@@ -1,0 +1,165 @@
+git-annex allows managing files with git, without checking the file
+contents into git. This is useful when dealing with files larger than git
+can currently easily handle, whether due to limitations in memory,
+checksumming time, or disk space (only one copy need be stored of an
+annexed file). 
+
+Even without file content tracking, being able to manage file metadata with
+git, move files around and delete files with versioned directory trees, and use
+branches and distributed clone, are all very handy reasons to use git. And
+annexed files can co-exist in the same git repository with regularly versioned
+files, which is convenient for maintaining code, Makefiles, etc that are
+associated with annexed files but that benefit from full revision control. 
+
+Enough broad picture, here's how it actually looks:
+
+* `git annex --add $file` moves the file into `.git/annex/`, and replaces
+  it with a symlink pointing at the annexed file, and then calls `git add`
+  to version the *symlink*. (If the file has already been annexed, it does
+  nothing.)
+* You can move the symlink around, copy it, delete it, etc, and commit changes
+  as desired using git. Reading the symlink will always get you the annexed
+  file content, or the link may be broken if the content is not currently
+  available.
+* If you use normal git push/pull commands, the annexed file contents
+  won't be sent, but the symlinks will be. So different clones of a repository
+  can have different sets of annexed files available.
+* `git annex --push $repository` pushes *all* annexed files to the specified
+  repository.
+* `git annex --pull $repository` pulls *all* annexed files from the specified
+  repository.
+* `git annex --want $file` indicates that you want access to a file's
+  content, without immediatly transferring it.
+* `git annex --get $file` is used to transfer a specified file, and/or
+  files previously indicated with --want. If a configured repository has it,
+  or it is available from other key/value storage, it will be immediatly
+  downloaded.
+* `git annex --drop $file` indicates that you no longer want the file's
+  content to be available in this repository.
+* `git annex $file` is a shorthand for either --add or --get. If the file
+  is already known, it does --get, otherwise it does --add.
+
+## copies
+
+git-annex can be configured to try to keep N copies of a file's content
+available across all repositories. By default, N is 1 (configured by
+annex.numcopies).
+
+`git annex --drop` attempts to communicate with all other configured
+repositories, to check that N copies of the file exist. If enough
+repositories cannot be contacted, it will retain the file content.
+You can later use `git annex --drop --retry` to retry pending drops.
+Or you can use `git annex --drop --force $file` to force dropping of
+file content.
+
+For example, consider three repositories: Server, Laptop, and USB. Both Server
+and USB have a copy of a file, and N=1. If on Laptop, you `git annex --get
+$file`, this will transfer it from either Server or USB (depending on which
+is available), and there are now 3 copies of the file.
+
+Suppose you want to free up space on laptop again, and you --drop the file
+there. If USB is connected, or Server can be contacted, git-annex can check
+that it still has a copy of the file, and the content is removed from
+Laptop. But if USB is currently disconnected, and Server also cannot be
+contacted, it can't check that and will retain the file content.
+
+With N=2, in order to drop the file content from Laptop, it would need access
+to both USB and Server.
+
+Note that different repositories can be configured with different values of
+N. So just because Laptop has N=2, this does not prevent the number of
+copies falling to 1, when USB and Server have N=1, and of they have the
+only copies of a file.
+
+## the .git-annex directory
+
+The `.git-annex` directory at the top of the repository, is used to store
+git-annex information that should be propigated between repositories.
+
+Data is stored here in files that are arranged to avoid conflicts in most
+cases. A conflict could occur if a file with the same name but different
+content was added to multiple clones.
+
+## key/value storage
+
+git-annex uses a key/value abstraction layer to allow files contents to be
+stored in different ways. In theory, any key/value storage system could be
+used to store the file contents, and git-annex would then retrieve them
+as needed and put them in `.git/annex/`.
+
+When a file is annexed, a key is generated from its content and/or metadata.
+This key can later be used to retrieve the file's content (its value). This
+key generation must be stable for a given file content, name, and size.
+
+The mapping from filename to its key is stored in the .git-annex directory,
+in a file named `$filename.$backend`
+
+Multiple pluggable backends are supported, and more than one can be used
+to store different files' contents in a given repository.
+
+* `file` -- This backend stores the file's content in
+  `.git/annex/`, and assumes that any file with the same basename
+  has the same content. So with this backend, files can be moved around,
+  but should never be added to or changed. This is the default, and
+  the least expensive backend.
+* `sha1sum` -- This backend stores the file's content in
+  `.git/annex/`, with a name based on its sha1 checksum. This backend allows
+  modifications of files to be tracked. Its need to generate checksums
+  can make it slow for large files.
+* `url` -- This backend downloads the file's content from an external URL.
+
+## location tracking
+
+git-annex keeps track of on which repository it last saw a file's content.
+This can be useful when using it for archiving with offline storage. When
+you indicate you --want a file, git-annex will tell you which repositories
+have the file's content.
+
+Location tracking information is stored in `.git-annex/$filename.log`.
+Repositories record their name and the date when they --get or --drop 
+a file's content. (Git is configured to use a union merge for this file,
+so the lines may be in arbitrary order, but it will never conflict.)
+
+## configuration
+
+* `annex.numcopies` -- number of copies of files to keep
+* `annex.backend` -- name of the default key/value backend to use to
+  store new files
+* `annex.name` -- allows specifying a unique name for this repository.
+  If not specified, the name is derived from its directory's location and
+  the hostname. When a repository is on removable media it is useful to give
+  it a more stable name. Typically the name of a repository is the same
+  name configured as a git remote to allow pulling from that repository.
+* `remote.<name>.annex-cost` -- When determining which repository to
+  transfer annexed files from or to, ones with lower costs are preferred.
+  The default cost is 50. Note that other factors may be configured
+  when pushing files to repositories, in particular, whether the repository
+  is on a filesystem with sufficient free space.
+
+## issues
+
+### symlinks
+
+If the symlink to annexed content is relative, moving it to a subdir will
+break it. But it it's absolute, moving the git repo (or mounting its drive
+elsewhere) will break it. Either:
+
+* Use relative links and need `git annex mv` to move (or post-commit 
+  hook that caches moves and updates links).
+* Use absolute links and need `git annex fixlinks` when location changes;
+  note that would also mean that git would see the symlink targets changed
+  and want to commit the change.
+
+### free space determination
+
+Need a way to tell how much free space is available on the disk containing
+a given repository. The repository may be remote, so ssh may need to be
+used.
+
+Similarly, need a way to tell the size of a file before downloading it from
+remote, to check local disk space.
+
+### auto-drop files on rm
+
+When git-rm removed a file, it should get dropped too. Of course, it may
+not be dropped right away, depending on number of copies available.
