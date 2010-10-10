@@ -20,6 +20,7 @@ module LocationLog where
 import Data.DateTime
 import System.IO
 import System.Directory
+import Data.Char
 import GitRepo
 import Utility
 
@@ -50,14 +51,15 @@ instance Read LogLine where
 	-- This parser is robust in that even unparsable log lines are
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
-	readsPrec _ string = if (length w >= 3)
-				then [((LogLine date status repo), "")]
-				else [((LogLine (fromSeconds 0) Undefined ""), "")]
+	readsPrec _ string = 
+		if (length w >= 3 && all isDigit date)
+			then [((LogLine (fromSeconds $ read date) status repo), "")]
+			else [((LogLine (fromSeconds 0) Undefined ""), "")]
 		where
-			date = fromSeconds $ read $ w !! 0
+			w = words string
+			date = w !! 0
 			status = read $ w !! 1
 			repo = unwords $ drop 2 w
-			w = words string
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
