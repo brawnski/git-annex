@@ -11,7 +11,7 @@ import Data.String.Utils
  - relative to a git repository directory (which must be absolute).
  - This is the same form displayed and used by git. -}
 gitRelative :: String -> String -> String
-gitRelative file repo = drop (length absrepo) absfile
+gitRelative repo file = drop (length absrepo) absfile
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file

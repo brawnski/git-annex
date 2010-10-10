@@ -19,6 +19,7 @@ module LocationLog where
 import Data.DateTime
 import System.IO
 import System.Posix.IO
+import GitRepo
 
 data LogLine = LogLine {
 	date :: DateTime,
@@ -79,3 +80,10 @@ logNow :: String -> String -> IO LogLine
 logNow repo file = do
 	now <- getCurrentTime
 	return $ LogLine now repo file
+
+{- Returns the filename of the log file for a given annexed file. -}
+logFile :: String -> IO String
+logFile annexedFile = do
+	repo <- repoTop
+	return $ repo ++ "/.git-annex/" ++ 
+		(gitRelative repo annexedFile) ++ ".log"
