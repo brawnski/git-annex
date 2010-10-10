@@ -21,4 +21,3 @@ moveToAnnex file key = return False
 
 copyFromOtherRepo :: IO Key -> FilePath -> IO (Bool)
 copyFromOtherRepo key file = return False
-
