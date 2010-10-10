@@ -3,10 +3,11 @@
 
 module Locations where
 
+import Types
 import GitRepo
 
 {- An annexed file's content is stored somewhere under .git/annex/ -}
-annexDir :: GitRepo -> String -> IO FilePath
+annexDir :: GitRepo -> Key -> IO FilePath
 annexDir repo key = do
 	dir <- gitDir repo
 	return $ dir ++ "/annex/" ++ key

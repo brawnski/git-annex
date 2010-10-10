@@ -8,6 +8,7 @@ import System.Directory
 import GitRepo
 import Utility
 import Locations
+import Types
 import Backend
 
 {- Annexes a file, storing it in a backend, and then moving it into

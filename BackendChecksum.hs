@@ -3,8 +3,7 @@
 
 module BackendChecksum (backend) where
 
-import Backend
-import GitRepo
+import Types
 import qualified BackendFile
 import Data.Digest.Pure.SHA
 

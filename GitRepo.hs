@@ -7,17 +7,18 @@ import System.Directory
 import System.Path
 import Data.String.Utils
 import Utility
-
-data GitRepo = GitRepo {
-	top :: FilePath,
-	remotes :: [GitRepo]
-} deriving (Eq, Show, Read)
+import Types
+import BackendList
 
 {- GitRepo constructor -}
 gitRepo :: FilePath -> IO GitRepo
 gitRepo dir = do
 	-- TOOD query repo for configuration settings; other repositories; etc
-	return GitRepo { top = dir, remotes = [] }
+	return GitRepo {
+		top = dir,
+		remotes = [],
+		backends = supportedBackends
+	}
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> IO String

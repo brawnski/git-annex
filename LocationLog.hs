@@ -26,6 +26,7 @@ import Data.Char
 import GitRepo
 import Utility
 import Locations
+import Types
 
 data LogStatus = FilePresent | FileMissing | Undefined
 	deriving (Eq)

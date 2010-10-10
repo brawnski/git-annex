@@ -1,20 +1,17 @@
 {- git-annex main program
  - -}
 
-import LocationLog
+import System.Environment
 import GitRepo
-import Backend
+import CmdLine
 import Annex
-
--- When adding a new backend, import it here and add it to the backends list.
-import qualified BackendFile
-import qualified BackendChecksum
-import qualified BackendUrl
-backends = [BackendFile.backend, BackendChecksum.backend, BackendUrl.backend]
+import BackendList
 
 main = do
+	args <- getArgs
+	flags <- argvToFlags args
+	
 	repo <- currentRepo
 	gitPrep repo
 
-	l <- readLog "demo.log"
-	writeLog "demo2.log" $ compactLog l
+	mapM (\f -> dispatch f supportedBackends repo) flags

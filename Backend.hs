@@ -22,19 +22,7 @@ import System.Directory
 import Locations
 import GitRepo
 import Utility
-
-type Key = String
-
-data Backend = Backend {
-	-- name of this backend
-	name :: String,
-	-- converts a filename to a key
-	getKey :: GitRepo -> FilePath -> IO (Maybe Key),
-	-- stores a file's contents to a key
-	storeFileKey :: GitRepo -> FilePath -> Key -> IO (Bool),
-	-- retrieves a key's contents to a file
-	retrieveKeyFile :: IO Key -> FilePath -> IO (Bool)
-}
+import Types
 
 instance Show Backend where
 	show backend = "Backend { name =\"" ++ (name backend) ++ "\" }"
