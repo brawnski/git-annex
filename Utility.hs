@@ -9,12 +9,15 @@ import Data.String.Utils
 
 {- Let's just say that Haskell makes reading/writing a file with
  - file locking excessively difficult. -}
-openLocked file mode = do
+withFileLocked file mode action = do
+	-- TODO: find a way to use bracket here
 	handle <- openFile file mode
 	lockfd <- handleToFd handle -- closes handle
 	waitToSetLock lockfd (lockType mode, AbsoluteSeek, 0, 0)
 	handle' <- fdToHandle lockfd
-	return handle'
+	ret <- action handle'
+	hClose handle'
+	return ret
 		where
 			lockType ReadMode = ReadLock
 			lockType _ = WriteLock

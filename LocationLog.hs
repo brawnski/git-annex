@@ -12,6 +12,11 @@
  -
  - A line of the log will look like: "date N reponame"
  - Where N=1 when the repo has the file, and 0 otherwise.
+ -
+ - TOOD: compact logs, by storing only current presence infomation when
+ - writing them.
+ -
+ - TODO: use ByteString
  -}
 
 module LocationLog where
@@ -67,9 +72,8 @@ readLog file = do
 	exists <- doesFileExist file
 	if exists
 		then do
-			h <- openLocked file ReadMode
-			s <- hGetContentsStrict h
-			hClose h
+			s <- withFileLocked file ReadMode $ \h -> 
+				hGetContentsStrict h
 			-- filter out any unparsable lines
 			return $ filter (\l -> (status l) /= Undefined )
 				$ map read $ lines s
@@ -80,9 +84,8 @@ readLog file = do
 writeLog :: String -> LogLine -> IO ()
 writeLog file line = do
 	createDirectoryIfMissing True (parentDir file)
-	h <- openLocked file AppendMode
-	hPutStrLn h $ show line
-	hClose h
+	withFileLocked file AppendMode $ \h ->
+		hPutStrLn h $ show line
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> String -> IO LogLine
