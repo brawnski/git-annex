@@ -14,6 +14,26 @@ stateLoc = ".git-annex"
 gitStateDir :: String -> String
 gitStateDir repo = repo ++ "/" ++ stateLoc ++ "/"
 
+{- Path to the current repository's gitattributes file. -}
+gitAttributes :: IO String
+gitAttributes = do
+	repo <- repoTop
+	bare <- isBareRepo repo
+	if (bare)
+		then return $ repo ++ "/info/.gitattributes"
+		else return $ repo ++ "/.gitattributes"
+
+{- Path to the current repository's .git directory.
+ - (For a bare repository, that is the root of the repository.)
+ - TODO: support GIT_DIR -}
+gitDir :: IO String
+gitDir = do
+	repo <- repoTop
+	bare <- isBareRepo repo
+	if (bare)
+		then return $ repo
+		else return $ repo ++ "/.git"
+
 {- Given a relative or absolute filename, calculates the name to use
  - relative to a git repository directory (which must be absolute).
  - This is the same form displayed and used by git. -}
@@ -41,28 +61,10 @@ gitPrep = do
 		else do
 			content <- readFile attributes
 			if (all (/= attrLine) (lines content))
-				then appendFile attributes $ attrLine ++ "\n"
+				then do
+					appendFile attributes $ attrLine ++ "\n"
+					-- TODO check attributes file into git?
 				else return ()
-
-{- Returns the path to the current repository's gitattributes file. -}
-gitAttributes :: IO String
-gitAttributes = do
-	repo <- repoTop
-	bare <- isBareRepo repo
-	if (bare)
-		then return $ repo ++ "/info/.gitattributes"
-		else return $ repo ++ "/.gitattributes"
-
-{- Returns the path to the current repository's .git directory.
- - (For a bare repository, that is the root of the repository.)
- - TODO: support GIT_DIR -}
-gitDir :: IO String
-gitDir = do
-	repo <- repoTop
-	bare <- isBareRepo repo
-	if (bare)
-		then return $ repo
-		else return $ repo ++ "/.git"
 
 {- Finds the top of the current git repository, which may be in a parent
  - directory. -}
