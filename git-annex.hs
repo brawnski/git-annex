@@ -5,6 +5,7 @@ import LocationLog
 import GitRepo
 
 main = do
-	gitPrep
+	repo <- repoTop
+	gitPrep repo
 	l <- readLog "demo.log"
 	writeLog "demo2.log" $ compactLog l

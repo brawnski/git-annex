@@ -14,21 +14,19 @@ stateLoc = ".git-annex"
 gitStateDir :: String -> String
 gitStateDir repo = repo ++ "/" ++ stateLoc ++ "/"
 
-{- Path to the current repository's gitattributes file. -}
-gitAttributes :: IO String
-gitAttributes = do
-	repo <- repoTop
+{- Path to a repository's gitattributes file. -}
+gitAttributes :: FilePath -> IO String
+gitAttributes repo = do
 	bare <- isBareRepo repo
 	if (bare)
 		then return $ repo ++ "/info/.gitattributes"
 		else return $ repo ++ "/.gitattributes"
 
-{- Path to the current repository's .git directory.
+{- Path to a repository's .git directory.
  - (For a bare repository, that is the root of the repository.)
  - TODO: support GIT_DIR -}
-gitDir :: IO String
-gitDir = do
-	repo <- repoTop
+gitDir :: FilePath -> IO String
+gitDir repo = do
 	bare <- isBareRepo repo
 	if (bare)
 		then return $ repo
@@ -37,7 +35,7 @@ gitDir = do
 {- Given a relative or absolute filename, calculates the name to use
  - relative to a git repository directory (which must be absolute).
  - This is the same form displayed and used by git. -}
-gitRelative :: String -> String -> String
+gitRelative :: FilePath -> String -> String
 gitRelative repo file = drop (length absrepo) absfile
 	where
 		-- normalize both repo and file, so that repo
@@ -49,12 +47,12 @@ gitRelative repo file = drop (length absrepo) absfile
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 
-{- Sets up the current git repo for git-annex. May be called repeatedly. -}
-gitPrep :: IO ()
-gitPrep = do
+{- Sets up a git repo for git-annex. May be called repeatedly. -}
+gitPrep :: FilePath -> IO ()
+gitPrep repo = do
 	-- configure git to use union merge driver on state files
 	let attrLine = stateLoc ++ "/* merge=union"
-	attributes <- gitAttributes
+	attributes <- gitAttributes repo
 	exists <- doesFileExist attributes
 	if (not exists)
 		then writeFile attributes $ attrLine ++ "\n"
