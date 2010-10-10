@@ -8,79 +8,62 @@ import System.Path
 import Data.String.Utils
 import Utility
 
-type GitRepo = FilePath
+data GitRepo = GitRepo {
+	top :: FilePath,
+	remotes :: [GitRepo]
+} deriving (Eq, Show, Read)
 
-{- Long-term state is stored in files inside the .git-annex directory
- - in the git repository. -}
-stateLoc = ".git-annex"
-gitStateDir :: GitRepo -> FilePath
-gitStateDir repo = repo ++ "/" ++ stateLoc ++ "/"
+{- GitRepo constructor -}
+gitRepo :: FilePath -> IO GitRepo
+gitRepo dir = do
+	-- TOOD query repo for configuration settings; other repositories; etc
+	return GitRepo { top = dir, remotes = [] }
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> IO String
 gitAttributes repo = do
-	bare <- isBareRepo repo
+	bare <- isBareRepo (top repo)
 	if (bare)
-		then return $ repo ++ "/info/.gitattributes"
-		else return $ repo ++ "/.gitattributes"
+		then return $ (top repo) ++ "/info/.gitattributes"
+		else return $ (top repo) ++ "/.gitattributes"
 
 {- Path to a repository's .git directory.
  - (For a bare repository, that is the root of the repository.)
  - TODO: support GIT_DIR -}
 gitDir :: GitRepo -> IO String
 gitDir repo = do
-	bare <- isBareRepo repo
+	bare <- isBareRepo (top repo)
 	if (bare)
-		then return $ repo
-		else return $ repo ++ "/.git"
+		then return $ (top repo)
+		else return $ (top repo) ++ "/.git"
 
 {- Given a relative or absolute filename, calculates the name to use
- - relative to a git repository directory (which must be absolute).
+ - to refer to the file relative to a git repository directory.
  - This is the same form displayed and used by git. -}
 gitRelative :: GitRepo -> String -> String
 gitRelative repo file = drop (length absrepo) absfile
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
-		absrepo = case (absNormPath "/" repo) of
+		absrepo = case (absNormPath "/" (top repo)) of
 			Just f -> f ++ "/"
-			Nothing -> error $ "bad repo" ++ repo
+			Nothing -> error $ "bad repo" ++ (top repo)
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
-
-{- Sets up a git repo for git-annex. May be called repeatedly. -}
-gitPrep :: GitRepo -> IO ()
-gitPrep repo = do
-	-- configure git to use union merge driver on state files
-	let attrLine = stateLoc ++ "/* merge=union"
-	attributes <- gitAttributes repo
-	exists <- doesFileExist attributes
-	if (not exists)
-		then do
-			writeFile attributes $ attrLine ++ "\n"
-			gitAdd repo attributes
-		else do
-			content <- readFile attributes
-			if (all (/= attrLine) (lines content))
-				then do
-					appendFile attributes $ attrLine ++ "\n"
-					gitAdd repo attributes
-				else return ()
 
 {- Stages a changed file in git's index. -}
 gitAdd repo file = do
 	-- TODO
 	return ()
 
-{- Finds the top of the current git repository, which may be in a parent
- - directory. -}
-repoTop :: IO GitRepo
-repoTop = do
+{- Finds the current git repository, which may be in a parent directory. -}
+currentRepo :: IO GitRepo
+currentRepo = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
-		(Just dir) -> return dir
+		(Just dir) -> gitRepo dir
 		Nothing -> error "Not in a git repository."
 
 seekUp :: String -> (String -> IO Bool) -> IO (Maybe String)

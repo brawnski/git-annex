@@ -19,6 +19,7 @@
 module Backend where
 
 import System.Directory
+import Locations
 import GitRepo
 import Utility
 

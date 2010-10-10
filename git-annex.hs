@@ -13,7 +13,7 @@ import qualified BackendUrl
 backends = [BackendFile.backend, BackendChecksum.backend, BackendUrl.backend]
 
 main = do
-	repo <- repoTop
+	repo <- currentRepo
 	gitPrep repo
 
 	l <- readLog "demo.log"

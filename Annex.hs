@@ -3,16 +3,12 @@
 
 module Annex where
 
-import Backend
 import System.Posix.Files
 import System.Directory
 import GitRepo
 import Utility
-
-{- An annexed file's content is stored somewhere under .git/annex/ -}
-annexLoc repo key = do
-	dir <- gitDir repo
-	return $ dir ++ "/annex/" ++ key
+import Locations
+import Backend
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
@@ -28,8 +24,28 @@ annexFile backends repo file = do
 				Just key -> symlink key
 	where
 		symlink key = do
-			dest <- annexLoc repo key
+			dest <- annexDir repo key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file
 			gitAdd repo file
+
+{- Sets up a git repo for git-annex. May be called repeatedly. -}
+gitPrep :: GitRepo -> IO ()
+gitPrep repo = do
+	-- configure git to use union merge driver on state files
+	let attrLine = stateLoc ++ "/* merge=union"
+	attributes <- gitAttributes repo
+	exists <- doesFileExist attributes
+	if (not exists)
+		then do
+			writeFile attributes $ attrLine ++ "\n"
+			gitAdd repo attributes
+		else do
+			content <- readFile attributes
+			if (all (/= attrLine) (lines content))
+				then do
+					appendFile attributes $ attrLine ++ "\n"
+					gitAdd repo attributes
+				else return ()
+
