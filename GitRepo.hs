@@ -6,6 +6,7 @@ import Directory
 import System.Directory
 import System.Path
 import Data.String.Utils
+import Utility
 
 {- Given a relative or absolute filename, calculates the name to use
  - relative to a git repository directory (which must be absolute).
@@ -49,16 +50,8 @@ seekUp dir want = do
 	if ok
 		then return (Just dir)
 		else case (parentDir dir) of
-			(Just d) -> seekUp d want
-			Nothing -> return Nothing
-
-parentDir :: String -> Maybe String
-parentDir dir =
-	if length dirs > 0
-	then Just ("/" ++ (join "/" $ take ((length dirs) - 1) dirs))
-	else Nothing
-		where
-			dirs = filter (\x -> length x > 0) $ split "/" dir
+			"" -> return Nothing
+			d -> seekUp d want
 
 isRepoTop dir = do
 	r <- isGitRepo dir
