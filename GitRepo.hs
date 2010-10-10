@@ -12,17 +12,19 @@ import Types
 {- GitRepo constructor -}
 gitRepo :: FilePath -> IO GitRepo
 gitRepo dir = do
+	b <- isBareRepo dir
+
 	-- TOOD query repo for configuration settings; other repositories; etc
 	return GitRepo {
 		top = dir,
+		bare = b,
 		remotes = []
 	}
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> IO String
 gitAttributes repo = do
-	bare <- isBareRepo (top repo)
-	if (bare)
+	if (bare repo)
 		then return $ (top repo) ++ "/info/.gitattributes"
 		else return $ (top repo) ++ "/.gitattributes"
 
@@ -31,8 +33,7 @@ gitAttributes repo = do
  - TODO: support GIT_DIR -}
 gitDir :: GitRepo -> IO String
 gitDir repo = do
-	bare <- isBareRepo (top repo)
-	if (bare)
+	if (bare repo)
 		then return $ (top repo)
 		else return $ (top repo) ++ "/.git"
 

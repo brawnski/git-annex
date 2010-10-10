@@ -21,6 +21,7 @@ data Backend = Backend {
 -- a git repository
 data GitRepo = GitRepo {
 	top :: FilePath,
+	bare :: Bool,
 	remotes :: [GitRepo]
 }
 
