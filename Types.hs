@@ -13,9 +13,11 @@ data Backend = Backend {
 	-- converts a filename to a key
 	getKey :: GitRepo -> FilePath -> IO (Maybe Key),
 	-- stores a file's contents to a key
-	storeFileKey :: GitRepo -> FilePath -> Key -> IO (Bool),
+	storeFileKey :: GitRepo -> FilePath -> Key -> IO Bool,
 	-- retrieves a key's contents to a file
-	retrieveKeyFile :: IO Key -> FilePath -> IO (Bool)
+	retrieveKeyFile :: Key -> FilePath -> IO Bool,
+	-- removes a key
+	removeKey :: Key -> IO Bool
 }
 
 -- a git repository

@@ -44,14 +44,30 @@ annexFile state file = do
 			gitAdd (repo state) file
 		checkExists file = do
 			exists <- doesFileExist file
-			case (exists) of
-				False -> error $ "does not exist: " ++ file
-				True -> return ()
+			if (not exists)
+				then error $ "does not exist: " ++ file
+				else return ()
 		checkLegal file = do
-			s <- getFileStatus file
-			case (not (isSymbolicLink s) && not (isRegularFile s)) of
-				False -> error $ "not a regular file: " ++ file
-				True -> return ()
+			s <- getSymbolicLinkStatus file
+			if ((isSymbolicLink s) || (not $ isRegularFile s))
+				then error $ "not a regular file: " ++ file
+				else return ()
+
+{- Inverse of annexFile. -}
+unannexFile :: State -> FilePath -> IO ()
+unannexFile state file = do
+	alreadyannexed <- lookupBackend (backends state) (repo state) file
+	case (alreadyannexed) of
+		Nothing -> error $ "not annexed " ++ file
+		Just _ -> do
+			mkey <- dropFile (backends state) (repo state) file
+			case (mkey) of
+				Nothing -> return ()
+				Just key -> do
+					src <- annexDir (repo state) key
+					removeFile file
+					renameFile src file
+					return ()
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()

@@ -36,6 +36,7 @@ Enough broad picture, here's how it actually looks:
   downloaded.
 * `git annex --drop $file` indicates that you no longer want the file's
   content to be available in this repository.
+* `git annex --unannex $file` undoes a `git annex --add`.
 * `git annex $file` is a shorthand for either --add or --get. If the file
   is already known, it does --get, otherwise it does --add.
 

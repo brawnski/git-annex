@@ -10,8 +10,8 @@ import System.Console.GetOpt
 import Types
 import Annex
 
-data Flag = Add FilePath | Push String | Pull String |
-		Want FilePath | Get (Maybe FilePath) | Drop FilePath
+data Flag = Add FilePath | Push String | Pull String | Want FilePath | 
+		Get (Maybe FilePath) | Drop FilePath | Unannex FilePath
 	deriving Show
 
 options :: [OptDescr Flag]
@@ -22,6 +22,7 @@ options =
 	, Option ['w'] ["want"] (ReqArg Want "FILE") "request file contents"
 	, Option ['g'] ["get"] (OptArg Get "FILE") "transfer file contents"
 	, Option ['d'] ["drop"] (ReqArg Drop "FILE") "indicate file content not needed"
+	, Option ['u'] ["unannex"] (ReqArg Unannex "FILE") "undo --add"
 	]
 
 argvToFlags argv = do
@@ -38,4 +39,5 @@ dispatch :: Flag -> State -> IO ()
 dispatch flag state = do
 	case (flag) of
 		Add f -> annexFile state f
+		Unannex f -> unannexFile state f
 		_ -> error "not implemented"

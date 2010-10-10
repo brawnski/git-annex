@@ -57,14 +57,29 @@ storeFile (b:bs) repo file = do
 
 {- Attempts to retrieve an file from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: [Backend] -> GitRepo -> FilePath -> FilePath -> IO (Bool)
+retrieveFile :: [Backend] -> GitRepo -> FilePath -> FilePath -> IO Bool
 retrieveFile backends repo file dest = do
 	result <- lookupBackend backends repo file
 	case (result) of
 		Nothing -> return False
-		Just b -> (retrieveKeyFile b) key dest
-			where
-				key = readFile (backendFile b repo file)
+		Just b -> do
+			key <- lookupKey b repo file
+			(retrieveKeyFile b) key dest
+
+{- Drops the key for a file from the backend that has it. -}
+dropFile :: [Backend] -> GitRepo -> FilePath -> IO (Maybe Key)
+dropFile backends repo file = do
+	result <- lookupBackend backends repo file
+	case (result) of
+		Nothing -> return Nothing
+		Just b -> do
+			key <- lookupKey b repo file
+			(removeKey b) key
+			return $ Just key
+
+{- Looks up the key a backend uses for an already annexed file. -}
+lookupKey :: Backend -> GitRepo -> FilePath -> IO Key
+lookupKey backend repo file = readFile (backendFile backend repo file)
 
 {- Looks up the backend used for an already annexed file. -}
 lookupBackend :: [Backend] -> GitRepo -> FilePath -> IO (Maybe Backend)
