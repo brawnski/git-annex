@@ -34,8 +34,8 @@ argvToFlags argv = do
 		(_,n,errs) -> ioError (userError (concat errs ++ usageInfo header options))
 	where header = "Usage: git-annex [option] file"
 
-dispatch :: Flag -> [Backend] -> GitRepo -> IO ()
-dispatch flag backends repo = do
+dispatch :: Flag -> State -> IO ()
+dispatch flag state = do
 	case (flag) of
-		Add f -> annexFile backends repo f
+		Add f -> annexFile state f
 		_ -> error "not implemented"

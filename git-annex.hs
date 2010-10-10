@@ -11,7 +11,6 @@ main = do
 	args <- getArgs
 	flags <- argvToFlags args
 	
-	repo <- currentRepo
-	gitPrep repo
+	state <- startAnnex
 
-	mapM (\f -> dispatch f supportedBackends repo) flags
+	mapM (\f -> dispatch f state) flags

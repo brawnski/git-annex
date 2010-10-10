@@ -3,8 +3,10 @@
 
 module Types where
 
+-- annexed filenames are mapped into keys
 type Key = String
 
+-- this structure represents a key/value backend
 data Backend = Backend {
 	-- name of this backend
 	name :: String,
@@ -16,9 +18,14 @@ data Backend = Backend {
 	retrieveKeyFile :: IO Key -> FilePath -> IO (Bool)
 }
 
+-- a git repository
 data GitRepo = GitRepo {
 	top :: FilePath,
-	remotes :: [GitRepo],
-	backends :: [Backend]
+	remotes :: [GitRepo]
 }
 
+-- git-annex's runtime state
+data State = State {
+	repo :: GitRepo,
+	backends :: [Backend]
+}

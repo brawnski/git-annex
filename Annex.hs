@@ -10,26 +10,32 @@ import Utility
 import Locations
 import Types
 import Backend
+import BackendList
+
+startAnnex :: IO State
+startAnnex = do
+	r <- currentRepo
+	return State { repo = r,  backends = supportedBackends }
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
-annexFile :: [Backend] -> GitRepo -> FilePath -> IO ()
-annexFile backends repo file = do
-	alreadyannexed <- lookupBackend backends repo file
+annexFile :: State -> FilePath -> IO ()
+annexFile state file = do
+	alreadyannexed <- lookupBackend (backends state) (repo state) file
 	case (alreadyannexed) of
 		Just _ -> error $ "already annexed " ++ file
 		Nothing -> do
-			stored <- storeFile backends repo file
+			stored <- storeFile (backends state) (repo state) file
 			case (stored) of
 				Nothing -> error $ "no backend could store " ++ file
 				Just key -> symlink key
 	where
 		symlink key = do
-			dest <- annexDir repo key
+			dest <- annexDir (repo state) key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file
-			gitAdd repo file
+			gitAdd (repo state) file
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()
