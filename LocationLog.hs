@@ -7,21 +7,19 @@
  -
  - Location tracking information is stored in `.git-annex/filename.log`.
  - Repositories record their name and the date when they --get or --drop
- - a file's content. (Git is configured to use a union merge for this file,
- - so the lines may be in arbitrary order, but it will never conflict.)
+ - a file's content.
  -
  - A line of the log will look like: "date N reponame"
  - Where N=1 when the repo has the file, and 0 otherwise.
- -
- - TOOD: compact logs, by storing only current presence infomation when
- - writing them.
- -
- - TODO: use ByteString
+ - 
+ - Git is configured to use a union merge for this file,
+ - so the lines may be in arbitrary order, but it will never conflict.
  -}
 
 module LocationLog where
 
 import Data.DateTime
+import qualified Data.Map as Map
 import System.IO
 import System.Directory
 import Data.Char
@@ -81,11 +79,18 @@ readLog file = do
 			return []
 
 {- Adds a LogLine to a log file -}
-writeLog :: String -> LogLine -> IO ()
-writeLog file line = do
+appendLog :: String -> LogLine -> IO ()
+appendLog file line = do
 	createDirectoryIfMissing True (parentDir file)
 	withFileLocked file AppendMode $ \h ->
 		hPutStrLn h $ show line
+
+{- Writes a set of lines to a log file -}
+writeLog :: String -> [LogLine] -> IO ()
+writeLog file lines = do
+	createDirectoryIfMissing True (parentDir file)
+	withFileLocked file WriteMode $ \h ->
+		hPutStr h $ unlines $ map show lines
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> String -> IO LogLine
@@ -112,3 +117,24 @@ fileLocations file = do
  - is (or should still be) present. -}
 filterPresent :: [LogLine] -> [LogLine]
 filterPresent lines = error "unimplimented" -- TODO
+
+{- Compacts a set of logs, returning a subset that contains the current
+ - status. -}
+compactLog :: [LogLine] -> [LogLine]
+compactLog lines = compactLog' Map.empty lines
+compactLog' map [] = Map.elems map
+compactLog' map (l:ls) = compactLog' (mapLog map l) ls
+
+{- Inserts a log into a map of logs, if the log has better (ie, newer)
+ - information about a repo than the other logs in the map -}
+mapLog map log = 
+	if (better)
+		then Map.insert (repo log) log map
+		else map
+	where
+		better = case (Map.lookup (repo log) map) of
+			-- <= used because two log entries could
+			-- have the same timestamp; if so the one that
+			-- is seen last should win.
+			Just l -> (date l <= date log)
+			Nothing -> True
