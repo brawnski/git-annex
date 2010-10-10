@@ -1,4 +1,4 @@
-{- git-annex
+{- git-annex toplevel code
  -}
 
 module Annex where
@@ -12,15 +12,21 @@ import Types
 import Backend
 import BackendList
 
+{- On startup, examine the git repo, prepare it, and record state for
+ - later. -}
 startAnnex :: IO State
 startAnnex = do
 	r <- currentRepo
+	gitPrep r
+	-- TODO query git repo for configuration
 	return State { repo = r,  backends = supportedBackends }
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
 annexFile state file = do
+	checkExists file
+	checkLegal file
 	alreadyannexed <- lookupBackend (backends state) (repo state) file
 	case (alreadyannexed) of
 		Just _ -> error $ "already annexed " ++ file
@@ -36,6 +42,16 @@ annexFile state file = do
 			renameFile file dest
 			createSymbolicLink dest file
 			gitAdd (repo state) file
+		checkExists file = do
+			exists <- doesFileExist file
+			case (exists) of
+				False -> error $ "does not exist: " ++ file
+				True -> return ()
+		checkLegal file = do
+			s <- getFileStatus file
+			case (not (isSymbolicLink s) && not (isRegularFile s)) of
+				False -> error $ "not a regular file: " ++ file
+				True -> return ()
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()
