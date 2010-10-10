@@ -4,6 +4,7 @@
 module BackendUrl (backend) where
 
 import Backend
+import GitRepo
 
 backend = Backend {
 	name = "url",
@@ -13,12 +14,12 @@ backend = Backend {
 }
 
 -- cannot generate url from filename
-keyValue :: FilePath -> IO (Maybe Key)
-keyValue k = return Nothing
+keyValue :: GitRepo -> FilePath -> IO (Maybe Key)
+keyValue repo file = return Nothing
 
 -- cannot store to urls
-dummyStore :: FilePath -> Key -> IO (Bool)
-dummyStore file url = return False
+dummyStore :: GitRepo -> FilePath -> Key -> IO (Bool)
+dummyStore repo file url = return False
 
 downloadUrl :: IO Key -> FilePath -> IO (Bool)
-downloadUrl url file = error "unimplemented"
+downloadUrl url file = error "downloadUrl unimplemented"

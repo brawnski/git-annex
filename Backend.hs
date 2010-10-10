@@ -28,9 +28,9 @@ data Backend = Backend {
 	-- name of this backend
 	name :: String,
 	-- converts a filename to a key
-	getKey :: FilePath -> IO (Maybe Key),
+	getKey :: GitRepo -> FilePath -> IO (Maybe Key),
 	-- stores a file's contents to a key
-	storeFileKey :: FilePath -> Key -> IO (Bool),
+	storeFileKey :: GitRepo -> FilePath -> Key -> IO (Bool),
 	-- retrieves a key's contents to a file
 	retrieveKeyFile :: IO Key -> FilePath -> IO (Bool)
 }
@@ -49,11 +49,11 @@ backendFile backend repo file = gitStateDir repo ++
 storeFile :: [Backend] -> GitRepo -> FilePath -> IO (Maybe Key)
 storeFile [] _ _ = return Nothing
 storeFile (b:bs) repo file = do
-	try <- (getKey b) (gitRelative repo file)
+	try <- (getKey b) repo (gitRelative repo file)
 	case (try) of
 		Nothing -> nextbackend
 		Just key -> do
-			stored <- (storeFileKey b) file key
+			stored <- (storeFileKey b) repo file key
 			if (not stored)
 				then nextbackend
 				else do

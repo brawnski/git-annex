@@ -4,6 +4,7 @@
 module BackendChecksum (backend) where
 
 import Backend
+import GitRepo
 import qualified BackendFile
 import Data.Digest.Pure.SHA
 
@@ -13,6 +14,6 @@ backend = BackendFile.backend {
 	getKey = keyValue
 }
 
--- 
-keyValue :: FilePath -> IO (Maybe Key)
-keyValue k = error "unimplemented" -- TODO
+-- checksum the file to get its key
+keyValue :: GitRepo -> FilePath -> IO (Maybe Key)
+keyValue k = error "checksum keyValue unimplemented" -- TODO
