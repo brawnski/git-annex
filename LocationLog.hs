@@ -65,7 +65,7 @@ instance Read LogLine where
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
-readLog :: String -> IO [LogLine]
+readLog :: FilePath -> IO [LogLine]
 readLog file = do
 	exists <- doesFileExist file
 	if exists
@@ -79,14 +79,14 @@ readLog file = do
 			return []
 
 {- Adds a LogLine to a log file -}
-appendLog :: String -> LogLine -> IO ()
+appendLog :: FilePath -> LogLine -> IO ()
 appendLog file line = do
 	createDirectoryIfMissing True (parentDir file)
 	withFileLocked file AppendMode $ \h ->
 		hPutStrLn h $ show line
 
 {- Writes a set of lines to a log file -}
-writeLog :: String -> [LogLine] -> IO ()
+writeLog :: FilePath -> [LogLine] -> IO ()
 writeLog file lines = do
 	createDirectoryIfMissing True (parentDir file)
 	withFileLocked file WriteMode $ \h ->
@@ -99,7 +99,7 @@ logNow status repo = do
 	return $ LogLine now status repo
 
 {- Returns the filename of the log file for a given annexed file. -}
-logFile :: String -> IO String
+logFile :: FilePath -> IO String
 logFile annexedFile = do
 	repo <- repoTop
 	return $ (gitStateDir repo) ++
@@ -107,16 +107,16 @@ logFile annexedFile = do
 
 {- Returns a list of repositories that, according to the log, have
  - the content of a file -}
-fileLocations :: String -> IO [String]
+fileLocations :: FilePath -> IO [String]
 fileLocations file = do
 	log <- logFile file
 	lines <- readLog log
 	return $ map repo (filterPresent lines)
 
-{- Filters the list of LogLines to find repositories where the file
+{- Filters the list of LogLines to find ones where the file
  - is (or should still be) present. -}
 filterPresent :: [LogLine] -> [LogLine]
-filterPresent lines = error "unimplimented" -- TODO
+filterPresent lines = filter (\l -> FilePresent == status l) $ compactLog lines
 
 {- Compacts a set of logs, returning a subset that contains the current
  - status. -}
