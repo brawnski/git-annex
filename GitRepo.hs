@@ -32,21 +32,26 @@ gitRelative repo file = drop (length absrepo) absfile
 {- Sets up the current git repo for git-annex. May be called repeatedly. -}
 gitPrep :: IO ()
 gitPrep = do
+	-- configure git to use union merge driver on state files
+	let attrLine = stateLoc ++ "/* merge=union"
+	attributes <- gitAttributes
+	exists <- doesFileExist attributes
+	if (not exists)
+		then writeFile attributes $ attrLine ++ "\n"
+		else do
+			content <- readFile attributes
+			if (all (/= attrLine) (lines content))
+				then appendFile attributes $ attrLine ++ "\n"
+				else return ()
+
+{- Returns the path to the current repository's gitattributes file. -}
+gitAttributes :: IO String
+gitAttributes = do
 	repo <- repoTop
 	bare <- isBareRepo repo
-	-- configure git to use union merge driver on state files
-	let attributes = repo ++ "/.gitattributes"
-	let attrLine = stateLoc ++ "/* merge=union"
-	exists <- doesFileExist attributes
-	if (not bare)
-		then if (not exists)
-			then writeFile attributes $ attrLine ++ "\n"
-			else do
-				content <- readFile attributes
-				if (all (/= attrLine) (lines content))
-					then appendFile attributes $ attrLine ++ "\n"
-					else return ()
-		else return ()
+	if (bare)
+		then return $ repo ++ "/info/.gitattributes"
+		else return $ repo ++ "/.gitattributes"
 
 {- Returns the path to the current repository's .git directory.
  - (For a bare repository, that is the root of the repository.)
@@ -56,7 +61,7 @@ gitDir = do
 	repo <- repoTop
 	bare <- isBareRepo repo
 	if (bare)
-		then return repo
+		then return $ repo
 		else return $ repo ++ "/.git"
 
 {- Finds the top of the current git repository, which may be in a parent
