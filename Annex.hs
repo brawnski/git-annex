@@ -9,14 +9,13 @@ import System.Directory
 import GitRepo
 import Utility
 
-{- An annexed file's content is stored in .git/annex/. -}
-annexedFileLocation repo file = do
+{- An annexed file's content is stored somewhere under .git/annex/ -}
+annexLoc repo key = do
 	dir <- gitDir repo
-	return $ dir ++ "/annex/" ++ (gitRelative repo file)
+	return $ dir ++ "/annex/" ++ key
 
 {- Annexes a file, storing it in a backend, and then moving it into
- - the annex directory and setting up the symlink pointing to its
- - content. -}
+ - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: [Backend] -> GitRepo -> FilePath -> IO ()
 annexFile backends repo file = do
 	alreadyannexed <- lookupBackend backends repo file
@@ -24,12 +23,12 @@ annexFile backends repo file = do
 		Just _ -> error $ "already annexed " ++ file
 		Nothing -> do
 			stored <- storeFile backends repo file
-			if (not stored)
-				then error $ "no backend could store " ++ file
-				else symlink
+			case (stored) of
+				Nothing -> error $ "no backend could store " ++ file
+				Just key -> symlink key
 	where
-		symlink = do
-			dest <- annexedFileLocation repo file
+		symlink key = do
+			dest <- annexLoc repo key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file

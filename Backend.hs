@@ -44,21 +44,29 @@ backendFile :: Backend -> GitRepo -> FilePath -> String
 backendFile backend repo file = gitStateDir repo ++
 	(gitRelative repo file) ++ "." ++ (name backend)
 
-{- Attempts to Stores a file in one of the backends. -}
-storeFile :: [Backend] -> GitRepo -> FilePath -> IO (Bool)
-storeFile [] _ _ = return False
+{- Attempts to store a file in one of the backends, and returns
+ - its key. -}
+storeFile :: [Backend] -> GitRepo -> FilePath -> IO (Maybe Key)
+storeFile [] _ _ = return Nothing
 storeFile (b:bs) repo file = do
 	try <- (getKey b) (gitRelative repo file)
 	case (try) of
-		Nothing -> storeFile bs repo file
+		Nothing -> nextbackend
 		Just key -> do
-			(storeFileKey b) file key
+			stored <- (storeFileKey b) file key
+			if (not stored)
+				then nextbackend
+				else do
+					bookkeeping key
+					return $ Just key
+	where
+		nextbackend = storeFile bs repo file
+		backendfile = backendFile b repo file
+		bookkeeping key = do
 			createDirectoryIfMissing True (parentDir backendfile)
 			writeFile backendfile key
-			return True
-				where backendfile = backendFile b repo file
 
-{- Attempts to retrieve an file from one of the backends, saving it to 
+{- Attempts to retrieve an file from one of the backends, saving it to
  - a specified location. -}
 retrieveFile :: [Backend] -> GitRepo -> FilePath -> FilePath -> IO (Bool)
 retrieveFile backends repo file dest = do
