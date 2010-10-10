@@ -5,12 +5,12 @@
  - When you indicate you --want a file, git-annex will tell you which
  - repositories have the file's content.
  -
- - Location tracking information is stored in `.git-annex/$filename.log`.
+ - Location tracking information is stored in `.git-annex/filename.log`.
  - Repositories record their name and the date when they --get or --drop
  - a file's content. (Git is configured to use a union merge for this file,
  - so the lines may be in arbitrary order, but it will never conflict.)
  -
- - A line of the log will look like: "date N reponame filename"
+ - A line of the log will look like: "date N reponame"
  - Where N=1 when the repo has the file, and 0 otherwise.
  -
  -}
@@ -19,8 +19,8 @@ module LocationLog where
 
 import Data.DateTime
 import System.IO
-import System.Posix.IO
 import GitRepo
+import Utility
 
 data LogStatus = FilePresent | FileMissing | Undefined
 	deriving (Eq)
@@ -38,28 +38,26 @@ instance Read LogStatus where
 data LogLine = LogLine {
 	date :: DateTime,
 	status :: LogStatus,
-	repo :: String,
-	file :: String
+	repo :: String
 } deriving (Eq)
 
 instance Show LogLine where
-	show (LogLine date status repo file) = unwords
-		[(show (toSeconds date)), (show status), repo, file]
+	show (LogLine date status repo) = unwords
+		[(show (toSeconds date)), (show status), repo]
 
 instance Read LogLine where
 	-- This parser is robust in that even unparsable log lines are
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = if (length w >= 3)
-				then [((LogLine date status repo file), "")]
-				else [((LogLine (fromSeconds 0) Undefined "" ""), "")]
+				then [((LogLine date status repo), "")]
+				else [((LogLine (fromSeconds 0) Undefined ""), "")]
 		where
 			date = fromSeconds $ read $ w !! 0
 			status = read $ w !! 1
-			repo = w !! 2
-			file = unwords $ rest w
+			repo = unwords $ rest w
 			w = words string
-			rest (_:_:_:l) = l
+			rest (_:_:l) = l
 
 {- Reads a log file -}
 readLog :: String -> IO [LogLine]
@@ -77,23 +75,11 @@ writeLog file line = do
 	hPutStrLn h $ show line
 	hClose h
 
-{- Let's just say that Haskell makes reading/writing a file with
- - file locking excessively difficult. -}
-openLocked file mode = do
-	handle <- openFile file mode
-	lockfd <- handleToFd handle -- closes handle
-	waitToSetLock lockfd (lockType mode, AbsoluteSeek, 0, 0)
-	handle' <- fdToHandle lockfd
-	return handle'
-		where
-			lockType ReadMode = ReadLock
-			lockType _ = WriteLock
-
-{- Generates a new log line with the current date. -}
-logNow :: LogStatus -> String -> String -> IO LogLine
-logNow status repo file = do
+{- Generates a new LogLine with the current date. -}
+logNow :: LogStatus -> String -> IO LogLine
+logNow status repo = do
 	now <- getCurrentTime
-	return $ LogLine now status repo file
+	return $ LogLine now status repo
 
 {- Returns the filename of the log file for a given annexed file. -}
 logFile :: String -> IO String
@@ -101,3 +87,16 @@ logFile annexedFile = do
 	repo <- repoTop
 	return $ repo ++ "/.git-annex/" ++ 
 		(gitRelative repo annexedFile) ++ ".log"
+
+{- Returns a list of repositories that, according to the log, have
+ - the content of a file -}
+fileLocations :: String -> IO [String]
+fileLocations file = do
+	log <- logFile file
+	lines <- readLog log
+	return $ map repo (filterPresent lines)
+
+{- Filters the list of LogLines to find repositories where the file
+ - is (or should still be) present. -}
+filterPresent :: [LogLine] -> [LogLine]
+filterPresent lines = 
