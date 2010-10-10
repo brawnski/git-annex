@@ -2,7 +2,7 @@
  - -}
 
 import LocationLog
+import GitRepo
 
 main = do
-	l <- readLog "demo.log"
-	putStrLn "hi"
+	gitPrep

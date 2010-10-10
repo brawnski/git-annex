@@ -8,6 +8,12 @@ import System.Path
 import Data.String.Utils
 import Utility
 
+{- Long-term state is stored in files inside the .git-annex directory
+ - in the git repository. -}
+stateLoc = ".git-annex"
+gitStateDir :: String -> String
+gitStateDir repo = repo ++ "/" ++ stateLoc ++ "/"
+
 {- Given a relative or absolute filename, calculates the name to use
  - relative to a git repository directory (which must be absolute).
  - This is the same form displayed and used by git. -}
@@ -23,9 +29,28 @@ gitRelative repo file = drop (length absrepo) absfile
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 
+{- Sets up the current git repo for git-annex. May be called repeatedly. -}
+gitPrep :: IO ()
+gitPrep = do
+	repo <- repoTop
+	bare <- isBareRepo repo
+	-- configure git to use union merge driver on state files
+	let attributes = repo ++ "/.gitattributes"
+	let attrLine = stateLoc ++ "/* merge=union"
+	exists <- doesFileExist attributes
+	if (not bare)
+		then if (not exists)
+			then writeFile attributes $ attrLine ++ "\n"
+			else do
+				content <- readFile attributes
+				if (all (/= attrLine) (lines content))
+					then appendFile attributes $ attrLine ++ "\n"
+					else return ()
+		else return ()
 
 {- Returns the path to the current repository's .git directory.
- - (For a bare repository, that is the root of the repository.) -}
+ - (For a bare repository, that is the root of the repository.)
+ - TODO: support GIT_DIR -}
 gitDir :: IO String
 gitDir = do
 	repo <- repoTop
