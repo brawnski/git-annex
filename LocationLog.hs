@@ -12,7 +12,6 @@
  -
  - A line of the log will look like: "date N reponame"
  - Where N=1 when the repo has the file, and 0 otherwise.
- -
  -}
 
 module LocationLog where
@@ -69,8 +68,8 @@ readLog file = do
 	if exists
 		then do
 			h <- openLocked file ReadMode
-			s <- hGetContents h
-			-- hClose handle' -- TODO disabled due to lazy IO issue
+			s <- hGetContentsStrict h
+			hClose h
 			-- filter out any unparsable lines
 			return $ filter (\l -> (status l) /= Undefined )
 				$ map read $ lines s
@@ -95,7 +94,7 @@ logNow status repo = do
 logFile :: String -> IO String
 logFile annexedFile = do
 	repo <- repoTop
-	return $ repo ++ "/.git-annex/" ++ 
+	return $ (gitStateDir repo) ++
 		(gitRelative repo annexedFile) ++ ".log"
 
 {- Returns a list of repositories that, according to the log, have

@@ -19,6 +19,10 @@ openLocked file mode = do
 			lockType ReadMode = ReadLock
 			lockType _ = WriteLock
 
+{- A version of hgetContents that is not lazy. Ensures file is 
+ - all read before it gets closed. -}
+hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
+
 {- Returns the parent directory of a path. Parent of / is "" -}
 parentDir :: String -> String
 parentDir dir =
