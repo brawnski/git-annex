@@ -10,7 +10,8 @@
  - a file's content. (Git is configured to use a union merge for this file,
  - so the lines may be in arbitrary order, but it will never conflict.)
  -
- - A line of the log will look like: "date reponame filename"
+ - A line of the log will look like: "date N reponame filename"
+ - Where N=1 when the repo has the file, and 0 otherwise.
  -
  -}
 
@@ -21,31 +22,44 @@ import System.IO
 import System.Posix.IO
 import GitRepo
 
+data LogStatus = FilePresent | FileMissing | Undefined
+	deriving (Eq)
+
+instance Show LogStatus where
+	show FilePresent = "1"
+	show FileMissing = "0"
+	show Undefined = "undefined"
+
+instance Read LogStatus where
+	readsPrec _ "1" = [(FilePresent, "")]
+	readsPrec _ "0" = [(FileMissing, "")]
+	readsPrec _ _   = [(Undefined, "")]
+
 data LogLine = LogLine {
 	date :: DateTime,
+	status :: LogStatus,
 	repo :: String,
 	file :: String
 } deriving (Eq)
 
--- a special value representing a log file line that could not be parsed
-unparsable = (LogLine (fromSeconds 0) "" "")
-
 instance Show LogLine where
-	show (LogLine date repo file) = unwords
-		[(show (toSeconds date)), repo, file]
+	show (LogLine date status repo file) = unwords
+		[(show (toSeconds date)), (show status), repo, file]
 
 instance Read LogLine where
-	-- this parser is robust in that even unparsable log lines are
-	-- read without an exception being thrown
+	-- This parser is robust in that even unparsable log lines are
+	-- read without an exception being thrown.
+	-- Such lines have a status of Undefined.
 	readsPrec _ string = if (length w >= 3)
-				then [((LogLine time repo file), "")]
-				else [(unparsable, "")]
+				then [((LogLine date status repo file), "")]
+				else [((LogLine (fromSeconds 0) Undefined "" ""), "")]
 		where
-			time = fromSeconds $ read $ w !! 0
-			repo = w !! 1
+			date = fromSeconds $ read $ w !! 0
+			status = read $ w !! 1
+			repo = w !! 2
 			file = unwords $ rest w
 			w = words string
-			rest (_:_:l) = l
+			rest (_:_:_:l) = l
 
 {- Reads a log file -}
 readLog :: String -> IO [LogLine]
@@ -54,7 +68,7 @@ readLog file = do
 	s <- hGetContents h
 	-- hClose handle' -- TODO disabled due to lazy IO issue
 	-- filter out any unparsable lines
-	return $ filter ( /= unparsable ) $ map read $ lines s
+	return $ filter (\l -> (status l) /= Undefined ) $ map read $ lines s
 
 {- Adds a LogLine to a log file -}
 writeLog :: String -> LogLine -> IO ()
@@ -76,10 +90,10 @@ openLocked file mode = do
 			lockType _ = WriteLock
 
 {- Generates a new log line with the current date. -}
-logNow :: String -> String -> IO LogLine
-logNow repo file = do
+logNow :: LogStatus -> String -> String -> IO LogLine
+logNow status repo file = do
 	now <- getCurrentTime
-	return $ LogLine now repo file
+	return $ LogLine now status repo file
 
 {- Returns the filename of the log file for a given annexed file. -}
 logFile :: String -> IO String
