@@ -4,6 +4,7 @@
 import LocationLog
 import GitRepo
 import Backend
+import Annex
 
 -- When adding a new backend, import it here and add it to the backends list.
 import qualified BackendFile

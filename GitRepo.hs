@@ -57,14 +57,21 @@ gitPrep repo = do
 	attributes <- gitAttributes repo
 	exists <- doesFileExist attributes
 	if (not exists)
-		then writeFile attributes $ attrLine ++ "\n"
+		then do
+			writeFile attributes $ attrLine ++ "\n"
+			gitAdd repo attributes
 		else do
 			content <- readFile attributes
 			if (all (/= attrLine) (lines content))
 				then do
 					appendFile attributes $ attrLine ++ "\n"
-					-- TODO check attributes file into git?
+					gitAdd repo attributes
 				else return ()
+
+{- Stages a changed file in git's index. -}
+gitAdd repo file = do
+	-- TODO
+	return ()
 
 {- Finds the top of the current git repository, which may be in a parent
  - directory. -}

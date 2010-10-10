@@ -84,6 +84,7 @@ appendLog file line = do
 	createDirectoryIfMissing True (parentDir file)
 	withFileLocked file AppendMode $ \h ->
 		hPutStrLn h $ show line
+		-- TODO git add log
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()
@@ -99,17 +100,16 @@ logNow status repo = do
 	return $ LogLine now status repo
 
 {- Returns the filename of the log file for a given annexed file. -}
-logFile :: FilePath -> IO String
-logFile annexedFile = do
-	repo <- repoTop
+logFile :: GitRepo -> FilePath -> IO String
+logFile repo annexedFile = do
 	return $ (gitStateDir repo) ++
 		(gitRelative repo annexedFile) ++ ".log"
 
 {- Returns a list of repositories that, according to the log, have
  - the content of a file -}
-fileLocations :: FilePath -> IO [String]
-fileLocations file = do
-	log <- logFile file
+fileLocations :: GitRepo -> FilePath -> IO [String]
+fileLocations thisrepo file = do
+	log <- logFile thisrepo file
 	lines <- readLog log
 	return $ map repo (filterPresent lines)
 

@@ -7,11 +7,18 @@ import Backend
 
 backend = Backend {
 	name = "url",
-	keyvalue = keyValue,
-	retrievekey = downloadUrl
+	getKey = keyValue,
+	storeFileKey = dummyStore,
+	retrieveKeyFile = downloadUrl
 }
 
 -- cannot generate url from filename
-keyValue k = Nothing
+keyValue :: FilePath -> IO (Maybe Key)
+keyValue k = return Nothing
 
-downloadUrl k = error "unimplemented"
+-- cannot store to urls
+dummyStore :: FilePath -> Key -> IO (Bool)
+dummyStore file url = return False
+
+downloadUrl :: IO Key -> FilePath -> IO (Bool)
+downloadUrl url file = error "unimplemented"

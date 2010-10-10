@@ -7,11 +7,18 @@ import Backend
 
 backend = Backend {
 	name = "file",
-	keyvalue = keyValue,
-	retrievekey = copyFile
+	getKey = keyValue,
+	storeFileKey = moveToAnnex,
+	retrieveKeyFile = copyFromOtherRepo
 }
 
 -- direct mapping from filename to key
-keyValue k = Just $ id k
+keyValue :: FilePath -> IO (Maybe Key)
+keyValue k = return $ Just $ id k
 
-copyFile f = error "unimplemented"
+moveToAnnex :: FilePath -> Key -> IO (Bool)
+moveToAnnex file key = return False
+
+copyFromOtherRepo :: IO Key -> FilePath -> IO (Bool)
+copyFromOtherRepo key file = return False
+

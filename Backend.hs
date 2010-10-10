@@ -18,14 +18,25 @@
 
 module Backend where
 
-import GitRepo
 import System.Directory
+import GitRepo
+import Utility
+
+type Key = String
 
 data Backend = Backend {
-	name :: String,				-- name of this backend
-	keyvalue :: FilePath -> Maybe String,	-- maps from key to value
-	retrievekey :: IO String -> IO (Bool)	-- retrieves value given key
+	-- name of this backend
+	name :: String,
+	-- converts a filename to a key
+	getKey :: FilePath -> IO (Maybe Key),
+	-- stores a file's contents to a key
+	storeFileKey :: FilePath -> Key -> IO (Bool),
+	-- retrieves a key's contents to a file
+	retrieveKeyFile :: IO Key -> FilePath -> IO (Bool)
 }
+
+instance Show Backend where
+	show backend = "Backend { name =\"" ++ (name backend) ++ "\" }"
 
 {- Name of state file that holds the key for an annexed file,
  - using a given backend. -}
@@ -33,9 +44,34 @@ backendFile :: Backend -> GitRepo -> FilePath -> String
 backendFile backend repo file = gitStateDir repo ++
 	(gitRelative repo file) ++ "." ++ (name backend)
 
+{- Attempts to Stores a file in one of the backends. -}
+storeFile :: [Backend] -> GitRepo -> FilePath -> IO (Bool)
+storeFile [] _ _ = return False
+storeFile (b:bs) repo file = do
+	try <- (getKey b) (gitRelative repo file)
+	case (try) of
+		Nothing -> storeFile bs repo file
+		Just key -> do
+			(storeFileKey b) file key
+			createDirectoryIfMissing True (parentDir backendfile)
+			writeFile backendfile key
+			return True
+				where backendfile = backendFile b repo file
+
+{- Attempts to retrieve an file from one of the backends, saving it to 
+ - a specified location. -}
+retrieveFile :: [Backend] -> GitRepo -> FilePath -> FilePath -> IO (Bool)
+retrieveFile backends repo file dest = do
+	result <- lookupBackend backends repo file
+	case (result) of
+		Nothing -> return False
+		Just b -> (retrieveKeyFile b) key dest
+			where
+				key = readFile (backendFile b repo file)
+
 {- Looks up the backend used for an already annexed file. -}
 lookupBackend :: [Backend] -> GitRepo -> FilePath -> IO (Maybe Backend)
-lookupBackend [] repo file = return Nothing
+lookupBackend [] _ _ = return Nothing
 lookupBackend (b:bs) repo file = do
 	present <- checkBackend b repo file
 	if present
@@ -47,12 +83,3 @@ lookupBackend (b:bs) repo file = do
 {- Checks if a file is available via a given backend. -}
 checkBackend :: Backend -> GitRepo -> FilePath -> IO (Bool)
 checkBackend backend repo file = doesFileExist $ backendFile backend repo file
-
-{- Attempts to retrieve an annexed file from one of the backends. -}
-retrieveFile :: [Backend] -> GitRepo -> FilePath -> IO (Bool)
-retrieveFile backends repo file = do
-	result <- lookupBackend backends repo file
-	case (result) of
-		Nothing -> return False
-		Just b -> (retrievekey b) key
-			where key = readFile (backendFile b repo file)
