@@ -3,6 +3,12 @@
 
 import LocationLog
 import GitRepo
+import Backend
+
+-- When adding a new backend, import it here and add it to the backends list.
+import qualified BackendFile
+import qualified BackendUrl
+backends = [BackendFile.backend, BackendUrl.backend]
 
 main = do
 	repo <- repoTop
