@@ -10,34 +10,35 @@ import System.Console.GetOpt
 import Types
 import Annex
 
-data Flag = Add FilePath | Push String | Pull String | Want FilePath | 
-		Get (Maybe FilePath) | Drop FilePath | Unannex FilePath
+data Mode = Add | Push | Pull | Want | Get | Drop | Unannex
 	deriving Show
 
-options :: [OptDescr Flag]
+options :: [OptDescr Mode]
 options =
-	[ Option ['a'] ["add"] (ReqArg Add "FILE") "add file to annex"
-	, Option ['p'] ["push"] (ReqArg Push "REPO") "push annex to repo"
-	, Option ['P'] ["pull"] (ReqArg Pull "REPO") "pull annex from repo"
-	, Option ['w'] ["want"] (ReqArg Want "FILE") "request file contents"
-	, Option ['g'] ["get"] (OptArg Get "FILE") "transfer file contents"
-	, Option ['d'] ["drop"] (ReqArg Drop "FILE") "indicate file content not needed"
-	, Option ['u'] ["unannex"] (ReqArg Unannex "FILE") "undo --add"
+	[ Option ['a'] ["add"] (NoArg Add) "add files to annex"
+	, Option ['p'] ["push"] (NoArg Push) "push annex to repos"
+	, Option ['P'] ["pull"] (NoArg Pull) "pull annex from repos"
+	, Option ['w'] ["want"] (NoArg Want) "request file contents"
+	, Option ['g'] ["get"] (NoArg Get) "transfer file contents"
+	, Option ['d'] ["drop"] (NoArg Drop) "indicate file contents not needed"
+	, Option ['u'] ["unannex"] (NoArg Unannex) "undo --add"
 	]
 
-argvToFlags argv = do
+argvToMode argv = do
 	case getOpt Permute options argv of
-		-- no options? add listed files
-		([],p,[]  ) -> return $ map (\f -> Add f) p
-		-- all options parsed, return flags
-		(o,[],[]  ) -> return o
+		-- default mode is Add
+		([],files,[]) -> return (Add, files)
+		-- one mode is normal case
+		(m:[],files,[]) -> return (m, files)
+		-- multiple modes is an error
+		(ms,files,[]) -> ioError (userError ("only one mode should be specified\n" ++ usageInfo header options))
 		-- error case
-		(_,n,errs) -> ioError (userError (concat errs ++ usageInfo header options))
-	where header = "Usage: git-annex [option] file"
+		(_,files,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+	where header = "Usage: git-annex [mode] file"
 
-dispatch :: Flag -> State -> IO ()
-dispatch flag state = do
-	case (flag) of
-		Add f -> annexFile state f
-		Unannex f -> unannexFile state f
+dispatch :: State -> Mode -> FilePath -> IO ()
+dispatch state mode file = do
+	case (mode) of
+		Add -> annexFile state file
+		Unannex -> unannexFile state file
 		_ -> error "not implemented"

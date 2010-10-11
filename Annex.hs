@@ -25,15 +25,14 @@ startAnnex = do
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
 annexFile state file = do
-	checkExists file
-	checkLegal file
 	alreadyannexed <- lookupBackend (backends state) (repo state) file
 	case (alreadyannexed) of
-		Just _ -> error $ "already annexed " ++ file
+		Just _ -> error $ "already annexed: " ++ file
 		Nothing -> do
+			checkLegal file
 			stored <- storeFile (backends state) (repo state) file
 			case (stored) of
-				Nothing -> error $ "no backend could store " ++ file
+				Nothing -> error $ "no backend could store: " ++ file
 				Just key -> symlink key
 	where
 		symlink key = do
@@ -42,11 +41,6 @@ annexFile state file = do
 			renameFile file dest
 			createSymbolicLink dest file
 			gitAdd (repo state) file
-		checkExists file = do
-			exists <- doesFileExist file
-			if (not exists)
-				then error $ "does not exist: " ++ file
-				else return ()
 		checkLegal file = do
 			s <- getSymbolicLinkStatus file
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
