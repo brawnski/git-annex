@@ -3,8 +3,9 @@
 
 module BackendList where
 
+import Backend
+
 -- When adding a new backend, import it here and add it to the list.
-import Types
 import qualified BackendFile
 import qualified BackendChecksum
 import qualified BackendUrl

@@ -8,10 +8,27 @@ import System.Directory
 import GitRepo
 import Utility
 import Locations
-import Types
 import Backend
 import BackendList
 import LocationLog
+
+-- git-annex's runtime state
+data State = State {
+	repo :: GitRepo,
+	gitconfig :: GitConfig
+}
+
+data GitConfig = GitConfig {
+	annex_name :: String,
+	annex_numcopies :: Int,
+	annex_backends :: [Backend]
+}
+
+{- An annexed file's content is stored somewhere under .git/annex/ -}
+annexDir :: GitRepo -> Key -> IO FilePath
+annexDir repo key = do
+	dir <- gitDir repo
+	return $ dir ++ "/annex/" ++ key
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}

@@ -3,7 +3,8 @@
 
 module BackendFile (backend) where
 
-import Types
+import Backend
+import GitRepo
 
 backend = Backend {
 	name = "file",

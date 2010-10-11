@@ -10,7 +10,12 @@ import System.IO
 import Data.String.Utils
 import Control.Exception
 import Utility
-import Types
+
+-- a git repository
+data GitRepo = GitRepo {
+	top :: FilePath,
+	bare :: Bool
+}
 
 {- GitRepo constructor -}
 gitRepo :: FilePath -> IO GitRepo

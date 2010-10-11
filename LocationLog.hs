@@ -28,7 +28,6 @@ import Data.Char
 import GitRepo
 import Utility
 import Locations
-import Types
 
 data LogLine = LogLine {
 	date :: POSIXTime,

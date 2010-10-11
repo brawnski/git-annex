@@ -3,9 +3,10 @@
 
 module BackendChecksum (backend) where
 
-import Types
 import qualified BackendFile
 import Data.Digest.Pure.SHA
+import Backend
+import GitRepo
 
 -- based on BackendFile just with a different key type
 backend = BackendFile.backend {
