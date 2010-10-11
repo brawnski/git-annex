@@ -16,8 +16,8 @@ import System.Directory
 import System.Path
 import System.Cmd.Utils
 import System.IO
+import System.IO.Error
 import Data.String.Utils
-import Control.Exception
 import Utility
 
 -- a git repository
@@ -79,7 +79,7 @@ gitAdd repo file = do
 {- Queries git-config. -}
 gitConfigGet :: String -> String -> IO String
 gitConfigGet name defaultValue = 
-	handle ((\_ -> return defaultValue)::SomeException -> IO String) $
+	flip catch (\_ -> return defaultValue) $
 		pOpen ReadFromPipe "git" ["config", "--get", name] $ \h -> do
 			ret <- hGetLine h
 			return ret
