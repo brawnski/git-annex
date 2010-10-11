@@ -18,20 +18,38 @@ import LocationLog
 startAnnex :: IO State
 startAnnex = do
 	r <- currentRepo
+	config <- getConfig r
 	gitPrep r
-	-- TODO query git repo for configuration
-	return State { repo = r,  backends = supportedBackends }
+	return State {
+		repo = r,
+		gitconfig = config
+	}
+
+{- Query the git repo for relevant configuration settings. -}
+getConfig :: GitRepo -> IO GitConfig
+getConfig repo = do
+	-- a name can be configured, if none is, use the repository path
+	name <- gitConfigGet "annex.name" (top repo)
+	-- default number of copies to keep of file contents is 1
+	numcopies <- gitConfigGet "annex.numcopies" "1"
+	backends <- gitConfigGet "annex.backends" ""
+	
+	return GitConfig {
+		annex_name = name,
+		annex_numcopies = read numcopies,
+		annex_backends = parseBackendList backends
+	}
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
 annexFile state file = do
-	alreadyannexed <- lookupBackend (backends state) (repo state) file
+	alreadyannexed <- lookupBackend backends (repo state) file
 	case (alreadyannexed) of
 		Just _ -> error $ "already annexed: " ++ file
 		Nothing -> do
 			checkLegal file
-			stored <- storeFile (backends state) (repo state) file
+			stored <- storeFile (annex_backends $ gitconfig state) (repo state) file
 			case (stored) of
 				Nothing -> error $ "no backend could store: " ++ file
 				Just key -> symlink key
@@ -47,15 +65,16 @@ annexFile state file = do
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
+		backends = annex_backends $ gitconfig state
 
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = do
-	alreadyannexed <- lookupBackend (backends state) (repo state) file
+	alreadyannexed <- lookupBackend backends (repo state) file
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
 		Just _ -> do
-			mkey <- dropFile (backends state) (repo state) file
+			mkey <- dropFile backends (repo state) file
 			case (mkey) of
 				Nothing -> return ()
 				Just key -> do
@@ -63,6 +82,8 @@ unannexFile state file = do
 					removeFile file
 					renameFile src file
 					return ()
+	where
+		backends = annex_backends $ gitconfig state
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()

@@ -23,12 +23,17 @@ data Backend = Backend {
 -- a git repository
 data GitRepo = GitRepo {
 	top :: FilePath,
-	bare :: Bool,
-	remotes :: [GitRepo]
+	bare :: Bool
 }
 
 -- git-annex's runtime state
 data State = State {
 	repo :: GitRepo,
-	backends :: [Backend]
+	gitconfig :: GitConfig
+}
+
+data GitConfig = GitConfig {
+	annex_name :: String,
+	annex_numcopies :: Int,
+	annex_backends :: [Backend]
 }

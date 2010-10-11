@@ -124,8 +124,9 @@ so the lines may be in arbitrary order, but it will never conflict.)
 ## configuration
 
 * `annex.numcopies` -- number of copies of files to keep
-* `annex.backend` -- name of the default key/value backend to use to
-  store new files
+* `annex.backends` -- space-separated list of names of 
+  the key/value backends to use. The first listed is used to store
+  new files.
 * `annex.name` -- allows specifying a unique name for this repository.
   If not specified, the name is derived from its directory's location and
   the hostname. When a repository is on removable media it is useful to give
@@ -145,11 +146,15 @@ If the symlink to annexed content is relative, moving it to a subdir will
 break it. But it it's absolute, moving the git repo (or mounting its drive
 elsewhere) will break it. Either:
 
-* Use relative links and need `git annex mv` to move (or post-commit 
+* Use relative links and need `git annex --mv` to move (or post-commit 
   hook that caches moves and updates links).
 * Use absolute links and need `git annex fixlinks` when location changes;
   note that would also mean that git would see the symlink targets changed
-  and want to commit the change.
+  and want to commit the change. And, other clones of the repo would
+  diverge and there would be conflicts on the symlink text. Ugh.
+
+Hard links are not an option, because git would then happily commit the
+file content. Amoung other reasons..
 
 ### free space determination
 

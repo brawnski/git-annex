@@ -5,7 +5,10 @@ module GitRepo where
 import Directory
 import System.Directory
 import System.Path
+import System.Cmd.Utils
+import System.IO
 import Data.String.Utils
+import Control.Exception
 import Utility
 import Types
 
@@ -14,11 +17,9 @@ gitRepo :: FilePath -> IO GitRepo
 gitRepo dir = do
 	b <- isBareRepo dir
 
-	-- TOOD query repo for configuration settings; other repositories; etc
 	return GitRepo {
 		top = dir,
-		bare = b,
-		remotes = []
+		bare = b
 	}
 
 {- Path to a repository's gitattributes file. -}
@@ -53,9 +54,18 @@ gitRelative repo file = drop (length absrepo) absfile
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 
 {- Stages a changed file in git's index. -}
+gitAdd :: GitRepo -> FilePath -> IO ()
 gitAdd repo file = do
 	-- TODO
 	return ()
+
+{- Queries git-config. -}
+gitConfigGet :: String -> String -> IO String
+gitConfigGet name defaultValue = 
+	handle ((\_ -> return defaultValue)::SomeException -> IO String) $
+		pOpen ReadFromPipe "git" ["config", "--get", name] $ \h -> do
+			ret <- hGetLine h
+			return ret
 
 {- Finds the current git repository, which may be in a parent directory. -}
 currentRepo :: IO GitRepo
