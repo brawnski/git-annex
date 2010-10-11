@@ -75,6 +75,7 @@ dropFile backends repo file = do
 		Just b -> do
 			key <- lookupKey b repo file
 			(removeKey b) key
+			removeFile $ backendFile b repo file
 			return $ Just key
 
 {- Looks up the key a backend uses for an already annexed file. -}
