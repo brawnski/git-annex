@@ -12,8 +12,8 @@ annexDir repo key = do
 	dir <- gitDir repo
 	return $ dir ++ "/annex/" ++ key
 
-{- Long-term state is stored in files inside the .git-annex directory
- - in the git repository. -}
+{- Long-term, cross-repo state is stored in files inside the .git-annex
+ - directory, in the git repository. -}
 stateLoc = ".git-annex"
 gitStateDir :: GitRepo -> FilePath
 gitStateDir repo = (top repo) ++ "/" ++ stateLoc ++ "/"
