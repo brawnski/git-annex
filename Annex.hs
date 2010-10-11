@@ -89,7 +89,7 @@ unannexFile state file = do
 gitPrep :: GitRepo -> IO ()
 gitPrep repo = do
 	-- configure git to use union merge driver on state files
-	let attrLine = stateLoc ++ "/* merge=union"
+	let attrLine = stateLoc ++ "/*.log merge=union"
 	attributes <- gitAttributes repo
 	exists <- doesFileExist attributes
 	if (not exists)
