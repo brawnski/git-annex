@@ -13,21 +13,21 @@ main = do
 	
 	state <- startAnnex
 
-	tryRun 0 $ map (\f -> dispatch state mode f) files
+	tryRun 0 0 $ map (\f -> dispatch state mode f) files
 
 {- Tries to run a series of actions, not stopping if some error out,
  - and propigating an overall error status at the end. -}
-tryRun errflag [] = do
-	if (errflag > 0)
-		then error "unsuccessful"
+tryRun errnum oknum [] = do
+	if (errnum > 0)
+		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " succeeded"
 		else return ()
-tryRun errflag (a:as) = do
+tryRun errnum oknum (a:as) = do
 	result <- try (a)::IO (Either SomeException ())
 	case (result) of
 		Left err -> do
 			showErr err
-			tryRun 1 as
-		Right _ -> tryRun errflag as
+			tryRun (errnum + 1) oknum as
+		Right _ -> tryRun errnum (oknum + 1) as
 
 {- Exception pretty-printing. -}
 showErr :: SomeException -> IO ()
