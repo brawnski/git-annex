@@ -3,7 +3,7 @@
 
 module BackendUrl (backend) where
 
-import Backend
+import BackendType
 import GitRepo
 
 backend = Backend {

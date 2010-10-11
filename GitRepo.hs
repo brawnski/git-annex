@@ -1,6 +1,15 @@
 {- git repository handling -}
 
-module GitRepo where
+module GitRepo (
+	GitRepo,
+	gitRepoCurrent,
+	gitRepoTop,
+	gitDir,
+	gitRelative,
+	gitConfigGet,
+	gitAdd,
+	gitAttributes
+) where
 
 import Directory
 import System.Directory
@@ -13,7 +22,7 @@ import Utility
 
 -- a git repository
 data GitRepo = GitRepo {
-	top :: FilePath,
+	gitRepoTop :: FilePath,
 	bare :: Bool
 }
 
@@ -23,9 +32,12 @@ gitRepo dir = do
 	b <- isBareRepo dir
 
 	return GitRepo {
-		top = dir,
+		gitRepoTop = dir,
 		bare = b
 	}
+
+{- Short name used in here for top of repo. -}
+top = gitRepoTop
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> IO String
@@ -73,8 +85,8 @@ gitConfigGet name defaultValue =
 			return ret
 
 {- Finds the current git repository, which may be in a parent directory. -}
-currentRepo :: IO GitRepo
-currentRepo = do
+gitRepoCurrent :: IO GitRepo
+gitRepoCurrent = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of

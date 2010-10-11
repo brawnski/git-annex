@@ -1,7 +1,10 @@
 {- git-annex file locations
  -}
 
-module Locations where
+module Locations (
+	gitStateDir,
+	stateLoc
+) where
 
 import GitRepo
 
@@ -9,4 +12,4 @@ import GitRepo
  - directory, in the git repository. -}
 stateLoc = ".git-annex"
 gitStateDir :: GitRepo -> FilePath
-gitStateDir repo = (top repo) ++ "/" ++ stateLoc ++ "/"
+gitStateDir repo = (gitRepoTop repo) ++ "/" ++ stateLoc ++ "/"

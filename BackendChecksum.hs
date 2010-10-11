@@ -5,7 +5,7 @@ module BackendChecksum (backend) where
 
 import qualified BackendFile
 import Data.Digest.Pure.SHA
-import Backend
+import BackendType
 import GitRepo
 
 -- based on BackendFile just with a different key type

@@ -1,7 +1,11 @@
 {- git-annex utility functions
  -}
 
-module Utility where
+module Utility (
+	withFileLocked,
+	hGetContentsStrict,
+	parentDir
+) where
 
 import System.IO
 import System.Posix.IO

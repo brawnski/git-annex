@@ -16,32 +16,19 @@
  - to store different files' contents in a given repository.
  - -}
 
-module Backend where
+module Backend (
+	Key,
+	Backend, -- note only data type is exported, not destructors
+	lookupBackend,
+	storeFile,
+	dropFile
+) where
 
 import System.Directory
 import Locations
 import GitRepo
 import Utility
-
--- annexed filenames are mapped into keys
-type Key = FilePath
-
--- this structure represents a key/value backend
-data Backend = Backend {
-	-- name of this backend
-	name :: String,
-	-- converts a filename to a key
-	getKey :: GitRepo -> FilePath -> IO (Maybe Key),
-	-- stores a file's contents to a key
-	storeFileKey :: GitRepo -> FilePath -> Key -> IO Bool,
-	-- retrieves a key's contents to a file
-	retrieveKeyFile :: Key -> FilePath -> IO Bool,
-	-- removes a key
-	removeKey :: Key -> IO Bool
-}
-
-instance Show Backend where
-	show backend = "Backend { name =\"" ++ (name backend) ++ "\" }"
+import BackendType
 
 {- Name of state file that holds the key for an annexed file,
  - using a given backend. -}

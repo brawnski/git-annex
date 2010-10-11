@@ -16,7 +16,8 @@
  - so the lines may be in arbitrary order, but it will never conflict.
  -}
 
-module LocationLog where
+module LocationLog (
+) where
 
 import Data.Time.Clock.POSIX
 import Data.Time

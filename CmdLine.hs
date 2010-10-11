@@ -4,7 +4,10 @@
  - System.Console.CmdArgs.Implicit but it is not yet packaged in Debian.
  -}
 
-module CmdLine where
+module CmdLine (
+	argvToMode,
+	dispatch
+) where
 
 import System.Console.GetOpt
 import Annex

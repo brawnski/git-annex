@@ -1,9 +1,13 @@
 {- git-annex backend list
  - -}
 
-module BackendList where
+module BackendList (
+	supportedBackends,
+	parseBackendList,
+	lookupBackendName
+) where
 
-import Backend
+import BackendType
 
 -- When adding a new backend, import it here and add it to the list.
 import qualified BackendFile

@@ -1,7 +1,12 @@
 {- git-annex toplevel code
  -}
 
-module Annex where
+module Annex (
+	State,
+	startAnnex,
+	annexFile,
+	unannexFile
+) where
 
 import System.Posix.Files
 import System.Directory
@@ -34,7 +39,7 @@ annexDir repo key = do
  - later. -}
 startAnnex :: IO State
 startAnnex = do
-	r <- currentRepo
+	r <- gitRepoCurrent
 	config <- getConfig r
 	gitPrep r
 	return State {
@@ -46,7 +51,7 @@ startAnnex = do
 getConfig :: GitRepo -> IO GitConfig
 getConfig repo = do
 	-- a name can be configured, if none is, use the repository path
-	name <- gitConfigGet "annex.name" (top repo)
+	name <- gitConfigGet "annex.name" (gitRepoTop repo)
 	-- default number of copies to keep of file contents is 1
 	numcopies <- gitConfigGet "annex.numcopies" "1"
 	backends <- gitConfigGet "annex.backends" ""
