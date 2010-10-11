@@ -19,7 +19,7 @@ main = do
  - and propigating an overall error status at the end. -}
 tryRun errnum oknum [] = do
 	if (errnum > 0)
-		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " succeeded"
+		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " ok"
 		else return ()
 tryRun errnum oknum (a:as) = do
 	result <- try (a)::IO (Either SomeException ())
