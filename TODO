@@ -1,0 +1,9 @@
+* bug when annexing files in a subdir of a git repo
+* how to handle git mv file?
+
+* query remotes for their annex.name settings
+
+* hook up LocationLog
+* --push/--pull/--get/--want/--drop
+
+* finish BackendUrl and BackendChecksum
