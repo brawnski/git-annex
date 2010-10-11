@@ -20,10 +20,10 @@ import LocationLog
 -- git-annex's runtime state
 data State = State {
 	repo :: GitRepo,
-	gitconfig :: GitConfig
+	config :: Config
 }
 
-data GitConfig = GitConfig {
+data Config = Config {
 	annex_name :: String,
 	annex_numcopies :: Int,
 	annex_backends :: [Backend]
@@ -40,26 +40,11 @@ annexDir repo key = do
 startAnnex :: IO State
 startAnnex = do
 	r <- gitRepoCurrent
-	config <- getConfig r
+	config <- queryConfig r
 	gitPrep r
 	return State {
 		repo = r,
-		gitconfig = config
-	}
-
-{- Query the git repo for relevant configuration settings. -}
-getConfig :: GitRepo -> IO GitConfig
-getConfig repo = do
-	-- a name can be configured, if none is, use the repository path
-	name <- gitConfigGet "annex.name" (gitRepoTop repo)
-	-- default number of copies to keep of file contents is 1
-	numcopies <- gitConfigGet "annex.numcopies" "1"
-	backends <- gitConfigGet "annex.backends" ""
-	
-	return GitConfig {
-		annex_name = name,
-		annex_numcopies = read numcopies,
-		annex_backends = parseBackendList backends
+		config = config
 	}
 
 {- Annexes a file, storing it in a backend, and then moving it into
@@ -71,7 +56,7 @@ annexFile state file = do
 		Just _ -> error $ "already annexed: " ++ file
 		Nothing -> do
 			checkLegal file
-			stored <- storeFile (annex_backends $ gitconfig state) (repo state) file
+			stored <- storeFile backends (repo state) file
 			case (stored) of
 				Nothing -> error $ "no backend could store: " ++ file
 				Just key -> symlink key
@@ -87,7 +72,7 @@ annexFile state file = do
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
-		backends = annex_backends $ gitconfig state
+		backends = getConfig state annex_backends
 
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
@@ -105,7 +90,22 @@ unannexFile state file = do
 					renameFile src file
 					return ()
 	where
-		backends = annex_backends $ gitconfig state
+		backends = getConfig state annex_backends
+
+{- Query the git repo for relevant configuration settings. -}
+queryConfig :: GitRepo -> IO Config
+queryConfig repo = do
+	-- a name can be configured, if none is, use the repository path
+	name <- gitConfigGet "annex.name" (gitRepoTop repo)
+	-- default number of copies to keep of file contents is 1
+	numcopies <- gitConfigGet "annex.numcopies" "1"
+	backends <- gitConfigGet "annex.backends" ""
+	
+	return Config {
+		annex_name = name,
+		annex_numcopies = read numcopies,
+		annex_backends = parseBackendList backends
+	}
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()
@@ -126,3 +126,6 @@ gitPrep repo = do
 					gitAdd repo attributes
 				else return ()
 
+{- Looks up a key in a State's Config -}
+getConfig :: State -> (Config -> b) -> b
+getConfig state key = key $ config state
