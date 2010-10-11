@@ -11,6 +11,7 @@ import Locations
 import Types
 import Backend
 import BackendList
+import LocationLog
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}

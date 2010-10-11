@@ -18,7 +18,9 @@
 
 module LocationLog where
 
-import Data.DateTime
+import Data.Time.Clock.POSIX
+import Data.Time
+import System.Locale
 import qualified Data.Map as Map
 import System.IO
 import System.Directory
@@ -27,6 +29,12 @@ import GitRepo
 import Utility
 import Locations
 import Types
+
+data LogLine = LogLine {
+	date :: POSIXTime,
+	status :: LogStatus,
+	reponame :: String
+} deriving (Eq)
 
 data LogStatus = FilePresent | FileMissing | Undefined
 	deriving (Eq)
@@ -41,29 +49,30 @@ instance Read LogStatus where
 	readsPrec _ "0" = [(FileMissing, "")]
 	readsPrec _ _   = [(Undefined, "")]
 
-data LogLine = LogLine {
-	date :: DateTime,
-	status :: LogStatus,
-	repo :: String
-} deriving (Eq)
-
 instance Show LogLine where
-	show (LogLine date status repo) = unwords
-		[(show (toSeconds date)), (show status), repo]
+	show (LogLine date status reponame) = unwords
+		[(show date), (show status), reponame]
 
 instance Read LogLine where
 	-- This parser is robust in that even unparsable log lines are
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
-		if (length w >= 3 && all isDigit date)
-			then [((LogLine (fromSeconds $ read date) status repo), "")]
-			else [((LogLine (fromSeconds 0) Undefined ""), "")]
+		if (length w >= 3)
+			then case (pdate) of
+				Just v -> good v
+				Nothing -> undefined
+			else undefined
 		where
 			w = words string
 			date = w !! 0
 			status = read $ w !! 1
-			repo = unwords $ drop 2 w
+			reponame = unwords $ drop 2 w
+			pdate = (parseTime defaultTimeLocale "%s%Qs" date) :: Maybe UTCTime
+
+			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status reponame
+			undefined = ret $ LogLine (0) Undefined ""
+			ret v = [(v, "")]
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
@@ -97,9 +106,9 @@ writeLog file lines = do
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> String -> IO LogLine
-logNow status repo = do
-	now <- getCurrentTime
-	return $ LogLine now status repo
+logNow status reponame = do
+	now <- getPOSIXTime
+	return $ LogLine now status reponame
 
 {- Returns the filename of the log file for a given annexed file. -}
 logFile :: GitRepo -> FilePath -> IO String
@@ -113,7 +122,7 @@ fileLocations :: GitRepo -> FilePath -> IO [String]
 fileLocations thisrepo file = do
 	log <- logFile thisrepo file
 	lines <- readLog log
-	return $ map repo (filterPresent lines)
+	return $ map reponame (filterPresent lines)
 
 {- Filters the list of LogLines to find ones where the file
  - is (or should still be) present. -}
@@ -131,12 +140,9 @@ compactLog' map (l:ls) = compactLog' (mapLog map l) ls
  - information about a repo than the other logs in the map -}
 mapLog map log = 
 	if (better)
-		then Map.insert (repo log) log map
+		then Map.insert (reponame log) log map
 		else map
 	where
-		better = case (Map.lookup (repo log) map) of
-			-- <= used because two log entries could
-			-- have the same timestamp; if so the one that
-			-- is seen last should win.
+		better = case (Map.lookup (reponame log) map) of
 			Just l -> (date l <= date log)
 			Nothing -> True
