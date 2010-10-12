@@ -23,14 +23,16 @@ genUUID :: IO String
 genUUID = do
 	pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
 
+{- Looks up a repo's UUID -}
 getUUID :: GitRepo -> String
 getUUID repo = gitConfig repo "annex.uuid" ""
 
 {- Make sure that the repo has an annex.uuid setting. -}
-prepUUID :: GitRepo -> IO ()
+prepUUID :: GitRepo -> IO GitRepo
 prepUUID repo =
 	if ("" == getUUID repo)
 		then do
 			uuid <- genUUID
 			gitRun repo ["config", configkey, uuid]
-		else return ()
+			gitConfigRead repo -- return new repo with updated config
+		else return repo

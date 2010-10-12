@@ -33,11 +33,12 @@ annexDir repo key = gitDir repo ++ "/annex/" ++ key
 startAnnex :: IO State
 startAnnex = do
 	r <- gitRepoFromCwd
-	gitPrep r
+	r' <- prepUUID r
+	gitPrep r'
 
 	return State {
-		repo = r,
-		backends = parseBackendList $ gitConfig r "annex.backends" ""
+		repo = r',
+		backends = parseBackendList $ gitConfig r' "annex.backends" ""
 	}
 
 {- Annexes a file, storing it in a backend, and then moving it into
@@ -85,8 +86,6 @@ unannexFile state file = do
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()
 gitPrep repo = do
-	prepUUID repo
-
 	-- configure git to use union merge driver on state files
 	let attrLine = stateLoc ++ "/*.log merge=union"
 	let attributes = gitAttributes repo

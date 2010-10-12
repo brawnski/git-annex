@@ -14,6 +14,7 @@ module GitRepo (
 	gitDir,
 	gitRelative,
 	gitConfig,
+	gitConfigRead,
 	gitAdd,
 	gitRm,
 	gitRun,
