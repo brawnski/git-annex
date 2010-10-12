@@ -129,6 +129,7 @@ is a UUID, a space, and the rest of the line is its description. For
 example:
 
 	UUID d3d2474c-d5c3-11df-80a9-002170d25c55 USB drive in red enclosure
+	UUID 60cf39c8-d5c6-11df-aa8b-93fda39008d6 my colocated server
 
 ## configuration
 
