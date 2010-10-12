@@ -31,7 +31,9 @@ import Network.URI
 import Maybe
 import Utility
 
-{- A git repository can be local or remote. -}
+{- A git repository can be on local disk or remote. Not to be confused
+ - with a git repo's configured remotes, some of which may be on local
+ - disk. -}
 data GitRepo = 
 	LocalGitRepo {
 		top :: FilePath,
