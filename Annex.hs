@@ -22,12 +22,7 @@ import Backend
 import BackendList
 import UUID
 import LocationLog
-
--- git-annex's runtime state
-data State = State {
-	repo :: GitRepo,
-	backends :: [Backend]
-}
+import Types
 
 {- An annexed file's content is stored somewhere under .git/annex/ -}
 annexDir :: GitRepo -> Key -> FilePath
