@@ -136,11 +136,7 @@ gitRm repo file = runGit repo ["rm", file]
 gitCommandLine :: GitRepo -> [String] -> [String]
 gitCommandLine repo params = assertlocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
-	-- gitDir cannot be used for --git-dir because the config may
-	-- not have been  read (and gitConfigRead relies on this function).
-	-- So this relies on git doing the right thing when told that
-	-- --git-dir is the top of a work tree. 
-	["--git-dir="++(top repo), "--work-tree="++(top repo)] ++ params
+	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 runGit :: GitRepo -> [String] -> IO ()
