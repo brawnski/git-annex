@@ -6,10 +6,10 @@
  - repositories have the file's content.
  -
  - Location tracking information is stored in `.git-annex/filename.log`.
- - Repositories record their name and the date when they --get or --drop
+ - Repositories record their UUID and the date when they --get or --drop
  - a file's content.
  -
- - A line of the log will look like: "date N reponame"
+ - A line of the log will look like: "date N UUID"
  - Where N=1 when the repo has the file, and 0 otherwise.
  - 
  - Git is configured to use a union merge for this file,
@@ -28,12 +28,13 @@ import System.Directory
 import Data.Char
 import GitRepo
 import Utility
+import UUID
 import Locations
 
 data LogLine = LogLine {
 	date :: POSIXTime,
 	status :: LogStatus,
-	reponame :: String
+	uuid :: UUID
 } deriving (Eq)
 
 data LogStatus = FilePresent | FileMissing | Undefined
@@ -50,8 +51,8 @@ instance Read LogStatus where
 	readsPrec _ _   = [(Undefined, "")]
 
 instance Show LogLine where
-	show (LogLine date status reponame) = unwords
-		[(show date), (show status), reponame]
+	show (LogLine date status uuid) = unwords
+		[(show date), (show status), uuid]
 
 instance Read LogLine where
 	-- This parser is robust in that even unparsable log lines are
@@ -67,10 +68,10 @@ instance Read LogLine where
 			w = words string
 			date = w !! 0
 			status = read $ w !! 1
-			reponame = unwords $ drop 2 w
+			uuid = unwords $ drop 2 w
 			pdate = (parseTime defaultTimeLocale "%s%Qs" date) :: Maybe UTCTime
 
-			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status reponame
+			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status uuid
 			undefined = ret $ LogLine (0) Undefined ""
 			ret v = [(v, "")]
 
@@ -106,9 +107,9 @@ writeLog file lines = do
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> String -> IO LogLine
-logNow status reponame = do
+logNow status uuid = do
 	now <- getPOSIXTime
-	return $ LogLine now status reponame
+	return $ LogLine now status uuid
 
 {- Returns the filename of the log file for a given annexed file. -}
 logFile :: GitRepo -> FilePath -> IO String
@@ -122,7 +123,7 @@ fileLocations :: GitRepo -> FilePath -> IO [String]
 fileLocations thisrepo file = do
 	log <- logFile thisrepo file
 	lines <- readLog log
-	return $ map reponame (filterPresent lines)
+	return $ map uuid (filterPresent lines)
 
 {- Filters the list of LogLines to find ones where the file
  - is (or should still be) present. -}
@@ -140,9 +141,9 @@ compactLog' map (l:ls) = compactLog' (mapLog map l) ls
  - information about a repo than the other logs in the map -}
 mapLog map log = 
 	if (better)
-		then Map.insert (reponame log) log map
+		then Map.insert (uuid log) log map
 		else map
 	where
-		better = case (Map.lookup (reponame log) map) of
+		better = case (Map.lookup (uuid log) map) of
 			Just l -> (date l <= date log)
 			Nothing -> True

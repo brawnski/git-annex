@@ -29,4 +29,9 @@ dummyRemove state url = return False
 {- Try to find a copy of the file in one of the other repos,
  - and copy it over to this one. -}
 copyFromOtherRepo :: State -> Key -> FilePath -> IO (Bool)
-copyFromOtherRepo state key file = error "copyFromOtherRepo unimplemented" -- TODO
+copyFromOtherRepo state key file =
+	-- 1. get ordered list of remotes (local repos, then remote repos)
+	-- 2. read locationlog for file
+	-- 3. filter remotes list to ones that have file
+	-- 4. attempt to transfer from each remote until success
+	error "copyFromOtherRepo unimplemented" -- TODO

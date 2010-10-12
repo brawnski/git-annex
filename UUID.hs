@@ -6,6 +6,7 @@
  -}
 
 module UUID (
+	UUID,
 	getUUID,
 	prepUUID,
 	genUUID
