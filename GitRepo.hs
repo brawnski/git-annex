@@ -174,7 +174,7 @@ gitConfigParse s = Map.fromList $ map pair $ lines s
 {- Returns a single git config setting, or a default value if not set. -}
 gitConfig :: GitRepo -> String -> String -> String
 gitConfig repo key defaultValue = 
-	Map.findWithDefault key defaultValue (config repo)
+	Map.findWithDefault defaultValue key (config repo)
 
 {- Returns a list of a repo's configured remotes. -}
 gitConfigRemotes :: GitRepo -> IO [GitRepo]
