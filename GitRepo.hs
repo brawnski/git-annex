@@ -38,7 +38,6 @@ import Utility
 data GitRepo = 
 	LocalGitRepo {
 		top :: FilePath,
-		bare :: Bool,
 		config :: Map String String
 	} | RemoteGitRepo {
 		url :: String,
@@ -46,24 +45,20 @@ data GitRepo =
 		config :: Map String String
 	} deriving (Show, Read, Eq)
 
-{- Local GitRepo constructor. -}
-gitRepoFromPath :: FilePath -> IO GitRepo
-gitRepoFromPath dir = do
-	b <- isBareRepo dir
-
+{- Local GitRepo constructor. Can optionally query the repo for its config. -}
+gitRepoFromPath :: FilePath -> Bool -> IO GitRepo
+gitRepoFromPath dir query = do
 	let r = LocalGitRepo {
 		top = dir,
-		bare = b,
 		config = Map.empty
 	}
-	r' <- gitConfigRead r
+	if (query)
+		then gitConfigRead r
+		else return r
 
-	return r'
-
-{- Remote GitRepo constructor. Note that remote repo config is not read. 
- - Throws exception on invalid url. -}
-gitRepoFromUrl :: String -> IO GitRepo
-gitRepoFromUrl url = do
+{- Remote GitRepo constructor. Throws exception on invalid url. -}
+gitRepoFromUrl :: String -> Bool -> IO GitRepo
+gitRepoFromUrl url query = do
 	return $ RemoteGitRepo {
 		url = url,
 		top = path url,
@@ -71,8 +66,11 @@ gitRepoFromUrl url = do
 	}
 	where path url = uriPath $ fromJust $ parseURI url
 
-{- Some code needs to vary between remote and local repos, these functions
- - help with that. -}
+{- User-visible description of a git repo by path or url -}
+describe repo = if (local repo) then top repo else url repo
+
+{- Some code needs to vary between remote and local repos, or bare and
+ - non-bare, these functions help with that. -}
 local repo = case (repo) of
 	LocalGitRepo {} -> True
 	RemoteGitRepo {} -> False
@@ -80,8 +78,16 @@ remote repo = not $ local repo
 assertlocal repo action = 
 	if (local repo)
 		then action
-		else error $ "acting on remote git repo " ++  (url repo) ++ 
+		else error $ "acting on remote git repo " ++  (describe repo) ++ 
 				" not supported"
+bare :: GitRepo -> Bool
+bare repo = 
+	if (member b (config repo))
+		then ("true" == fromJust (Map.lookup b (config repo)))
+		else error $ "it is not known if git repo " ++ (describe repo) ++
+			" is a bare repository; config not read"
+	where
+		b = "core.bare"
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> String
@@ -130,7 +136,11 @@ gitRm repo file = runGit repo ["rm", file]
 gitCommandLine :: GitRepo -> [String] -> [String]
 gitCommandLine repo params = assertlocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
+	-- gitDir cannot be used for --git-dir because the config may
+	-- not have been  read (and gitConfigRead relies on this function).
+	-- So this relies on git doing the right thing when told that
+	-- --git-dir is the top of a work tree. 
+	["--git-dir="++(top repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 runGit :: GitRepo -> [String] -> IO ()
@@ -175,8 +185,8 @@ gitConfigRemotes repo = mapM construct remotes
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
 		construct r =
 			if (isURI r)
-				then gitRepoFromUrl r
-				else gitRepoFromPath r
+				then gitRepoFromUrl r False
+				else gitRepoFromPath r False
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoFromCwd :: IO GitRepo
@@ -184,7 +194,7 @@ gitRepoFromCwd = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
-		(Just dir) -> gitRepoFromPath dir
+		(Just dir) -> gitRepoFromPath dir True
 		Nothing -> error "Not in a git repository."
 
 seekUp :: String -> (String -> IO Bool) -> IO (Maybe String)
@@ -200,11 +210,10 @@ isRepoTop dir = do
 	r <- isGitRepo dir
 	b <- isBareRepo dir
 	return (r || b)
-
-isGitRepo dir = gitSignature dir ".git" ".git/config"
-isBareRepo dir = gitSignature dir "objects" "config"
-	
-gitSignature dir subdir file = do
-	s <- (doesDirectoryExist (dir ++ "/" ++ subdir))
-	f <- (doesFileExist (dir ++ "/" ++ file))
-	return (s && f)
+	where
+		isGitRepo dir = gitSignature dir ".git" ".git/config"
+		isBareRepo dir = gitSignature dir "objects" "config"
+		gitSignature dir subdir file = do
+			s <- (doesDirectoryExist (dir ++ "/" ++ subdir))
+			f <- (doesFileExist (dir ++ "/" ++ file))
+			return (s && f)
