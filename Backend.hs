@@ -56,7 +56,7 @@ retrieveFile state file dest = do
 	case (result) of
 		Nothing -> return False
 		Just b -> do
-			key <- lookupKey b state file
+			key <- lookupKey state b file
 			(retrieveKeyFile b) state key dest
 
 {- Drops the key for a file from the backend that has it. -}
@@ -66,7 +66,7 @@ dropFile state file = do
 	case (result) of
 		Nothing -> return Nothing
 		Just b -> do
-			key <- lookupKey b state file
+			key <- lookupKey state b file
 			(removeKey b) state key
 			removeFile $ backendFile state b file
 			return $ Just key
@@ -95,8 +95,8 @@ checkBackend :: Backend -> State -> FilePath -> IO (Bool)
 checkBackend backend state file = doesFileExist $ backendFile state backend file
 
 {- Looks up the key a backend uses for an already annexed file. -}
-lookupKey :: Backend -> State -> FilePath -> IO Key
-lookupKey backend state file = do
+lookupKey :: State -> Backend -> FilePath -> IO Key
+lookupKey state backend file = do
 	k <- readFile (backendFile state backend file)
 	return $ chomp k
 	where
