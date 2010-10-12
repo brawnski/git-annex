@@ -1,4 +1,9 @@
-{- git repository handling -}
+{- git repository handling 
+ -
+ - This is written to be completely independant of git-annex and should be
+ - suitable for other uses.
+ -
+ - -}
 
 module GitRepo (
 	GitRepo,
@@ -6,38 +11,46 @@ module GitRepo (
 	gitRepoTop,
 	gitDir,
 	gitRelative,
-	gitConfigGet,
+	gitConfig,
 	gitAdd,
 	gitAttributes
 ) where
 
 import Directory
+import System
 import System.Directory
 import System.Path
 import System.Cmd.Utils
 import System.IO
-import System.IO.Error
+import System.Posix.Process
 import Data.String.Utils
+import Data.Map as Map (fromList, empty, lookup, Map)
 import Utility
 
 -- a git repository
 data GitRepo = GitRepo {
-	gitRepoTop :: FilePath,
-	bare :: Bool
-}
+	top :: FilePath,
+	bare :: Bool,
+	config :: Map String String
+} deriving (Show, Read, Eq)
 
 {- GitRepo constructor -}
 gitRepo :: FilePath -> IO GitRepo
 gitRepo dir = do
 	b <- isBareRepo dir
 
-	return GitRepo {
-		gitRepoTop = dir,
-		bare = b
+	let r = GitRepo {
+		top = dir,
+		bare = b,
+		config = Map.empty
 	}
+	r' <- gitConfigRead r
 
-{- Short name used in here for top of repo. -}
-top = gitRepoTop
+	return r'
+
+{- Field accessor. -}
+gitRepoTop :: GitRepo -> FilePath
+gitRepoTop repo = top repo
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> IO String
@@ -49,11 +62,11 @@ gitAttributes repo = do
 {- Path to a repository's .git directory.
  - (For a bare repository, that is the root of the repository.)
  - TODO: support GIT_DIR -}
-gitDir :: GitRepo -> IO String
-gitDir repo = do
+gitDir :: GitRepo -> String
+gitDir repo = 
 	if (bare repo)
-		then return $ (top repo)
-		else return $ (top repo) ++ "/.git"
+		then top repo
+		else top repo ++ "/.git"
 
 {- Given a relative or absolute filename, calculates the name to use
  - to refer to the file relative to a git repository directory.
@@ -72,17 +85,45 @@ gitRelative repo file = drop (length absrepo) absfile
 
 {- Stages a changed file in git's index. -}
 gitAdd :: GitRepo -> FilePath -> IO ()
-gitAdd repo file = do
-	-- TODO
+gitAdd repo file = runGit repo ["add", file]
+
+{- Constructs a git command line operating on the specified repo. -}
+gitCommandLine :: GitRepo -> [String] -> [String]
+gitCommandLine repo params =
+	-- force use of specified repo via --git-dir and --work-tree
+	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
+
+{- Runs git in the specified repo. -}
+runGit :: GitRepo -> [String] -> IO ()
+runGit repo params = do
+	r <- executeFile "git" True (gitCommandLine repo params) Nothing
 	return ()
 
-{- Queries git-config. -}
-gitConfigGet :: String -> String -> IO String
-gitConfigGet name defaultValue = 
-	flip catch (\_ -> return defaultValue) $
-		pOpen ReadFromPipe "git" ["config", "--get", name] $ \h -> do
-			ret <- hGetLine h
-			return ret
+{- Runs a git subcommand and returns its output. -}
+gitPipeRead :: GitRepo -> [String] -> IO String
+gitPipeRead repo params =
+	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
+		ret <- hGetContentsStrict h
+		return ret
+
+{- Runs git config and populates a repo with its settings. -}
+gitConfigRead :: GitRepo -> IO GitRepo
+gitConfigRead repo = do
+	c <- gitPipeRead repo ["config", "--list"]
+	return repo { config = Map.fromList $ parse c }
+		where
+			parse s = map ( \l -> (key l, val l) ) $ lines s
+			keyval l = split sep l :: [String]
+			key l = (keyval l) !! 0
+			val l = join sep $ drop 1 $ keyval l
+			sep = "="
+
+{- Returns a single git config setting, or a default value if not set. -}
+gitConfig :: GitRepo -> String -> String -> String
+gitConfig repo key defaultValue = 
+	case (Map.lookup key $ config repo) of
+		Just value -> value
+		Nothing -> defaultValue
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoCurrent :: IO GitRepo
