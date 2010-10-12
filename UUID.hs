@@ -15,16 +15,18 @@ import System.Cmd.Utils
 import System.IO
 import GitRepo
 
+type UUID = String
+
 configkey="annex.uuid"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}
-genUUID :: IO String
+genUUID :: IO UUID
 genUUID = do
 	pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
 
 {- Looks up a repo's UUID -}
-getUUID :: GitRepo -> String
+getUUID :: GitRepo -> UUID
 getUUID repo = gitConfig repo "annex.uuid" ""
 
 {- Make sure that the repo has an annex.uuid setting. -}

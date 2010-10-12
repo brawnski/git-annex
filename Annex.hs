@@ -102,7 +102,7 @@ annexGetFile state file = do
 annexWantFile :: State -> FilePath -> IO ()
 annexWantFile state file = do error "not implemented" -- TODO
 
-{- Indicates a file is now wanted. -}
+{- Indicates a file is not wanted. -}
 annexDropFile :: State -> FilePath -> IO ()
 annexDropFile state file = do error "not implemented" -- TODO
 
