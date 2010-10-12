@@ -70,7 +70,7 @@ instance Read LogLine where
 			w = words string
 			date = w !! 0
 			status = read $ w !! 1
-			uuid = unwords $ drop 2 w
+			uuid = w !! 3
 			pdate = (parseTime defaultTimeLocale "%s%Qs" date) :: Maybe UTCTime
 
 			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status uuid
