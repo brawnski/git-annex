@@ -26,7 +26,7 @@ import System.Cmd.Utils
 import System.IO
 import System.Posix.Process
 import Data.String.Utils
-import Data.Map as Map (fromList, empty, lookup, Map)
+import Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
 import Utility
@@ -61,14 +61,15 @@ gitRepoFromPath dir = do
  - Throws exception on invalid url. -}
 gitRepoFromUrl :: String -> IO GitRepo
 gitRepoFromUrl url = do
-	return RemoteGitRepo {
+	return $ RemoteGitRepo {
 		url = url,
 		top = path url,
 		config = Map.empty
 	}
 	where path url = uriPath $ fromJust $ parseURI url
 
-{- Some code needs to vary between remote and local repos. -}
+{- Some code needs to vary between remote and local repos, these functions
+ - help with that. -}
 local repo = case (repo) of
 	LocalGitRepo {} -> True
 	RemoteGitRepo {} -> False
@@ -165,9 +166,19 @@ gitConfigParse s = Map.fromList $ map pair $ lines s
 {- Returns a single git config setting, or a default value if not set. -}
 gitConfig :: GitRepo -> String -> String -> String
 gitConfig repo key defaultValue = 
-	case (Map.lookup key $ config repo) of
-		Just value -> value
-		Nothing -> defaultValue
+	Map.findWithDefault key defaultValue (config repo)
+
+{- Returns a list of a repo's configured remotes. -}
+gitConfigRemotes :: GitRepo -> IO [GitRepo]
+gitConfigRemotes repo = mapM construct remotes
+	where
+		remotes = elems $ filter $ config repo
+		filter = filterWithKey (\k _ -> isremote k)
+		isremote k = (startswith "remote." k) && (endswith ".url" k)
+		construct r =
+			if (isURI r)
+				then gitRepoFromUrl r
+				else gitRepoFromPath r
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoCurrent :: IO GitRepo
