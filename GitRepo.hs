@@ -16,6 +16,7 @@ module GitRepo (
 	gitConfig,
 	gitAdd,
 	gitRm,
+	gitRun,
 	gitAttributes
 ) where
 
@@ -128,11 +129,11 @@ gitRelative repo file = drop (length absrepo) absfile
 
 {- Stages a changed/new file in git's index. -}
 gitAdd :: GitRepo -> FilePath -> IO ()
-gitAdd repo file = runGit repo ["add", file]
+gitAdd repo file = gitRun repo ["add", file]
 
 {- Removes a file. -}
 gitRm :: GitRepo -> FilePath -> IO ()
-gitRm repo file = runGit repo ["rm", file]
+gitRm repo file = gitRun repo ["rm", file]
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: GitRepo -> [String] -> [String]
@@ -141,8 +142,8 @@ gitCommandLine repo params = assertlocal repo $
 	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
-runGit :: GitRepo -> [String] -> IO ()
-runGit repo params = assertlocal repo $ do
+gitRun :: GitRepo -> [String] -> IO ()
+gitRun repo params = assertlocal repo $ do
 	r <- executeFile "git" True (gitCommandLine repo params) Nothing
 	return ()
 
