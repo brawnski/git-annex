@@ -1,39 +1,7 @@
 * bug when annexing files in a subdir of a git repo
 * how to handle git mv file?
 
-* query remotes for their annex.name settings, or figure out a different
-  solution to nameing problem?
-
-  - querying network remotes all the time will be slow. local caching in
-    .git/config?
-  - having a git annex name and a git remote name that are distinct
-    will be confusing
-  - but git remote names are repo-local, I want a global name
-  - really, I don't want a name at all, I want a per-repo UUID
-
-  So, each repo has a UUID, stored in annex.uuid.
-  
-  And also, the last seen UUID for each remote is listed:
-
-  remote.origin.annex-uuid=d3d2474c-d5c3-11df-80a9-002170d25c55
-
-  Then when it need to find a repo by UUID, it can see if a known remote
-  has it -- and then query the remote to confirm the repo there still has
-  that UUID (a different repo may have been mounted there).
-
-  Failing that, it can force a refresh of all uuids, updating .git/config,
-  and check again.
-
-  - Only downside for this is that if I put a repo on a usb disk,
-    and it is disconnected and I have no remote for it,
-    git-annex will have to say:
-
-    "You asked for a file that is only present on a git repo with
-     UUID d3d2474c-d5c3-11df-80a9-002170d25c55 -- and I don't know
-     where it is."
-
-   To solve that, let .git-annex/uuid.map map between uuids and descriptions,
-   like "d3d2474c-d5c3-11df-80a9-002170d25c55 SATA drive labeled '* arch-2'"
+* query remotes for their annex.uuid settings
 
 * hook up LocationLog
 * --push/--pull/--get/--want/--drop

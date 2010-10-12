@@ -10,13 +10,12 @@ module Annex (
 
 import System.Posix.Files
 import System.Directory
-import System.Cmd.Utils
-import System.IO
 import GitRepo
 import Utility
 import Locations
 import Backend
 import BackendList
+import UUID
 import LocationLog
 
 -- git-annex's runtime state
@@ -86,12 +85,7 @@ unannexFile state file = do
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()
 gitPrep repo = do
-	-- Make sure that the repo has an annex.uuid setting.
-	if ("" == gitConfig repo "annex.uuid" "")
-		then do
-			uuid <- genUUID
-			gitRun repo ["config", "annex.uuid", uuid]
-		else return ()
+	prepUUID repo
 
 	-- configure git to use union merge driver on state files
 	let attrLine = stateLoc ++ "/*.log merge=union"
@@ -108,9 +102,3 @@ gitPrep repo = do
 					appendFile attributes $ attrLine ++ "\n"
 					gitAdd repo attributes
 				else return ()
-
-{- Generates a UUID. There is a library for this, but it's not packaged,
- - so use the command line tool. -}
-genUUID :: IO String
-genUUID = do
-	pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
