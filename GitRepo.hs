@@ -7,9 +7,10 @@
 
 module GitRepo (
 	GitRepo,
-	gitRepoFromPath,
 	gitRepoCurrent,
-	gitRepoTop,
+	gitRepoFromPath,
+	gitRepoFromUrl,
+	gitWorkTree,
 	gitDir,
 	gitRelative,
 	gitConfig,
@@ -26,21 +27,28 @@ import System.IO
 import System.Posix.Process
 import Data.String.Utils
 import Data.Map as Map (fromList, empty, lookup, Map)
+import Network.URI
+import Maybe
 import Utility
 
--- a git repository
-data GitRepo = GitRepo {
-	top :: FilePath,
-	bare :: Bool,
-	config :: Map String String
-} deriving (Show, Read, Eq)
+{- A git repository can be local or remote. -}
+data GitRepo = 
+	LocalGitRepo {
+		top :: FilePath,
+		bare :: Bool,
+		config :: Map String String
+	} | RemoteGitRepo {
+		url :: String,
+		top :: FilePath,
+		config :: Map String String
+	} deriving (Show, Read, Eq)
 
-{- GitRepo constructor -}
+{- Local GitRepo constructor. -}
 gitRepoFromPath :: FilePath -> IO GitRepo
 gitRepoFromPath dir = do
 	b <- isBareRepo dir
 
-	let r = GitRepo {
+	let r = LocalGitRepo {
 		top = dir,
 		bare = b,
 		config = Map.empty
@@ -49,28 +57,49 @@ gitRepoFromPath dir = do
 
 	return r'
 
-{- Field accessor. -}
-gitRepoTop :: GitRepo -> FilePath
-gitRepoTop repo = top repo
+{- Remote GitRepo constructor. Note that remote repo config is not read. 
+ - Throws exception on invalid url. -}
+gitRepoFromUrl :: String -> IO GitRepo
+gitRepoFromUrl url = do
+	return RemoteGitRepo {
+		url = url,
+		top = path url,
+		config = Map.empty
+	}
+	where path url = uriPath $ fromJust $ parseURI url
+
+{- Some code needs to vary between remote and local repos. -}
+local repo = case (repo) of
+	LocalGitRepo {} -> True
+	RemoteGitRepo {} -> False
+remote repo = not $ local repo
+assertlocal repo action = 
+	if (local repo)
+		then action
+		else error "acting on remote git repo not supported"
 
 {- Path to a repository's gitattributes file. -}
-gitAttributes :: GitRepo -> IO String
-gitAttributes repo = do
+gitAttributes :: GitRepo -> String
+gitAttributes repo = assertlocal repo $ do
 	if (bare repo)
-		then return $ (top repo) ++ "/info/.gitattributes"
-		else return $ (top repo) ++ "/.gitattributes"
+		then (top repo) ++ "/info/.gitattributes"
+		else (top repo) ++ "/.gitattributes"
 
 {- Path to a repository's .git directory.
  - (For a bare repository, that is the root of the repository.)
  - TODO: support GIT_DIR -}
 gitDir :: GitRepo -> String
-gitDir repo = 
+gitDir repo = assertlocal repo $
 	if (bare repo)
 		then top repo
 		else top repo ++ "/.git"
 
-{- Given a relative or absolute filename, calculates the name to use
- - to refer to the file relative to a git repository directory.
+{- Path to a repository's --work-tree. -}
+gitWorkTree :: GitRepo -> FilePath
+gitWorkTree repo = top repo
+
+{- Given a relative or absolute filename in a repository, calculates the
+ - name to use to refer to the file relative to a git repository's top.
  - This is the same form displayed and used by git. -}
 gitRelative :: GitRepo -> String -> String
 gitRelative repo file = drop (length absrepo) absfile
@@ -92,26 +121,36 @@ gitAdd repo file = runGit repo ["add", file]
 gitCommandLine :: GitRepo -> [String] -> [String]
 gitCommandLine repo params =
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
+	if (local repo) 
+		then ["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
+		else error "gitCommandLine not implemented for remote repo"
 
 {- Runs git in the specified repo. -}
 runGit :: GitRepo -> [String] -> IO ()
-runGit repo params = do
-	r <- executeFile "git" True (gitCommandLine repo params) Nothing
-	return ()
+runGit repo params =
+	if (local repo) 
+		then do
+			r <- executeFile "git" True (gitCommandLine repo params) Nothing
+			return ()
+		else error "runGit not implemented for remote repo"
 
 {- Runs a git subcommand and returns its output. -}
 gitPipeRead :: GitRepo -> [String] -> IO String
 gitPipeRead repo params =
-	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
-		ret <- hGetContentsStrict h
-		return ret
+	if (local repo)
+		then pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
+			ret <- hGetContentsStrict h
+			return ret
+		else error "gitPipeRead not implemented for remote repo"
 
 {- Runs git config and populates a repo with its settings. -}
 gitConfigRead :: GitRepo -> IO GitRepo
-gitConfigRead repo = do
-	c <- gitPipeRead repo ["config", "--list"]
-	return repo { config = gitConfigParse c }
+gitConfigRead repo =
+	if (local repo)
+		then do
+			c <- gitPipeRead repo ["config", "--list"]
+			return repo { config = gitConfigParse c }
+		else error "gitConfigRead not implemented for remote repo"
 
 {- Parses git config --list output into a config map. -}
 gitConfigParse :: String -> Map.Map String String

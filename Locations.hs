@@ -9,7 +9,7 @@ module Locations (
 import GitRepo
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex
- - directory, in the git repository. -}
+ - directory, in the git repository's working tree. -}
 stateLoc = ".git-annex"
 gitStateDir :: GitRepo -> FilePath
-gitStateDir repo = (gitRepoTop repo) ++ "/" ++ stateLoc ++ "/"
+gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
