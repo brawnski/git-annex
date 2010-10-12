@@ -23,17 +23,11 @@ module Backend (
 ) where
 
 import System.Directory
+import Data.String.Utils
 import Locations
 import GitRepo
 import Utility
 import Types
-
-{- Name of state file that holds the key for an annexed file,
- - using a given backend. -}
-backendFile :: State -> Backend -> FilePath -> String
-backendFile state backend file =
-	gitStateDir (repo state) ++ (gitRelative (repo state) file) ++ 
-		"." ++ (name backend)
 
 {- Attempts to store a file in one of the backends, and returns
  - its key. -}
@@ -49,14 +43,10 @@ storeFile' (b:bs) state file = do
 			if (not stored)
 				then nextbackend
 				else do
-					bookkeeping key
+					recordKey state b file key
 					return $ Just key
 	where
 		nextbackend = storeFile' bs state file
-		backendfile = backendFile state b file
-		bookkeeping key = do
-			createDirectoryIfMissing True (parentDir backendfile)
-			writeFile backendfile key
 
 {- Attempts to retrieve an file from one of the backends, saving it to
  - a specified location. -}
@@ -81,10 +71,6 @@ dropFile state file = do
 			removeFile $ backendFile state b file
 			return $ Just key
 
-{- Looks up the key a backend uses for an already annexed file. -}
-lookupKey :: Backend -> State -> FilePath -> IO Key
-lookupKey backend state file = readFile (backendFile state backend file)
-
 {- Looks up the backend used for an already annexed file. -}
 lookupBackend :: State -> FilePath -> IO (Maybe Backend)
 lookupBackend state file = lookupBackend' (backends state) state file
@@ -97,6 +83,31 @@ lookupBackend' (b:bs) state file = do
 		else
 			lookupBackend' bs state file
 
+{- Name of state file that holds the key for an annexed file,
+ - using a given backend. -}
+backendFile :: State -> Backend -> FilePath -> String
+backendFile state backend file =
+	gitStateDir (repo state) ++ (gitRelative (repo state) file) ++ 
+		"." ++ (name backend)
+
 {- Checks if a file is available via a given backend. -}
 checkBackend :: Backend -> State -> FilePath -> IO (Bool)
 checkBackend backend state file = doesFileExist $ backendFile state backend file
+
+{- Looks up the key a backend uses for an already annexed file. -}
+lookupKey :: Backend -> State -> FilePath -> IO Key
+lookupKey backend state file = do
+	k <- readFile (backendFile state backend file)
+	return $ chomp k
+	where
+		chomp s = if (endswith s "\n")
+				then (reverse . (drop 1) . reverse) s
+				else s
+
+{- Records the key a backend uses for an annexed file. -}
+recordKey :: State -> Backend -> FilePath -> Key -> IO ()
+recordKey state backend file key = do
+	createDirectoryIfMissing True (parentDir record)
+	writeFile record $ key ++ "\n"
+	where
+		record = backendFile state backend file
