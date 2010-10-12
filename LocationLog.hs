@@ -17,6 +17,8 @@
  -}
 
 module LocationLog (
+	LogStatus(..),
+	logChange
 ) where
 
 import Data.Time.Clock.POSIX
@@ -75,6 +77,22 @@ instance Read LogLine where
 			undefined = ret $ LogLine (0) Undefined ""
 			ret v = [(v, "")]
 
+{- Log a change in the presence of a file in a repository,
+ - and add the log to git so it will propigate to other repos. -}
+logChange :: GitRepo -> FilePath -> UUID -> LogStatus -> IO ()
+logChange repo file uuid status = do
+	log <- logNow status uuid
+	if (status == FilePresent)
+		-- file added; just append to log
+		then appendLog logfile log
+		-- file removed; compact log
+		else do
+			ls <- readLog logfile
+			writeLog logfile (log:ls)
+	gitAdd repo logfile
+	where
+		logfile = logFile repo file
+
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
 readLog :: FilePath -> IO [LogLine]
@@ -106,23 +124,21 @@ writeLog file lines = do
 		hPutStr h $ unlines $ map show lines
 
 {- Generates a new LogLine with the current date. -}
-logNow :: LogStatus -> String -> IO LogLine
+logNow :: LogStatus -> UUID -> IO LogLine
 logNow status uuid = do
 	now <- getPOSIXTime
 	return $ LogLine now status uuid
 
 {- Returns the filename of the log file for a given annexed file. -}
-logFile :: GitRepo -> FilePath -> IO String
-logFile repo annexedFile = do
-	return $ (gitStateDir repo) ++
+logFile :: GitRepo -> FilePath -> String
+logFile repo annexedFile = (gitStateDir repo) ++
 		(gitRelative repo annexedFile) ++ ".log"
 
-{- Returns a list of repositories that, according to the log, have
+{- Returns a list of repository UUIDs that, according to the log, have
  - the content of a file -}
-fileLocations :: GitRepo -> FilePath -> IO [String]
+fileLocations :: GitRepo -> FilePath -> IO [UUID]
 fileLocations thisrepo file = do
-	log <- logFile thisrepo file
-	lines <- readLog log
+	lines <- readLog $ logFile thisrepo file
 	return $ map uuid (filterPresent lines)
 
 {- Filters the list of LogLines to find ones where the file

@@ -68,6 +68,7 @@ annexFile state file = do
 			let dest = annexLocation state key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
+			logChange (repo state) file (getUUID (repo state)) FilePresent
 			createSymbolicLink dest file
 			gitAdd (repo state) file
 		checkLegal file = do
