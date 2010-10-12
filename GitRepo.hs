@@ -112,10 +112,11 @@ gitConfigRead repo = do
 	c <- gitPipeRead repo ["config", "--list"]
 	return repo { config = Map.fromList $ parse c }
 		where
-			parse s = map ( \l -> (key l, val l) ) $ lines s
-			keyval l = split sep l :: [String]
+			parse s = map pair $ lines s
+			pair l = (key l, val l)
 			key l = (keyval l) !! 0
 			val l = join sep $ drop 1 $ keyval l
+			keyval l = split sep l :: [String]
 			sep = "="
 
 {- Returns a single git config setting, or a default value if not set. -}
