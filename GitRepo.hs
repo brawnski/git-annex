@@ -22,9 +22,11 @@ module GitRepo (
 import Directory
 import System
 import System.Directory
+import System.Posix.Directory
 import System.Path
 import System.Cmd.Utils
 import System.IO
+import IO (bracket_)
 import System.Posix.Process
 import Data.String.Utils
 import Data.Map as Map hiding (map, split)
@@ -151,11 +153,17 @@ gitPipeRead repo params = assertlocal repo $ do
 	ret <- hGetContentsStrict h
 	return ret
 
-{- Runs git config and populates a repo with its settings. -}
+{- Runs git config and populates a repo with its config. -}
 gitConfigRead :: GitRepo -> IO GitRepo
 gitConfigRead repo = assertlocal repo $ do
-	c <- gitPipeRead repo ["config", "--list"]
-	return repo { config = gitConfigParse c }
+	{- Cannot use gitPipeRead because it relies on the config having
+           been already read. Instead, chdir to the repo. -}
+	cwd <- getCurrentDirectory
+	bracket_ (changeWorkingDirectory (top repo))
+		(\_ -> changeWorkingDirectory cwd) $ do
+			pOpen ReadFromPipe "git" ["config", "--list"] $ \h -> do
+				val <- hGetContentsStrict h
+				return repo { config = gitConfigParse val }
 
 {- Parses git config --list output into a config map. -}
 gitConfigParse :: String -> Map.Map String String
