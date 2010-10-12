@@ -26,10 +26,10 @@ import System
 import System.Directory
 import System.Posix.Directory
 import System.Path
+import System.Cmd
 import System.Cmd.Utils
 import System.IO
 import IO (bracket_)
-import System.Posix.Process
 import Data.String.Utils
 import Data.Map as Map hiding (map, split)
 import Network.URI
@@ -145,7 +145,7 @@ gitCommandLine repo params = assertlocal repo $
 {- Runs git in the specified repo. -}
 gitRun :: GitRepo -> [String] -> IO ()
 gitRun repo params = assertlocal repo $ do
-	r <- executeFile "git" True (gitCommandLine repo params) Nothing
+	r <- rawSystem "git" (gitCommandLine repo params)
 	return ()
 
 {- Runs a git subcommand and returns its output. -}

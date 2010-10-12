@@ -3,7 +3,7 @@
 
 module BackendUrl (backend) where
 
-import System.Posix.Process
+import System.Cmd
 import IO
 import Types
 
@@ -28,7 +28,7 @@ dummyRemove state url = return False
 downloadUrl :: State -> Key -> FilePath -> IO Bool
 downloadUrl state url file = do
 	putStrLn $ "download: " ++ url
-	result <- try $ executeFile "curl" True ["-o", file, url] Nothing
+	result <- try $ rawSystem "curl" ["-o", file, url]
 	case (result) of
 		Left _ -> return False
 		Right _ -> return True
