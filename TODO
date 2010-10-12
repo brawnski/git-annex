@@ -1,7 +1,5 @@
 * bug when annexing files in a subdir of a git repo
 * how to handle git mv file?
-* if curl fails to download, git-annex crashes and does not complete
-  further actions.. exception seems to somehow not get caught
 
 * query remotes for their annex.uuid settings
 

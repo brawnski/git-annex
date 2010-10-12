@@ -29,9 +29,13 @@ import Types
  - used should be as close to the key as possible, in case the key is a
  - filename or url. Just escape "/" in the key name, to keep a flat
  - tree of files and avoid issues with files ending with "/" etc. -}
-annexLocation :: GitRepo -> Key -> FilePath
-annexLocation repo key = gitDir repo ++ "/annex/" ++ (transform key)
+annexLocation :: State -> Key -> FilePath
+annexLocation state key = gitDir (repo state) ++ "/annex/" ++ (transform key)
 	where transform s = replace "/" "%" $ replace "%" "%%" s
+
+{- Checks if a given key is currently present in the annexLocation -}
+inAnnex :: State -> Key -> IO Bool
+inAnnex state key = doesFileExist $ annexLocation state key
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}
@@ -61,7 +65,7 @@ annexFile state file = do
 				Just key -> symlink key
 	where
 		symlink key = do
-			let dest = annexLocation (repo state) key
+			let dest = annexLocation state key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file
@@ -83,7 +87,7 @@ unannexFile state file = do
 			case (mkey) of
 				Nothing -> return ()
 				Just key -> do
-					let src = annexLocation (repo state) key
+					let src = annexLocation state key
 					removeFile file
 					renameFile src file
 					return ()
@@ -96,12 +100,16 @@ annexGetFile state file = do
 		Nothing -> error $ "not annexed " ++ file
 		Just backend -> do
 			key <- lookupKey state backend file
-			let dest = annexLocation (repo state) key
-			createDirectoryIfMissing True (parentDir dest)
-			success <- retrieveFile state file dest
-			if (success)
+			inannex <- inAnnex state key
+			if (inannex)
 				then return ()
-				else error $ "failed to get " ++ file
+				else do
+					let dest = annexLocation state key
+					createDirectoryIfMissing True (parentDir dest)
+					success <- retrieveFile state file dest
+					if (success)
+						then return ()
+						else error $ "failed to get " ++ file
 
 {- Indicates a file is wanted. -}
 annexWantFile :: State -> FilePath -> IO ()
