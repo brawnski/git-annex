@@ -5,7 +5,12 @@ module Annex (
 	State,
 	startAnnex,
 	annexFile,
-	unannexFile
+	unannexFile,
+	annexGetFile,
+	annexWantFile,
+	annexDropFile,
+	annexPushRepo,
+	annexPullRepo
 ) where
 
 import System.Posix.Files
@@ -82,6 +87,32 @@ unannexFile state file = do
 					removeFile file
 					renameFile src file
 					return ()
+
+{- Transfers the file from a remote. -}
+annexGetFile :: State -> FilePath -> IO ()
+annexGetFile state file = do
+	alreadyannexed <- lookupBackend (backends state) (repo state) file
+	case (alreadyannexed) of
+		Nothing -> error $ "not annexed " ++ file
+		Just _ -> do error "not implemented" -- TODO
+			-- 1. find remote with file
+			-- 2. copy file from remote
+
+{- Indicates a file is wanted. -}
+annexWantFile :: State -> FilePath -> IO ()
+annexWantFile state file = do error "not implemented" -- TODO
+
+{- Indicates a file is now wanted. -}
+annexDropFile :: State -> FilePath -> IO ()
+annexDropFile state file = do error "not implemented" -- TODO
+
+{- Pushes all files to a remote repository. -}
+annexPushRepo :: State -> String -> IO ()
+annexPushRepo state reponame = do error "not implemented" -- TODO
+
+{- Pulls all files from a remote repository. -}
+annexPullRepo :: State -> String -> IO ()
+annexPullRepo state reponame = do error "not implemented" -- TODO
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
 gitPrep :: GitRepo -> IO ()

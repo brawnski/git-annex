@@ -34,5 +34,6 @@ prepUUID repo =
 		then do
 			uuid <- genUUID
 			gitRun repo ["config", configkey, uuid]
-			gitConfigRead repo -- return new repo with updated config
+			-- return new repo with updated config
+			gitConfigRead repo
 		else return repo

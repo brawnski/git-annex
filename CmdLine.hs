@@ -39,8 +39,12 @@ argvToMode argv = do
 	where header = "Usage: git-annex [mode] file"
 
 dispatch :: State -> Mode -> FilePath -> IO ()
-dispatch state mode file = do
+dispatch state mode item = do
 	case (mode) of
-		Add -> annexFile state file
-		Unannex -> unannexFile state file
-		_ -> error "not implemented"
+		Add     -> annexFile state item
+		Push    -> annexPushRepo state item
+		Pull    -> annexPullRepo state item
+		Want    -> annexWantFile state item
+		Get     -> annexGetFile state item
+		Drop    -> annexDropFile state item
+		Unannex -> unannexFile state item
