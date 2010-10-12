@@ -31,7 +31,7 @@ annexDir repo key = gitDir repo ++ "/annex/" ++ key
  - later. -}
 startAnnex :: IO State
 startAnnex = do
-	r <- gitRepoCurrent
+	r <- gitRepoFromCwd
 	gitPrep r
 
 	return State {

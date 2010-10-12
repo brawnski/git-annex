@@ -7,7 +7,7 @@
 
 module GitRepo (
 	GitRepo,
-	gitRepoCurrent,
+	gitRepoFromCwd,
 	gitRepoFromPath,
 	gitRepoFromUrl,
 	gitWorkTree,
@@ -183,8 +183,8 @@ gitConfigRemotes repo = mapM construct remotes
 				else gitRepoFromPath r
 
 {- Finds the current git repository, which may be in a parent directory. -}
-gitRepoCurrent :: IO GitRepo
-gitRepoCurrent = do
+gitRepoFromCwd :: IO GitRepo
+gitRepoFromCwd = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
