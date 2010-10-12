@@ -26,9 +26,9 @@ data Backend = Backend {
 	-- stores a file's contents to a key
 	storeFileKey :: State -> FilePath -> Key -> IO Bool,
 	-- retrieves a key's contents to a file
-	retrieveKeyFile :: Key -> FilePath -> IO Bool,
+	retrieveKeyFile :: State -> Key -> FilePath -> IO Bool,
 	-- removes a key
-	removeKey :: Key -> IO Bool
+	removeKey :: State -> Key -> IO Bool
 }
 
 instance Show Backend where

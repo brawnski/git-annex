@@ -20,8 +20,8 @@ keyValue repo file = return Nothing
 -- cannot change urls
 dummyStore :: State -> FilePath -> Key -> IO Bool
 dummyStore repo file url = return False
-dummyRemove :: Key -> IO Bool
-dummyRemove url = return False
+dummyRemove :: State -> Key -> IO Bool
+dummyRemove state url = return False
 
-downloadUrl :: Key -> FilePath -> IO Bool
-downloadUrl url file = error "downloadUrl unimplemented"
+downloadUrl :: State -> Key -> FilePath -> IO Bool
+downloadUrl state url file = error "downloadUrl unimplemented"

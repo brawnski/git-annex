@@ -68,7 +68,7 @@ retrieveFile backends state file dest = do
 		Nothing -> return False
 		Just b -> do
 			key <- lookupKey b state file
-			(retrieveKeyFile b) key dest
+			(retrieveKeyFile b) state key dest
 
 {- Drops the key for a file from the backend that has it. -}
 dropFile :: [Backend] -> State -> FilePath -> IO (Maybe Key)
@@ -78,7 +78,7 @@ dropFile backends state file = do
 		Nothing -> return Nothing
 		Just b -> do
 			key <- lookupKey b state file
-			(removeKey b) key
+			(removeKey b) state key
 			removeFile $ backendFile b state file
 			return $ Just key
 

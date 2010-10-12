@@ -4,7 +4,6 @@
 module BackendFile (backend) where
 
 import Types
-import GitRepo
 
 backend = Backend {
 	name = "file",
@@ -24,10 +23,10 @@ keyValue state file = return $ Just file
  - a no-op. -}
 dummyStore :: State -> FilePath -> Key -> IO (Bool)
 dummyStore state file key = return True
-dummyRemove :: Key -> IO Bool
-dummyRemove url = return False
+dummyRemove :: State -> Key -> IO Bool
+dummyRemove state url = return False
 
 {- Try to find a copy of the file in one of the other repos,
  - and copy it over to this one. -}
-copyFromOtherRepo :: Key -> FilePath -> IO (Bool)
-copyFromOtherRepo key file = error "copyFromOtherRepo unimplemented" -- TODO
+copyFromOtherRepo :: State -> Key -> FilePath -> IO (Bool)
+copyFromOtherRepo state key file = error "copyFromOtherRepo unimplemented" -- TODO
