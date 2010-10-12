@@ -1,9 +1,11 @@
 * bug when annexing files in a subdir of a git repo
 * how to handle git mv file?
 
+* implement retrieval for backendfile
+
 * query remotes for their annex.uuid settings
 
 * hook up LocationLog
-* --push/--pull/--get/--want/--drop
+* --push/--pull/--want/--drop
 
 * finish BackendUrl and BackendChecksum
