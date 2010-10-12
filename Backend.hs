@@ -17,8 +17,6 @@
  - -}
 
 module Backend (
-	Key,
-	Backend, -- note only data type is exported, not destructors
 	lookupBackend,
 	storeFile,
 	dropFile
@@ -32,16 +30,17 @@ import Types
 
 {- Name of state file that holds the key for an annexed file,
  - using a given backend. -}
-backendFile :: Backend -> State -> FilePath -> String
-backendFile backend state file =
+backendFile :: State -> Backend -> FilePath -> String
+backendFile state backend file =
 	gitStateDir (repo state) ++ (gitRelative (repo state) file) ++ 
 		"." ++ (name backend)
 
 {- Attempts to store a file in one of the backends, and returns
  - its key. -}
-storeFile :: [Backend] -> State -> FilePath -> IO (Maybe Key)
-storeFile [] _ _ = return Nothing
-storeFile (b:bs) state file = do
+storeFile :: State -> FilePath -> IO (Maybe Key)
+storeFile state file = storeFile' (backends state) state file
+storeFile' [] _ _ = return Nothing
+storeFile' (b:bs) state file = do
 	try <- (getKey b) state (gitRelative (repo state) file)
 	case (try) of
 		Nothing -> nextbackend
@@ -53,17 +52,17 @@ storeFile (b:bs) state file = do
 					bookkeeping key
 					return $ Just key
 	where
-		nextbackend = storeFile bs state file
-		backendfile = backendFile b state file
+		nextbackend = storeFile' bs state file
+		backendfile = backendFile state b file
 		bookkeeping key = do
 			createDirectoryIfMissing True (parentDir backendfile)
 			writeFile backendfile key
 
 {- Attempts to retrieve an file from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: [Backend] -> State -> FilePath -> FilePath -> IO Bool
-retrieveFile backends state file dest = do
-	result <- lookupBackend backends state file
+retrieveFile :: State -> FilePath -> FilePath -> IO Bool
+retrieveFile state file dest = do
+	result <- lookupBackend state file
 	case (result) of
 		Nothing -> return False
 		Just b -> do
@@ -71,32 +70,33 @@ retrieveFile backends state file dest = do
 			(retrieveKeyFile b) state key dest
 
 {- Drops the key for a file from the backend that has it. -}
-dropFile :: [Backend] -> State -> FilePath -> IO (Maybe Key)
-dropFile backends state file = do
-	result <- lookupBackend backends state file
+dropFile :: State -> FilePath -> IO (Maybe Key)
+dropFile state file = do
+	result <- lookupBackend state file
 	case (result) of
 		Nothing -> return Nothing
 		Just b -> do
 			key <- lookupKey b state file
 			(removeKey b) state key
-			removeFile $ backendFile b state file
+			removeFile $ backendFile state b file
 			return $ Just key
 
 {- Looks up the key a backend uses for an already annexed file. -}
 lookupKey :: Backend -> State -> FilePath -> IO Key
-lookupKey backend state file = readFile (backendFile backend state file)
+lookupKey backend state file = readFile (backendFile state backend file)
 
 {- Looks up the backend used for an already annexed file. -}
-lookupBackend :: [Backend] -> State -> FilePath -> IO (Maybe Backend)
-lookupBackend [] _ _ = return Nothing
-lookupBackend (b:bs) state file = do
+lookupBackend :: State -> FilePath -> IO (Maybe Backend)
+lookupBackend state file = lookupBackend' (backends state) state file
+lookupBackend' [] _ _ = return Nothing
+lookupBackend' (b:bs) state file = do
 	present <- checkBackend b state file
 	if present
 		then
 			return $ Just b
 		else
-			lookupBackend bs state file
+			lookupBackend' bs state file
 
 {- Checks if a file is available via a given backend. -}
 checkBackend :: Backend -> State -> FilePath -> IO (Bool)
-checkBackend backend state file = doesFileExist $ backendFile backend state file
+checkBackend backend state file = doesFileExist $ backendFile state backend file

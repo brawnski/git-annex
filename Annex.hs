@@ -2,7 +2,6 @@
  -}
 
 module Annex (
-	State,
 	startAnnex,
 	annexFile,
 	unannexFile,
@@ -45,12 +44,12 @@ startAnnex = do
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
 annexFile state file = do
-	alreadyannexed <- lookupBackend (backends state) state file
+	alreadyannexed <- lookupBackend state file
 	case (alreadyannexed) of
 		Just _ -> error $ "already annexed: " ++ file
 		Nothing -> do
 			checkLegal file
-			stored <- storeFile (backends state) state file
+			stored <- storeFile state file
 			case (stored) of
 				Nothing -> error $ "no backend could store: " ++ file
 				Just key -> symlink key
@@ -70,11 +69,11 @@ annexFile state file = do
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = do
-	alreadyannexed <- lookupBackend (backends state) state file
+	alreadyannexed <- lookupBackend state file
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
 		Just _ -> do
-			mkey <- dropFile (backends state) state file
+			mkey <- dropFile state file
 			case (mkey) of
 				Nothing -> return ()
 				Just key -> do
@@ -86,7 +85,7 @@ unannexFile state file = do
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
 annexGetFile state file = do
-	alreadyannexed <- lookupBackend (backends state) state file
+	alreadyannexed <- lookupBackend state file
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
 		Just _ -> do error "not implemented" -- TODO
