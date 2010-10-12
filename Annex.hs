@@ -24,8 +24,8 @@ import LocationLog
 import Types
 
 {- An annexed file's content is stored somewhere under .git/annex/ -}
-annexDir :: GitRepo -> Key -> FilePath
-annexDir repo key = gitDir repo ++ "/annex/" ++ key
+annexLocation :: GitRepo -> Key -> FilePath
+annexLocation repo key = gitDir repo ++ "/annex/" ++ key
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}
@@ -55,7 +55,7 @@ annexFile state file = do
 				Just key -> symlink key
 	where
 		symlink key = do
-			let dest = annexDir (repo state) key
+			let dest = annexLocation (repo state) key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file
@@ -77,7 +77,7 @@ unannexFile state file = do
 			case (mkey) of
 				Nothing -> return ()
 				Just key -> do
-					let src = annexDir (repo state) key
+					let src = annexLocation (repo state) key
 					removeFile file
 					renameFile src file
 					return ()
@@ -88,9 +88,14 @@ annexGetFile state file = do
 	alreadyannexed <- lookupBackend state file
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
-		Just _ -> do error "not implemented" -- TODO
-			-- 1. find remote with file
-			-- 2. copy file from remote
+		Just backend -> do
+			key <- lookupKey state backend file
+			let dest = annexLocation (repo state) key
+			createDirectoryIfMissing True (parentDir dest)
+			success <- retrieveFile state file dest
+			if (success)
+				then return ()
+				else error $ "failed to get " ++ file
 
 {- Indicates a file is wanted. -}
 annexWantFile :: State -> FilePath -> IO ()

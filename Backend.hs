@@ -19,6 +19,8 @@
 module Backend (
 	lookupBackend,
 	storeFile,
+	retrieveFile,
+	lookupKey,
 	dropFile
 ) where
 
