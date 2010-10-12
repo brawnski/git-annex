@@ -3,6 +3,8 @@
 
 module BackendUrl (backend) where
 
+import System.Posix.Process
+import IO
 import Types
 
 backend = Backend {
@@ -17,11 +19,16 @@ backend = Backend {
 keyValue :: State -> FilePath -> IO (Maybe Key)
 keyValue repo file = return Nothing
 
--- cannot change urls
+-- cannot change url contents
 dummyStore :: State -> FilePath -> Key -> IO Bool
 dummyStore repo file url = return False
 dummyRemove :: State -> Key -> IO Bool
 dummyRemove state url = return False
 
 downloadUrl :: State -> Key -> FilePath -> IO Bool
-downloadUrl state url file = error "downloadUrl unimplemented"
+downloadUrl state url file = do
+	putStrLn $ "download: " ++ url
+	result <- try $ executeFile "curl" True ["-o", file, url] Nothing
+	case (result) of
+		Left _ -> return False
+		Right _ -> return True

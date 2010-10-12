@@ -102,7 +102,7 @@ lookupKey state backend file = do
 	k <- readFile (backendFile state backend file)
 	return $ chomp k
 	where
-		chomp s = if (endswith s "\n")
+		chomp s = if (endswith "\n" s)
 				then (reverse . (drop 1) . reverse) s
 				else s
 

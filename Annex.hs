@@ -14,6 +14,7 @@ module Annex (
 
 import System.Posix.Files
 import System.Directory
+import Data.String.Utils
 import GitRepo
 import Utility
 import Locations
@@ -23,9 +24,14 @@ import UUID
 import LocationLog
 import Types
 
-{- An annexed file's content is stored somewhere under .git/annex/ -}
+{- An annexed file's content is stored somewhere under .git/annex/,
+ - based on the key. Since the symlink is user-visible, the filename
+ - used should be as close to the key as possible, in case the key is a
+ - filename or url. Just escape "/" in the key name, to keep a flat
+ - tree of files and avoid issues with files ending with "/" etc. -}
 annexLocation :: GitRepo -> Key -> FilePath
-annexLocation repo key = gitDir repo ++ "/annex/" ++ key
+annexLocation repo key = gitDir repo ++ "/annex/" ++ (transform key)
+	where transform s = replace "/" "%" $ replace "%" "%%" s
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}
