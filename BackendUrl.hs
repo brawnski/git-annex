@@ -3,8 +3,7 @@
 
 module BackendUrl (backend) where
 
-import BackendType
-import GitRepo
+import Types
 
 backend = Backend {
 	name = "url",
@@ -15,11 +14,11 @@ backend = Backend {
 }
 
 -- cannot generate url from filename
-keyValue :: GitRepo -> FilePath -> IO (Maybe Key)
+keyValue :: State -> FilePath -> IO (Maybe Key)
 keyValue repo file = return Nothing
 
 -- cannot change urls
-dummyStore :: GitRepo -> FilePath -> Key -> IO Bool
+dummyStore :: State -> FilePath -> Key -> IO Bool
 dummyStore repo file url = return False
 dummyRemove :: Key -> IO Bool
 dummyRemove url = return False

@@ -7,7 +7,7 @@ module BackendList (
 	lookupBackendName
 ) where
 
-import BackendType
+import Types
 
 -- When adding a new backend, import it here and add it to the list.
 import qualified BackendFile
