@@ -7,6 +7,7 @@
 
 module GitRepo (
 	GitRepo,
+	gitRepoFromPath,
 	gitRepoCurrent,
 	gitRepoTop,
 	gitDir,
@@ -35,8 +36,8 @@ data GitRepo = GitRepo {
 } deriving (Show, Read, Eq)
 
 {- GitRepo constructor -}
-gitRepo :: FilePath -> IO GitRepo
-gitRepo dir = do
+gitRepoFromPath :: FilePath -> IO GitRepo
+gitRepoFromPath dir = do
 	b <- isBareRepo dir
 
 	let r = GitRepo {
@@ -110,14 +111,17 @@ gitPipeRead repo params =
 gitConfigRead :: GitRepo -> IO GitRepo
 gitConfigRead repo = do
 	c <- gitPipeRead repo ["config", "--list"]
-	return repo { config = Map.fromList $ parse c }
-		where
-			parse s = map pair $ lines s
-			pair l = (key l, val l)
-			key l = (keyval l) !! 0
-			val l = join sep $ drop 1 $ keyval l
-			keyval l = split sep l :: [String]
-			sep = "="
+	return repo { config = gitConfigParse c }
+
+{- Parses git config --list output into a config map. -}
+gitConfigParse :: String -> Map.Map String String
+gitConfigParse s = Map.fromList $ map pair $ lines s
+	where
+		pair l = (key l, val l)
+		key l = (keyval l) !! 0
+		val l = join sep $ drop 1 $ keyval l
+		keyval l = split sep l :: [String]
+		sep = "="
 
 {- Returns a single git config setting, or a default value if not set. -}
 gitConfig :: GitRepo -> String -> String -> String
@@ -132,7 +136,7 @@ gitRepoCurrent = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
-		(Just dir) -> gitRepo dir
+		(Just dir) -> gitRepoFromPath dir
 		Nothing -> error "Not in a git repository."
 
 seekUp :: String -> (String -> IO Bool) -> IO (Maybe String)
