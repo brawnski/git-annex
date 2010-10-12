@@ -15,6 +15,7 @@ module GitRepo (
 	gitRelative,
 	gitConfig,
 	gitAdd,
+	gitRm,
 	gitAttributes
 ) where
 
@@ -79,7 +80,8 @@ remote repo = not $ local repo
 assertlocal repo action = 
 	if (local repo)
 		then action
-		else error "acting on remote git repo not supported"
+		else error $ "acting on remote git repo " ++  (url repo) ++ 
+				" not supported"
 
 {- Path to a repository's gitattributes file. -}
 gitAttributes :: GitRepo -> String
@@ -116,44 +118,38 @@ gitRelative repo file = drop (length absrepo) absfile
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 
-{- Stages a changed file in git's index. -}
+{- Stages a changed/new file in git's index. -}
 gitAdd :: GitRepo -> FilePath -> IO ()
 gitAdd repo file = runGit repo ["add", file]
 
+{- Removes a file. -}
+gitRm :: GitRepo -> FilePath -> IO ()
+gitRm repo file = runGit repo ["rm", file]
+
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: GitRepo -> [String] -> [String]
-gitCommandLine repo params =
+gitCommandLine repo params = assertlocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
-	if (local repo) 
-		then ["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
-		else error "gitCommandLine not implemented for remote repo"
+	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 runGit :: GitRepo -> [String] -> IO ()
-runGit repo params =
-	if (local repo) 
-		then do
-			r <- executeFile "git" True (gitCommandLine repo params) Nothing
-			return ()
-		else error "runGit not implemented for remote repo"
+runGit repo params = assertlocal repo $ do
+	r <- executeFile "git" True (gitCommandLine repo params) Nothing
+	return ()
 
 {- Runs a git subcommand and returns its output. -}
 gitPipeRead :: GitRepo -> [String] -> IO String
-gitPipeRead repo params =
-	if (local repo)
-		then pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
-			ret <- hGetContentsStrict h
-			return ret
-		else error "gitPipeRead not implemented for remote repo"
+gitPipeRead repo params = assertlocal repo $ do
+	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
+	ret <- hGetContentsStrict h
+	return ret
 
 {- Runs git config and populates a repo with its settings. -}
 gitConfigRead :: GitRepo -> IO GitRepo
-gitConfigRead repo =
-	if (local repo)
-		then do
-			c <- gitPipeRead repo ["config", "--list"]
-			return repo { config = gitConfigParse c }
-		else error "gitConfigRead not implemented for remote repo"
+gitConfigRead repo = assertlocal repo $ do
+	c <- gitPipeRead repo ["config", "--list"]
+	return repo { config = gitConfigParse c }
 
 {- Parses git config --list output into a config map. -}
 gitConfigParse :: String -> Map.Map String String
