@@ -24,15 +24,6 @@ import UUID
 import LocationLog
 import Types
 
-{- An annexed file's content is stored somewhere under .git/annex/,
- - based on the key. Since the symlink is user-visible, the filename
- - used should be as close to the key as possible, in case the key is a
- - filename or url. Just escape "/" in the key name, to keep a flat
- - tree of files and avoid issues with files ending with "/" etc. -}
-annexLocation :: State -> Key -> FilePath
-annexLocation state key = gitDir (repo state) ++ "/annex/" ++ (transform key)
-	where transform s = replace "/" "%" $ replace "%" "%%" s
-
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: State -> Key -> IO Bool
 inAnnex state key = doesFileExist $ annexLocation state key
@@ -62,15 +53,18 @@ annexFile state file = do
 			stored <- storeFile state file
 			case (stored) of
 				Nothing -> error $ "no backend could store: " ++ file
-				Just key -> symlink key
+				Just (key, backend) -> setup key backend
 	where
-		symlink key = do
+		setup key backend = do
 			let dest = annexLocation state key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
-			logChange (repo state) file (getUUID (repo state)) FilePresent
 			createSymbolicLink dest file
-			gitAdd (repo state) file
+			gitRun (repo state) ["add", file, bfile]
+			gitRun (repo state) ["commit", "-m", 
+				("git-annex annexed " ++ file), file, bfile]
+			logStatus state key ValuePresent
+				where bfile = backendFile state backend file
 		checkLegal file = do
 			s <- getSymbolicLinkStatus file
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
@@ -87,11 +81,17 @@ unannexFile state file = do
 			mkey <- dropFile state file
 			case (mkey) of
 				Nothing -> return ()
-				Just key -> do
+				Just (key, backend) -> do
 					let src = annexLocation state key
 					removeFile file
+					gitRun (repo state) ["rm", file, bfile]
+					gitRun (repo state) ["commit", "-m",
+						("git-annex unannexed " ++ file),
+						file, bfile]
 					renameFile src file
+					logStatus state key ValueMissing
 					return ()
+						where bfile = backendFile state backend file
 
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
@@ -109,7 +109,9 @@ annexGetFile state file = do
 					createDirectoryIfMissing True (parentDir dest)
 					success <- retrieveFile state file dest
 					if (success)
-						then return ()
+						then do
+							logStatus state key ValuePresent
+							return ()
 						else error $ "failed to get " ++ file
 
 {- Indicates a file is wanted. -}
@@ -132,17 +134,28 @@ annexPullRepo state reponame = do error "not implemented" -- TODO
 gitPrep :: GitRepo -> IO ()
 gitPrep repo = do
 	-- configure git to use union merge driver on state files
-	let attrLine = stateLoc ++ "/*.log merge=union"
-	let attributes = gitAttributes repo
 	exists <- doesFileExist attributes
 	if (not exists)
 		then do
 			writeFile attributes $ attrLine ++ "\n"
-			gitAdd repo attributes
+			commit
 		else do
 			content <- readFile attributes
 			if (all (/= attrLine) (lines content))
 				then do
 					appendFile attributes $ attrLine ++ "\n"
-					gitAdd repo attributes
+					commit
 				else return ()
+	where
+		attrLine = stateLoc ++ "/*.log merge=union"
+		attributes = gitAttributes repo
+		commit = do
+			gitRun repo ["add", attributes]
+			gitRun repo ["commit", "-m", "git-annex setup", 
+					attributes]
+
+{- Updates the LocationLog when a key's presence changes. -}
+logStatus state key status = do
+	f <- logChange (repo state) key (getUUID (repo state)) status
+	gitRun (repo state) ["add", f]
+	gitRun (repo state) ["commit", "-m", "git-annex log update", f]

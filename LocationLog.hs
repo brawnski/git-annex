@@ -1,13 +1,13 @@
 {- git-annex location log
  -
- - git-annex keeps track of on which repository it last saw a file's content.
+ - git-annex keeps track of on which repository it last saw a value.
  - This can be useful when using it for archiving with offline storage.
  - When you indicate you --want a file, git-annex will tell you which
- - repositories have the file's content.
+ - repositories have the value.
  -
- - Location tracking information is stored in `.git-annex/filename.log`.
+ - Location tracking information is stored in `.git-annex/key.log`.
  - Repositories record their UUID and the date when they --get or --drop
- - a file's content.
+ - a value.
  -
  - A line of the log will look like: "date N UUID"
  - Where N=1 when the repo has the file, and 0 otherwise.
@@ -31,6 +31,7 @@ import Data.Char
 import GitRepo
 import Utility
 import UUID
+import Types
 import Locations
 
 data LogLine = LogLine {
@@ -39,17 +40,17 @@ data LogLine = LogLine {
 	uuid :: UUID
 } deriving (Eq)
 
-data LogStatus = FilePresent | FileMissing | Undefined
+data LogStatus = ValuePresent | ValueMissing | Undefined
 	deriving (Eq)
 
 instance Show LogStatus where
-	show FilePresent = "1"
-	show FileMissing = "0"
+	show ValuePresent = "1"
+	show ValueMissing = "0"
 	show Undefined = "undefined"
 
 instance Read LogStatus where
-	readsPrec _ "1" = [(FilePresent, "")]
-	readsPrec _ "0" = [(FileMissing, "")]
+	readsPrec _ "1" = [(ValuePresent, "")]
+	readsPrec _ "0" = [(ValueMissing, "")]
 	readsPrec _ _   = [(Undefined, "")]
 
 instance Show LogLine where
@@ -61,7 +62,7 @@ instance Read LogLine where
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
-		if (length w >= 3)
+		if (length w == 3)
 			then case (pdate) of
 				Just v -> good v
 				Nothing -> undefined
@@ -70,28 +71,23 @@ instance Read LogLine where
 			w = words string
 			date = w !! 0
 			status = read $ w !! 1
-			uuid = w !! 3
+			uuid = w !! 2
 			pdate = (parseTime defaultTimeLocale "%s%Qs" date) :: Maybe UTCTime
 
 			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status uuid
 			undefined = ret $ LogLine (0) Undefined ""
 			ret v = [(v, "")]
 
-{- Log a change in the presence of a file in a repository,
- - and add the log to git so it will propigate to other repos. -}
-logChange :: GitRepo -> FilePath -> UUID -> LogStatus -> IO ()
-logChange repo file uuid status = do
+{- Log a change in the presence of a key's value in a repository,
+ - and return the log filename. -}
+logChange :: GitRepo -> Key -> UUID -> LogStatus -> IO FilePath
+logChange repo key uuid status = do
 	log <- logNow status uuid
-	if (status == FilePresent)
-		-- file added; just append to log
-		then appendLog logfile log
-		-- file removed; compact log
-		else do
-			ls <- readLog logfile
-			writeLog logfile (log:ls)
-	gitAdd repo logfile
+	ls <- readLog logfile
+	writeLog logfile (compactLog $ log:ls)
+	return logfile
 	where
-		logfile = logFile repo file
+		logfile = logFile repo key
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
@@ -129,22 +125,22 @@ logNow status uuid = do
 	now <- getPOSIXTime
 	return $ LogLine now status uuid
 
-{- Returns the filename of the log file for a given annexed file. -}
-logFile :: GitRepo -> FilePath -> String
-logFile repo annexedFile = (gitStateDir repo) ++
-		(gitRelative repo annexedFile) ++ ".log"
+{- Returns the filename of the log file for a given key. -}
+logFile :: GitRepo -> Key -> String
+logFile repo key = 
+	(gitStateDir repo) ++ (gitRelative repo (keyFile key)) ++ ".log"
 
 {- Returns a list of repository UUIDs that, according to the log, have
- - the content of a file -}
-fileLocations :: GitRepo -> FilePath -> IO [UUID]
-fileLocations thisrepo file = do
-	lines <- readLog $ logFile thisrepo file
+ - the value of a key. -}
+keyLocations :: GitRepo -> Key -> IO [UUID]
+keyLocations thisrepo key = do
+	lines <- readLog $ logFile thisrepo key
 	return $ map uuid (filterPresent lines)
 
-{- Filters the list of LogLines to find ones where the file
+{- Filters the list of LogLines to find ones where the value
  - is (or should still be) present. -}
 filterPresent :: [LogLine] -> [LogLine]
-filterPresent lines = filter (\l -> FilePresent == status l) $ compactLog lines
+filterPresent lines = filter (\l -> ValuePresent == status l) $ compactLog lines
 
 {- Compacts a set of logs, returning a subset that contains the current
  - status. -}

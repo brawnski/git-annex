@@ -6,6 +6,7 @@ module Types (
 	Backend(..)
 ) where
 
+import Data.String.Utils
 import GitRepo
 
 -- git-annex's runtime state

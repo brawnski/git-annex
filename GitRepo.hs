@@ -15,8 +15,6 @@ module GitRepo (
 	gitRelative,
 	gitConfig,
 	gitConfigRead,
-	gitAdd,
-	gitRm,
 	gitRun,
 	gitAttributes
 ) where
@@ -127,14 +125,6 @@ gitRelative repo file = drop (length absrepo) absfile
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
-
-{- Stages a changed/new file in git's index. -}
-gitAdd :: GitRepo -> FilePath -> IO ()
-gitAdd repo file = gitRun repo ["add", file]
-
-{- Removes a file. -}
-gitRm :: GitRepo -> FilePath -> IO ()
-gitRm repo file = gitRun repo ["rm", file]
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: GitRepo -> [String] -> [String]

@@ -31,9 +31,8 @@ import GitRepo
 import Utility
 import Types
 
-{- Attempts to store a file in one of the backends, and returns
- - its key. -}
-storeFile :: State -> FilePath -> IO (Maybe Key)
+{- Attempts to store a file in one of the backends. -}
+storeFile :: State -> FilePath -> IO (Maybe (Key, Backend))
 storeFile state file = storeFile' (backends state) state file
 storeFile' [] _ _ = return Nothing
 storeFile' (b:bs) state file = do
@@ -46,7 +45,7 @@ storeFile' (b:bs) state file = do
 				then nextbackend
 				else do
 					recordKey state b file key
-					return $ Just key
+					return $ Just (key, b)
 	where
 		nextbackend = storeFile' bs state file
 
@@ -62,7 +61,7 @@ retrieveFile state file dest = do
 			(retrieveKeyFile b) state key dest
 
 {- Drops the key for a file from the backend that has it. -}
-dropFile :: State -> FilePath -> IO (Maybe Key)
+dropFile :: State -> FilePath -> IO (Maybe (Key, Backend))
 dropFile state file = do
 	result <- lookupBackend state file
 	case (result) of
@@ -71,7 +70,7 @@ dropFile state file = do
 			key <- lookupKey state b file
 			(removeKey b) state key
 			removeFile $ backendFile state b file
-			return $ Just key
+			return $ Just (key, b)
 
 {- Looks up the backend used for an already annexed file. -}
 lookupBackend :: State -> FilePath -> IO (Maybe Backend)
@@ -84,13 +83,6 @@ lookupBackend' (b:bs) state file = do
 			return $ Just b
 		else
 			lookupBackend' bs state file
-
-{- Name of state file that holds the key for an annexed file,
- - using a given backend. -}
-backendFile :: State -> Backend -> FilePath -> String
-backendFile state backend file =
-	gitStateDir (repo state) ++ (gitRelative (repo state) file) ++ 
-		"." ++ (name backend)
 
 {- Checks if a file is available via a given backend. -}
 checkBackend :: Backend -> State -> FilePath -> IO (Bool)
@@ -106,7 +98,7 @@ lookupKey state backend file = do
 				then (reverse . (drop 1) . reverse) s
 				else s
 
-{- Records the key a backend uses for an annexed file. -}
+{- Records the key used for an annexed file. -}
 recordKey :: State -> Backend -> FilePath -> Key -> IO ()
 recordKey state backend file key = do
 	createDirectoryIfMissing True (parentDir record)
