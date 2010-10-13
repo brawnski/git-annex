@@ -97,6 +97,9 @@ unannexFile state file = do
 					gitRun (repo state) ["commit", "-m",
 						("git-annex unannexed " ++ file),
 						file]
+					-- git rm deletes empty directories;
+					-- put them back
+					createDirectoryIfMissing True (parentDir file)
 					renameFile src file
 					logStatus state key ValueMissing
 					return ()
