@@ -14,14 +14,13 @@
  - -}
 
 module Backend (
-	lookupBackend,
 	storeFile,
 	dropFile,
 	retrieveFile,
-	fileKey,
-	fileBackend
+	lookupFile
 ) where
 
+import Control.Exception
 import System.Directory
 import System.FilePath
 import Data.String.Utils
@@ -51,50 +50,24 @@ storeFile' (b:bs) state file = do
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: State -> Key -> FilePath -> IO Bool
-retrieveFile state key dest = do
-	result <- lookupBackend state key
-	case (result) of
-		Nothing -> return False
-		Just backend -> (retrieveKeyFile backend) state key dest
+retrieveFile :: State -> Backend -> Key -> FilePath -> IO Bool
+retrieveFile state backend key dest = (retrieveKeyFile backend) state key dest
 
-{- Drops a key from the backend that has it. -}
-dropFile :: State -> Key -> IO (Maybe (Key, Backend))
-dropFile state key = do
-	result <- lookupBackend state key
-	case (result) of
-		Nothing -> return Nothing
-		Just backend -> do
-			(removeKey backend) state key
-			return $ Just (key, backend)
+{- Drops a key from a backend. -}
+dropFile :: State -> Backend -> Key -> IO Bool
+dropFile state backend key = (removeKey backend) state key
 
-{- Looks up the backend that has a key. -}
-lookupBackend :: State -> Key -> IO (Maybe Backend)
-lookupBackend state key = lookupBackend' (backends state) state key
-lookupBackend' [] _ _ = return Nothing
-lookupBackend' (b:bs) state key = do
-	present <- checkBackend b state key
-	if present
-		then
-			return $ Just b
-		else
-			lookupBackend' bs state key
-
-{- Checks if a key is available via a given backend. -}
-checkBackend :: Backend -> State -> Key -> IO (Bool)
-checkBackend backend state key = 
-	doesFileExist $ annexLocation state backend key
-
-{- Looks up the key corresponding to an annexed file,
+{- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
-fileKey :: FilePath -> IO Key
-fileKey file = do
-	l <- readSymbolicLink (file)
-	return $ Key $ takeFileName $ l
-
-{- Looks up the backend corresponding to an annexed file,
- - by examining what the file symlinks to. -}
-fileBackend :: FilePath -> IO Backend
-fileBackend file = do
-	l <- readSymbolicLink (file)
-	return $ lookupBackendName $ takeFileName $ parentDir $ l
+lookupFile :: FilePath -> IO (Maybe (Key, Backend))
+lookupFile file = do
+	result <- try (lookup)::IO (Either SomeException (Maybe (Key, Backend)))
+	case (result) of
+		Left err -> return Nothing
+		Right succ -> return succ
+	where 
+		lookup = do
+			l <- readSymbolicLink file
+			return $ Just (k l, b l)
+		k l = Key $ takeFileName $ l
+		b l = lookupBackendName $ takeFileName $ parentDir $ l
