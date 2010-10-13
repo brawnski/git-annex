@@ -180,3 +180,11 @@ remote, to check local disk space.
 
 When git-rm removed a file, it should get dropped too. Of course, it may
 not be dropped right away, depending on number of copies available.
+
+### branching
+
+The use of `.git-annex` to store state means that if a repo has branches 
+and the user switched between them, git-annex will see different state in
+the different branches. Whether that is a bug or a feature may depend on
+point of view -- call it Too Be Determined. An alternative would be to
+store data directly in the git repo as `pristine-tar` does.
