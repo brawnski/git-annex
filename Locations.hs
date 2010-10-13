@@ -19,11 +19,11 @@ stateLoc = ".git-annex"
 gitStateDir :: GitRepo -> FilePath
 gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
 
-{- Generates a filename that can be used to record a key somewhere to disk.
+{- Converts a key into a filename fragment.
  - Just escape "/" in the key name, to keep a flat
  - tree of files and avoid issues with files ending with "/" etc. -}
 keyFile :: Key -> FilePath
-keyFile key = replace "/" "%" $ replace "%" "%%" key
+keyFile key = replace "/" "&s" $ replace "&" "&a" key
 
 {- An annexed file's content is stored somewhere under .git/annex/,
  - based on the key. -}
