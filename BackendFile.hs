@@ -4,12 +4,16 @@
 module BackendFile (backend) where
 
 import Types
+import LocationLog
+import Locations
+import Remotes
+import GitRepo
 
 backend = Backend {
 	name = "file",
 	getKey = keyValue,
 	storeFileKey = dummyStore,
-	retrieveKeyFile = copyFromOtherRepo,
+	retrieveKeyFile = copyKeyFile,
 	removeKey = dummyRemove
 }
 
@@ -27,12 +31,26 @@ dummyStore state file key = return True
 dummyRemove :: State -> Key -> IO Bool
 dummyRemove state url = return False
 
-{- Try to find a copy of the file in one of the other repos,
+{- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
-copyFromOtherRepo :: State -> Key -> FilePath -> IO (Bool)
-copyFromOtherRepo state key file =
-	-- 1. get ordered list of remotes (local repos, then remote repos)
-	-- 2. read locationlog for file
-	-- 3. filter remotes list to ones that have file
-	-- 4. attempt to transfer from each remote until success
-	error "copyFromOtherRepo unimplemented" -- TODO
+copyKeyFile :: State -> Key -> FilePath -> IO (Bool)
+copyKeyFile state key file = do
+	remotes <- remotesWithKey state key
+	if (0 == length remotes)
+		then error $ "no known remotes have: " ++ (keyFile key) ++ "\n" ++
+			"(Perhaps you need to git remote add a repository?)"
+		else trycopy remotes remotes
+	where
+		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
+			"To get that file, need access to one of these remotes: " ++
+			(remotesList full)
+		trycopy full (r:rs) = do
+			ok <- copyFromRemote r key file
+			if (ok)
+				then return True
+				else trycopy full rs
+
+{- Tries to copy a file from a remote. -}
+copyFromRemote :: GitRepo -> Key -> FilePath -> IO (Bool)
+copyFromRemote r key file = do
+	return False -- TODO	

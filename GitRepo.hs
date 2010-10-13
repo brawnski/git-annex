@@ -13,6 +13,7 @@ module GitRepo (
 	gitRepoIsLocal,
 	gitRepoIsRemote,
 	gitConfigRemotes,
+	gitRepoDescribe,
 	gitWorkTree,
 	gitDir,
 	gitRelative,
@@ -74,8 +75,13 @@ gitRepoFromUrl url =
 	}
 	where path url = uriPath $ fromJust $ parseURI url
 
-{- User-visible description of a git repo by path or url -}
-describe repo = if (gitRepoIsLocal repo) then top repo else url repo
+{- User-visible description of a git repo. -}
+gitRepoDescribe repo = 
+	if (isJust $ remoteName repo)
+		then fromJust $ remoteName repo
+		else if (gitRepoIsLocal repo)
+			then top repo
+			else url repo
 
 {- Returns the name of the remote that corresponds to the repo, if 
  - it is a remote. Otherwise, "" -}
@@ -93,13 +99,13 @@ gitRepoIsRemote repo = not $ gitRepoIsLocal repo
 assertlocal repo action = 
 	if (gitRepoIsLocal repo)
 		then action
-		else error $ "acting on remote git repo " ++  (describe repo) ++ 
+		else error $ "acting on remote git repo " ++  (gitRepoDescribe repo) ++ 
 				" not supported"
 bare :: GitRepo -> Bool
 bare repo = 
 	if (member b (config repo))
 		then ("true" == fromJust (Map.lookup b (config repo)))
-		else error $ "it is not known if git repo " ++ (describe repo) ++
+		else error $ "it is not known if git repo " ++ (gitRepoDescribe repo) ++
 			" is a bare repository; config not read"
 	where
 		b = "core.bare"

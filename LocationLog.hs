@@ -18,7 +18,8 @@
 
 module LocationLog (
 	LogStatus(..),
-	logChange
+	logChange,
+	keyLocations
 ) where
 
 import Data.Time.Clock.POSIX

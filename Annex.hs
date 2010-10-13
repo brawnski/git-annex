@@ -9,7 +9,6 @@ module Annex (
 	annexWantFile,
 	annexDropFile,
 	annexPushRepo,
-	annexRemotes,
 	annexPullRepo
 ) where
 
@@ -161,37 +160,10 @@ gitSetup repo = do
 
 {- Updates the LocationLog when a key's presence changes. -}
 logStatus state key status = do
-	f <- logChange (repo state) key (getUUID (repo state)) status
+	f <- logChange (repo state) key (getUUID state (repo state)) status
 	gitRun (repo state) ["add", f]
 	gitRun (repo state) ["commit", "-m", "git-annex log update", f]
 
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: State -> Backend -> Key -> IO Bool
 inAnnex state backend key = doesFileExist $ annexLocation state backend key
-
-{- Ordered list of remotes for the annex. -}
-annexRemotes :: State -> [GitRepo]
-annexRemotes state = reposByCost state $ gitConfigRemotes (repo state)
-
-{- Orders a list of git repos by cost. -}
-reposByCost :: State -> [GitRepo] -> [GitRepo]
-reposByCost state l =
-	fst $ unzip $ sortBy (\(r1, c1) (r2, c2) -> compare c1 c2) $ costpairs l
-	where
-		costpairs l = map (\r -> (r, repoCost state r)) l
-
-{- Calculates cost for a repo.
- -
- - The default cost is 100 for local repositories, and 200 for remote
- - repositories; it can also be configured by remote.<name>.annex-cost
- -}
-repoCost :: State -> GitRepo -> Int
-repoCost state r = 
-	if ((length $ config state r) > 0)
-		then read $ config state r
-		else if (gitRepoIsLocal r)
-			then 100
-			else 200
-	where
-		config state r = gitConfig (repo state) (configkey r) ""
-		configkey r = "remote." ++ (gitRepoRemoteName r) ++ ".annex-cost"
