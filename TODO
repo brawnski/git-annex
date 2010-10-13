@@ -1,11 +1,10 @@
 * bug when annexing files while in a subdir of a git repo
-* bug when specifying full path to files when annexing
+* bug when specifying absolute path to files when annexing
 
 * implement retrieval for backendfile
 
 * query remotes for their annex.uuid settings
 
-* hook up LocationLog
 * --push/--pull/--want/--drop
 
 * how to handle git mv file?
