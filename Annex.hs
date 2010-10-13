@@ -65,6 +65,7 @@ annexFile state file = inBackend file err $ do
 				then error $ "not a regular file: " ++ file
 				else return ()
 		setup key backend = do
+			logStatus state key ValuePresent
 			let dest = annexLocation state backend key
 			let reldest = annexLocationRelative state backend key
 			createDirectoryIfMissing True (parentDir dest)
@@ -73,7 +74,6 @@ annexFile state file = inBackend file err $ do
 			gitRun (repo state) ["add", file]
 			gitRun (repo state) ["commit", "-m", 
 				("git-annex annexed " ++ file), file]
-			logStatus state key ValuePresent
 		linkTarget file =
 			-- relies on file being relative to the top of the 
 			-- git repo; just replace each subdirectory with ".."
@@ -88,41 +88,37 @@ annexFile state file = inBackend file err $ do
 unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = notinBackend file err $ \(key, backend) -> do
 	dropFile state backend key
-	cleanup key backend
+	logStatus state key ValueMissing
+	let src = annexLocation state backend key
+	removeFile file
+	gitRun (repo state) ["rm", file]
+	gitRun (repo state) ["commit", "-m",
+		("git-annex unannexed " ++ file), file]
+	-- git rm deletes empty directories;
+	-- put them back
+	createDirectoryIfMissing True (parentDir file)
+	renameFile src file
+	return ()
 	where
 		err = error $ "not annexed " ++ file
-		cleanup key backend = do
-			let src = annexLocation state backend key
-			removeFile file
-			gitRun (repo state) ["rm", file]
-			gitRun (repo state) ["commit", "-m",
-				("git-annex unannexed " ++ file), file]
-			-- git rm deletes empty directories;
-			-- put them back
-			createDirectoryIfMissing True (parentDir file)
-			renameFile src file
-			logStatus state key ValueMissing
-			return ()
 
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
-annexGetFile state file = do
-	r <- lookupFile file
-	case (r) of
-		Nothing -> error $ "not annexed " ++ file
-		Just (key, backend) -> do
-			inannex <- inAnnex state backend key
-			if (inannex)
-				then return ()
-				else do
-					let dest = annexLocation state backend key
-					createDirectoryIfMissing True (parentDir dest)
-					success <- retrieveFile state backend key dest
-					if (success)
-						then do
-							logStatus state key ValuePresent
-							return ()
-						else error $ "failed to get " ++ file
+annexGetFile state file = notinBackend file err $ \(key, backend) -> do
+	inannex <- inAnnex state backend key
+	if (inannex)
+		then return ()
+		else do
+			let dest = annexLocation state backend key
+			createDirectoryIfMissing True (parentDir dest)
+			success <- retrieveFile state backend key dest
+			if (success)
+				then do
+					logStatus state key ValuePresent
+					return ()
+				else error $ "failed to get " ++ file
+	where
+		err = error $ "not annexed " ++ file
 
 {- Indicates a file is wanted. -}
 annexWantFile :: State -> FilePath -> IO ()
