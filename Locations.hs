@@ -40,7 +40,8 @@ annexLocation state backend key =
 	(gitWorkTree $ repo state) ++ "/" ++ 
 	(annexLocationRelative state backend key)
 
+{- Annexed file's location relative to the gitWorkTree -}
 annexLocationRelative :: State -> Backend -> Key -> FilePath
-annexLocationRelative state backend key =
+annexLocationRelative state backend key = 
 	gitDir (repo state) ++ "/annex/" ++ (name backend) ++ 
 		"/" ++ (keyFile key)

@@ -55,20 +55,30 @@ annexFile state file = do
 				Nothing -> error $ "no backend could store: " ++ file
 				Just (key, backend) -> setup key backend
 	where
-		setup key backend = do
-			let dest = annexLocation state backend key
-			createDirectoryIfMissing True (parentDir dest)
-			renameFile file dest
-			createSymbolicLink (annexLocationRelative state backend key) file
-			gitRun (repo state) ["add", file]
-			gitRun (repo state) ["commit", "-m", 
-				("git-annex annexed " ++ file), file]
-			logStatus state key ValuePresent
 		checkLegal file = do
 			s <- getSymbolicLinkStatus file
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
+		setup key backend = do
+			let dest = annexLocation state backend key
+			let reldest = annexLocationRelative state backend key
+			createDirectoryIfMissing True (parentDir dest)
+			renameFile file dest
+			createSymbolicLink ((linkTarget file) ++ reldest) file
+			gitRun (repo state) ["add", file]
+			gitRun (repo state) ["commit", "-m", 
+				("git-annex annexed " ++ file), file]
+			logStatus state key ValuePresent
+		linkTarget file =
+			-- relies on file being relative to the top of the 
+			-- git repo; just replace each subdirectory with ".."
+			if (subdirs > 0)
+				then (join "/" $ take subdirs $ repeat "..") ++ "/"
+				else ""
+			where
+				subdirs = (length $ split "/" file) - 1
+		
 
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
