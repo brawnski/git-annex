@@ -32,6 +32,5 @@ tryRun errnum oknum (a:as) = do
 {- Exception pretty-printing. -}
 showErr :: SomeException -> IO ()
 showErr e = do
-	let err = show e
-	hPutStrLn stderr $ "git-annex: " ++ err
+	hPutStrLn stderr $ "git-annex: " ++ (show e)
 	return ()

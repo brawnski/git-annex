@@ -64,8 +64,8 @@ annexFile state file = inBackend file err $ do
 				else return ()
 		setup key backend = do
 			logStatus state key ValuePresent
-			let dest = annexLocation state backend key
-			let reldest = annexLocationRelative state backend key
+			let dest = annexLocation (repo state) backend key
+			let reldest = annexLocationRelative (repo state) backend key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink ((linkTarget file) ++ reldest) file
@@ -94,7 +94,7 @@ unannexFile state file = notinBackend file err $ \(key, backend) -> do
 	-- git rm deletes empty directories;
 	-- put them back
 	createDirectoryIfMissing True (parentDir file)
-	let src = annexLocation state backend key
+	let src = annexLocation (repo state) backend key
 	renameFile src file
 	return ()
 	where
@@ -107,7 +107,7 @@ annexGetFile state file = notinBackend file err $ \(key, backend) -> do
 	if (inannex)
 		then return ()
 		else do
-			let dest = annexLocation state backend key
+			let dest = annexLocation (repo state) backend key
 			createDirectoryIfMissing True (parentDir dest)
 			success <- retrieveFile state backend key dest
 			if (success)
@@ -166,4 +166,4 @@ logStatus state key status = do
 
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: State -> Backend -> Key -> IO Bool
-inAnnex state backend key = doesFileExist $ annexLocation state backend key
+inAnnex state backend key = doesFileExist $ annexLocation (repo state) backend key

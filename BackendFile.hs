@@ -3,6 +3,9 @@
 
 module BackendFile (backend) where
 
+import System.IO
+import System.Cmd
+import Control.Exception
 import Types
 import LocationLog
 import Locations
@@ -45,12 +48,30 @@ copyKeyFile state key file = do
 			"To get that file, need access to one of these remotes: " ++
 			(remotesList full)
 		trycopy full (r:rs) = do
-			ok <- copyFromRemote r key file
-			if (ok)
-				then return True
-				else trycopy full rs
+			putStrLn "trying a remote"
+			result <- try (copyFromRemote r key file)::IO (Either SomeException ())
+        		case (result) of
+		                Left err -> do
+					showerr err r
+					trycopy full rs
+		                Right succ -> return True
+		showerr err r = do
+			hPutStrLn stderr $ "git-annex: copy from " ++ 
+				(gitRepoDescribe r ) ++ " failed: " ++
+				(show err)
 
-{- Tries to copy a file from a remote. -}
-copyFromRemote :: GitRepo -> Key -> FilePath -> IO (Bool)
+{- Tries to copy a file from a remote, exception on error. -}
+copyFromRemote :: GitRepo -> Key -> FilePath -> IO ()
 copyFromRemote r key file = do
-	return False -- TODO	
+	r <- if (gitRepoIsLocal r)
+		then getlocal
+		else getremote
+	return ()
+	where
+		getlocal = do
+			putStrLn $ "get: " ++ location
+			rawSystem "cp" ["-a", location, file]
+		getremote = do
+			putStrLn $ "get: " ++ location
+			error "get via network not yet implemented!"
+		location = annexLocation r backend key

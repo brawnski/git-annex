@@ -21,18 +21,18 @@ gitStateDir :: GitRepo -> FilePath
 gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
 
 {- An annexed file's content is stored in 
- - .git/annex/<backend>/<key> ; this allows deriving the key and backend
- - by looking at the symlink to it. -}
-annexLocation :: State -> Backend -> Key -> FilePath
-annexLocation state backend key = 
-	(gitWorkTree $ repo state) ++ "/" ++ 
-	(annexLocationRelative state backend key)
+ - /path/to/repo/.git/annex/<backend>/<key>
+ -
+ - (That allows deriving the key and backend by looking at the symlink to it.)
+ -}
+annexLocation :: GitRepo -> Backend -> Key -> FilePath
+annexLocation r backend key = 
+	(gitWorkTree r) ++ "/" ++ (annexLocationRelative r backend key)
 
 {- Annexed file's location relative to the gitWorkTree -}
-annexLocationRelative :: State -> Backend -> Key -> FilePath
-annexLocationRelative state backend key = 
-	gitDir (repo state) ++ "/annex/" ++ (name backend) ++ 
-		"/" ++ (keyFile key)
+annexLocationRelative :: GitRepo -> Backend -> Key -> FilePath
+annexLocationRelative r backend key = 
+	gitDir r ++ "/annex/" ++ (name backend) ++ "/" ++ (keyFile key)
 
 {- Converts a key into a filename fragment.
  -
