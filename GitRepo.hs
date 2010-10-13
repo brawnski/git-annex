@@ -10,13 +10,17 @@ module GitRepo (
 	gitRepoFromCwd,
 	gitRepoFromPath,
 	gitRepoFromUrl,
+	gitRepoIsLocal,
+	gitRepoIsRemote,
+	gitConfigRemotes,
 	gitWorkTree,
 	gitDir,
 	gitRelative,
 	gitConfig,
 	gitConfigRead,
 	gitRun,
-	gitAttributes
+	gitAttributes,
+	gitRepoRemoteName
 ) where
 
 import Directory
@@ -74,16 +78,23 @@ gitRepoFromUrl url query = do
 	where path url = uriPath $ fromJust $ parseURI url
 
 {- User-visible description of a git repo by path or url -}
-describe repo = if (local repo) then top repo else url repo
+describe repo = if (gitRepoIsLocal repo) then top repo else url repo
+
+{- Returns the name of the remote that corresponds to the repo, if 
+ - it is a remote. Otherwise, "" -}
+gitRepoRemoteName r = 
+	if (isJust $ remoteName r)
+		then fromJust $ remoteName r
+		else ""
 
 {- Some code needs to vary between remote and local repos, or bare and
  - non-bare, these functions help with that. -}
-local repo = case (repo) of
+gitRepoIsLocal repo = case (repo) of
 	LocalGitRepo {} -> True
 	RemoteGitRepo {} -> False
-remote repo = not $ local repo
+gitRepoIsRemote repo = not $ gitRepoIsLocal repo
 assertlocal repo action = 
-	if (local repo)
+	if (gitRepoIsLocal repo)
 		then action
 		else error $ "acting on remote git repo " ++  (describe repo) ++ 
 				" not supported"
