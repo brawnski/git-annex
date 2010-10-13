@@ -34,7 +34,8 @@ hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
 parentDir :: String -> String
 parentDir dir =
 	if length dirs > 0
-	then "/" ++ (join "/" $ take ((length dirs) - 1) dirs)
+	then absolute ++ (join "/" $ take ((length dirs) - 1) dirs)
 	else ""
 		where
 			dirs = filter (\x -> length x > 0) $ split "/" dir
+			absolute = if ((dir !! 0) == '/') then "/" else ""
