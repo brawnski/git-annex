@@ -16,7 +16,11 @@ data State = State {
 } deriving (Show)
 
 -- annexed filenames are mapped into keys
-type Key = FilePath
+data Key = Key String deriving (Eq)
+
+-- show a key to convert it to a string
+instance Show Key where
+	show (Key v) = v
 
 -- this structure represents a key/value backend
 data Backend = Backend {

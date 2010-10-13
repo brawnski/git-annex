@@ -45,7 +45,8 @@ startAnnex = do
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
 annexFile state file = do
-	alreadyannexed <- lookupBackend state file
+	-- TODO check if already annexed
+	let alreadyannexed = Nothing
 	case (alreadyannexed) of
 		Just _ -> error $ "already annexed: " ++ file
 		Nothing -> do
@@ -83,15 +84,17 @@ annexFile state file = do
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = do
-	alreadyannexed <- lookupBackend state file
+	-- TODO check if already annexed
+	let alreadyannexed = Just 1
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
 		Just _ -> do
-			mkey <- dropFile state file
-			case (mkey) of
+			key <- fileKey file
+			dropped <- dropFile state key
+			case (dropped) of
 				Nothing -> return ()
 				Just (key, backend) -> do
-					let src = annexLocation state backend file
+					let src = annexLocation state backend key
 					removeFile file
 					gitRun (repo state) ["rm", file]
 					gitRun (repo state) ["commit", "-m",
@@ -107,18 +110,20 @@ unannexFile state file = do
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
 annexGetFile state file = do
-	alreadyannexed <- lookupBackend state file
+	-- TODO check if already annexed
+	let alreadyannexed = Just 1
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
-		Just backend -> do
+		Just _ -> do
 			key <- fileKey file
+			backend <- fileBackend file
 			inannex <- inAnnex state backend key
 			if (inannex)
 				then return ()
 				else do
 					let dest = annexLocation state backend key
 					createDirectoryIfMissing True (parentDir dest)
-					success <- retrieveFile state file dest
+					success <- retrieveFile state key dest
 					if (success)
 						then do
 							logStatus state key ValuePresent

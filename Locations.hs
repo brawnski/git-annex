@@ -30,7 +30,7 @@ gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
  -     is one to one.
  - -}
 keyFile :: Key -> FilePath
-keyFile key = replace "/" "%" $ replace "%" "%s" $ replace "&" "&a" key
+keyFile key = replace "/" "%" $ replace "%" "%s" $ replace "&" "&a" $ show key
 
 {- An annexed file's content is stored in 
  - .git/annex/<backend>/<key> ; this allows deriving the key and backend

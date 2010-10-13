@@ -27,8 +27,8 @@ dummyRemove state url = return False
 
 downloadUrl :: State -> Key -> FilePath -> IO Bool
 downloadUrl state url file = do
-	putStrLn $ "download: " ++ url
-	result <- try $ rawSystem "curl" ["-#", "-o", file, url]
+	putStrLn $ "download: " ++ (show url)
+	result <- try $ rawSystem "curl" ["-#", "-o", file, (show url)]
 	case (result) of
 		Left _ -> return False
 		Right _ -> return True

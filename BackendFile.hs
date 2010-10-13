@@ -15,12 +15,13 @@ backend = Backend {
 
 -- direct mapping from filename to key
 keyValue :: State -> FilePath -> IO (Maybe Key)
-keyValue state file = return $ Just file
+keyValue state file = return $ Just $ Key file
 
 {- This backend does not really do any independant data storage,
  - it relies on the file contents in .git/annex/ in this repo,
  - and other accessible repos. So storing or removing a key is
- - a no-op. -}
+ - a no-op. TODO until support is added for git annex --push otherrepo,
+ - then these could implement that.. -}
 dummyStore :: State -> FilePath -> Key -> IO (Bool)
 dummyStore state file key = return True
 dummyRemove :: State -> Key -> IO Bool

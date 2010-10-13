@@ -16,15 +16,17 @@
 module Backend (
 	lookupBackend,
 	storeFile,
+	dropFile,
 	retrieveFile,
 	fileKey,
-	dropFile
+	fileBackend
 ) where
 
 import System.Directory
 import System.FilePath
 import Data.String.Utils
 import System.Posix.Files
+import BackendList
 import Locations
 import GitRepo
 import Utility
@@ -47,48 +49,52 @@ storeFile' (b:bs) state file = do
 	where
 		nextbackend = storeFile' bs state file
 
-{- Attempts to retrieve an file from one of the backends, saving it to
+{- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: State -> FilePath -> FilePath -> IO Bool
-retrieveFile state file dest = do
-	result <- lookupBackend state file
+retrieveFile :: State -> Key -> FilePath -> IO Bool
+retrieveFile state key dest = do
+	result <- lookupBackend state key
 	case (result) of
 		Nothing -> return False
-		Just backend -> do
-			key <- fileKey file
-			(retrieveKeyFile backend) state key dest
+		Just backend -> (retrieveKeyFile backend) state key dest
 
-{- Drops the key for a file from the backend that has it. -}
-dropFile :: State -> FilePath -> IO (Maybe (Key, Backend))
-dropFile state file = do
-	result <- lookupBackend state file
+{- Drops a key from the backend that has it. -}
+dropFile :: State -> Key -> IO (Maybe (Key, Backend))
+dropFile state key = do
+	result <- lookupBackend state key
 	case (result) of
 		Nothing -> return Nothing
 		Just backend -> do
-			key <- fileKey file
 			(removeKey backend) state key
 			return $ Just (key, backend)
 
-{- Looks up the backend used for an already annexed file. -}
-lookupBackend :: State -> FilePath -> IO (Maybe Backend)
-lookupBackend state file = lookupBackend' (backends state) state file
+{- Looks up the backend that has a key. -}
+lookupBackend :: State -> Key -> IO (Maybe Backend)
+lookupBackend state key = lookupBackend' (backends state) state key
 lookupBackend' [] _ _ = return Nothing
-lookupBackend' (b:bs) state file = do
-	present <- checkBackend b state file
+lookupBackend' (b:bs) state key = do
+	present <- checkBackend b state key
 	if present
 		then
 			return $ Just b
 		else
-			lookupBackend' bs state file
+			lookupBackend' bs state key
 
-{- Checks if a file is available via a given backend. -}
-checkBackend :: Backend -> State -> FilePath -> IO (Bool)
-checkBackend backend state file = 
-	doesFileExist $ annexLocation state backend file
+{- Checks if a key is available via a given backend. -}
+checkBackend :: Backend -> State -> Key -> IO (Bool)
+checkBackend backend state key = 
+	doesFileExist $ annexLocation state backend key
 
 {- Looks up the key corresponding to an annexed file,
  - by examining what the file symlinks to. -}
 fileKey :: FilePath -> IO Key
 fileKey file = do
 	l <- readSymbolicLink (file)
-	return $ takeFileName $ l
+	return $ Key $ takeFileName $ l
+
+{- Looks up the backend corresponding to an annexed file,
+ - by examining what the file symlinks to. -}
+fileBackend :: FilePath -> IO Backend
+fileBackend file = do
+	l <- readSymbolicLink (file)
+	return $ lookupBackendName $ takeFileName $ parentDir $ l
