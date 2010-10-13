@@ -41,20 +41,24 @@ startAnnex = do
 		backends = parseBackendList $ gitConfig r' "annex.backends" ""
 	}
 
+inBackend file yes no = do
+	r <- lookupFile file
+	case (r) of
+		Just v -> yes v
+		Nothing -> no
+notinBackend file yes no = inBackend file no yes
+
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
 annexFile :: State -> FilePath -> IO ()
-annexFile state file = do
-	r <- lookupFile file
-	case (r) of
-		Just _ -> error $ "already annexed " ++ file
-		Nothing -> do
-			checkLegal file
-			stored <- storeFile state file
-			case (stored) of
-				Nothing -> error $ "no backend could store: " ++ file
-				Just (key, backend) -> setup key backend
+annexFile state file = inBackend file err $ do
+	checkLegal file
+	stored <- storeFile state file
+	case (stored) of
+		Nothing -> error $ "no backend could store: " ++ file
+		Just (key, backend) -> setup key backend
 	where
+		err = error $ "already annexed " ++ file
 		checkLegal file = do
 			s <- getSymbolicLinkStatus file
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
@@ -82,27 +86,25 @@ annexFile state file = do
 
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
-unannexFile state file = do
-	r <- lookupFile file
-	case (r) of
-		Nothing -> error $ "not annexed " ++ file
-		Just (key, backend) -> do
-			dropped <- dropFile state backend key
-			if (not dropped)
-				then error $ "backend refused to drop " ++ file
-				else do
-					let src = annexLocation state backend key
-					removeFile file
-					gitRun (repo state) ["rm", file]
-					gitRun (repo state) ["commit", "-m",
-						("git-annex unannexed " ++ file),
-						file]
-					-- git rm deletes empty directories;
-					-- put them back
-					createDirectoryIfMissing True (parentDir file)
-					renameFile src file
-					logStatus state key ValueMissing
-					return ()
+unannexFile state file = notinBackend file err $ \(key, backend) -> do
+	dropped <- dropFile state backend key
+	if (not dropped)
+		then error $ "backend refused to drop " ++ file
+		else cleanup key backend
+	where
+		err = error $ "not annexed " ++ file
+		cleanup key backend = do
+			let src = annexLocation state backend key
+			removeFile file
+			gitRun (repo state) ["rm", file]
+			gitRun (repo state) ["commit", "-m",
+				("git-annex unannexed " ++ file), file]
+			-- git rm deletes empty directories;
+			-- put them back
+			createDirectoryIfMissing True (parentDir file)
+			renameFile src file
+			logStatus state key ValueMissing
+			return ()
 
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
