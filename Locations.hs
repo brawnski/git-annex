@@ -5,7 +5,8 @@ module Locations (
 	gitStateDir,
 	stateLoc,
 	keyFile,
-	annexLocation
+	annexLocation,
+	annexLocationRelative
 ) where
 
 import Data.String.Utils
@@ -28,6 +29,10 @@ keyFile key = replace "/" "&s" $ replace "&" "&a" key
  - .git/annex/<backend>/<key> ; this allows deriving the key and backend
  - by looking at the symlink to it. -}
 annexLocation :: State -> Backend -> Key -> FilePath
-annexLocation state backend key =
+annexLocation state backend key = 
+	(gitWorkTree $ repo state) ++ "/" ++ 
+	(annexLocationRelative state backend key)
+annexLocationRelative :: State -> Backend -> Key -> FilePath
+annexLocationRelative state backend key =
 	gitDir (repo state) ++ "/annex/" ++ (name backend) ++ 
 		"/" ++ (keyFile key)

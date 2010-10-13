@@ -59,7 +59,7 @@ annexFile state file = do
 			let dest = annexLocation state backend key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
-			createSymbolicLink dest file
+			createSymbolicLink (annexLocationRelative state backend key) file
 			gitRun (repo state) ["add", file]
 			gitRun (repo state) ["commit", "-m", 
 				("git-annex annexed " ++ file), file]

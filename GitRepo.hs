@@ -98,14 +98,12 @@ gitAttributes repo = assertlocal repo $ do
 		then (top repo) ++ "/info/.gitattributes"
 		else (top repo) ++ "/.gitattributes"
 
-{- Path to a repository's .git directory.
- - (For a bare repository, that is the root of the repository.)
- - TODO: support GIT_DIR -}
+{- Path to a repository's .git directory, relative to its topdir. -}
 gitDir :: GitRepo -> String
 gitDir repo = assertlocal repo $
 	if (bare repo)
-		then top repo
-		else top repo ++ "/.git"
+		then ""
+		else ".git"
 
 {- Path to a repository's --work-tree. -}
 gitWorkTree :: GitRepo -> FilePath
@@ -130,7 +128,7 @@ gitRelative repo file = drop (length absrepo) absfile
 gitCommandLine :: GitRepo -> [String] -> [String]
 gitCommandLine repo params = assertlocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++(gitDir repo), "--work-tree="++(top repo)] ++ params
+	["--git-dir="++(top repo)++"/"++(gitDir repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 gitRun :: GitRepo -> [String] -> IO ()
