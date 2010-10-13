@@ -91,11 +91,9 @@ used to store the file contents, and git-annex would then retrieve them
 as needed and put them in `.git/annex/`.
 
 When a file is annexed, a key is generated from its content and/or metadata.
-This key can later be used to retrieve the file's content (its value). This
-key generation must be stable for a given file content, name, and size.
-
-The mapping from filename to its key is stored in the .git-annex directory,
-in a file named `key/$filename.$backend`
+The file checked into git symlinks to the key. This key can later be used
+to retrieve the file's content (its value). This key generation must be
+stable for a given file content, name, and size.
 
 Multiple pluggable backends are supported, and more than one can be used
 to store different files' contents in a given repository.
@@ -183,8 +181,8 @@ not be dropped right away, depending on number of copies available.
 
 ### branching
 
-The use of `.git-annex` to store state means that if a repo has branches 
-and the user switched between them, git-annex will see different state in
-the different branches. Whether that is a bug or a feature may depend on
-point of view -- call it Too Be Determined. An alternative would be to
-store data directly in the git repo as `pristine-tar` does.
+The use of `.git-annex` to store logs means that if a repo has branches 
+and the user switched between them, git-annex will see different logs in
+the different branches, and so may miss info about what remotes have which
+files (though it can re-learn). An alternative would be to
+store the log data directly in the git repo as `pristine-tar` does.

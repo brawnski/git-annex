@@ -25,8 +25,8 @@ import LocationLog
 import Types
 
 {- Checks if a given key is currently present in the annexLocation -}
-inAnnex :: State -> Key -> IO Bool
-inAnnex state key = doesFileExist $ annexLocation state key
+inAnnex :: State -> Backend -> Key -> IO Bool
+inAnnex state backend key = doesFileExist $ annexLocation state backend key
 
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}
@@ -56,15 +56,14 @@ annexFile state file = do
 				Just (key, backend) -> setup key backend
 	where
 		setup key backend = do
-			let dest = annexLocation state key
+			let dest = annexLocation state backend key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink dest file
-			gitRun (repo state) ["add", file, bfile]
+			gitRun (repo state) ["add", file]
 			gitRun (repo state) ["commit", "-m", 
-				("git-annex annexed " ++ file), file, bfile]
+				("git-annex annexed " ++ file), file]
 			logStatus state key ValuePresent
-				where bfile = backendFile state backend file
 		checkLegal file = do
 			s <- getSymbolicLinkStatus file
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
@@ -82,16 +81,15 @@ unannexFile state file = do
 			case (mkey) of
 				Nothing -> return ()
 				Just (key, backend) -> do
-					let src = annexLocation state key
+					let src = annexLocation state backend key
 					removeFile file
-					gitRun (repo state) ["rm", file, bfile]
+					gitRun (repo state) ["rm", file]
 					gitRun (repo state) ["commit", "-m",
 						("git-annex unannexed " ++ file),
-						file, bfile]
+						file]
 					renameFile src file
 					logStatus state key ValueMissing
 					return ()
-						where bfile = backendFile state backend file
 
 {- Transfers the file from a remote. -}
 annexGetFile :: State -> FilePath -> IO ()
@@ -100,12 +98,12 @@ annexGetFile state file = do
 	case (alreadyannexed) of
 		Nothing -> error $ "not annexed " ++ file
 		Just backend -> do
-			key <- lookupKey state backend file
-			inannex <- inAnnex state key
+			key <- fileKey file
+			inannex <- inAnnex state backend key
 			if (inannex)
 				then return ()
 				else do
-					let dest = annexLocation state key
+					let dest = annexLocation state backend key
 					createDirectoryIfMissing True (parentDir dest)
 					success <- retrieveFile state file dest
 					if (success)

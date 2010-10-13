@@ -17,12 +17,14 @@ module Backend (
 	lookupBackend,
 	storeFile,
 	retrieveFile,
-	lookupKey,
+	fileKey,
 	dropFile
 ) where
 
 import System.Directory
+import System.FilePath
 import Data.String.Utils
+import System.Posix.Files
 import Locations
 import GitRepo
 import Utility
@@ -41,7 +43,6 @@ storeFile' (b:bs) state file = do
 			if (not stored)
 				then nextbackend
 				else do
-					recordKey state b file key
 					return $ Just (key, b)
 	where
 		nextbackend = storeFile' bs state file
@@ -53,9 +54,9 @@ retrieveFile state file dest = do
 	result <- lookupBackend state file
 	case (result) of
 		Nothing -> return False
-		Just b -> do
-			key <- lookupKey state b file
-			(retrieveKeyFile b) state key dest
+		Just backend -> do
+			key <- fileKey file
+			(retrieveKeyFile backend) state key dest
 
 {- Drops the key for a file from the backend that has it. -}
 dropFile :: State -> FilePath -> IO (Maybe (Key, Backend))
@@ -63,11 +64,10 @@ dropFile state file = do
 	result <- lookupBackend state file
 	case (result) of
 		Nothing -> return Nothing
-		Just b -> do
-			key <- lookupKey state b file
-			(removeKey b) state key
-			removeFile $ backendFile state b file
-			return $ Just (key, b)
+		Just backend -> do
+			key <- fileKey file
+			(removeKey backend) state key
+			return $ Just (key, backend)
 
 {- Looks up the backend used for an already annexed file. -}
 lookupBackend :: State -> FilePath -> IO (Maybe Backend)
@@ -83,22 +83,12 @@ lookupBackend' (b:bs) state file = do
 
 {- Checks if a file is available via a given backend. -}
 checkBackend :: Backend -> State -> FilePath -> IO (Bool)
-checkBackend backend state file = doesFileExist $ backendFile state backend file
+checkBackend backend state file = 
+	doesFileExist $ annexLocation state backend file
 
-{- Looks up the key a backend uses for an already annexed file. -}
-lookupKey :: State -> Backend -> FilePath -> IO Key
-lookupKey state backend file = do
-	k <- readFile (backendFile state backend file)
-	return $ chomp k
-	where
-		chomp s = if (endswith "\n" s)
-				then (reverse . (drop 1) . reverse) s
-				else s
-
-{- Records the key used for an annexed file. -}
-recordKey :: State -> Backend -> FilePath -> Key -> IO ()
-recordKey state backend file key = do
-	createDirectoryIfMissing True (parentDir record)
-	writeFile record $ key ++ "\n"
-	where
-		record = backendFile state backend file
+{- Looks up the key corresponding to an annexed file,
+ - by examining what the file symlinks to. -}
+fileKey :: FilePath -> IO Key
+fileKey file = do
+	l <- readSymbolicLink (file)
+	return $ takeFileName $ l
