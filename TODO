@@ -1,12 +1,5 @@
-* bug when annexing files in a subdir of a git repo
-* how to handle git mv file?
-
-* if the annexed files were in .git/annex/<backend>/key, and 
-  files in the repo symlink to that, the .git-annex/key/<file>.<backend>
-  would be redundant, and not needed 
-
-     -- no separate merge problem with it
-     -- want to add an url? `ln -s .git/annex/<backend>/http:%%kitenet.net%foo myfile`
+* bug when annexing files while in a subdir of a git repo
+* bug when specifying full path to files when annexing
 
 * implement retrieval for backendfile
 
@@ -15,4 +8,6 @@
 * hook up LocationLog
 * --push/--pull/--want/--drop
 
-* finish BackendUrl and BackendChecksum
+* how to handle git mv file?
+
+* finish BackendChecksum
