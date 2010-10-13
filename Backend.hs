@@ -9,9 +9,6 @@
  - This key can later be used to retrieve the file's content (its value). This
  - key generation must be stable for a given file content, name, and size.
  - 
- - The mapping from filename to its key is stored in the .git-annex directory,
- - in a file named `$filename.$backend`
- - 
  - Multiple pluggable backends are supported, and more than one can be used
  - to store different files' contents in a given repository.
  - -}

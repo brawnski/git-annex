@@ -30,9 +30,10 @@ keyFile key = replace "/" "%" $ replace "%" "%%" key
 annexLocation :: State -> Key -> FilePath
 annexLocation state key = gitDir (repo state) ++ "/annex/" ++ (keyFile key)
 
-{- Name of state file that holds the key for an annexed file,
- - using a given backend. -}
+{- The mapping from filename to its key is stored in the .git-annex directory,
+ - in a file named `key/$filename.$backend` -}
 backendFile :: State -> Backend -> FilePath -> String
 backendFile state backend file =
-	gitStateDir (repo state) ++ (gitRelative (repo state) file) ++ 
+	gitStateDir (repo state) ++ "key/" ++
+		(gitRelative (repo state) file) ++ 
 		"." ++ (name backend)
