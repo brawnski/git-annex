@@ -36,7 +36,9 @@ Enough broad picture, here's how it actually looks:
   downloaded.
 * `git annex --drop $file` indicates that you no longer want the file's
   content to be available in this repository.
-* `git annex --unannex $file` undoes a `git annex --add`.
+* `git annex --unannex $file` undoes a `git annex --add`. But use `--drop`
+  if you're just done with a file; only use `--unannex` if you
+  accidentially added a file.
 * `git annex $file` is a shorthand for either --add or --get. If the file
   is already known, it does --get, otherwise it does --add.
 
@@ -74,12 +76,12 @@ only copies of a file.
 
 ## the .git-annex directory
 
-The `.git-annex` directory at the top of the repository, is used to store
+The `.git-annex` directory at the top of the repository is used to store
 git-annex information that should be propigated between repositories.
 
 Data is stored here in files that are arranged to avoid conflicts in most
 cases. A conflict could occur if a file with the same name but different
-content was added to multiple repositories.
+content was added to different repositories.
 
 ## key/value storage
 
@@ -93,7 +95,7 @@ This key can later be used to retrieve the file's content (its value). This
 key generation must be stable for a given file content, name, and size.
 
 The mapping from filename to its key is stored in the .git-annex directory,
-in a file named `$filename.$backend`
+in a file named `key/$filename.$backend`
 
 Multiple pluggable backends are supported, and more than one can be used
 to store different files' contents in a given repository.
@@ -116,7 +118,7 @@ This can be useful when using it for archiving with offline storage. When
 you indicate you --want a file, git-annex will tell you which repositories
 have the file's content.
 
-Location tracking information is stored in `.git-annex/$filename.log`.
+Location tracking information is stored in `.git-annex/$key.log`.
 Repositories record their UUID and the date when they --get or --drop 
 a file's content. (Git is configured to use a union merge for this file,
 so the lines may be in arbitrary order, but it will never conflict.)
@@ -140,10 +142,12 @@ example:
   new files. (default: file, checksum, url)
 * `remote.<name>.annex-cost` -- When determining which repository to
   transfer annexed files from or to, ones with lower costs are preferred.
-  The default cost is 50. Note that other factors may be configured
-  when pushing files to repositories, in particular, whether the repository
-  is on a filesystem with sufficient free space.
-* `remote.<name>.annex-uuid` -- git-annex caches UUIDs of remotes here
+  The default cost is 100 for local repositories, and 200 for remote
+  repositories. Note that other factors may be configured when pushing
+  files to repositories, in particular, whether the repository is on
+  a filesystem with sufficient free space.
+* `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
+  here.
 
 ## issues
 
