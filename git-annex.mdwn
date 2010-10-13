@@ -79,10 +79,6 @@ only copies of a file.
 The `.git-annex` directory at the top of the repository is used to store
 git-annex information that should be propigated between repositories.
 
-Data is stored here in files that are arranged to avoid conflicts in most
-cases. A conflict could occur if a file with the same name but different
-content was added to different repositories.
-
 ## key/value storage
 
 git-annex uses a key/value abstraction layer to allow files contents to be

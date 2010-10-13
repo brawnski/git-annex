@@ -34,7 +34,7 @@ startAnnex :: IO State
 startAnnex = do
 	r <- gitRepoFromCwd
 	r' <- prepUUID r
-	gitPrep r'
+	gitSetup r'
 
 	return State {
 		repo = r',
@@ -129,8 +129,8 @@ annexPullRepo :: State -> String -> IO ()
 annexPullRepo state reponame = do error "not implemented" -- TODO
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
-gitPrep :: GitRepo -> IO ()
-gitPrep repo = do
+gitSetup :: GitRepo -> IO ()
+gitSetup repo = do
 	-- configure git to use union merge driver on state files
 	exists <- doesFileExist attributes
 	if (not exists)
