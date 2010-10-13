@@ -24,10 +24,6 @@ import UUID
 import LocationLog
 import Types
 
-{- Checks if a given key is currently present in the annexLocation -}
-inAnnex :: State -> Backend -> Key -> IO Bool
-inAnnex state backend key = doesFileExist $ annexLocation state backend key
-
 {- On startup, examine the git repo, prepare it, and record state for
  - later. -}
 startAnnex :: IO State
@@ -89,7 +85,6 @@ unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = notinBackend file err $ \(key, backend) -> do
 	dropFile state backend key
 	logStatus state key ValueMissing
-	let src = annexLocation state backend key
 	removeFile file
 	gitRun (repo state) ["rm", file]
 	gitRun (repo state) ["commit", "-m",
@@ -97,12 +92,13 @@ unannexFile state file = notinBackend file err $ \(key, backend) -> do
 	-- git rm deletes empty directories;
 	-- put them back
 	createDirectoryIfMissing True (parentDir file)
+	let src = annexLocation state backend key
 	renameFile src file
 	return ()
 	where
 		err = error $ "not annexed " ++ file
 
-{- Transfers the file from a remote. -}
+{- Gets an annexed file from one of the backends. -}
 annexGetFile :: State -> FilePath -> IO ()
 annexGetFile state file = notinBackend file err $ \(key, backend) -> do
 	inannex <- inAnnex state backend key
@@ -165,3 +161,7 @@ logStatus state key status = do
 	f <- logChange (repo state) key (getUUID (repo state)) status
 	gitRun (repo state) ["add", f]
 	gitRun (repo state) ["commit", "-m", "git-annex log update", f]
+
+{- Checks if a given key is currently present in the annexLocation -}
+inAnnex :: State -> Backend -> Key -> IO Bool
+inAnnex state backend key = doesFileExist $ annexLocation state backend key
