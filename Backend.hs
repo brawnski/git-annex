@@ -69,5 +69,5 @@ lookupFile file = do
 		lookup = do
 			l <- readSymbolicLink file
 			return $ Just (k l, b l)
-		k l = Key $ takeFileName $ l
+		k l = fileKey $ takeFileName $ l
 		b l = lookupBackendName $ takeFileName $ parentDir $ l

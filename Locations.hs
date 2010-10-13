@@ -5,6 +5,7 @@ module Locations (
 	gitStateDir,
 	stateLoc,
 	keyFile,
+	fileKey,
 	annexLocation,
 	annexLocationRelative
 ) where
@@ -19,19 +20,6 @@ stateLoc = ".git-annex"
 gitStateDir :: GitRepo -> FilePath
 gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
 
-{- Converts a key into a filename fragment.
- -
- - Escape "/" in the key name, to keep a flat tree of files and avoid
- - issues with keys containing "/../" or ending with "/" etc. 
- -
- - "/" is escaped to "%" because it's short and rarely used, and resembles
- -     a slash
- - "%" is escaped to "&s", and "&" to "&a"; this ensures that the mapping
- -     is one to one.
- - -}
-keyFile :: Key -> FilePath
-keyFile key = replace "/" "%" $ replace "%" "%s" $ replace "&" "&a" $ show key
-
 {- An annexed file's content is stored in 
  - .git/annex/<backend>/<key> ; this allows deriving the key and backend
  - by looking at the symlink to it. -}
@@ -45,3 +33,20 @@ annexLocationRelative :: State -> Backend -> Key -> FilePath
 annexLocationRelative state backend key = 
 	gitDir (repo state) ++ "/annex/" ++ (name backend) ++ 
 		"/" ++ (keyFile key)
+
+{- Converts a key into a filename fragment.
+ -
+ - Escape "/" in the key name, to keep a flat tree of files and avoid
+ - issues with keys containing "/../" or ending with "/" etc. 
+ -
+ - "/" is escaped to "%" because it's short and rarely used, and resembles
+ -     a slash
+ - "%" is escaped to "&s", and "&" to "&a"; this ensures that the mapping
+ -     is one to one.
+ - -}
+keyFile :: Key -> FilePath
+keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a" $ show key
+
+{- Reverses keyFile -}
+fileKey :: FilePath -> Key
+fileKey file = Key $ replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file

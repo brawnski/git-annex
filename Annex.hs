@@ -87,10 +87,8 @@ annexFile state file = inBackend file err $ do
 {- Inverse of annexFile. -}
 unannexFile :: State -> FilePath -> IO ()
 unannexFile state file = notinBackend file err $ \(key, backend) -> do
-	dropped <- dropFile state backend key
-	if (not dropped)
-		then error $ "backend refused to drop " ++ file
-		else cleanup key backend
+	dropFile state backend key
+	cleanup key backend
 	where
 		err = error $ "not annexed " ++ file
 		cleanup key backend = do
