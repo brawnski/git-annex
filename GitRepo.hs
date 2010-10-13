@@ -54,22 +54,19 @@ data GitRepo =
 		remoteName :: Maybe String
 	} deriving (Show, Read, Eq)
 
-{- Local GitRepo constructor. Can optionally query the repo for its config. -}
-gitRepoFromPath :: FilePath -> Bool -> IO GitRepo
-gitRepoFromPath dir query = do
-	let r = LocalGitRepo {
+{- Local GitRepo constructor. -}
+gitRepoFromPath :: FilePath -> GitRepo
+gitRepoFromPath dir =
+	LocalGitRepo {
 		top = dir,
 		config = Map.empty,
 		remoteName = Nothing
 	}
-	if (query)
-		then gitConfigRead r
-		else return r
 
 {- Remote GitRepo constructor. Throws exception on invalid url. -}
-gitRepoFromUrl :: String -> Bool -> IO GitRepo
-gitRepoFromUrl url query = do
-	return $ RemoteGitRepo {
+gitRepoFromUrl :: String -> GitRepo
+gitRepoFromUrl url =
+	RemoteGitRepo {
 		url = url,
 		top = path url,
 		config = Map.empty,
@@ -187,18 +184,17 @@ gitConfig repo key defaultValue =
 	Map.findWithDefault defaultValue key (config repo)
 
 {- Returns a list of a repo's configured remotes. -}
-gitConfigRemotes :: GitRepo -> IO [GitRepo]
-gitConfigRemotes repo = mapM construct remotes
+gitConfigRemotes :: GitRepo -> [GitRepo]
+gitConfigRemotes repo = map construct remotes
 	where
 		remotes = toList $ filter $ config repo
 		filter = filterWithKey (\k _ -> isremote k)
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
 		remotename k = (split "." k) !! 1
-		construct (k,v) = do
-			r <- if (isURI v)
-				then gitRepoFromUrl v False
-				else gitRepoFromPath v False
-			return r { remoteName = Just $ remotename k }
+		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
+		gen v = if (isURI v)
+			then gitRepoFromUrl v
+			else gitRepoFromPath v
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoFromCwd :: IO GitRepo
@@ -206,7 +202,7 @@ gitRepoFromCwd = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
-		(Just dir) -> gitRepoFromPath dir True
+		(Just dir) -> return $ gitRepoFromPath dir
 		Nothing -> error "Not in a git repository."
 
 seekUp :: String -> (String -> IO Bool) -> IO (Maybe String)

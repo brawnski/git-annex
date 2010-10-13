@@ -9,7 +9,7 @@ module Annex (
 	annexWantFile,
 	annexDropFile,
 	annexPushRepo,
-	repoCost,
+	annexRemotes,
 	annexPullRepo
 ) where
 
@@ -31,8 +31,9 @@ import Types
 startAnnex :: IO State
 startAnnex = do
 	r <- gitRepoFromCwd
-	r' <- prepUUID r
-	gitSetup r'
+	r' <- gitConfigRead r
+	r'' <- prepUUID r'
+	gitSetup r''
 
 	return State {
 		repo = r',
@@ -167,6 +168,10 @@ logStatus state key status = do
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: State -> Backend -> Key -> IO Bool
 inAnnex state backend key = doesFileExist $ annexLocation state backend key
+
+{- Ordered list of remotes for the annex. -}
+annexRemotes :: State -> [GitRepo]
+annexRemotes state = reposByCost state $ gitConfigRemotes (repo state)
 
 {- Orders a list of git repos by cost. -}
 reposByCost :: State -> [GitRepo] -> [GitRepo]
