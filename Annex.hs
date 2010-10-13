@@ -91,7 +91,7 @@ unannexFile state file = do
 			case (mkey) of
 				Nothing -> return ()
 				Just (key, backend) -> do
-					let src = annexLocation state backend key
+					let src = annexLocation state backend file
 					removeFile file
 					gitRun (repo state) ["rm", file]
 					gitRun (repo state) ["commit", "-m",
