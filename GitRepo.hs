@@ -40,11 +40,14 @@ import Utility
 data GitRepo = 
 	LocalGitRepo {
 		top :: FilePath,
-		config :: Map String String
+		config :: Map String String,
+		-- remoteName holds the name used for this repo in remotes
+		remoteName :: Maybe String 
 	} | RemoteGitRepo {
 		url :: String,
 		top :: FilePath,
-		config :: Map String String
+		config :: Map String String,
+		remoteName :: Maybe String
 	} deriving (Show, Read, Eq)
 
 {- Local GitRepo constructor. Can optionally query the repo for its config. -}
@@ -52,7 +55,8 @@ gitRepoFromPath :: FilePath -> Bool -> IO GitRepo
 gitRepoFromPath dir query = do
 	let r = LocalGitRepo {
 		top = dir,
-		config = Map.empty
+		config = Map.empty,
+		remoteName = Nothing
 	}
 	if (query)
 		then gitConfigRead r
@@ -64,7 +68,8 @@ gitRepoFromUrl url query = do
 	return $ RemoteGitRepo {
 		url = url,
 		top = path url,
-		config = Map.empty
+		config = Map.empty,
+		remoteName = Nothing
 	}
 	where path url = uriPath $ fromJust $ parseURI url
 
@@ -174,13 +179,15 @@ gitConfig repo key defaultValue =
 gitConfigRemotes :: GitRepo -> IO [GitRepo]
 gitConfigRemotes repo = mapM construct remotes
 	where
-		remotes = elems $ filter $ config repo
+		remotes = toList $ filter $ config repo
 		filter = filterWithKey (\k _ -> isremote k)
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
-		construct r =
-			if (isURI r)
-				then gitRepoFromUrl r False
-				else gitRepoFromPath r False
+		remotename k = (split "." k) !! 1
+		construct (k,v) = do
+			r <- if (isURI v)
+				then gitRepoFromUrl v False
+				else gitRepoFromPath v False
+			return r { remoteName = Just $ remotename k }
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoFromCwd :: IO GitRepo
