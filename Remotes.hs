@@ -3,19 +3,21 @@
 module Remotes (
 	list,
 	withKey,
-	ensureGitConfigRead
+	tryGitConfigRead
 ) where
 
 import Control.Monad.State (liftIO)
+import IO
 import qualified Data.Map as Map
 import Data.String.Utils
+import List
+import Maybe
 import Types
 import qualified GitRepo as Git
 import qualified Annex
 import LocationLog
 import Locations
 import UUID
-import List
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -27,12 +29,25 @@ withKey key = do
 	g <- Annex.gitRepo
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
+	-- this only uses cached data, so may not find new remotes
 	remotes <- reposByUUID allremotes uuids
 	if (0 == length remotes)
-		then error $ "no configured git remotes have: " ++ (keyFile key) ++ "\n" ++
+		then tryharder allremotes uuids
+		else return remotes
+	where
+		tryharder allremotes uuids = do
+			-- more expensive; check each remote's config
+			mayberemotes <- mapM tryGitConfigRead allremotes
+			let allremotes' = catMaybes mayberemotes
+			remotes' <- reposByUUID allremotes' uuids
+			if (0 == length remotes')
+				then err uuids
+				else return remotes'
+		err uuids = 
+			error $ "no available git remotes have: " ++
+			(keyFile key) ++ "\n" ++
 			"It has been seen before in these repositories:\n" ++
 			prettyPrintUUIDs uuids
-		else return remotes
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
@@ -69,20 +84,25 @@ repoCost r = do
 		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
 
 {- The git configs for the git repo's remotes is not read on startup
- - because reading it may be expensive. This function ensures that it is
- - read for a specified remote, and updates state. It returns the
- - updated git repo also. -}
-ensureGitConfigRead :: Git.Repo -> Annex Git.Repo
-ensureGitConfigRead r = do
+ - because reading it may be expensive. This function tries to read the
+ - config for a specified remote, and updates state. If successful, it
+ - returns the updated git repo. -}
+tryGitConfigRead :: Git.Repo -> Annex (Maybe Git.Repo)
+tryGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
-			r' <- liftIO $ Git.configRead r
-			g <- Annex.gitRepo
-			let l = Git.remotes g
-			let g' = Git.remotesAdd g $ exchange l r'
-			Annex.gitRepoChange g'
-			return r'
-		else return r
+			liftIO $ putStrLn $ "read config for " ++ (show r)
+			result <- liftIO $ try (Git.configRead r)
+			case (result) of
+				Left err -> return Nothing
+				Right r' -> do
+					g <- Annex.gitRepo
+					let l = Git.remotes g
+					let g' = Git.remotesAdd g $
+						exchange l r'
+					Annex.gitRepoChange g'
+					return $ Just r'
+		else return $ Just r
 	where 
 		exchange [] new = []
 		exchange (old:ls) new =

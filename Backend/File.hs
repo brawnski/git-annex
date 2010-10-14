@@ -49,13 +49,16 @@ copyKeyFile key file = do
 			-- annexLocation needs the git config to have been
 			-- read for a remote, so do that now,
 			-- if it hasn't been already
-			r' <- Remotes.ensureGitConfigRead r
-			result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
-        		case (result) of
-		                Left err -> do
-					liftIO $ hPutStrLn stderr (show err)
-					trycopy full rs
-		                Right succ -> return True
+			result <- Remotes.tryGitConfigRead r
+			case (result) of
+				Nothing -> trycopy full rs
+				Just r' -> do
+					result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
+		        		case (result) of
+				                Left err -> do
+							liftIO $ hPutStrLn stderr (show err)
+							trycopy full rs
+				                Right succ -> return True
 
 {- Tries to copy a file from a remote, exception on error. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()
@@ -67,6 +70,8 @@ copyFromRemote r key file = do
 		else getremote
 	return ()
 	where
-		getlocal = rawSystem "cp" ["-a", location, file]
+		getlocal = do
+			rawSystem "cp" ["-a", location, file]
+			putStrLn "cp done"
 		getremote = error "get via network not yet implemented!"
 		location = annexLocation r backend key
