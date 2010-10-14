@@ -1,14 +1,14 @@
 {- git-annex "checksum" backend
  - -}
 
-module BackendChecksum (backend) where
+module Backend.Checksum (backend) where
 
-import qualified BackendFile
+import qualified Backend.File
 import Data.Digest.Pure.SHA
 import BackendTypes
 
 -- based on BackendFile just with a different key type
-backend = BackendFile.backend {
+backend = Backend.File.backend {
 	name = "checksum",
 	getKey = keyValue
 }

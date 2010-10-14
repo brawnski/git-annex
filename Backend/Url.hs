@@ -1,7 +1,7 @@
 {- git-annex "url" backend
  - -}
 
-module BackendUrl (backend) where
+module Backend.Url (backend) where
 
 import Control.Monad.State
 import System.Cmd

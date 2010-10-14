@@ -1,7 +1,7 @@
 {- git-annex "file" backend
  - -}
 
-module BackendFile (backend) where
+module Backend.File (backend) where
 
 import Control.Monad.State
 import System.IO
