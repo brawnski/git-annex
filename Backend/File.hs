@@ -6,6 +6,7 @@ module Backend.File (backend) where
 import Control.Monad.State
 import System.IO
 import System.Cmd
+import System.Exit
 import Control.Exception
 import BackendTypes
 import LocationLog
@@ -68,10 +69,11 @@ copyFromRemote r key file = do
 	if (Git.repoIsLocal r)
 		then getlocal
 		else getremote
-	return ()
 	where
 		getlocal = do
-			rawSystem "cp" ["-a", location, file]
-			putStrLn "cp done"
+			res <-rawSystem "cp" ["-a", location, file]
+			if (res == ExitSuccess)
+				then return ()
+				else error "cp failed"
 		getremote = error "get via network not yet implemented!"
 		location = annexLocation r backend key

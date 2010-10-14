@@ -5,7 +5,7 @@ module Backend.Url (backend) where
 
 import Control.Monad.State
 import System.Cmd
-import IO
+import System.Exit
 import BackendTypes
 
 backend = Backend {
@@ -29,7 +29,7 @@ dummyRemove url = return False
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl url file = do
 	liftIO $ putStrLn $ "download: " ++ (show url)
-	result <- liftIO $ try $ rawSystem "curl" ["-#", "-o", file, (show url)]
-	case (result) of
-		Left _ -> return False
-		Right _ -> return True
+	result <- liftIO $ rawSystem "curl" ["-#", "-o", file, (show url)]
+	if (result == ExitSuccess)
+		then return True
+		else return False
