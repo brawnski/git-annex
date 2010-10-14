@@ -15,6 +15,8 @@ import qualified Remotes
 import qualified GitRepo as Git
 import Utility
 import Core
+import qualified Annex
+import UUID
 
 backend = Backend {
 	name = "file",
@@ -49,6 +51,9 @@ checkKeyFile k = inAnnex backend k
 copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
 	remotes <- Remotes.withKey key
+	if (0 == length remotes)
+		then cantfind
+		else return ()
 	trycopy remotes remotes
 	where
 		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
@@ -68,6 +73,14 @@ copyKeyFile key file = do
 							liftIO $ hPutStrLn stderr (show err)
 							trycopy full rs
 				                Right succ -> return True
+		cantfind = do
+			g <- Annex.gitRepo
+			uuids <- liftIO $ keyLocations g key
+			error $ "no available git remotes have: " ++
+				(keyFile key) ++ (uuidlist uuids)
+		uuidlist [] = ""
+		uuidlist uuids = "\nIt has been seen before in these repositories:\n" ++
+				prettyPrintUUIDs uuids
 
 {- Tries to copy a file from a remote, exception on error. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()

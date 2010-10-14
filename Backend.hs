@@ -15,8 +15,9 @@
 
 module Backend (
 	storeFileKey,
-	removeKey,
 	retrieveKeyFile,
+	removeKey,
+	hasKey,
 	lookupFile
 ) where
 
@@ -76,6 +77,18 @@ retrieveKeyFile backend key dest = (B.retrieveKeyFile backend) key dest
 {- Removes a key from a backend. -}
 removeKey :: Backend -> Key -> Annex Bool
 removeKey backend key = (B.removeKey backend)  key
+
+{- Checks if any backend has a key. -}
+hasKey :: Key -> Annex Bool
+hasKey key = do
+	b <- backendList
+	hasKey' b key
+hasKey' [] key = return False
+hasKey' (b:bs) key = do
+	has <- (B.hasKey b) key
+	if (has)
+		then return True
+		else hasKey' bs key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

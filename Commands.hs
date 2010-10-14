@@ -8,6 +8,7 @@ import System.Posix.Files
 import System.Directory
 import Data.String.Utils
 import List
+import IO
 import qualified GitRepo as Git
 import qualified Annex
 import Utility
@@ -18,6 +19,7 @@ import UUID
 import LocationLog
 import Types
 import Core
+import qualified Remotes
 
 options :: [OptDescr (String -> Annex ())]
 options =
@@ -138,7 +140,7 @@ wantCmd file = do error "not implemented" -- TODO
 {- Indicates a file is not wanted. -}
 dropCmd :: FilePath -> Annex ()
 dropCmd file = notinBackend file err $ \(key, backend) -> do
-	-- TODO only remove if enough copies are present elsewhere
+	requireEnoughCopies key
 	success <- Backend.removeKey backend key
 	if (success)
 		then do
@@ -181,3 +183,40 @@ inBackend file yes no = do
 		Just v -> yes v
 		Nothing -> no
 notinBackend file yes no = inBackend file no yes
+
+{- Checks remotes to verify that enough copies of a key exist to allow
+ - for a key to be safely removed (with no data loss), and fails with an
+ - error if not. -}
+requireEnoughCopies :: Key -> Annex ()
+requireEnoughCopies key = do
+	g <- Annex.gitRepo
+	let numcopies = read $ Git.configGet g config "1"
+	remotes <- Remotes.withKey key
+	if (numcopies > length remotes)
+		then error $ "I only know about " ++ (show $ length remotes) ++ 
+			" out of " ++ (show numcopies) ++ 
+			" necessary copies of: " ++ (keyFile key) ++
+			unsafe
+		else findcopies numcopies remotes []
+	where
+		findcopies 0 _ _ = return () -- success, enough copies found
+		findcopies _ [] bad = die bad
+		findcopies n (r:rs) bad = do
+			result <- liftIO $ try $ haskey r
+			case (result) of
+				Right True -> findcopies (n-1) rs bad
+				Left _ -> findcopies n rs (r:bad)
+		haskey r = do
+			-- To check if a remote has a key, construct a new
+			-- Annex monad and query its backend.
+			a <- Annex.new r
+			(result, _) <- Annex.run a (Backend.hasKey key)
+			return result
+		die bad =
+			error $ "I failed to find enough other copies of: " ++
+				(keyFile key) ++ "\n" ++
+				"I was unable to access these remotes: " ++
+				(Remotes.list bad) ++ unsafe
+		unsafe = "\n  -- According to the " ++ config ++
+			" setting, it is not safe to remove it!"
+		config = "annex.numcopies"

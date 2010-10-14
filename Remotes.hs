@@ -40,15 +40,7 @@ withKey key = do
 			mayberemotes <- mapM tryGitConfigRead allremotes
 			let allremotes' = catMaybes mayberemotes
 			remotes' <- reposByUUID allremotes' uuids
-			if (0 == length remotes')
-				then err uuids
-				else return remotes'
-		err uuids = 
-			error $ "no available git remotes have: " ++
-				(keyFile key) ++ (uuidlist uuids)
-		uuidlist [] = ""
-		uuidlist uuids = "\nIt has been seen before in these repositories:\n" ++
-				prettyPrintUUIDs uuids
+			return remotes'
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
