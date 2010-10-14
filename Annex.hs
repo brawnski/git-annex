@@ -2,14 +2,14 @@
  -}
 
 module Annex (
-	startAnnex,
-	annexFile,
-	unannexFile,
-	annexGetFile,
-	annexWantFile,
-	annexDropFile,
-	annexPushRepo,
-	annexPullRepo
+	start,
+	annexCmd,
+	unannexCmd,
+	getCmd,
+	wantCmd,
+	dropCmd,
+	pushCmd,
+	pullCmd
 ) where
 
 import Control.Monad.State (liftIO)
@@ -17,7 +17,7 @@ import System.Posix.Files
 import System.Directory
 import Data.String.Utils
 import List
-import GitRepo
+import qualified GitRepo as Git
 import Utility
 import Locations
 import Backend
@@ -29,20 +29,20 @@ import AbstractTypes
 {- Create and returns an Annex state object. 
  - Examines and prepares the git repo.
  -}
-startAnnex :: IO AnnexState
-startAnnex = do
-	g <- gitRepoFromCwd
+start :: IO AnnexState
+start = do
+	g <- Git.repoFromCwd
 	let s = makeAnnexState g
 	(_,s') <- runAnnexState s (prep g)
 	return s'
 	where
 		prep g = do
 			-- setup git and read its config; update state
-			g' <- liftIO $ gitConfigRead g
+			g' <- liftIO $ Git.configRead g
 			gitAnnexChange g'
 			liftIO $ gitSetup g'
 			backendsAnnexChange $ parseBackendList $
-				gitConfig g' "annex.backends" ""
+				Git.configGet g' "annex.backends" ""
 			prepUUID
 
 inBackend file yes no = do
@@ -54,8 +54,8 @@ notinBackend file yes no = inBackend file no yes
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
-annexFile :: FilePath -> Annex ()
-annexFile file = inBackend file err $ do
+annexCmd :: FilePath -> Annex ()
+annexCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
 	stored <- storeFile file
 	g <- gitAnnex
@@ -77,8 +77,8 @@ annexFile file = inBackend file err $ do
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink ((linkTarget file) ++ reldest) file
-			gitRun g ["add", file]
-			gitRun g ["commit", "-m", 
+			Git.run g ["add", file]
+			Git.run g ["commit", "-m", 
 				("git-annex annexed " ++ file), file]
 		linkTarget file =
 			-- relies on file being relative to the top of the 
@@ -90,9 +90,9 @@ annexFile file = inBackend file err $ do
 				subdirs = (length $ split "/" file) - 1
 		
 
-{- Inverse of annexFile. -}
-unannexFile :: FilePath -> Annex ()
-unannexFile file = notinBackend file err $ \(key, backend) -> do
+{- Inverse of annexCmd. -}
+unannexCmd :: FilePath -> Annex ()
+unannexCmd file = notinBackend file err $ \(key, backend) -> do
 	dropFile backend key
 	logStatus key ValueMissing
 	g <- gitAnnex
@@ -102,8 +102,8 @@ unannexFile file = notinBackend file err $ \(key, backend) -> do
 		err = error $ "not annexed " ++ file
 		moveout g src = do
 			removeFile file
-			gitRun g ["rm", file]
-			gitRun g ["commit", "-m",
+			Git.run g ["rm", file]
+			Git.run g ["commit", "-m",
 				("git-annex unannexed " ++ file), file]
 			-- git rm deletes empty directories;
 			-- put them back
@@ -112,8 +112,8 @@ unannexFile file = notinBackend file err $ \(key, backend) -> do
 			return ()
 
 {- Gets an annexed file from one of the backends. -}
-annexGetFile :: FilePath -> Annex ()
-annexGetFile file = notinBackend file err $ \(key, backend) -> do
+getCmd :: FilePath -> Annex ()
+getCmd file = notinBackend file err $ \(key, backend) -> do
 	inannex <- inAnnex backend key
 	if (inannex)
 		then return ()
@@ -131,23 +131,23 @@ annexGetFile file = notinBackend file err $ \(key, backend) -> do
 		err = error $ "not annexed " ++ file
 
 {- Indicates a file is wanted. -}
-annexWantFile :: FilePath -> Annex ()
-annexWantFile file = do error "not implemented" -- TODO
+wantCmd :: FilePath -> Annex ()
+wantCmd file = do error "not implemented" -- TODO
 
 {- Indicates a file is not wanted. -}
-annexDropFile :: FilePath -> Annex ()
-annexDropFile file = do error "not implemented" -- TODO
+dropCmd :: FilePath -> Annex ()
+dropCmd file = do error "not implemented" -- TODO
 
 {- Pushes all files to a remote repository. -}
-annexPushRepo :: String -> Annex ()
-annexPushRepo reponame = do error "not implemented" -- TODO
+pushCmd :: String -> Annex ()
+pushCmd reponame = do error "not implemented" -- TODO
 
 {- Pulls all files from a remote repository. -}
-annexPullRepo :: String -> Annex ()
-annexPullRepo reponame = do error "not implemented" -- TODO
+pullCmd :: String -> Annex ()
+pullCmd reponame = do error "not implemented" -- TODO
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
-gitSetup :: GitRepo -> IO ()
+gitSetup :: Git.Repo -> IO ()
 gitSetup repo = do
 	-- configure git to use union merge driver on state files
 	exists <- doesFileExist attributes
@@ -164,10 +164,10 @@ gitSetup repo = do
 				else return ()
 	where
 		attrLine = stateLoc ++ "/*.log merge=union"
-		attributes = gitAttributes repo
+		attributes = Git.attributes repo
 		commit = do
-			gitRun repo ["add", attributes]
-			gitRun repo ["commit", "-m", "git-annex setup", 
+			Git.run repo ["add", attributes]
+			Git.run repo ["commit", "-m", "git-annex setup", 
 					attributes]
 
 {- Updates the LocationLog when a key's presence changes. -}
@@ -179,8 +179,8 @@ logStatus key status = do
 	liftIO $ commit g f
 	where
 		commit g f = do
-			gitRun g ["add", f]
-			gitRun g ["commit", "-m", "git-annex log update", f]
+			Git.run g ["add", f]
+			Git.run g ["commit", "-m", "git-annex log update", f]
 
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: Backend -> Key -> Annex Bool

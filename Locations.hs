@@ -12,27 +12,27 @@ module Locations (
 
 import Data.String.Utils
 import Types
-import GitRepo
+import qualified GitRepo as Git
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex
  - directory, in the git repository's working tree. -}
 stateLoc = ".git-annex"
-gitStateDir :: GitRepo -> FilePath
-gitStateDir repo = (gitWorkTree repo) ++ "/" ++ stateLoc ++ "/"
+gitStateDir :: Git.Repo -> FilePath
+gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc ++ "/"
 
 {- An annexed file's content is stored in 
  - /path/to/repo/.git/annex/<backend>/<key>
  -
  - (That allows deriving the key and backend by looking at the symlink to it.)
  -}
-annexLocation :: GitRepo -> Backend -> Key -> FilePath
+annexLocation :: Git.Repo -> Backend -> Key -> FilePath
 annexLocation r backend key = 
-	(gitWorkTree r) ++ "/" ++ (annexLocationRelative r backend key)
+	(Git.workTree r) ++ "/" ++ (annexLocationRelative r backend key)
 
 {- Annexed file's location relative to the gitWorkTree -}
-annexLocationRelative :: GitRepo -> Backend -> Key -> FilePath
+annexLocationRelative :: Git.Repo -> Backend -> Key -> FilePath
 annexLocationRelative r backend key = 
-	gitDir r ++ "/annex/" ++ (name backend) ++ "/" ++ (keyFile key)
+	Git.dir r ++ "/annex/" ++ (name backend) ++ "/" ++ (keyFile key)
 
 {- Converts a key into a filename fragment.
  -

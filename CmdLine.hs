@@ -43,10 +43,10 @@ argvToMode argv = do
 dispatch :: Mode -> FilePath -> Annex ()
 dispatch mode item = do
 	case (mode) of
-		Add     -> annexFile item
-		Push    -> annexPushRepo item
-		Pull    -> annexPullRepo item
-		Want    -> annexWantFile item
-		Get     -> annexGetFile item
-		Drop    -> annexDropFile item
-		Unannex -> unannexFile item
+		Add     -> annexCmd item
+		Push    -> pushCmd item
+		Pull    -> pullCmd item
+		Want    -> wantCmd item
+		Get     -> getCmd item
+		Drop    -> dropCmd item
+		Unannex -> unannexCmd item

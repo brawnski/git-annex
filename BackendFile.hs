@@ -11,7 +11,7 @@ import Types
 import LocationLog
 import Locations
 import Remotes
-import GitRepo
+import qualified GitRepo as Git
 
 backend = Backend {
 	name = "file",
@@ -58,11 +58,11 @@ copyKeyFile key file = do
 		                Right succ -> return True
 
 {- Tries to copy a file from a remote, exception on error. -}
-copyFromRemote :: GitRepo -> Key -> FilePath -> IO ()
+copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()
 copyFromRemote r key file = do
-	putStrLn $ "copy from " ++ (gitRepoDescribe r ) ++ " " ++ file
+	putStrLn $ "copy from " ++ (Git.repoDescribe r ) ++ " " ++ file
 
-	if (gitRepoIsLocal r)
+	if (Git.repoIsLocal r)
 		then getlocal
 		else getremote
 	return ()

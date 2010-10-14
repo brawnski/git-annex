@@ -29,7 +29,7 @@ import qualified Data.Map as Map
 import System.IO
 import System.Directory
 import Data.Char
-import GitRepo
+import qualified GitRepo as Git
 import Utility
 import UUID
 import AbstractTypes
@@ -81,7 +81,7 @@ instance Read LogLine where
 
 {- Log a change in the presence of a key's value in a repository,
  - and return the log filename. -}
-logChange :: GitRepo -> Key -> UUID -> LogStatus -> IO FilePath
+logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO FilePath
 logChange repo key uuid status = do
 	log <- logNow status uuid
 	ls <- readLog logfile
@@ -127,13 +127,13 @@ logNow status uuid = do
 	return $ LogLine now status uuid
 
 {- Returns the filename of the log file for a given key. -}
-logFile :: GitRepo -> Key -> String
+logFile :: Git.Repo -> Key -> String
 logFile repo key = 
-	(gitStateDir repo) ++ (gitRelative repo (keyFile key)) ++ ".log"
+	(gitStateDir repo) ++ (Git.relative repo (keyFile key)) ++ ".log"
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
-keyLocations :: GitRepo -> Key -> IO [UUID]
+keyLocations :: Git.Repo -> Key -> IO [UUID]
 keyLocations thisrepo key = do
 	lines <- readLog $ logFile thisrepo key
 	return $ map uuid (filterPresent lines)

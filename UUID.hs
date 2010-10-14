@@ -19,7 +19,7 @@ import Maybe
 import List
 import System.Cmd.Utils
 import System.IO
-import GitRepo
+import qualified GitRepo as Git
 import AbstractTypes
 
 type UUID = String
@@ -37,17 +37,17 @@ genUUID = liftIO $ pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
  - remote.<name>.annex-uuid
  -
  - -}
-getUUID :: GitRepo -> Annex UUID
+getUUID :: Git.Repo -> Annex UUID
 getUUID r = do
 	if ("" /= configured r)
 		then return $ configured r
 		else cached r
 	where
-		configured r = gitConfig r "annex.uuid" ""
+		configured r = Git.configGet r "annex.uuid" ""
 		cached r = do
 			g <- gitAnnex
-			return $ gitConfig g (configkey r) ""
-		configkey r = "remote." ++ (gitRepoRemoteName r) ++ ".annex-uuid"
+			return $ Git.configGet g (configkey r) ""
+		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
@@ -57,15 +57,15 @@ prepUUID = do
 	if ("" == u)
 		then do
 			uuid <- genUUID
-			liftIO $ gitRun g ["config", configkey, uuid]
+			liftIO $ Git.run g ["config", configkey, uuid]
 			-- re-read git config and update the repo's state
-			u' <- liftIO $ gitConfigRead g
+			u' <- liftIO $ Git.configRead g
 			gitAnnexChange u'
 			return ()
 		else return ()
 
 {- Filters a list of repos to ones that have listed UUIDs. -}
-reposByUUID :: [GitRepo] -> [UUID] -> Annex [GitRepo]
+reposByUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
 reposByUUID repos uuids = do
 	filterM match repos
 	where

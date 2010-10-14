@@ -12,7 +12,7 @@ import Annex
 main = do
 	args <- getArgs
 	(mode, params) <- argvToMode args
-	state <- startAnnex
+	state <- start
 	tryRun state mode 0 0 params
 
 {- Processes each param in the list by dispatching the handler function

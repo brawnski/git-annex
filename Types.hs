@@ -1,26 +1,14 @@
 {- git-annex core data types -}
 
-module Types (
-	Annex,
-	AnnexState,
-	makeAnnexState,
-	runAnnexState,
-	gitAnnex,
-	gitAnnexChange,
-	backendsAnnex,
-	backendsAnnexChange,
-
-	Key(..),
-	Backend(..)
-) where
+module Types where
 
 import Control.Monad.State
 import Data.String.Utils
-import GitRepo
+import qualified GitRepo as Git
 
 -- git-annex's runtime state
 data AnnexState = AnnexState {
-	repo :: GitRepo,
+	repo :: Git.Repo,
 	backends :: [Backend]
 } deriving (Show)
 
@@ -28,18 +16,18 @@ data AnnexState = AnnexState {
 type Annex = StateT AnnexState IO
 
 -- constructor
-makeAnnexState :: GitRepo -> AnnexState
+makeAnnexState :: Git.Repo -> AnnexState
 makeAnnexState g = AnnexState { repo = g, backends = [] }
 
 -- performs an action in the Annex monad
 runAnnexState state action = runStateT (action) state
 
 -- Annex monad state accessors
-gitAnnex :: Annex GitRepo
+gitAnnex :: Annex Git.Repo
 gitAnnex = do
 	state <- get
 	return (repo state)
-gitAnnexChange :: GitRepo -> Annex ()
+gitAnnexChange :: Git.Repo -> Annex ()
 gitAnnexChange r = do
 	state <- get
 	put state { repo = r }

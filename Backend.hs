@@ -28,7 +28,7 @@ import Data.String.Utils
 import System.Posix.Files
 import BackendList
 import Locations
-import GitRepo
+import qualified GitRepo as Git
 import Utility
 import Types
 
@@ -36,7 +36,7 @@ import Types
 storeFile :: FilePath -> Annex (Maybe (Key, Backend))
 storeFile file = do
 	g <- gitAnnex
-	let relfile = gitRelative g file
+	let relfile = Git.relative g file
 	b <- backendsAnnex
 	storeFile' b file relfile
 storeFile' [] _ _ = return Nothing
