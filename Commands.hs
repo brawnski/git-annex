@@ -200,9 +200,9 @@ requireEnoughCopies key = do
 		findcopies n (r:rs) bad = do
 			result <- liftIO $ try $ haskey r
 			case (result) of
-				Right True -> do
-					findcopies (n-1) rs bad
-				Left _ -> findcopies n rs (r:bad)
+				Right True	-> findcopies (n-1) rs bad
+				Right False	-> findcopies n rs bad
+				Left _		-> findcopies n rs (r:bad)
 		haskey r = do
 			-- To check if a remote has a key, construct a new
 			-- Annex monad and query its backend.
@@ -211,9 +211,11 @@ requireEnoughCopies key = do
 			return result
 		die bad =
 			error $ "I failed to find enough other copies of: " ++
-				(keyFile key) ++ "\n" ++
-				"I was unable to access these remotes: " ++
-				(Remotes.list bad) ++ unsafe
+				(keyFile key) ++
+				(if (0 /= length bad) then listbad bad else "")
+				++ unsafe
+		listbad bad = "\nI was unable to access these remotes: " ++
+				(Remotes.list bad) 
 		unsafe = "\n  -- According to the " ++ config ++
 			" setting, it is not safe to remove it!"
 		config = "annex.numcopies"
