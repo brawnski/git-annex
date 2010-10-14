@@ -22,18 +22,19 @@ gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc ++ "/"
 
 {- An annexed file's content is stored in 
- - /path/to/repo/.git/annex/<backend>/<key>
+ - /path/to/repo/.git/annex/<key>, where <key> is of the form
+ - <backend:fragment>
  -
- - (That allows deriving the key and backend by looking at the symlink to it.)
+ - That allows deriving the key and backend by looking at the symlink to it.
  -}
-annexLocation :: Git.Repo -> Backend -> Key -> FilePath
-annexLocation r backend key = 
-	(Git.workTree r) ++ "/" ++ (annexLocationRelative r backend key)
+annexLocation :: Git.Repo -> Key -> FilePath
+annexLocation r key = 
+	(Git.workTree r) ++ "/" ++ (annexLocationRelative r key)
 
 {- Annexed file's location relative to the gitWorkTree -}
-annexLocationRelative :: Git.Repo -> Backend -> Key -> FilePath
-annexLocationRelative r backend key = 
-	Git.dir r ++ "/annex/" ++ (Backend.name backend) ++ "/" ++ (keyFile key)
+annexLocationRelative :: Git.Repo -> Key -> FilePath
+annexLocationRelative r key = 
+	Git.dir r ++ "/annex/" ++ (keyFile key)
 
 {- Converts a key into a filename fragment.
  -
@@ -51,5 +52,5 @@ keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a" $ show key
 {- Reverses keyFile, converting a filename fragment (ie, the basename of
  - the symlink target) into a key. -}
 fileKey :: FilePath -> Key
-fileKey file = Backend.Key $ 
+fileKey file = read $
 	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file

@@ -29,7 +29,7 @@ backend = Backend {
 
 -- direct mapping from filename to key
 keyValue :: FilePath -> Annex (Maybe Key)
-keyValue file = return $ Just $ Key file
+keyValue file = return $ Just $ Key ((name backend), file)
 
 {- This backend does not really do any independant data storage,
  - it relies on the file contents in .git/annex/ in this repo,
@@ -44,7 +44,7 @@ dummyRemove url = return True
 
 {- Just check if the .git/annex/ file for the key exists. -}
 checkKeyFile :: Key -> Annex Bool
-checkKeyFile k = inAnnex backend k
+checkKeyFile k = inAnnex k
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
@@ -97,4 +97,4 @@ copyFromRemote r key file = do
 				then return ()
 				else error "cp failed"
 		getremote = error "get via network not yet implemented!"
-		location = annexLocation r backend key
+		location = annexLocation r key

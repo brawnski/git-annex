@@ -5,7 +5,7 @@
 
 module BackendTypes where
 
-import Control.Monad.State
+import Control.Monad.State (StateT)
 import Data.String.Utils
 import qualified GitRepo as Git
 
@@ -19,12 +19,22 @@ data AnnexState = AnnexState {
 -- git-annex's monad
 type Annex = StateT AnnexState IO
 
--- annexed filenames are mapped into keys
-data Key = Key String deriving (Eq)
+-- annexed filenames are mapped through a backend into keys
+type KeyFrag = String
+type BackendName = String
+data Key = Key (BackendName, KeyFrag) deriving (Eq)
 
--- show a key to convert it to a string
+-- show a key to convert it to a string; the string includes the
+-- name of the backend to avoid collisions between key strings
 instance Show Key where
-	show (Key v) = v
+	show (Key (b, k)) = b ++ ":" ++ k
+
+instance Read Key where
+	readsPrec _ s = [((Key (b,k)) ,"")]
+		where
+			l = split ":" s
+			b = l !! 0
+			k = join ":" $ drop 1 l
 
 -- this structure represents a key/value backend
 data Backend = Backend {

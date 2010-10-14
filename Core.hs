@@ -50,7 +50,7 @@ gitAttributes repo = do
 					attributes]
 
 {- Checks if a given key is currently present in the annexLocation -}
-inAnnex :: Backend -> Key -> Annex Bool
-inAnnex backend key = do
+inAnnex :: Key -> Annex Bool
+inAnnex key = do
 	g <- Annex.gitRepo
-	liftIO $ doesFileExist $ annexLocation g backend key
+	liftIO $ doesFileExist $ annexLocation g key

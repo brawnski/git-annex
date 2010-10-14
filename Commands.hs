@@ -66,7 +66,7 @@ addCmd file = inBackend file err $ do
 		Nothing -> error $ "no backend could store: " ++ file
 		Just (key, backend) -> do
 			logStatus key ValuePresent
-			liftIO $ setup g key backend
+			liftIO $ setup g key
 	where
 		err = error $ "already annexed " ++ file
 		checkLegal file = do
@@ -74,9 +74,9 @@ addCmd file = inBackend file err $ do
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
-		setup g key backend = do
-			let dest = annexLocation g backend key
-			let reldest = annexLocationRelative g backend key
+		setup g key = do
+			let dest = annexLocation g key
+			let reldest = annexLocationRelative g key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
 			createSymbolicLink ((linkTarget file) ++ reldest) file
@@ -99,7 +99,7 @@ unannexCmd file = notinBackend file err $ \(key, backend) -> do
 	Backend.removeKey backend key
 	logStatus key ValueMissing
 	g <- Annex.gitRepo
-	let src = annexLocation g backend key
+	let src = annexLocation g key
 	liftIO $ moveout g src
 	where
 		err = error $ "not annexed " ++ file
@@ -117,12 +117,12 @@ unannexCmd file = notinBackend file err $ \(key, backend) -> do
 {- Gets an annexed file from one of the backends. -}
 getCmd :: FilePath -> Annex ()
 getCmd file = notinBackend file err $ \(key, backend) -> do
-	inannex <- inAnnex backend key
+	inannex <- inAnnex key
 	if (inannex)
 		then return ()
 		else do
 			g <- Annex.gitRepo
-			let dest = annexLocation g backend key
+			let dest = annexLocation g key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
 			success <- Backend.retrieveKeyFile backend key dest
 			if (success)
@@ -145,11 +145,11 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 	if (success)
 		then do
 			logStatus key ValueMissing
-			inannex <- inAnnex backend key
+			inannex <- inAnnex key
 			if (inannex)
 				then do
 					g <- Annex.gitRepo
-					let loc = annexLocation g backend key
+					let loc = annexLocation g key
 					liftIO $ removeFile loc
 					return ()
 				else return ()
