@@ -91,7 +91,6 @@ tryGitConfigRead :: Git.Repo -> Annex (Maybe Git.Repo)
 tryGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
-			liftIO $ putStrLn $ "read config for " ++ (show r)
 			result <- liftIO $ try (Git.configRead r)
 			case (result) of
 				Left err -> return Nothing
