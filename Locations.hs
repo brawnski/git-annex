@@ -47,6 +47,7 @@ annexLocationRelative r backend key =
 keyFile :: Key -> FilePath
 keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a" $ show key
 
-{- Reverses keyFile -}
+{- Reverses keyFile, converting a filename fragment (ie, the basename of
+ - the symlink target) into a key. -}
 fileKey :: FilePath -> Key
 fileKey file = Key $ replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
