@@ -1,8 +1,6 @@
 * bug when annexing files while in a subdir of a git repo
 * bug when specifying absolute path to files when annexing
 
-* state monad
-
 * query remotes for their annex.uuid settings and cache
 
 * --push/--pull/--want/--drop

@@ -10,7 +10,8 @@ module UUID (
 	getUUID,
 	prepUUID,
 	genUUID,
-	reposByUUID
+	reposByUUID,
+	prettyPrintUUIDs
 ) where
 
 import Control.Monad.State
@@ -71,3 +72,10 @@ reposByUUID repos uuids = do
 		match r = do
 			u <- getUUID r
 			return $ isJust $ elemIndex u uuids
+
+{- Pretty-prints a list of UUIDs 
+ - TODO: use lookup file to really show pretty names. -}
+prettyPrintUUIDs :: [UUID] -> String
+prettyPrintUUIDs uuids = 
+	unwords $ map (\u -> "\tUUID "++u++"\n") uuids
+

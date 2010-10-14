@@ -8,10 +8,11 @@ module Remotes (
 
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
+import Data.String.Utils
 import Types
 import GitRepo
 import LocationLog
-import Data.String.Utils
+import Locations
 import UUID
 import List
 
@@ -24,8 +25,13 @@ remotesWithKey :: Key -> Annex [GitRepo]
 remotesWithKey key = do
 	g <- gitAnnex
 	uuids <- liftIO $ keyLocations g key
-	remotes <- remotesByCost
-	reposByUUID remotes uuids
+	allremotes <- remotesByCost
+	remotes <- reposByUUID allremotes uuids
+	if (0 == length remotes)
+		then error $ "no configured git remotes have: " ++ (keyFile key) ++ "\n" ++
+			"It has been seen before in these repositories:\n" ++
+			prettyPrintUUIDs uuids
+		else return remotes
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [GitRepo]

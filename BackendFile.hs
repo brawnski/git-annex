@@ -40,10 +40,7 @@ dummyRemove url = return False
 copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
 	remotes <- remotesWithKey key
-	if (0 == length remotes)
-		then error $ "no known remotes have: " ++ (keyFile key) ++ "\n" ++
-			"(Perhaps you need to git remote add a repository?)"
-		else trycopy remotes remotes
+	trycopy remotes remotes
 	where
 		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
 			"To get that file, need access to one of these remotes: " ++
