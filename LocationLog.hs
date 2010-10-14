@@ -32,7 +32,7 @@ import Data.Char
 import qualified GitRepo as Git
 import Utility
 import UUID
-import AbstractTypes
+import Types
 import Locations
 
 data LogLine = LogLine {

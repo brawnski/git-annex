@@ -9,8 +9,9 @@ module Remotes (
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
 import Data.String.Utils
-import AbstractTypes
+import Types
 import qualified GitRepo as Git
+import qualified Annex
 import LocationLog
 import Locations
 import UUID
@@ -23,7 +24,7 @@ list remotes = join " " $ map Git.repoDescribe remotes
 {- Cost ordered list of remotes that the LocationLog indicate may have a key. -}
 withKey :: Key -> Annex [Git.Repo]
 withKey key = do
-	g <- gitAnnex
+	g <- Annex.gitRepo
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
 	remotes <- reposByUUID allremotes uuids
@@ -36,7 +37,7 @@ withKey key = do
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
 remotesByCost = do
-	g <- gitAnnex
+	g <- Annex.gitRepo
 	reposByCost $ Git.remotes g
 
 {- Orders a list of git repos by cost. -}
@@ -57,7 +58,7 @@ reposByCost l = do
  -}
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
-	g <- gitAnnex
+	g <- Annex.gitRepo
 	if ((length $ config g r) > 0)
 		then return $ read $ config g r
 		else if (Git.repoIsLocal r)
@@ -76,10 +77,10 @@ ensureGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
 			r' <- liftIO $ Git.configRead r
-			g <- gitAnnex
+			g <- Annex.gitRepo
 			let l = Git.remotes g
 			let g' = Git.remotesAdd g $ exchange l r'
-			gitAnnexChange g'
+			Annex.gitRepoChange g'
 			return r'
 		else return r
 	where 

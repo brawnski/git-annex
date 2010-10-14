@@ -20,7 +20,8 @@ import List
 import System.Cmd.Utils
 import System.IO
 import qualified GitRepo as Git
-import AbstractTypes
+import Types
+import qualified Annex
 
 type UUID = String
 
@@ -45,22 +46,22 @@ getUUID r = do
 	where
 		configured r = Git.configGet r "annex.uuid" ""
 		cached r = do
-			g <- gitAnnex
+			g <- Annex.gitRepo
 			return $ Git.configGet g (configkey r) ""
 		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
 prepUUID = do
-	g <- gitAnnex
+	g <- Annex.gitRepo
 	u <- getUUID g
 	if ("" == u)
 		then do
 			uuid <- genUUID
 			liftIO $ Git.run g ["config", configkey, uuid]
 			-- re-read git config and update the repo's state
-			u' <- liftIO $ Git.configRead g
-			gitAnnexChange u'
+			g' <- liftIO $ Git.configRead g
+			Annex.gitRepoChange g'
 			return ()
 		else return ()
 

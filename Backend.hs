@@ -29,16 +29,17 @@ import System.Posix.Files
 import BackendList
 import Locations
 import qualified GitRepo as Git
+import qualified Annex
 import Utility
-import AbstractTypes
+import Types
 import BackendTypes
 
 {- Attempts to store a file in one of the backends. -}
 storeFile :: FilePath -> Annex (Maybe (Key, Backend))
 storeFile file = do
-	g <- gitAnnex
+	g <- Annex.gitRepo
 	let relfile = Git.relative g file
-	b <- backendsAnnex
+	b <- Annex.backends
 	storeFile' b file relfile
 storeFile' [] _ _ = return Nothing
 storeFile' (b:bs) file relfile = do

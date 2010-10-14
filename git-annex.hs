@@ -6,8 +6,9 @@ import System.IO
 import System.Environment
 import Control.Exception
 import CmdLine
-import AbstractTypes
-import Annex
+import Types
+import Commands
+import qualified Annex
 
 main = do
 	args <- getArgs
@@ -30,7 +31,8 @@ tryRun state mode errnum oknum [] = do
 		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " ok"
 		else return ()
 tryRun state mode errnum oknum (f:fs) = do
-	result <- try (runAnnexState state (dispatch mode f))::IO (Either SomeException ((), AnnexState))
+	result <- try
+		(Annex.run state (dispatch mode f))::IO (Either SomeException ((), AnnexState))
 	case (result) of
 		Left err -> do
 			showErr err
