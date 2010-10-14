@@ -21,12 +21,12 @@ import Core
 
 options :: [OptDescr (String -> Annex ())]
 options =
-	[ Option ['a'] ["add"] (NoArg addCmd) "add files to annex"
-	, Option ['p'] ["push"] (NoArg pushCmd) "push annex to repos"
-	, Option ['P'] ["pull"] (NoArg pullCmd) "pull annex from repos"
-	, Option ['w'] ["want"] (NoArg wantCmd) "request file contents"
-	, Option ['g'] ["get"] (NoArg getCmd) "transfer file contents"
-	, Option ['d'] ["drop"] (NoArg dropCmd) "indicate file contents not needed"
+	[ Option ['a'] ["add"]	(NoArg addCmd)	"add files to annex"
+	, Option ['p'] ["push"]	(NoArg pushCmd)	"push annex to repos"
+	, Option ['P'] ["pull"]	(NoArg pullCmd)	"pull annex from repos"
+	, Option ['w'] ["want"]	(NoArg wantCmd)	"request file contents"
+	, Option ['g'] ["get"]	(NoArg getCmd)	"transfer file contents"
+	, Option ['d'] ["drop"]	(NoArg dropCmd)	"indicate file contents not needed"
 	, Option ['u'] ["unannex"] (NoArg unannexCmd) "undo --add"
 	]
 
