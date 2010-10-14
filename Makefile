@@ -1,7 +1,8 @@
 git-annex:
-	ghc --make git-annex
+	mkdir -p build
+	ghc -odir build -hidir build --make git-annex
 
 clean:
-	rm -f git-annex *.o *.hi *.ho *.a
+	rm -rf build git-annex
 
 .PHONY: git-annex

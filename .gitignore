@@ -1,5 +1,2 @@
-*.o
-*.hi
-*.ho
-*.a
+build/*
 git-annex
