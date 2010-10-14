@@ -53,10 +53,6 @@ repositories, to check that N copies of the file exist. If enough
 repositories cannot be verified to have it, it will retain the file content
 to avoid data loss.
 
-You can later use `git annex --drop --retry` to retry pending drops.
-Or you can use `git annex --drop --force $file` to force dropping of
-file content.
-
 For example, consider three repositories: Server, Laptop, and USB. Both Server
 and USB have a copy of a file, and N=1. If on Laptop, you `git annex --get
 $file`, this will transfer it from either Server or USB (depending on which
@@ -66,14 +62,15 @@ Suppose you want to free up space on laptop again, and you --drop the file
 there. If USB is connected, or Server can be contacted, git-annex can check
 that it still has a copy of the file, and the content is removed from
 Laptop. But if USB is currently disconnected, and Server also cannot be
-contacted, it can't check that and will retain the file content.
+contacted, it can't verify that it is safe to drop the file, and will
+refuse to do so.
 
 With N=2, in order to drop the file content from Laptop, it would need access
 to both USB and Server.
 
 Note that different repositories can be configured with different values of
 N. So just because Laptop has N=2, this does not prevent the number of
-copies falling to 1, when USB and Server have N=1, and of they have the
+copies falling to 1, when USB and Server have N=1, and if they have the
 only copies of a file.
 
 ## the .git-annex directory
