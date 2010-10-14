@@ -12,15 +12,17 @@ module GitRepo (
 	gitRepoFromUrl,
 	gitRepoIsLocal,
 	gitRepoIsRemote,
-	gitConfigRemotes,
 	gitRepoDescribe,
 	gitWorkTree,
 	gitDir,
 	gitRelative,
 	gitConfig,
+	gitConfigMap,
 	gitConfigRead,
 	gitRun,
 	gitAttributes,
+	gitRepoRemotes,
+	gitRepoRemotesAdd,
 	gitRepoRemoteName
 ) where
 
@@ -46,12 +48,14 @@ data GitRepo =
 	LocalGitRepo {
 		top :: FilePath,
 		config :: Map String String,
+		remotes :: [GitRepo],
 		-- remoteName holds the name used for this repo in remotes
 		remoteName :: Maybe String 
 	} | RemoteGitRepo {
 		url :: String,
 		top :: FilePath,
 		config :: Map String String,
+		remotes :: [GitRepo],
 		remoteName :: Maybe String
 	} deriving (Show, Read, Eq)
 
@@ -61,6 +65,7 @@ gitRepoFromPath dir =
 	LocalGitRepo {
 		top = dir,
 		config = Map.empty,
+		remotes = [],
 		remoteName = Nothing
 	}
 
@@ -71,6 +76,7 @@ gitRepoFromUrl url =
 		url = url,
 		top = path url,
 		config = Map.empty,
+		remotes = [],
 		remoteName = Nothing
 	}
 	where path url = uriPath $ fromJust $ parseURI url
@@ -82,6 +88,15 @@ gitRepoDescribe repo =
 		else if (gitRepoIsLocal repo)
 			then top repo
 			else url repo
+
+{- Returns the list of a repo's remotes. -}
+gitRepoRemotes :: GitRepo -> [GitRepo]
+gitRepoRemotes r = remotes r
+
+{- Constructs and returns an updated version of a repo with
+ - different remotes list. -}
+gitRepoRemotesAdd :: GitRepo -> [GitRepo] -> GitRepo
+gitRepoRemotesAdd repo rs = repo { remotes = rs }
 
 {- Returns the name of the remote that corresponds to the repo, if 
  - it is a remote. Otherwise, "" -}
@@ -169,10 +184,24 @@ gitConfigRead repo = assertlocal repo $ do
            been already read. Instead, chdir to the repo. -}
 	cwd <- getCurrentDirectory
 	bracket_ (changeWorkingDirectory (top repo))
-		(\_ -> changeWorkingDirectory cwd) $ do
+		(\_ -> changeWorkingDirectory cwd) $
 			pOpen ReadFromPipe "git" ["config", "--list"] $ \h -> do
 				val <- hGetContentsStrict h
-				return repo { config = gitConfigParse val }
+				let r = repo { config = gitConfigParse val }
+				return r { remotes = gitConfigRemotes r }
+
+{- Calculates a list of a repo's configured remotes, by parsing its config. -}
+gitConfigRemotes :: GitRepo -> [GitRepo]
+gitConfigRemotes repo = map construct remotes
+	where
+		remotes = toList $ filter $ config repo
+		filter = filterWithKey (\k _ -> isremote k)
+		isremote k = (startswith "remote." k) && (endswith ".url" k)
+		remotename k = (split "." k) !! 1
+		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
+		gen v = if (isURI v)
+			then gitRepoFromUrl v
+			else gitRepoFromPath v
 
 {- Parses git config --list output into a config map. -}
 gitConfigParse :: String -> Map.Map String String
@@ -189,18 +218,9 @@ gitConfig :: GitRepo -> String -> String -> String
 gitConfig repo key defaultValue = 
 	Map.findWithDefault defaultValue key (config repo)
 
-{- Returns a list of a repo's configured remotes. -}
-gitConfigRemotes :: GitRepo -> [GitRepo]
-gitConfigRemotes repo = map construct remotes
-	where
-		remotes = toList $ filter $ config repo
-		filter = filterWithKey (\k _ -> isremote k)
-		isremote k = (startswith "remote." k) && (endswith ".url" k)
-		remotename k = (split "." k) !! 1
-		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
-		gen v = if (isURI v)
-			then gitRepoFromUrl v
-			else gitRepoFromPath v
+{- Access to raw config Map -}
+gitConfigMap :: GitRepo -> Map String String
+gitConfigMap repo = config repo
 
 {- Finds the current git repository, which may be in a parent directory. -}
 gitRepoFromCwd :: IO GitRepo

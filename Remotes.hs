@@ -2,10 +2,12 @@
 
 module Remotes (
 	remotesList,
-	remotesWithKey
+	remotesWithKey,
+	remoteEnsureGitConfigRead
 ) where
 
 import Control.Monad.State (liftIO)
+import qualified Data.Map as Map
 import Types
 import GitRepo
 import LocationLog
@@ -29,7 +31,7 @@ remotesWithKey key = do
 remotesByCost :: Annex [GitRepo]
 remotesByCost = do
 	g <- gitAnnex
-	reposByCost $ gitConfigRemotes g
+	reposByCost $ gitRepoRemotes g
 
 {- Orders a list of git repos by cost. -}
 reposByCost :: [GitRepo] -> Annex [GitRepo]
@@ -58,3 +60,25 @@ repoCost r = do
 	where
 		config g r = gitConfig g (configkey r) ""
 		configkey r = "remote." ++ (gitRepoRemoteName r) ++ ".annex-cost"
+
+{- The git configs for the git repo's remotes is not read on startup
+ - because reading it may be expensive. This function ensures that it is
+ - read for a specified remote, and updates state. It returns the
+ - updated git repo also. -}
+remoteEnsureGitConfigRead :: GitRepo -> Annex GitRepo
+remoteEnsureGitConfigRead r = do
+	if (Map.null $ gitConfigMap r)
+		then do
+			r' <- liftIO $ gitConfigRead r
+			g <- gitAnnex
+			let l = gitRepoRemotes g
+			let g' = gitRepoRemotesAdd g $ exchange l r'
+			gitAnnexChange g'
+			return r'
+		else return r
+	where 
+		exchange [] new = []
+		exchange (old:ls) new =
+			if ((gitRepoRemoteName old) == (gitRepoRemoteName new))
+				then new:(exchange ls new)
+				else old:(exchange ls new)

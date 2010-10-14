@@ -43,16 +43,20 @@ copyKeyFile key file = do
 	if (0 == length remotes)
 		then error $ "no known remotes have: " ++ (keyFile key) ++ "\n" ++
 			"(Perhaps you need to git remote add a repository?)"
-		else liftIO $ trycopy remotes remotes
+		else trycopy remotes remotes
 	where
 		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
 			"To get that file, need access to one of these remotes: " ++
 			(remotesList full)
 		trycopy full (r:rs) = do
-			result <- try (copyFromRemote r key file)::IO (Either SomeException ())
+			-- annexLocation needs the git config to have been
+			-- read for a remote, so do that now,
+			-- if it hasn't been already
+			r' <- remoteEnsureGitConfigRead r
+			result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
         		case (result) of
 		                Left err -> do
-					hPutStrLn stderr (show err)
+					liftIO $ hPutStrLn stderr (show err)
 					trycopy full rs
 		                Right succ -> return True
 
@@ -61,19 +65,11 @@ copyFromRemote :: GitRepo -> Key -> FilePath -> IO ()
 copyFromRemote r key file = do
 	putStrLn $ "copy from " ++ (gitRepoDescribe r ) ++ " " ++ file
 
-	-- annexLocation needs the git config read for the remote first.
-	-- FIXME: Having this here means git-config is run repeatedly when
-	-- copying a series of files; need to use state monad to avoid
-	-- this.
-	r' <- gitConfigRead r
-
-	_ <- if (gitRepoIsLocal r')
-		then getlocal r'
-		else getremote r'
+	if (gitRepoIsLocal r)
+		then getlocal
+		else getremote
 	return ()
 	where
-		getlocal r = do
-			rawSystem "cp" ["-a", location r, file]
-		getremote r = do
-			error "get via network not yet implemented!"
-		location r = annexLocation r backend key
+		getlocal = rawSystem "cp" ["-a", location, file]
+		getremote = error "get via network not yet implemented!"
+		location = annexLocation r backend key
