@@ -1,8 +1,6 @@
 {- git-annex command line -}
 
-module Commands (
-	argvToActions
-) where
+module Commands (argvToActions) where
 
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)

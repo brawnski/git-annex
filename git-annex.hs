@@ -14,8 +14,7 @@ main = do
 	state <- start
 	tryRun state actions
 
-{- Processes each param in the list by dispatching the handler function
- - for the user-selection operation mode. Catches exceptions, not stopping
+{- Runs a list of Annex actions. Catches exceptions, not stopping
  - if some error out, and propigates an overall error status at the end.
  -
  - This runs in the IO monad, not in the Annex monad. It seems that
