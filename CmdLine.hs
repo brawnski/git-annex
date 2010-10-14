@@ -11,7 +11,7 @@ module CmdLine (
 ) where
 
 import System.Console.GetOpt
-import Types
+import AbstractTypes
 import Annex
 
 data Mode = Add | Push | Pull | Want | Get | Drop | Unannex

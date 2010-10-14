@@ -24,7 +24,7 @@ import Backend
 import BackendList
 import UUID
 import LocationLog
-import Types
+import AbstractTypes
 
 {- Create and returns an Annex state object. 
  - Examines and prepares the git repo.

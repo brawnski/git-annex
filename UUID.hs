@@ -20,7 +20,7 @@ import List
 import System.Cmd.Utils
 import System.IO
 import GitRepo
-import Types
+import AbstractTypes
 
 type UUID = String
 

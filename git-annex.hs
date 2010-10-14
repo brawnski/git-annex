@@ -6,7 +6,7 @@ import System.IO
 import System.Environment
 import Control.Exception
 import CmdLine
-import Types
+import AbstractTypes
 import Annex
 
 main = do

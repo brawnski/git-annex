@@ -9,7 +9,7 @@ module Remotes (
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
 import Data.String.Utils
-import Types
+import AbstractTypes
 import GitRepo
 import LocationLog
 import Locations
