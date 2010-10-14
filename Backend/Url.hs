@@ -13,7 +13,8 @@ backend = Backend {
 	getKey = keyValue,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = downloadUrl,
-	removeKey = dummyRemove
+	removeKey = dummyOk,
+	hasKey = dummyOk
 }
 
 -- cannot generate url from filename
@@ -24,9 +25,9 @@ keyValue file = return Nothing
 dummyStore :: FilePath -> Key -> Annex Bool
 dummyStore file url = return False
 
--- allow keys to be removed
-dummyRemove :: Key -> Annex Bool
-dummyRemove url = return True
+-- allow keys to be removed; presumably they can always be downloaded again
+dummyOk :: Key -> Annex Bool
+dummyOk url = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl url file = do

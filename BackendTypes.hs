@@ -37,7 +37,9 @@ data Backend = Backend {
 	-- retrieves a key's contents to a file
 	retrieveKeyFile :: Key -> FilePath -> Annex Bool,
 	-- removes a key
-	removeKey :: Key -> Annex Bool
+	removeKey :: Key -> Annex Bool,
+	-- checks if a backend is storing the content of a key
+	hasKey :: Key -> Annex Bool
 }
 
 instance Show Backend where

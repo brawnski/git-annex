@@ -13,13 +13,16 @@ import LocationLog
 import Locations
 import qualified Remotes
 import qualified GitRepo as Git
+import Utility
+import Core
 
 backend = Backend {
 	name = "file",
 	getKey = keyValue,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = copyKeyFile,
-	removeKey = dummyRemove
+	removeKey = dummyRemove,
+	hasKey = checkKeyFile
 }
 
 -- direct mapping from filename to key
@@ -29,14 +32,17 @@ keyValue file = return $ Just $ Key file
 {- This backend does not really do any independant data storage,
  - it relies on the file contents in .git/annex/ in this repo,
  - and other accessible repos. So storing a key is
- - a no-op. TODO until support is added for git annex --push otherrepo,
- - then these could implement that.. -}
+ - a no-op. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
 
 {- Allow keys to be removed. -}
 dummyRemove :: Key -> Annex Bool
 dummyRemove url = return True
+
+{- Just check if the .git/annex/ file for the key exists. -}
+checkKeyFile :: Key -> Annex Bool
+checkKeyFile k = inAnnex backend k
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
