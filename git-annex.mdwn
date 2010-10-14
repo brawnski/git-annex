@@ -48,9 +48,11 @@ git-annex can be configured to try to keep N copies of a file's content
 available across all repositories. By default, N is 1 (configured by
 annex.numcopies).
 
-`git annex --drop` attempts to communicate with all other configured
+`git annex --drop` attempts to check all other configured
 repositories, to check that N copies of the file exist. If enough
-repositories cannot be contacted, it will retain the file content.
+repositories cannot be verified to have it, it will retain the file content
+to avoid data loss.
+
 You can later use `git annex --drop --retry` to retry pending drops.
 Or you can use `git annex --drop --force $file` to force dropping of
 file content.

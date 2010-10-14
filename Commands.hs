@@ -1,16 +1,12 @@
-{- git-annex subcommands -}
+{- git-annex command line -}
 
 module Commands (
-	defaultCmd,
-	addCmd,
-	unannexCmd,
-	getCmd,
-	wantCmd,
-	dropCmd,
-	pushCmd,
-	pullCmd
+	argvToMode,
+	dispatch,
+	Mode
 ) where
 
+import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Posix.Files
 import System.Directory
@@ -25,6 +21,44 @@ import BackendList
 import UUID
 import LocationLog
 import Types
+import Core
+
+data Mode = Default | Add | Push | Pull | Want | Get | Drop | Unannex
+	deriving Show
+
+options :: [OptDescr Mode]
+options =
+	[ Option ['a'] ["add"] (NoArg Add) "add files to annex"
+	, Option ['p'] ["push"] (NoArg Push) "push annex to repos"
+	, Option ['P'] ["pull"] (NoArg Pull) "pull annex from repos"
+	, Option ['w'] ["want"] (NoArg Want) "request file contents"
+	, Option ['g'] ["get"] (NoArg Get) "transfer file contents"
+	, Option ['d'] ["drop"] (NoArg Drop) "indicate file contents not needed"
+	, Option ['u'] ["unannex"] (NoArg Unannex) "undo --add"
+	]
+
+argvToMode argv = do
+	case getOpt Permute options argv of
+		([],files,[]) -> return (Default, files)
+		-- one mode is normal case
+		(m:[],files,[]) -> return (m, files)
+		-- multiple modes is an error
+		(ms,files,[]) -> ioError (userError ("only one mode should be specified\n" ++ usageInfo header options))
+		-- error case
+		(_,files,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+	where header = "Usage: git-annex [mode] file"
+
+dispatch :: Mode -> FilePath -> Annex ()
+dispatch mode item = do
+	case (mode) of
+		Default -> defaultCmd item
+		Add     -> addCmd item
+		Push    -> pushCmd item
+		Pull    -> pullCmd item
+		Want    -> wantCmd item
+		Get     -> getCmd item
+		Drop    -> dropCmd item
+		Unannex -> unannexCmd item
 
 {- Default mode is to annex a file if it is not already, and otherwise
  - get its content. -}
@@ -163,9 +197,3 @@ inBackend file yes no = do
 		Just v -> yes v
 		Nothing -> no
 notinBackend file yes no = inBackend file no yes
-
-{- Checks if a given key is currently present in the annexLocation -}
-inAnnex :: Backend -> Key -> Annex Bool
-inAnnex backend key = do
-	g <- Annex.gitRepo
-	liftIO $ doesFileExist $ annexLocation g backend key
