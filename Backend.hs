@@ -33,6 +33,19 @@ import qualified Annex
 import Utility
 import Types
 import qualified BackendTypes as B
+import BackendList
+
+{- List of backends in the order to try them when storing a new key. -}
+backendList :: Annex [Backend]
+backendList = do
+	l <- Annex.backends
+	if (0 < length l)
+		then return l
+		else do
+			g <- Annex.gitRepo
+			let l = parseBackendList $ Git.configGet g "annex.backends" ""
+			Annex.backendsChange l
+			return l
 
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))

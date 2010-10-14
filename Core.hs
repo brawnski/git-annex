@@ -27,8 +27,6 @@ start = do
 			g' <- liftIO $ Git.configRead g
 			Annex.gitRepoChange g'
 			liftIO $ gitSetup g'
-			Annex.backendsChange $ parseBackendList $
-				Git.configGet g' "annex.backends" ""
 			prepUUID
 
 {- Sets up a git repo for git-annex. May be called repeatedly. -}
