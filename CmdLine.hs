@@ -14,7 +14,7 @@ import System.Console.GetOpt
 import Types
 import Commands
 
-data Mode = Add | Push | Pull | Want | Get | Drop | Unannex
+data Mode = Default | Add | Push | Pull | Want | Get | Drop | Unannex
 	deriving Show
 
 options :: [OptDescr Mode]
@@ -30,8 +30,7 @@ options =
 
 argvToMode argv = do
 	case getOpt Permute options argv of
-		-- default mode is Add
-		([],files,[]) -> return (Add, files)
+		([],files,[]) -> return (Default, files)
 		-- one mode is normal case
 		(m:[],files,[]) -> return (m, files)
 		-- multiple modes is an error
@@ -43,7 +42,8 @@ argvToMode argv = do
 dispatch :: Mode -> FilePath -> Annex ()
 dispatch mode item = do
 	case (mode) of
-		Add     -> annexCmd item
+		Default -> defaultCmd item
+		Add     -> addCmd item
 		Push    -> pushCmd item
 		Pull    -> pullCmd item
 		Want    -> wantCmd item

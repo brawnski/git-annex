@@ -1,7 +1,8 @@
 {- git-annex subcommands -}
 
 module Commands (
-	annexCmd,
+	defaultCmd,
+	addCmd,
 	unannexCmd,
 	getCmd,
 	wantCmd,
@@ -25,10 +26,19 @@ import UUID
 import LocationLog
 import Types
 
+{- Default mode is to annex a file if it is not already, and otherwise
+ - get its content. -}
+defaultCmd :: FilePath -> Annex ()
+defaultCmd file = do
+	r <- liftIO $ Backend.lookupFile file
+	case (r) of
+		Just v -> getCmd file
+		Nothing -> addCmd file
+
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
-annexCmd :: FilePath -> Annex ()
-annexCmd file = inBackend file err $ do
+addCmd :: FilePath -> Annex ()
+addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
 	stored <- Backend.storeFile file
 	g <- Annex.gitRepo
@@ -63,7 +73,7 @@ annexCmd file = inBackend file err $ do
 				subdirs = (length $ split "/" file) - 1
 		
 
-{- Inverse of annexCmd. -}
+{- Inverse of addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
 	Backend.dropFile backend key
