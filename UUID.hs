@@ -41,22 +41,21 @@ genUUID = liftIO $ pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
 getUUID :: Git.Repo -> Annex UUID
 getUUID r = do
 	g <- Annex.gitRepo
-	let uuid = cached r g
-	if (uuid /= "")
-		then return $ uuid
-		else do
-			let uuid = uncached r
-			if (uuid /= "")
-				then do
-					updatecache r g uuid
-					return uuid
-				else return ""
+
+	let c = cached r g
+	let u = uncached r
+			
+	if (c /= u && u /= "")
+		then do
+			updatecache g r u
+			return u
+		else return c
 	where
 		uncached r = Git.configGet r "annex.uuid" ""
 		cached r g = Git.configGet g (cachekey r) ""
-		updatecache r g uuid = do
-			if (g /= r) 
-				then setConfig (cachekey r) uuid
+		updatecache g r u = do
+			if (g /= r)
+				then setConfig (cachekey r) u
 				else return ()
 		cachekey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
 
