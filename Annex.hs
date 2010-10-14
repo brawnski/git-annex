@@ -38,9 +38,9 @@ startAnnex = do
 	where
 		prep g = do
 			-- setup git and read its config; update state
-			liftIO $ gitSetup g
 			g' <- liftIO $ gitConfigRead g
 			gitAnnexChange g'
+			liftIO $ gitSetup g'
 			backendsAnnexChange $ parseBackendList $
 				gitConfig g' "annex.backends" ""
 			prepUUID
