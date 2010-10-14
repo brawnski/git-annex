@@ -1,9 +1,9 @@
 {- git-annex remote repositories -}
 
 module Remotes (
-	remotesList,
-	remotesWithKey,
-	remoteEnsureGitConfigRead
+	list,
+	withKey,
+	ensureGitConfigRead
 ) where
 
 import Control.Monad.State (liftIO)
@@ -17,12 +17,12 @@ import UUID
 import List
 
 {- Human visible list of remotes. -}
-remotesList :: [Git.Repo] -> String
-remotesList remotes = join " " $ map Git.repoDescribe remotes 
+list :: [Git.Repo] -> String
+list remotes = join " " $ map Git.repoDescribe remotes 
 
 {- Cost ordered list of remotes that the LocationLog indicate may have a key. -}
-remotesWithKey :: Key -> Annex [Git.Repo]
-remotesWithKey key = do
+withKey :: Key -> Annex [Git.Repo]
+withKey key = do
 	g <- gitAnnex
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
@@ -71,8 +71,8 @@ repoCost r = do
  - because reading it may be expensive. This function ensures that it is
  - read for a specified remote, and updates state. It returns the
  - updated git repo also. -}
-remoteEnsureGitConfigRead :: Git.Repo -> Annex Git.Repo
-remoteEnsureGitConfigRead r = do
+ensureGitConfigRead :: Git.Repo -> Annex Git.Repo
+ensureGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
 			r' <- liftIO $ Git.configRead r

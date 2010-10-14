@@ -10,7 +10,7 @@ import Control.Exception
 import Types
 import LocationLog
 import Locations
-import Remotes
+import qualified Remotes
 import qualified GitRepo as Git
 
 backend = Backend {
@@ -39,17 +39,17 @@ dummyRemove url = return False
  - and copy it over to this one. -}
 copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
-	remotes <- remotesWithKey key
+	remotes <- Remotes.withKey key
 	trycopy remotes remotes
 	where
 		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
 			"To get that file, need access to one of these remotes: " ++
-			(remotesList full)
+			(Remotes.list full)
 		trycopy full (r:rs) = do
 			-- annexLocation needs the git config to have been
 			-- read for a remote, so do that now,
 			-- if it hasn't been already
-			r' <- remoteEnsureGitConfigRead r
+			r' <- Remotes.ensureGitConfigRead r
 			result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
         		case (result) of
 		                Left err -> do

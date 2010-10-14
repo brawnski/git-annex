@@ -20,7 +20,7 @@ import List
 import qualified GitRepo as Git
 import Utility
 import Locations
-import Backend
+import qualified Backend
 import BackendList
 import UUID
 import LocationLog
@@ -46,7 +46,7 @@ start = do
 			prepUUID
 
 inBackend file yes no = do
-	r <- liftIO $ lookupFile file
+	r <- liftIO $ Backend.lookupFile file
 	case (r) of
 		Just v -> yes v
 		Nothing -> no
@@ -57,7 +57,7 @@ notinBackend file yes no = inBackend file no yes
 annexCmd :: FilePath -> Annex ()
 annexCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
-	stored <- storeFile file
+	stored <- Backend.storeFile file
 	g <- gitAnnex
 	case (stored) of
 		Nothing -> error $ "no backend could store: " ++ file
@@ -93,7 +93,7 @@ annexCmd file = inBackend file err $ do
 {- Inverse of annexCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
-	dropFile backend key
+	Backend.dropFile backend key
 	logStatus key ValueMissing
 	g <- gitAnnex
 	let src = annexLocation g backend key
@@ -121,7 +121,7 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 			g <- gitAnnex
 			let dest = annexLocation g backend key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
-			success <- retrieveFile backend key dest
+			success <- Backend.retrieveFile backend key dest
 			if (success)
 				then do
 					logStatus key ValuePresent
