@@ -10,9 +10,9 @@ import Commands
 
 main = do
 	args <- getArgs
-	(mode, params) <- argvToMode args
+	actions <- argvToActions args
 	state <- start
-	tryRun state mode params
+	tryRun state actions
 
 {- Processes each param in the list by dispatching the handler function
  - for the user-selection operation mode. Catches exceptions, not stopping
@@ -23,17 +23,17 @@ main = do
  - or more likely I missed an easy way to do it. So, I have to laboriously
  - thread AnnexState through this function.
  -}
-tryRun :: AnnexState -> Mode -> [String] -> IO ()
-tryRun state mode params = tryRun' state mode 0 0 params
-tryRun' state mode errnum oknum (f:fs) = do
+tryRun :: AnnexState -> [Annex ()] -> IO ()
+tryRun state actions = tryRun' state 0 0 actions
+tryRun' state errnum oknum (a:as) = do
 	result <- try
-		(Annex.run state (dispatch mode f))::IO (Either SomeException ((), AnnexState))
+		(Annex.run state a)::IO (Either SomeException ((), AnnexState))
 	case (result) of
 		Left err -> do
 			showErr err
-			tryRun' state mode (errnum + 1) oknum fs
-		Right (_,state') -> tryRun' state' mode errnum (oknum + 1) fs
-tryRun' state mode errnum oknum [] = do
+			tryRun' state (errnum + 1) oknum as
+		Right (_,state') -> tryRun' state' errnum (oknum + 1) as
+tryRun' state errnum oknum [] = do
 	if (errnum > 0)
 		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " ok"
 		else return ()
