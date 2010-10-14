@@ -15,7 +15,7 @@ main = do
 	actions <- argvToActions args
 	gitrepo <- Git.repoFromCwd
 	state <- new gitrepo
-	tryRun state (gitSetup:actions)
+	tryRun state $ [setup] ++ actions ++ [shutdown]
 
 {- Runs a list of Annex actions. Catches exceptions, not stopping
  - if some error out, and propigates an overall error status at the end.
@@ -26,18 +26,18 @@ main = do
  - thread AnnexState through this function.
  -}
 tryRun :: AnnexState -> [Annex ()] -> IO ()
-tryRun state actions = tryRun' state 0 0 actions
-tryRun' state errnum oknum (a:as) = do
+tryRun state actions = tryRun' state 0 actions
+tryRun' state errnum (a:as) = do
 	result <- try
 		(Annex.run state a)::IO (Either SomeException ((), AnnexState))
 	case (result) of
 		Left err -> do
 			showErr err
-			tryRun' state (errnum + 1) oknum as
-		Right (_,state') -> tryRun' state' errnum (oknum + 1) as
-tryRun' state errnum oknum [] = do
+			tryRun' state (errnum + 1) as
+		Right (_,state') -> tryRun' state' errnum as
+tryRun' state errnum [] = do
 	if (errnum > 0)
-		then error $ (show errnum) ++ " failed ; " ++ show (oknum) ++ " ok"
+		then error $ (show errnum) ++ " failed"
 		else return ()
 
 {- Exception pretty-printing. -}

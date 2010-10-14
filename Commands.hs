@@ -171,11 +171,7 @@ logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	f <- liftIO $ logChange g key u status
-	liftIO $ commit g f
-	where
-		commit g f = do
-			Git.run g ["add", f]
-			Git.run g ["commit", "-m", "git-annex log update", f]
+	liftIO $ Git.run g ["add", f] -- committed at shutdown
 
 inBackend file yes no = do
 	r <- liftIO $ Backend.lookupFile file
@@ -204,7 +200,8 @@ requireEnoughCopies key = do
 		findcopies n (r:rs) bad = do
 			result <- liftIO $ try $ haskey r
 			case (result) of
-				Right True -> findcopies (n-1) rs bad
+				Right True -> do
+					findcopies (n-1) rs bad
 				Left _ -> findcopies n rs (r:bad)
 		haskey r = do
 			-- To check if a remote has a key, construct a new
