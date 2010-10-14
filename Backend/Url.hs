@@ -23,8 +23,10 @@ keyValue file = return Nothing
 -- cannot change url contents
 dummyStore :: FilePath -> Key -> Annex Bool
 dummyStore file url = return False
+
+-- allow keys to be removed
 dummyRemove :: Key -> Annex Bool
-dummyRemove url = return False
+dummyRemove url = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl url file = do

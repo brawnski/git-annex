@@ -45,9 +45,10 @@ withKey key = do
 				else return remotes'
 		err uuids = 
 			error $ "no available git remotes have: " ++
-			(keyFile key) ++ "\n" ++
-			"It has been seen before in these repositories:\n" ++
-			prettyPrintUUIDs uuids
+				(keyFile key) ++ (uuidlist uuids)
+		uuidlist [] = ""
+		uuidlist uuids = "\nIt has been seen before in these repositories:\n" ++
+				prettyPrintUUIDs uuids
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]

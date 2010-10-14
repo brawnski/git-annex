@@ -40,7 +40,7 @@ defaultCmd file = do
 addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
-	stored <- Backend.storeFile file
+	stored <- Backend.storeFileKey file
 	g <- Annex.gitRepo
 	case (stored) of
 		Nothing -> error $ "no backend could store: " ++ file
@@ -76,7 +76,7 @@ addCmd file = inBackend file err $ do
 {- Inverse of addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
-	Backend.dropFile backend key
+	Backend.removeKey backend key
 	logStatus key ValueMissing
 	g <- Annex.gitRepo
 	let src = annexLocation g backend key
@@ -104,7 +104,7 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 			g <- Annex.gitRepo
 			let dest = annexLocation g backend key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
-			success <- Backend.retrieveFile backend key dest
+			success <- Backend.retrieveKeyFile backend key dest
 			if (success)
 				then do
 					logStatus key ValuePresent
@@ -119,7 +119,23 @@ wantCmd file = do error "not implemented" -- TODO
 
 {- Indicates a file is not wanted. -}
 dropCmd :: FilePath -> Annex ()
-dropCmd file = do error "not implemented" -- TODO
+dropCmd file = notinBackend file err $ \(key, backend) -> do
+	-- TODO only remove if enough copies are present elsewhere
+	success <- Backend.removeKey backend key
+	if (success)
+		then do
+			logStatus key ValueMissing
+			inannex <- inAnnex backend key
+			if (inannex)
+				then do
+					g <- Annex.gitRepo
+					let loc = annexLocation g backend key
+					liftIO $ removeFile loc
+					return ()
+				else return ()
+		else error $ "backend refused to drop " ++ file
+	where
+		err = error $ "not annexed " ++ file
 
 {- Pushes all files to a remote repository. -}
 pushCmd :: String -> Annex ()

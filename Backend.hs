@@ -14,9 +14,9 @@
  - -}
 
 module Backend (
-	storeFile,
-	dropFile,
-	retrieveFile,
+	storeFileKey,
+	removeKey,
+	retrieveKeyFile,
 	lookupFile
 ) where
 
@@ -32,37 +32,37 @@ import qualified GitRepo as Git
 import qualified Annex
 import Utility
 import Types
-import BackendTypes
+import qualified BackendTypes as B
 
 {- Attempts to store a file in one of the backends. -}
-storeFile :: FilePath -> Annex (Maybe (Key, Backend))
-storeFile file = do
+storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
+storeFileKey file = do
 	g <- Annex.gitRepo
 	let relfile = Git.relative g file
 	b <- Annex.backends
-	storeFile' b file relfile
-storeFile' [] _ _ = return Nothing
-storeFile' (b:bs) file relfile = do
-	try <- (getKey b) relfile
+	storeFileKey' b file relfile
+storeFileKey' [] _ _ = return Nothing
+storeFileKey' (b:bs) file relfile = do
+	try <- (B.getKey b) relfile
 	case (try) of
 		Nothing -> nextbackend
 		Just key -> do
-			stored <- (storeFileKey b) file key
+			stored <- (B.storeFileKey b) file key
 			if (not stored)
 				then nextbackend
 				else do
 					return $ Just (key, b)
 	where
-		nextbackend = storeFile' bs file relfile
+		nextbackend = storeFileKey' bs file relfile
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: Backend -> Key -> FilePath -> Annex Bool
-retrieveFile backend key dest = (retrieveKeyFile backend) key dest
+retrieveKeyFile :: Backend -> Key -> FilePath -> Annex Bool
+retrieveKeyFile backend key dest = (B.retrieveKeyFile backend) key dest
 
-{- Drops a key from a backend. -}
-dropFile :: Backend -> Key -> Annex Bool
-dropFile backend key = (removeKey backend)  key
+{- Removes a key from a backend. -}
+removeKey :: Backend -> Key -> Annex Bool
+removeKey backend key = (B.removeKey backend)  key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

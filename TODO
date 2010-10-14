@@ -1,7 +1,7 @@
 * bug when annexing files while in a subdir of a git repo
 * bug when specifying absolute path to files when annexing
 
-* --push/--pull/--want/--drop
+* --push/--pull/--want
 
 * how to handle git mv file?
 

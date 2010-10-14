@@ -28,13 +28,15 @@ keyValue file = return $ Just $ Key file
 
 {- This backend does not really do any independant data storage,
  - it relies on the file contents in .git/annex/ in this repo,
- - and other accessible repos. So storing or removing a key is
+ - and other accessible repos. So storing a key is
  - a no-op. TODO until support is added for git annex --push otherrepo,
  - then these could implement that.. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
+
+{- Allow keys to be removed. -}
 dummyRemove :: Key -> Annex Bool
-dummyRemove url = return False
+dummyRemove url = return True
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
