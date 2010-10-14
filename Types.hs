@@ -1,7 +1,8 @@
 {- git-annex core data types -}
 
 module Types (
-	Annex(..),
+	Annex,
+	AnnexState,
 	makeAnnexState,
 	runAnnexState,
 	gitAnnex,
@@ -9,7 +10,6 @@ module Types (
 	backendsAnnex,
 	backendsAnnexChange,
 
-	AnnexState(..),
 	Key(..),
 	Backend(..)
 ) where
@@ -34,7 +34,7 @@ makeAnnexState g = AnnexState { repo = g, backends = [] }
 -- performs an action in the Annex monad
 runAnnexState state action = runStateT (action) state
 
--- state accessors
+-- Annex monad state accessors
 gitAnnex :: Annex GitRepo
 gitAnnex = do
 	state <- get
