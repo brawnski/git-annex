@@ -52,7 +52,7 @@ storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
 storeFileKey file = do
 	g <- Annex.gitRepo
 	let relfile = Git.relative g file
-	b <- Annex.backends
+	b <- backendList
 	storeFileKey' b file relfile
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do

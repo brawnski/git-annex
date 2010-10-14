@@ -7,12 +7,15 @@ import qualified Annex
 import Types
 import Core
 import Commands
+import Annex
+import qualified GitRepo as Git
 
 main = do
 	args <- getArgs
 	actions <- argvToActions args
-	state <- start
-	tryRun state actions
+	gitrepo <- Git.repoFromCwd
+	state <- new gitrepo
+	tryRun state (gitSetup:actions)
 
 {- Runs a list of Annex actions. Catches exceptions, not stopping
  - if some error out, and propigates an overall error status at the end.

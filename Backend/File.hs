@@ -14,6 +14,7 @@ import Locations
 import qualified Remotes
 import qualified GitRepo as Git
 import Utility
+import Core
 
 backend = Backend {
 	name = "file",

@@ -14,9 +14,18 @@ import qualified GitRepo as Git
 import Types
 import qualified BackendTypes as Backend
 
--- constructor
-new :: Git.Repo -> AnnexState
-new g = Backend.AnnexState { Backend.repo = g, Backend.backends = [] }
+{- Create and returns an Annex state object for the specified git repo.
+ -}
+new :: Git.Repo -> IO AnnexState
+new g = do
+	let s = Backend.AnnexState { Backend.repo = g, Backend.backends = [] }
+	(_,s') <- Annex.run s (prep g)
+	return s'
+	where
+		prep g = do
+			-- read git config and update state
+			g' <- liftIO $ Git.configRead g
+			Annex.gitRepoChange g'
 
 -- performs an action in the Annex monad
 run state action = runStateT (action) state
