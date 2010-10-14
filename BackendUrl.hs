@@ -3,6 +3,7 @@
 
 module BackendUrl (backend) where
 
+import Control.Monad.State
 import System.Cmd
 import IO
 import Types
@@ -16,19 +17,19 @@ backend = Backend {
 }
 
 -- cannot generate url from filename
-keyValue :: State -> FilePath -> IO (Maybe Key)
-keyValue repo file = return Nothing
+keyValue :: FilePath -> Annex (Maybe Key)
+keyValue file = return Nothing
 
 -- cannot change url contents
-dummyStore :: State -> FilePath -> Key -> IO Bool
-dummyStore repo file url = return False
-dummyRemove :: State -> Key -> IO Bool
-dummyRemove state url = return False
+dummyStore :: FilePath -> Key -> Annex Bool
+dummyStore file url = return False
+dummyRemove :: Key -> Annex Bool
+dummyRemove url = return False
 
-downloadUrl :: State -> Key -> FilePath -> IO Bool
-downloadUrl state url file = do
-	putStrLn $ "download: " ++ (show url)
-	result <- try $ rawSystem "curl" ["-#", "-o", file, (show url)]
+downloadUrl :: Key -> FilePath -> Annex Bool
+downloadUrl url file = do
+	liftIO $ putStrLn $ "download: " ++ (show url)
+	result <- liftIO $ try $ rawSystem "curl" ["-#", "-o", file, (show url)]
 	case (result) of
 		Left _ -> return False
 		Right _ -> return True

@@ -6,7 +6,8 @@
 
 module CmdLine (
 	argvToMode,
-	dispatch
+	dispatch,
+	Mode
 ) where
 
 import System.Console.GetOpt
@@ -39,13 +40,13 @@ argvToMode argv = do
 		(_,files,errs) -> ioError (userError (concat errs ++ usageInfo header options))
 	where header = "Usage: git-annex [mode] file"
 
-dispatch :: State -> Mode -> FilePath -> IO ()
-dispatch state mode item = do
+dispatch :: Mode -> FilePath -> Annex ()
+dispatch mode item = do
 	case (mode) of
-		Add     -> annexFile state item
-		Push    -> annexPushRepo state item
-		Pull    -> annexPullRepo state item
-		Want    -> annexWantFile state item
-		Get     -> annexGetFile state item
-		Drop    -> annexDropFile state item
-		Unannex -> unannexFile state item
+		Add     -> annexFile item
+		Push    -> annexPushRepo item
+		Pull    -> annexPullRepo item
+		Want    -> annexWantFile item
+		Get     -> annexGetFile item
+		Drop    -> annexDropFile item
+		Unannex -> unannexFile item

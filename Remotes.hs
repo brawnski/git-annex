@@ -5,6 +5,7 @@ module Remotes (
 	remotesWithKey
 ) where
 
+import Control.Monad.State (liftIO)
 import Types
 import GitRepo
 import LocationLog
@@ -17,34 +18,43 @@ remotesList :: [GitRepo] -> String
 remotesList remotes = join " " $ map gitRepoDescribe remotes 
 
 {- Cost ordered list of remotes that the LocationLog indicate may have a key. -}
-remotesWithKey :: State -> Key -> IO [GitRepo]
-remotesWithKey state key = do
-	uuids <- keyLocations (repo state) key
-	return $ reposByUUID state (remotesByCost state) uuids
+remotesWithKey :: Key -> Annex [GitRepo]
+remotesWithKey key = do
+	g <- gitAnnex
+	uuids <- liftIO $ keyLocations g key
+	remotes <- remotesByCost
+	reposByUUID remotes uuids
 
 {- Cost Ordered list of remotes. -}
-remotesByCost :: State -> [GitRepo]
-remotesByCost state = reposByCost state $ gitConfigRemotes (repo state)
+remotesByCost :: Annex [GitRepo]
+remotesByCost = do
+	g <- gitAnnex
+	reposByCost $ gitConfigRemotes g
 
 {- Orders a list of git repos by cost. -}
-reposByCost :: State -> [GitRepo] -> [GitRepo]
-reposByCost state l =
-	fst $ unzip $ sortBy (\(r1, c1) (r2, c2) -> compare c1 c2) $ costpairs l
+reposByCost :: [GitRepo] -> Annex [GitRepo]
+reposByCost l = do
+	costpairs <- mapM costpair l
+	return $ fst $ unzip $ sortBy bycost $ costpairs
 	where
-		costpairs l = map (\r -> (r, repoCost state r)) l
+		costpair r = do
+			cost <- repoCost r
+			return (r, cost)
+		bycost (_, c1) (_, c2) = compare c1 c2
 
 {- Calculates cost for a repo.
  -
  - The default cost is 100 for local repositories, and 200 for remote
  - repositories; it can also be configured by remote.<name>.annex-cost
  -}
-repoCost :: State -> GitRepo -> Int
-repoCost state r = 
-	if ((length $ config state r) > 0)
-		then read $ config state r
+repoCost :: GitRepo -> Annex Int
+repoCost r = do
+	g <- gitAnnex
+	if ((length $ config g r) > 0)
+		then return $ read $ config g r
 		else if (gitRepoIsLocal r)
-			then 100
-			else 200
+			then return 100
+			else return 200
 	where
-		config state r = gitConfig (repo state) (configkey r) ""
+		config g r = gitConfig g (configkey r) ""
 		configkey r = "remote." ++ (gitRepoRemoteName r) ++ ".annex-cost"

@@ -14,5 +14,5 @@ backend = BackendFile.backend {
 }
 
 -- checksum the file to get its key
-keyValue :: State -> FilePath -> IO (Maybe Key)
+keyValue :: FilePath -> Annex (Maybe Key)
 keyValue k = error "checksum keyValue unimplemented" -- TODO

@@ -13,6 +13,7 @@ module UUID (
 	reposByUUID
 ) where
 
+import Control.Monad.State
 import Maybe
 import List
 import System.Cmd.Utils
@@ -26,9 +27,8 @@ configkey="annex.uuid"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}
-genUUID :: IO UUID
-genUUID = do
-	pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
+genUUID :: Annex UUID
+genUUID = liftIO $ pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
 
 {- Looks up a repo's UUID. May return "" if none is known.
  -
@@ -36,28 +36,38 @@ genUUID = do
  - remote.<name>.annex-uuid
  -
  - -}
-getUUID :: State -> GitRepo -> UUID
-getUUID s r = 
-	if ("" /= getUUID' r)
-		then getUUID' r
-		else cached s r
+getUUID :: GitRepo -> Annex UUID
+getUUID r = do
+	if ("" /= configured r)
+		then return $ configured r
+		else cached r
 	where
-		cached s r = gitConfig (repo s) (configkey r) ""
+		configured r = gitConfig r "annex.uuid" ""
+		cached r = do
+			g <- gitAnnex
+			return $ gitConfig g (configkey r) ""
 		configkey r = "remote." ++ (gitRepoRemoteName r) ++ ".annex-uuid"
-getUUID' r = gitConfig r "annex.uuid" ""
 
 {- Make sure that the repo has an annex.uuid setting. -}
-prepUUID :: GitRepo -> IO GitRepo
-prepUUID repo =
-	if ("" == getUUID' repo)
+prepUUID :: Annex ()
+prepUUID = do
+	g <- gitAnnex
+	u <- getUUID g
+	if ("" == u)
 		then do
 			uuid <- genUUID
-			gitRun repo ["config", configkey, uuid]
-			-- return new repo with updated config
-			gitConfigRead repo
-		else return repo
+			liftIO $ gitRun g ["config", configkey, uuid]
+			-- re-read git config and update the repo's state
+			u' <- liftIO $ gitConfigRead g
+			gitAnnexChange u'
+			return ()
+		else return ()
 
 {- Filters a list of repos to ones that have listed UUIDs. -}
-reposByUUID :: State -> [GitRepo] -> [UUID] -> [GitRepo]
-reposByUUID state repos uuids =
-	filter (\r -> isJust $ elemIndex (getUUID state r) uuids) repos
+reposByUUID :: [GitRepo] -> [UUID] -> Annex [GitRepo]
+reposByUUID repos uuids = do
+	filterM match repos
+	where
+		match r = do
+			u <- getUUID r
+			return $ isJust $ elemIndex u uuids

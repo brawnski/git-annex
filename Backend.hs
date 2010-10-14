@@ -20,6 +20,7 @@ module Backend (
 	lookupFile
 ) where
 
+import Control.Monad.State
 import Control.Exception
 import System.Directory
 import System.FilePath
@@ -32,30 +33,34 @@ import Utility
 import Types
 
 {- Attempts to store a file in one of the backends. -}
-storeFile :: State -> FilePath -> IO (Maybe (Key, Backend))
-storeFile state file = storeFile' (backends state) state file
+storeFile :: FilePath -> Annex (Maybe (Key, Backend))
+storeFile file = do
+	g <- gitAnnex
+	let relfile = gitRelative g file
+	b <- backendsAnnex
+	storeFile' b file relfile
 storeFile' [] _ _ = return Nothing
-storeFile' (b:bs) state file = do
-	try <- (getKey b) state (gitRelative (repo state) file)
+storeFile' (b:bs) file relfile = do
+	try <- (getKey b) relfile
 	case (try) of
 		Nothing -> nextbackend
 		Just key -> do
-			stored <- (storeFileKey b) state file key
+			stored <- (storeFileKey b) file key
 			if (not stored)
 				then nextbackend
 				else do
 					return $ Just (key, b)
 	where
-		nextbackend = storeFile' bs state file
+		nextbackend = storeFile' bs file relfile
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
-retrieveFile :: State -> Backend -> Key -> FilePath -> IO Bool
-retrieveFile state backend key dest = (retrieveKeyFile backend) state key dest
+retrieveFile :: Backend -> Key -> FilePath -> Annex Bool
+retrieveFile backend key dest = (retrieveKeyFile backend) key dest
 
 {- Drops a key from a backend. -}
-dropFile :: State -> Backend -> Key -> IO Bool
-dropFile state backend key = (removeKey backend) state key
+dropFile :: Backend -> Key -> Annex Bool
+dropFile backend key = (removeKey backend)  key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

@@ -3,6 +3,7 @@
 
 module BackendFile (backend) where
 
+import Control.Monad.State
 import System.IO
 import System.Cmd
 import Control.Exception
@@ -21,28 +22,28 @@ backend = Backend {
 }
 
 -- direct mapping from filename to key
-keyValue :: State -> FilePath -> IO (Maybe Key)
-keyValue state file = return $ Just $ Key file
+keyValue :: FilePath -> Annex (Maybe Key)
+keyValue file = return $ Just $ Key file
 
 {- This backend does not really do any independant data storage,
  - it relies on the file contents in .git/annex/ in this repo,
  - and other accessible repos. So storing or removing a key is
  - a no-op. TODO until support is added for git annex --push otherrepo,
  - then these could implement that.. -}
-dummyStore :: State -> FilePath -> Key -> IO (Bool)
-dummyStore state file key = return True
-dummyRemove :: State -> Key -> IO Bool
-dummyRemove state url = return False
+dummyStore :: FilePath -> Key -> Annex (Bool)
+dummyStore file key = return True
+dummyRemove :: Key -> Annex Bool
+dummyRemove url = return False
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
-copyKeyFile :: State -> Key -> FilePath -> IO (Bool)
-copyKeyFile state key file = do
-	remotes <- remotesWithKey state key
+copyKeyFile :: Key -> FilePath -> Annex (Bool)
+copyKeyFile key file = do
+	remotes <- remotesWithKey key
 	if (0 == length remotes)
 		then error $ "no known remotes have: " ++ (keyFile key) ++ "\n" ++
 			"(Perhaps you need to git remote add a repository?)"
-		else trycopy remotes remotes
+		else liftIO $ trycopy remotes remotes
 	where
 		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
 			"To get that file, need access to one of these remotes: " ++
