@@ -30,7 +30,8 @@ import BackendList
 import Locations
 import qualified GitRepo as Git
 import Utility
-import Types
+import AbstractTypes
+import BackendTypes
 
 {- Attempts to store a file in one of the backends. -}
 storeFile :: FilePath -> Annex (Maybe (Key, Backend))

@@ -6,7 +6,7 @@ module BackendUrl (backend) where
 import Control.Monad.State
 import System.Cmd
 import IO
-import Types
+import BackendTypes
 
 backend = Backend {
 	name = "url",

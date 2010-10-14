@@ -5,7 +5,7 @@ module BackendChecksum (backend) where
 
 import qualified BackendFile
 import Data.Digest.Pure.SHA
-import Types
+import BackendTypes
 
 -- based on BackendFile just with a different key type
 backend = BackendFile.backend {

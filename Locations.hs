@@ -11,7 +11,8 @@ module Locations (
 ) where
 
 import Data.String.Utils
-import Types
+import AbstractTypes
+import qualified BackendTypes as Backend
 import qualified GitRepo as Git
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex
@@ -32,7 +33,7 @@ annexLocation r backend key =
 {- Annexed file's location relative to the gitWorkTree -}
 annexLocationRelative :: Git.Repo -> Backend -> Key -> FilePath
 annexLocationRelative r backend key = 
-	Git.dir r ++ "/annex/" ++ (name backend) ++ "/" ++ (keyFile key)
+	Git.dir r ++ "/annex/" ++ (Backend.name backend) ++ "/" ++ (keyFile key)
 
 {- Converts a key into a filename fragment.
  -
@@ -50,4 +51,5 @@ keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a" $ show key
 {- Reverses keyFile, converting a filename fragment (ie, the basename of
  - the symlink target) into a key. -}
 fileKey :: FilePath -> Key
-fileKey file = Key $ replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
+fileKey file = Backend.Key $ 
+	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file

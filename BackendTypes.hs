@@ -1,12 +1,16 @@
-{- git-annex core data types -}
+{- git-annex backend data types
+ -
+ - Mostly only backend implementations should need to import this.
+ -}
 
-module Types where
+module BackendTypes where
 
 import Control.Monad.State
 import Data.String.Utils
 import qualified GitRepo as Git
 
--- git-annex's runtime state
+-- git-annex's runtime state type doesn't really belong here,
+-- but it uses Backend, so has to be here to avoid a depends loop.
 data AnnexState = AnnexState {
 	repo :: Git.Repo,
 	backends :: [Backend]
@@ -14,33 +18,6 @@ data AnnexState = AnnexState {
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
-
--- constructor
-makeAnnexState :: Git.Repo -> AnnexState
-makeAnnexState g = AnnexState { repo = g, backends = [] }
-
--- performs an action in the Annex monad
-runAnnexState state action = runStateT (action) state
-
--- Annex monad state accessors
-gitAnnex :: Annex Git.Repo
-gitAnnex = do
-	state <- get
-	return (repo state)
-gitAnnexChange :: Git.Repo -> Annex ()
-gitAnnexChange r = do
-	state <- get
-	put state { repo = r }
-	return ()
-backendsAnnex :: Annex [Backend]
-backendsAnnex = do
-	state <- get
-	return (backends state)
-backendsAnnexChange :: [Backend] -> Annex ()
-backendsAnnexChange b = do
-	state <- get
-	put state { backends = b }
-	return ()
 
 -- annexed filenames are mapped into keys
 data Key = Key String deriving (Eq)

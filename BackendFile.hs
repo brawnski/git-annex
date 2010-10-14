@@ -7,7 +7,7 @@ import Control.Monad.State
 import System.IO
 import System.Cmd
 import Control.Exception
-import Types
+import BackendTypes
 import LocationLog
 import Locations
 import qualified Remotes
