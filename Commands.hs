@@ -1,7 +1,6 @@
 {- git-annex subcommands -}
 
 module Commands (
-	start,
 	annexCmd,
 	unannexCmd,
 	getCmd,
@@ -25,32 +24,6 @@ import BackendList
 import UUID
 import LocationLog
 import Types
-
-{- Create and returns an Annex state object. 
- - Examines and prepares the git repo.
- -}
-start :: IO AnnexState
-start = do
-	g <- Git.repoFromCwd
-	let s = Annex.new g
-	(_,s') <- Annex.run s (prep g)
-	return s'
-	where
-		prep g = do
-			-- setup git and read its config; update state
-			g' <- liftIO $ Git.configRead g
-			Annex.gitRepoChange g'
-			liftIO $ gitSetup g'
-			Annex.backendsChange $ parseBackendList $
-				Git.configGet g' "annex.backends" ""
-			prepUUID
-
-inBackend file yes no = do
-	r <- liftIO $ Backend.lookupFile file
-	case (r) of
-		Just v -> yes v
-		Nothing -> no
-notinBackend file yes no = inBackend file no yes
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
@@ -146,30 +119,6 @@ pushCmd reponame = do error "not implemented" -- TODO
 pullCmd :: String -> Annex ()
 pullCmd reponame = do error "not implemented" -- TODO
 
-{- Sets up a git repo for git-annex. May be called repeatedly. -}
-gitSetup :: Git.Repo -> IO ()
-gitSetup repo = do
-	-- configure git to use union merge driver on state files
-	exists <- doesFileExist attributes
-	if (not exists)
-		then do
-			writeFile attributes $ attrLine ++ "\n"
-			commit
-		else do
-			content <- readFile attributes
-			if (all (/= attrLine) (lines content))
-				then do
-					appendFile attributes $ attrLine ++ "\n"
-					commit
-				else return ()
-	where
-		attrLine = stateLoc ++ "/*.log merge=union"
-		attributes = Git.attributes repo
-		commit = do
-			Git.run repo ["add", attributes]
-			Git.run repo ["commit", "-m", "git-annex setup", 
-					attributes]
-
 {- Updates the LocationLog when a key's presence changes. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
@@ -181,6 +130,13 @@ logStatus key status = do
 		commit g f = do
 			Git.run g ["add", f]
 			Git.run g ["commit", "-m", "git-annex log update", f]
+
+inBackend file yes no = do
+	r <- liftIO $ Backend.lookupFile file
+	case (r) of
+		Just v -> yes v
+		Nothing -> no
+notinBackend file yes no = inBackend file no yes
 
 {- Checks if a given key is currently present in the annexLocation -}
 inAnnex :: Backend -> Key -> Annex Bool
