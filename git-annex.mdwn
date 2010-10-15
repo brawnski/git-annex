@@ -13,7 +13,7 @@ associated with annexed files but that benefit from full revision control.
 
 Enough broad picture, here's how it actually looks:
 
-* `git annex --add $file` moves the file into `.git/annex/`, and replaces
+* `git annex add $file` moves the file into `.git/annex/`, and replaces
   it with a symlink pointing at the annexed file, and then calls `git add`
   to version the *symlink*. (If the file has already been annexed, it does
   nothing.)
@@ -24,23 +24,23 @@ Enough broad picture, here's how it actually looks:
 * If you use normal git push/pull commands, the annexed file contents
   won't be sent, but the symlinks will be. So different clones of a repository
   can have different sets of annexed files available.
-* `git annex --push $repository` pushes *all* annexed files to the specified
+* `git annex push $repository` pushes *all* annexed files to the specified
   repository.
-* `git annex --pull $repository` pulls *all* annexed files from the specified
+* `git annex pull $repository` pulls *all* annexed files from the specified
   repository.
-* `git annex --want $file` indicates that you want access to a file's
+* `git annex want $file` indicates that you want access to a file's
   content, without immediatly transferring it.
-* `git annex --get $file` is used to transfer a specified file, and/or
-  files previously indicated with --want. If a configured repository has it,
+* `git annex get $file` is used to transfer a specified file, and/or
+  files previously indicated with `git annex want`. If a configured repository has it,
   or it is available from other key/value storage, it will be immediatly
   downloaded.
-* `git annex --drop $file` indicates that you no longer want the file's
+* `git annex drop $file` indicates that you no longer want the file's
   content to be available in this repository.
-* `git annex --unannex $file` undoes a `git annex --add`. But use `--drop`
-  if you're just done with a file; only use `--unannex` if you
+* `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
+  if you're just done with a file; only use `unannex` if you
   accidentially added a file.
-* `git annex $file` is a shorthand for either --add or --get. If the file
-  is already known, it does --get, otherwise it does --add.
+* `git annex $file` is a shorthand. If the file
+  is already known, it does `git annex get`, otherwise it does `git annex add`.
 
 ## copies
 
@@ -48,17 +48,17 @@ git-annex can be configured to try to keep N copies of a file's content
 available across all repositories. By default, N is 1 (configured by
 annex.numcopies).
 
-`git annex --drop` attempts to check all other configured
+`git annex drop` attempts to check all other configured
 repositories, to check that N copies of the file exist. If enough
 repositories cannot be verified to have it, it will retain the file content
 to avoid data loss.
 
 For example, consider three repositories: Server, Laptop, and USB. Both Server
-and USB have a copy of a file, and N=1. If on Laptop, you `git annex --get
+and USB have a copy of a file, and N=1. If on Laptop, you `git annex get
 $file`, this will transfer it from either Server or USB (depending on which
 is available), and there are now 3 copies of the file.
 
-Suppose you want to free up space on laptop again, and you --drop the file
+Suppose you want to free up space on laptop again, and you `git annex drop` the file
 there. If USB is connected, or Server can be contacted, git-annex can check
 that it still has a copy of the file, and the content is removed from
 Laptop. But if USB is currently disconnected, and Server also cannot be
@@ -108,11 +108,11 @@ to store different files' contents in a given repository.
 
 git-annex keeps track of on which repository it last saw a file's content.
 This can be useful when using it for archiving with offline storage. When
-you indicate you --want a file, git-annex will tell you which repositories
+you indicate you want a file, git-annex will tell you which repositories
 have the file's content.
 
 Location tracking information is stored in `.git-annex/$key.log`.
-Repositories record their UUID and the date when they --get or --drop 
+Repositories record their UUID and the date when they get or drop 
 a file's content. (Git is configured to use a union merge for this file,
 so the lines may be in arbitrary order, but it will never conflict.)
 
@@ -150,7 +150,7 @@ If the symlink to annexed content is relative, moving it to a subdir will
 break it. But it it's absolute, moving the git repo (or mounting its drive
 elsewhere) will break it. Either:
 
-* Use relative links and need `git annex --mv` to move (or post-commit 
+* Use relative links and need `git annex mv` to move (or post-commit 
   hook that caches moves and updates links).
 * Use absolute links and need `git annex fixlinks` when location changes;
   note that would also mean that git would see the symlink targets changed
