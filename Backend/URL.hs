@@ -1,7 +1,7 @@
-{- git-annex "url" backend
+{- git-annex "URL" backend
  - -}
 
-module Backend.Url (backend) where
+module Backend.URL (backend) where
 
 import Control.Monad.State (liftIO)
 import Data.String.Utils
@@ -10,7 +10,7 @@ import System.Exit
 import BackendTypes
 
 backend = Backend {
-	name = "url",
+	name = "URL",
 	getKey = keyValue,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = downloadUrl,

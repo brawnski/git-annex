@@ -1,7 +1,7 @@
 {- git-annex "WORM" backend -- Write Once, Read Many
  - -}
 
-module Backend.Worm (backend) where
+module Backend.WORM (backend) where
 
 import Control.Monad.State
 import qualified Backend.File
