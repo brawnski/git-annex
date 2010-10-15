@@ -144,7 +144,10 @@ wantCmd file = do error "not implemented" -- TODO
 {- Indicates a file is not wanted. -}
 dropCmd :: FilePath -> Annex ()
 dropCmd file = notinBackend file err $ \(key, backend) -> do
-	requireEnoughCopies key
+	force <- Annex.flagIsSet Force
+	if (not force)
+		then requireEnoughCopies key
+		else return ()
 	success <- Backend.removeKey backend key
 	if (success)
 		then do
@@ -220,6 +223,9 @@ requireEnoughCopies key = do
 				++ unsafe
 		listbad bad = "\nI was unable to access these remotes: " ++
 				(Remotes.list bad) 
-		unsafe = "\n  -- According to the " ++ config ++
-			" setting, it is not safe to remove it!"
+		unsafe = "\n" ++
+			"  -- According to the " ++ config ++
+			" setting, it is not safe to remove it!\n" ++
+			"     (Use --force to override.)"
+
 		config = "annex.numcopies"
