@@ -6,6 +6,7 @@ import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Posix.Files
 import System.Directory
+import System.Path
 import Data.String.Utils
 import List
 import IO
@@ -66,13 +67,14 @@ defaultCmd file = do
 addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
-	stored <- Backend.storeFileKey file
 	g <- Annex.gitRepo
+	link <- liftIO $ calcGitLink file g
+	stored <- Backend.storeFileKey file
 	case (stored) of
 		Nothing -> error $ "no backend could store: " ++ file
 		Just (key, backend) -> do
 			logStatus key ValuePresent
-			liftIO $ setup g key
+			liftIO $ setup g key link
 	where
 		err = error $ "already annexed " ++ file
 		checkLegal file = do
@@ -80,24 +82,21 @@ addCmd file = inBackend file err $ do
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
-		setup g key = do
+		calcGitLink file g = do
+			cwd <- getCurrentDirectory
+			let absfile = case (absNormPath cwd file) of
+				Just f -> f
+				Nothing -> error $ "unable to normalize " ++ file
+			return $ relPathDirToDir (parentDir absfile) (Git.workTree g)
+		setup g key link = do
 			let dest = annexLocation g key
 			let reldest = annexLocationRelative g key
 			createDirectoryIfMissing True (parentDir dest)
 			renameFile file dest
-			createSymbolicLink ((linkTarget file) ++ reldest) file
+			createSymbolicLink (link ++ reldest) file
 			Git.run g ["add", file]
 			Git.run g ["commit", "-m", 
 				("git-annex annexed " ++ file), file]
-		linkTarget file =
-			-- relies on file being relative to the top of the 
-			-- git repo; just replace each subdirectory with ".."
-			if (subdirs > 0)
-				then (join "/" $ take subdirs $ repeat "..") ++ "/"
-				else ""
-			where
-				subdirs = (length $ split "/" file) - 1
-		
 
 {- Inverse of addCmd. -}
 unannexCmd :: FilePath -> Annex ()

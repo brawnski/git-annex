@@ -4,12 +4,16 @@
 module Utility (
 	withFileLocked,
 	hGetContentsStrict,
-	parentDir
+	parentDir,
+	relPathCwdToDir,
+	relPathDirToDir,
 ) where
 
 import System.IO
 import System.Posix.IO
 import Data.String.Utils
+import System.Path
+import System.Directory
 
 {- Let's just say that Haskell makes reading/writing a file with
  - file locking excessively difficult. -}
@@ -39,3 +43,45 @@ parentDir dir =
 		where
 			dirs = filter (\x -> length x > 0) $ split "/" dir
 			absolute = if ((dir !! 0) == '/') then "/" else ""
+
+{- Constructs a relative path from the CWD to a directory.
+ -
+ - For example, assuming CWD is /tmp/foo/bar:
+ -    relPathCwdToDir "/tmp/foo" == "../"
+ -    relPathCwdToDir "/tmp/foo/bar" == "" 
+ -    relPathCwdToDir "/tmp/foo/bar" == "" 
+ -}
+relPathCwdToDir :: FilePath -> IO FilePath
+relPathCwdToDir dir = do
+	cwd <- getCurrentDirectory
+	let absdir = abs cwd dir
+	return $ relPathDirToDir cwd absdir
+	where
+		-- absolute, normalized form of the directory
+		abs cwd dir = 
+			case (absNormPath cwd dir) of
+				Just d -> d
+				Nothing -> error $ "unable to normalize " ++ dir
+
+{- Constructs a relative path from one directory to another.
+ -
+ - Both directories must be absolute, and normalized (eg with absNormpath).
+ -
+ - The path will end with "/", unless it is empty.
+ - -}
+relPathDirToDir :: FilePath -> FilePath -> FilePath
+relPathDirToDir from to = 
+	if (0 < length path)
+		then if (endswith "/" path)
+			then path
+			else path ++ "/"
+		else ""
+	where
+		pfrom = split "/" from
+		pto = split "/" to
+		common = map fst $ filter same $ zip pfrom pto
+		same (c,d) = c == d
+		uncommon = drop numcommon pto
+		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
+		numcommon = length $ common
+		path = join "/" $ dotdots ++ uncommon

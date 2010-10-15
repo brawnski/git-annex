@@ -31,10 +31,9 @@ annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
 	(Git.workTree r) ++ "/" ++ (annexLocationRelative r key)
 
-{- Annexed file's location relative to the gitWorkTree -}
+{- Annexed file's location relative to git's working tree. -}
 annexLocationRelative :: Git.Repo -> Key -> FilePath
-annexLocationRelative r key = 
-	Git.dir r ++ "/annex/" ++ (keyFile key)
+annexLocationRelative r key = Git.dir r ++ "/annex/" ++ (keyFile key)
 
 {- Converts a key into a filename fragment.
  -
