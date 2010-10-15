@@ -178,7 +178,8 @@ logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	f <- liftIO $ logChange g key u status
-	liftIO $ Git.run g ["add", f] -- committed at shutdown
+	liftIO $ Git.run g ["add", f]
+	Annex.flagChange NeedCommit True
 
 inBackend file yes no = do
 	r <- liftIO $ Backend.lookupFile file

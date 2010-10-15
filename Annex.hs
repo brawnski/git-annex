@@ -8,7 +8,7 @@ module Annex (
 	backends,
 	backendsChange,
 	flagIsSet,
-	flagsChange,
+	flagChange,
 	Flag(..)
 ) where
 
@@ -60,8 +60,11 @@ flagIsSet :: Flag -> Annex Bool
 flagIsSet flag = do
 	state <- get
 	return $ elem flag $ Backend.flags state
-flagsChange :: [Flag] -> Annex ()
-flagsChange b = do
+flagChange :: Flag -> Bool -> Annex ()
+flagChange flag set = do
 	state <- get
-	put state { Backend.flags = b }
+	let f = filter (/= flag) $ Backend.flags state
+	if (set)
+		then put state { Backend.flags = (flag:f) }
+		else put state { Backend.flags = f }
 	return ()

@@ -14,7 +14,7 @@ import qualified Annex
 {- Sets up a git repo for git-annex. -}
 startup :: [Flag] -> Annex ()
 startup flags = do
-	Annex.flagsChange flags
+	mapM (\f -> Annex.flagChange f True) flags
 	g <- Annex.gitRepo
 	liftIO $ gitAttributes g
 	prepUUID
@@ -23,8 +23,11 @@ startup flags = do
 shutdown :: Annex ()
 shutdown = do
 	g <- Annex.gitRepo
-	liftIO $ Git.run g ["commit", "-m", 
-		"git-annex log update", ".git-annex"]
+	needcommit <- Annex.flagIsSet NeedCommit
+	if (needcommit)
+		then liftIO $ Git.run g ["commit", "-m", 
+			"git-annex log update", ".git-annex"]
+		else return ()
 
 {- configure git to use union merge driver on state files, if it is not
  - already -}

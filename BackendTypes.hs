@@ -10,7 +10,7 @@ import Data.String.Utils
 import qualified GitRepo as Git
 
 -- command-line flags
-data Flag = Force
+data Flag = Force | NeedCommit
 	deriving (Eq, Read, Show)
 
 -- git-annex's runtime state type doesn't really belong here,
