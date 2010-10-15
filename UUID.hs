@@ -91,7 +91,7 @@ reposByUUID repos uuids = do
 
 {- Pretty-prints a list of UUIDs 
  - TODO: use lookup file to really show pretty names. -}
-prettyPrintUUIDs :: [UUID] -> String
+prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = 
-	unwords $ map (\u -> "\tUUID "++u++"\n") uuids
+	return $ unwords $ map (\u -> "\tUUID "++u++"\n") uuids
 

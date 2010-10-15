@@ -26,11 +26,15 @@ import qualified Annex
 import UUID
 
 backend = Backend {
+	name = mustProvide,
+	getKey = mustProvide,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = copyKeyFile,
 	removeKey = dummyRemove,
 	hasKey = checkKeyFile
 }
+
+mustProvide = error "must provide this field"
 
 {- Storing a key is a no-op. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
@@ -74,11 +78,12 @@ copyKeyFile key file = do
 		cantfind = do
 			g <- Annex.gitRepo
 			uuids <- liftIO $ keyLocations g key
+			ppuuids <- prettyPrintUUIDs uuids
 			error $ "no available git remotes have: " ++
-				(keyFile key) ++ (uuidlist uuids)
-		uuidlist [] = ""
-		uuidlist uuids = "\nIt has been seen before in these repositories:\n" ++
-				prettyPrintUUIDs uuids
+				(keyFile key) ++ 
+				if (0 < length uuids)
+					then "\nIt has been seen before in these repositories:\n" ++ ppuuids
+					else ""
 
 {- Tries to copy a file from a remote, exception on error. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()
