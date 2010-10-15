@@ -13,6 +13,7 @@ import System.IO
 import System.Posix.IO
 import Data.String.Utils
 import System.Path
+import System.FilePath
 import System.Directory
 
 {- Let's just say that Haskell makes reading/writing a file with
@@ -38,11 +39,13 @@ hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
 parentDir :: String -> String
 parentDir dir =
 	if length dirs > 0
-	then absolute ++ (join "/" $ take ((length dirs) - 1) dirs)
+	then slash ++ (join s $ take ((length dirs) - 1) dirs)
 	else ""
 		where
-			dirs = filter (\x -> length x > 0) $ split "/" dir
-			absolute = if ((dir !! 0) == '/') then "/" else ""
+			dirs = filter (\x -> length x > 0) $ 
+				split s dir
+			slash = if (not $ isAbsolute dir) then "" else s
+			s = [pathSeparator]
 
 {- Constructs a relative path from the CWD to a directory.
  -
@@ -68,20 +71,19 @@ relPathCwdToDir dir = do
  - Both directories must be absolute, and normalized (eg with absNormpath).
  -
  - The path will end with "/", unless it is empty.
- - -}
+ -}
 relPathDirToDir :: FilePath -> FilePath -> FilePath
 relPathDirToDir from to = 
 	if (0 < length path)
-		then if (endswith "/" path)
-			then path
-			else path ++ "/"
+		then addTrailingPathSeparator path
 		else ""
 	where
-		pfrom = split "/" from
-		pto = split "/" to
+		s = [pathSeparator]
+		pfrom = split s from
+		pto = split s to
 		common = map fst $ filter same $ zip pfrom pto
 		same (c,d) = c == d
 		uncommon = drop numcommon pto
 		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
 		numcommon = length $ common
-		path = join "/" $ dotdots ++ uncommon
+		path = join s $ dotdots ++ uncommon
