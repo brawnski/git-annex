@@ -3,8 +3,10 @@
 module Types (
 	Annex,
 	AnnexState,
+	Backend,
 	Key,
-	Backend
+	backendName,
+	keyFrag
 ) where
 
 import BackendTypes

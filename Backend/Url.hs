@@ -3,7 +3,8 @@
 
 module Backend.Url (backend) where
 
-import Control.Monad.State
+import Control.Monad.State (liftIO)
+import Data.String.Utils
 import System.Cmd
 import System.Exit
 import BackendTypes
@@ -30,9 +31,11 @@ dummyOk :: Key -> Annex Bool
 dummyOk url = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
-downloadUrl url file = do
-	liftIO $ putStrLn $ "download: " ++ (show url)
-	result <- liftIO $ rawSystem "curl" ["-#", "-o", file, (show url)]
+downloadUrl key file = do
+	liftIO $ putStrLn $ "download: " ++ url
+	result <- liftIO $ rawSystem "curl" ["-#", "-o", file, url]
 	if (result == ExitSuccess)
 		then return True
 		else return False
+	where
+		url = join ":" $ drop 1 $ split ":" $ show key 

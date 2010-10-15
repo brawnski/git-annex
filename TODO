@@ -1,9 +1,6 @@
 * bug when annexing files while in a subdir of a git repo
 * bug when specifying absolute path to files when annexing
 
-* need to include backend name as part of the key, because currently
-  if two backends have overlapping key spaces, it can confuse things
-
 * --push/--pull/--want
 
 * how to handle git mv file?

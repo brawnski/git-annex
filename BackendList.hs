@@ -28,7 +28,7 @@ parseBackendList s =
 		then supportedBackends
 		else map (lookupBackendName) $ words s
 
-{- Looks up a supported backed by name. -}
+{- Looks up a supported backend by name. -}
 lookupBackendName :: String -> Backend
 lookupBackendName s =
 	if ((length matches) /= 1)

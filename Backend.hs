@@ -78,17 +78,9 @@ retrieveKeyFile backend key dest = (B.retrieveKeyFile backend) key dest
 removeKey :: Backend -> Key -> Annex Bool
 removeKey backend key = (B.removeKey backend)  key
 
-{- Checks if any backend has a key. -}
+{- Checks if a backend has its key. -}
 hasKey :: Key -> Annex Bool
-hasKey key = do
-	b <- backendList
-	hasKey' b key
-hasKey' [] key = return False
-hasKey' (b:bs) key = do
-	has <- (B.hasKey b) key
-	if (has)
-		then return True
-		else hasKey' bs key
+hasKey key = (B.hasKey (lookupBackendName $ backendName key)) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
@@ -101,6 +93,8 @@ lookupFile file = do
 	where 
 		lookup = do
 			l <- readSymbolicLink file
-			return $ Just (k l, b l)
-		k l = fileKey $ takeFileName $ l
-		b l = lookupBackendName $ takeFileName $ parentDir $ l
+			return $ Just $ pair $ takeFileName l
+		pair file = (k, b)
+			where
+				k = fileKey file
+				b = lookupBackendName $ backendName k

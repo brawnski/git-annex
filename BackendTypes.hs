@@ -36,6 +36,14 @@ instance Read Key where
 			b = l !! 0
 			k = join ":" $ drop 1 l
 
+-- pulls the backend name out
+backendName :: Key -> BackendName
+backendName (Key (b,k)) = b
+
+-- pulls the key fragment out
+keyFrag :: Key -> KeyFrag
+keyFrag (Key (b,k)) = k
+
 -- this structure represents a key/value backend
 data Backend = Backend {
 	-- name of this backend
