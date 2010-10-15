@@ -1,15 +1,15 @@
 git-annex allows managing files with git, without checking the file
-contents into git. This is useful when dealing with files larger than git
-can currently easily handle, whether due to limitations in memory,
-checksumming time, or disk space (only one copy need be stored of an
-annexed file). 
+contents into git. While that may seem paradoxical, it is useful when
+dealing with files larger than git can currently easily handle, whether due
+to limitations in memory, checksumming time, or disk space.
 
-Even without file content tracking, being able to manage file metadata with
-git, move files around and delete files with versioned directory trees, and use
-branches and distributed clone, are all very handy reasons to use git. And
-annexed files can co-exist in the same git repository with regularly versioned
-files, which is convenient for maintaining code, Makefiles, etc that are
-associated with annexed files but that benefit from full revision control. 
+Even without file content tracking, being able to manage files with git,
+move files around and delete files with versioned directory trees, and use
+branches and distributed clones, are all very handy reasons to use git. And
+annexed files can co-exist in the same git repository with regularly
+versioned files, which is convenient for maintaining documents, Makefiles,
+etc that are associated with annexed files but that benefit from full
+revision control.
 
 Enough broad picture, here's how it actually looks:
 
@@ -17,13 +17,13 @@ Enough broad picture, here's how it actually looks:
   it with a symlink pointing at the annexed file, and then calls `git add`
   to version the *symlink*. (If the file has already been annexed, it does
   nothing.)
+* If you use normal git push/pull commands, the annexed file content
+  won't be transferred, but the symlinks will be. So different clones of a
+  repository can have different sets of annexed files available.
 * You can move the symlink around, copy it, delete it, etc, and commit changes
   as desired using git. Reading the symlink will always get you the annexed
   file content, or the link may be broken if the content is not currently
   available.
-* If you use normal git push/pull commands, the annexed file contents
-  won't be sent, but the symlinks will be. So different clones of a repository
-  can have different sets of annexed files available.
 * `git annex push $repository` pushes *all* annexed files to the specified
   repository.
 * `git annex pull $repository` pulls *all* annexed files from the specified
@@ -31,9 +31,9 @@ Enough broad picture, here's how it actually looks:
 * `git annex want $file` indicates that you want access to a file's
   content, without immediatly transferring it.
 * `git annex get $file` is used to transfer a specified file, and/or
-  files previously indicated with `git annex want`. If a configured repository has it,
-  or it is available from other key/value storage, it will be immediatly
-  downloaded.
+  files previously indicated with `git annex want`. If a configured
+  repository has it, or it is available from other key/value storage,
+  it will be immediatly downloaded.
 * `git annex drop $file` indicates that you no longer want the file's
   content to be available in this repository.
 * `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
@@ -48,17 +48,16 @@ git-annex can be configured to try to keep N copies of a file's content
 available across all repositories. By default, N is 1 (configured by
 annex.numcopies).
 
-`git annex drop` attempts to check all other configured
-repositories, to check that N copies of the file exist. If enough
-repositories cannot be verified to have it, it will retain the file content
-to avoid data loss.
+`git annex drop` attempts to check with other git remotes, to check that N
+copies of the file exist. If enough repositories cannot be verified to have
+it, it will retain the file content to avoid data loss.
 
 For example, consider three repositories: Server, Laptop, and USB. Both Server
 and USB have a copy of a file, and N=1. If on Laptop, you `git annex get
 $file`, this will transfer it from either Server or USB (depending on which
 is available), and there are now 3 copies of the file.
 
-Suppose you want to free up space on laptop again, and you `git annex drop` the file
+Suppose you want to free up space on Laptop again, and you `git annex drop` the file
 there. If USB is connected, or Server can be contacted, git-annex can check
 that it still has a copy of the file, and the content is removed from
 Laptop. But if USB is currently disconnected, and Server also cannot be
@@ -70,17 +69,11 @@ to both USB and Server.
 
 Note that different repositories can be configured with different values of
 N. So just because Laptop has N=2, this does not prevent the number of
-copies falling to 1, when USB and Server have N=1, and if they have the
-only copies of a file.
-
-## the .git-annex directory
-
-The `.git-annex` directory at the top of the repository is used to store
-git-annex information that should be propigated between repositories.
+copies falling to 1, when USB and Server have N=1.
 
 ## key/value storage
 
-git-annex uses a key/value abstraction layer to allow files contents to be
+git-annex uses a key/value abstraction layer to allow file contents to be
 stored in different ways. In theory, any key/value storage system could be
 used to store the file contents, and git-annex would then retrieve them
 as needed and put them in `.git/annex/`.
@@ -94,15 +87,15 @@ Multiple pluggable backends are supported, and more than one can be used
 to store different files' contents in a given repository.
 
 * `WORM` ("Write Once, Read Many") This backend stores the file's content
-  in `.git/annex/`, and assumes that any file with the same basename,
+  only in `.git/annex/`, and assumes that any file with the same basename,
   size, and modification time has the same content. So with this backend,
   files can be moved around, but should never be added to or changed.
   This is the default, and the least expensive backend.
-* `sha1sum` -- This backend stores the file's content in
+* `SHA1` -- This backend stores the file's content in
   `.git/annex/`, with a name based on its sha1 checksum. This backend allows
   modifications of files to be tracked. Its need to generate checksums
   can make it slow for large files.
-* `url` -- This backend downloads the file's content from an external URL.
+* `URL` -- This backend downloads the file's content from an external URL.
 
 ## location tracking
 
@@ -132,7 +125,7 @@ example:
 * `annex.numcopies` -- number of copies of files to keep (default: 1)
 * `annex.backends` -- space-separated list of names of 
   the key/value backends to use. The first listed is used to store
-  new files. (default: file, checksum, url)
+  new files. (default: "WORM SHA1 URL")
 * `remote.<name>.annex-cost` -- When determining which repository to
   transfer annexed files from or to, ones with lower costs are preferred.
   The default cost is 100 for local repositories, and 200 for remote
