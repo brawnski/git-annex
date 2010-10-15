@@ -3,6 +3,8 @@
 
 * --push/--pull/--want
 
+* recurse on directories
+
 * how to handle git mv file?
 
 * finish BackendChecksum

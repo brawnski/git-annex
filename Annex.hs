@@ -7,6 +7,9 @@ module Annex (
 	gitRepoChange,
 	backends,
 	backendsChange,
+	flagIsSet,
+	flagsChange,
+	Flag(..)
 ) where
 
 import Control.Monad.State
@@ -18,7 +21,11 @@ import qualified BackendTypes as Backend
  -}
 new :: Git.Repo -> IO AnnexState
 new g = do
-	let s = Backend.AnnexState { Backend.repo = g, Backend.backends = [] }
+	let s = Backend.AnnexState {
+		Backend.repo = g,
+		Backend.backends = [],
+		Backend.flags = []
+	}
 	(_,s') <- Annex.run s (prep g)
 	return s'
 	where
@@ -48,4 +55,13 @@ backendsChange :: [Backend] -> Annex ()
 backendsChange b = do
 	state <- get
 	put state { Backend.backends = b }
+	return ()
+flagIsSet :: Flag -> Annex Bool
+flagIsSet flag = do
+	state <- get
+	return $ elem flag $ Backend.flags state
+flagsChange :: [Flag] -> Annex ()
+flagsChange b = do
+	state <- get
+	put state { Backend.flags = b }
 	return ()

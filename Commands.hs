@@ -1,6 +1,6 @@
 {- git-annex command line -}
 
-module Commands (argvToActions) where
+module Commands (parseCmd) where
 
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
@@ -21,30 +21,34 @@ import Types
 import Core
 import qualified Remotes
 
-options :: [OptDescr (String -> Annex ())]
-options =
-	[ Option ['a'] ["add"]	(NoArg addCmd)	"add files to annex"
-	, Option ['p'] ["push"]	(NoArg pushCmd)	"push annex to repos"
-	, Option ['P'] ["pull"]	(NoArg pullCmd)	"pull annex from repos"
-	, Option ['w'] ["want"]	(NoArg wantCmd)	"request file contents"
-	, Option ['g'] ["get"]	(NoArg getCmd)	"transfer file contents"
-	, Option ['d'] ["drop"]	(NoArg dropCmd)	"indicate file contents not needed"
-	, Option ['u'] ["unannex"] (NoArg unannexCmd) "undo --add"
-	]
-
 {- Parses command line and returns a list of actons to be run in the Annex
  - monad. -}
-argvToActions :: [String] -> IO [Annex ()]
-argvToActions argv = do
-	case getOpt Permute options argv of
-		([],files,[]) -> return $ map defaultCmd files
-		-- one mode is normal case
-		(m:[],files,[]) -> return $ map m files
-		-- multiple modes is an error
-		(ms,files,[]) -> ioError (userError ("only one mode should be specified\n" ++ usageInfo header options))
-		-- error case
-		(_,files,errs) -> ioError (userError (concat errs ++ usageInfo header options))
-	where header = "Usage: git-annex [mode] file"
+parseCmd :: [String] -> IO ([Flag], [Annex ()])
+parseCmd argv = do
+	(flags, nonopts) <- getopt
+	case (length nonopts) of
+		0 -> error header
+		_ -> do
+			let c = lookupCmd (nonopts !! 0)
+			if (0 == length c)
+				then return $ (flags, map defaultCmd nonopts)
+				else do
+					return $ (flags, map (snd $ c !! 0) $ drop 1 nonopts)
+	where
+		getopt = case getOpt Permute options argv of
+			(flags, nonopts, []) -> return (flags, nonopts)
+			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
+		lookupCmd cmd = filter (\(c, a) -> c == cmd) cmds
+		cmds =	[ ("add", addCmd)
+			, ("push", pushCmd)
+			, ("pull", pullCmd)
+			, ("want", wantCmd)
+			, ("drop", dropCmd)
+			, ("unannex", unannexCmd)
+			]
+		header = "Usage: git-annex [" ++ 
+			(join "|" $ map fst cmds) ++ "] file ..."
+		options = [ Option ['f'] ["force"] (NoArg Force) "" ]
 
 {- Default mode is to annex a file if it is not already, and otherwise
  - get its content. -}

@@ -6,7 +6,8 @@ module Types (
 	Backend,
 	Key,
 	backendName,
-	keyFrag
+	keyFrag,
+	Flag(..),
 ) where
 
 import BackendTypes

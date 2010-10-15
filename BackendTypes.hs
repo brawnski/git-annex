@@ -9,11 +9,16 @@ import Control.Monad.State (StateT)
 import Data.String.Utils
 import qualified GitRepo as Git
 
+-- command-line flags
+data Flag = Force
+	deriving (Eq, Read, Show)
+
 -- git-annex's runtime state type doesn't really belong here,
 -- but it uses Backend, so has to be here to avoid a depends loop.
 data AnnexState = AnnexState {
 	repo :: Git.Repo,
-	backends :: [Backend]
+	backends :: [Backend],
+	flags :: [Flag]
 } deriving (Show)
 
 -- git-annex's monad
