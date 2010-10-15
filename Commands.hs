@@ -21,8 +21,8 @@ import Types
 import Core
 import qualified Remotes
 
-{- Parses command line and returns a list of actons to be run in the Annex
- - monad. -}
+{- Parses command line and returns a list of flags and a list of
+ - actions to be run in the Annex monad. -}
 parseCmd :: [String] -> IO ([Flag], [Annex ()])
 parseCmd argv = do
 	(flags, nonopts) <- getopt
@@ -40,15 +40,16 @@ parseCmd argv = do
 			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
 		lookupCmd cmd = filter (\(c, a) -> c == cmd) cmds
 		cmds =	[ ("add", addCmd)
+			, ("get", getCmd)
+			, ("drop", dropCmd)
+			, ("want", wantCmd)
 			, ("push", pushCmd)
 			, ("pull", pullCmd)
-			, ("want", wantCmd)
-			, ("drop", dropCmd)
 			, ("unannex", unannexCmd)
 			]
 		header = "Usage: git-annex [" ++ 
 			(join "|" $ map fst cmds) ++ "] file ..."
-		options = [ Option ['f'] ["force"] (NoArg Force) "" ]
+		options = [ Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data" ]
 
 {- Default mode is to annex a file if it is not already, and otherwise
  - get its content. -}
