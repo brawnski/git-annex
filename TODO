@@ -1,5 +1,4 @@
-* bug when annexing files while in a subdir of a git repo
-* bug when specifying absolute path to files when annexing
+* bug: cannot "git annex ../foo"   (GitRepo.relative is buggy)
 
 * --push/--pull/--want
 
