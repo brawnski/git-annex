@@ -26,7 +26,7 @@ shutdown = do
 	needcommit <- Annex.flagIsSet NeedCommit
 	if (needcommit)
 		then liftIO $ Git.run g ["commit", "-m", 
-			"git-annex log update", ".git-annex"]
+			"git-annex log update", gitStateDir g]
 		else return ()
 
 {- configure git to use union merge driver on state files, if it is not
