@@ -7,7 +7,6 @@ import qualified Backend.File
 import Data.Digest.Pure.SHA
 import BackendTypes
 
--- based on BackendFile just with a different key type
 backend = Backend.File.backend {
 	name = "checksum",
 	getKey = keyValue

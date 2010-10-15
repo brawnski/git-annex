@@ -10,11 +10,11 @@ module BackendList (
 import BackendTypes
 
 -- When adding a new backend, import it here and add it to the list.
-import qualified Backend.File
+import qualified Backend.Worm
 import qualified Backend.Checksum
 import qualified Backend.Url
 supportedBackends = 
-	[ Backend.File.backend
+	[ Backend.Worm.backend
 	, Backend.Checksum.backend
 	, Backend.Url.backend
 	]

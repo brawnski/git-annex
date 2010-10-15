@@ -1,5 +1,12 @@
-{- git-annex "file" backend
- - -}
+{- git-annex pseudo-backend
+ -
+ - This backend does not really do any independant data storage,
+ - it relies on the file contents in .git/annex/ in this repo,
+ - and other accessible repos.
+ -
+ - This is an abstract backend; getKey has to be implemented to complete
+ - it.
+ -}
 
 module Backend.File (backend) where
 
@@ -19,22 +26,13 @@ import qualified Annex
 import UUID
 
 backend = Backend {
-	name = "file",
-	getKey = keyValue,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = copyKeyFile,
 	removeKey = dummyRemove,
 	hasKey = checkKeyFile
 }
 
--- direct mapping from filename to key
-keyValue :: FilePath -> Annex (Maybe Key)
-keyValue file = return $ Just $ Key ((name backend), file)
-
-{- This backend does not really do any independant data storage,
- - it relies on the file contents in .git/annex/ in this repo,
- - and other accessible repos. So storing a key is
- - a no-op. -}
+{- Storing a key is a no-op. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
 
