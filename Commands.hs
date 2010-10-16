@@ -10,6 +10,7 @@ import System.Path
 import Data.String.Utils
 import List
 import IO
+
 import qualified GitRepo as Git
 import qualified Annex
 import Utility

@@ -3,8 +3,9 @@
 
 module Backend.SHA1 (backend) where
 
-import qualified Backend.File
 import Data.Digest.Pure.SHA
+
+import qualified Backend.File
 import BackendTypes
 
 backend = Backend.File.backend {

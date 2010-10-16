@@ -42,6 +42,7 @@ import Data.String.Utils
 import Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
+
 import Utility
 
 {- A git repository can be on local disk or remote. Not to be confused

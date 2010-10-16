@@ -11,6 +11,7 @@ module Locations (
 ) where
 
 import Data.String.Utils
+
 import Types
 import qualified BackendTypes as Backend
 import qualified GitRepo as Git

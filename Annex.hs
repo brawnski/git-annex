@@ -13,6 +13,7 @@ module Annex (
 ) where
 
 import Control.Monad.State
+
 import qualified GitRepo as Git
 import Types
 import qualified BackendTypes as Backend

@@ -7,6 +7,7 @@ module BackendTypes where
 
 import Control.Monad.State (StateT)
 import Data.String.Utils
+
 import qualified GitRepo as Git
 
 -- command-line flags

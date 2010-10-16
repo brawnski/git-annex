@@ -16,12 +16,12 @@ use. Some are used to archive data, others hold backups, and yet others
 come with me when I'm away from home to carry data that doesn't fit on my
 netbook. Maintaining all that was a nightmare, lots of ad-hoc moving files
 around, rsyncing files (unison is too slow), and deleting multiple copies
-of files from multiple places. I realized what what I needed was revision
-control where each drive was a repository, and where copying the files
-around, and deciding which copies were safe to delete was automated.
+of files from multiple places. I realized what what I needed was a form of
+revision control where each drive was a repository, and where copying the
+files around, and deciding which copies were safe to delete was automated.
 I posted about this to the VCS-home mailing list and got a great suggestion
-to make it support arbitrary key-value stores. A week of coding later,
-and git-annex is born.
+to make it support arbitrary key-value stores, for more generality and
+flexability.  A week of coding later, and git-annex is born.
 
 Enough broad picture, here's how it actually looks:
 

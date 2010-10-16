@@ -4,13 +4,14 @@
 module Backend.WORM (backend) where
 
 import Control.Monad.State
-import qualified Backend.File
-import BackendTypes
-import Utility
 import System.FilePath
 import System.Posix.Files
 import Data.Digest.Pure.SHA -- slow, but we only checksum filenames
 import qualified Data.ByteString.Lazy.Char8 as B
+
+import qualified Backend.File
+import BackendTypes
+import Utility
 
 backend = Backend.File.backend {
 	name = "WORM",

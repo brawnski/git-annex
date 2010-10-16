@@ -3,17 +3,17 @@
 import Control.Exception
 import System.IO
 import System.Environment
+
 import qualified Annex
 import Types
 import Core
 import Commands
-import Annex
 import qualified GitRepo as Git
 
 main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
-	state <- new gitrepo
+	state <- Annex.new gitrepo
 	(flags, actions) <- parseCmd args state
 	tryRun state $ [startup flags] ++ actions ++ [shutdown]
 

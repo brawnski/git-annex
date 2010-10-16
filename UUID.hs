@@ -21,7 +21,9 @@ import Maybe
 import List
 import System.Cmd.Utils
 import System.IO
+import System.Directory
 import qualified Data.Map as M
+
 import qualified GitRepo as Git
 import Types
 import Locations
@@ -112,6 +114,7 @@ describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
 	log <- uuidLog
+	liftIO $ createDirectoryIfMissing True (parentDir log)
 	liftIO $ withFileLocked log WriteMode (\h -> hPutStr h $ serialize m')
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
