@@ -26,20 +26,21 @@ import qualified Remotes
  - actions to be run in the Annex monad. -}
 parseCmd :: [String] -> IO ([Flag], [Annex ()])
 parseCmd argv = do
-	(flags, files) <- getopt
-	case (length files) of
+	(flags, params) <- getopt
+	case (length params) of
 		0 -> error header
 		_ -> do
-			let c = lookupCmd (files !! 0)
-			if (0 == length c)
-				then ret flags defaultCmd files
-				else ret flags (snd $ c !! 0) $ drop 1 files
+			let (cmd, locs) = takeCmd params $ lookupCmd (params !! 0)
+			files <- mapM recurseFiles locs
+			return (flags, map cmd $ foldl (++) [] files)
 	where
-		ret flags cmd files = return (flags, makeactions cmd files)
-		makeactions cmd files = map cmd files
 		getopt = case getOpt Permute options argv of
 			(flags, nonopts, []) -> return (flags, nonopts)
 			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
+		takeCmd files cmds =
+			if (0 == length cmds)
+				then (defaultCmd, files)
+				else ((snd $ cmds !! 0), drop 1 files)
 		lookupCmd cmd = filter (\(c, a) -> c == cmd) cmds
 		cmds =	[ ("add", addCmd)
 			, ("get", getCmd)

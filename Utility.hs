@@ -7,12 +7,14 @@ module Utility (
 	parentDir,
 	relPathCwdToDir,
 	relPathDirToDir,
+	recurseFiles,
 ) where
 
 import System.IO
 import System.Posix.IO
 import Data.String.Utils
 import System.Path
+import System.IO.HVFS
 import System.FilePath
 import System.Directory
 
@@ -87,3 +89,15 @@ relPathDirToDir from to =
 		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
 		numcommon = length $ common
 		path = join s $ dotdots ++ uncommon
+
+{- Recursively returns all files and symlinks (to anything) in the specified
+ - path. If the path is a file, returns only it. Does not follow symlinks to
+ - directories. -}
+recurseFiles :: FilePath -> IO [FilePath]
+recurseFiles path = do
+	find <- recurseDirStat SystemFS path
+	return $ filesOnly find
+	where
+		filesOnly l = map (\(f,s) -> f) $ filter isFile l
+		isFile (f, HVFSStatEncap s) =
+			vIsRegularFile s || vIsSymbolicLink s

@@ -2,6 +2,8 @@
 
 * --push/--pull/--want
 
+* isn't pull the same as get?
+
 * recurse on directories
 
 * how to handle git mv file?

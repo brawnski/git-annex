@@ -42,6 +42,11 @@ Enough broad picture, here's how it actually looks:
 * `git annex $file` is a shorthand. If the file
   is already known, it does `git annex get`, otherwise it does `git annex add`.
 
+Oh yeah, "$file" in the above can be any number of files, or directories.
+git-annex automatically recurses into directories, but skips files that are
+checked into git (as well as skipping `.git` itself), so "git annex ." works
+fine.
+
 ## copies
 
 git-annex can be configured to try to keep N copies of a file's content
