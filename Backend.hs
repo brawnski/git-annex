@@ -1,7 +1,7 @@
-{- git-annex key/value storage backends
+{- git-annex key-value storage backends
  -
- - git-annex uses a key/value abstraction layer to allow files contents to be
- - stored in different ways. In theory, any key/value storage system could be
+ - git-annex uses a key-value abstraction layer to allow files contents to be
+ - stored in different ways. In theory, any key-value storage system could be
  - used to store the file contents, and git-annex would then retrieve them
  - as needed and put them in `.git/annex/`.
  - 

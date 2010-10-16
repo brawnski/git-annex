@@ -23,7 +23,7 @@ import Core
 import qualified Remotes
 import qualified BackendTypes
 
-data CmdWants = FilesInGit | FilesNotInGit | RepoName
+data CmdWants = FilesInGit | FilesNotInGit | RepoName | SingleString
 data Command = Command {
 	cmdname :: String,
 	cmdaction :: (String -> Annex ()),
@@ -34,10 +34,10 @@ cmds :: [Command]
 cmds =  [ (Command "add"	addCmd		FilesNotInGit)
 	, (Command "get"	getCmd		FilesInGit)
 	, (Command "drop"	dropCmd		FilesInGit)
-	, (Command "want"	wantCmd		FilesInGit)
 	, (Command "push"	pushCmd		RepoName)
 	, (Command "pull"	pullCmd		RepoName)
 	, (Command "unannex"	unannexCmd	FilesInGit)
+	, (Command "describe"	describeCmd	SingleString)
 	]
 
 {- Finds the type of parameters a command wants, from among the passed
@@ -49,6 +49,8 @@ findWanted FilesNotInGit params repo = do
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
+findWanted SingleString params _ = do
+	return $ [unwords params]
 findWanted RepoName params _ = do
 	return $ params
 
@@ -150,11 +152,8 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 	where
 		err = error $ "not annexed " ++ file
 
-{- Indicates a file is wanted. -}
-wantCmd :: FilePath -> Annex ()
-wantCmd file = do error "not implemented" -- TODO
-
-{- Indicates a file is not wanted. -}
+{- Indicates a file's content is not wanted anymore, and should be removed
+ - if it's safe to do so. -}
 dropCmd :: FilePath -> Annex ()
 dropCmd file = notinBackend file err $ \(key, backend) -> do
 	force <- Annex.flagIsSet Force
@@ -184,6 +183,17 @@ pushCmd reponame = do error "not implemented" -- TODO
 {- Pulls all files from a remote repository. -}
 pullCmd :: String -> Annex ()
 pullCmd reponame = do error "not implemented" -- TODO
+
+{- Stores description for the repository. -}
+describeCmd :: String -> Annex ()
+describeCmd description = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+	describeUUID u description
+	log <- uuidLog
+	liftIO $ Git.run g ["add", log]
+	Annex.flagChange NeedCommit True
+	liftIO $ putStrLn "description set"
 
 {- Updates the LocationLog when a key's presence changes. -}
 logStatus :: Key -> LogStatus -> Annex ()

@@ -58,7 +58,7 @@ copyKeyFile key file = do
 		else return ()
 	trycopy remotes remotes
 	where
-		trycopy full [] = error $ "unable to get: " ++ (keyFile key) ++ "\n" ++
+		trycopy full [] = error $ "unable to get file with key: " ++ (keyFile key) ++ "\n" ++
 			"To get that file, need access to one of these remotes: " ++
 			(Remotes.list full)
 		trycopy full (r:rs) = do
@@ -79,7 +79,7 @@ copyKeyFile key file = do
 			g <- Annex.gitRepo
 			uuids <- liftIO $ keyLocations g key
 			ppuuids <- prettyPrintUUIDs uuids
-			error $ "no available git remotes have: " ++
+			error $ "no available git remotes have file with key: " ++
 				(keyFile key) ++ 
 				if (0 < length uuids)
 					then "\nIt has been seen before in these repositories:\n" ++ ppuuids

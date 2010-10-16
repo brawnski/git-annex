@@ -12,7 +12,8 @@ module UUID (
 	genUUID,
 	reposByUUID,
 	prettyPrintUUIDs,
-	describeUUID
+	describeUUID,
+	uuidLog
 ) where
 
 import Control.Monad.State
@@ -25,6 +26,7 @@ import qualified GitRepo as Git
 import Types
 import Locations
 import qualified Annex
+import Utility
 
 type UUID = String
 
@@ -110,7 +112,7 @@ describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
 	log <- uuidLog
-	liftIO $ writeFile log $ serialize m'
+	liftIO $ withFileLocked log WriteMode (\h -> hPutStr h $ serialize m')
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
 
@@ -118,7 +120,9 @@ describeUUID uuid desc = do
 uuidMap :: Annex (M.Map UUID String)
 uuidMap = do
 	log <- uuidLog
-	s <- liftIO $ catch (readFile log) (\error -> return "")
+	s <- liftIO $ catch
+		(withFileLocked log ReadMode $ \h -> hGetContentsStrict h)
+		(\error -> return "")
 	return $ M.fromList $ map (\l -> pair l) $ lines s
 	where
 		pair l =

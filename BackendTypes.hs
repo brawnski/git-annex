@@ -49,7 +49,7 @@ backendName (Key (b,k)) = b
 keyFrag :: Key -> KeyFrag
 keyFrag (Key (b,k)) = k
 
--- this structure represents a key/value backend
+-- this structure represents a key-value backend
 data Backend = Backend {
 	-- name of this backend
 	name :: String,
