@@ -1,0 +1,5 @@
+To build and use git-annex, you will need:
+
+* ghc
+* These haskell libraries: MissingH
+* a "uuid" command
