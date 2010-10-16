@@ -114,13 +114,7 @@ addCmd file = inBackend file err $ do
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
 			liftIO $ renameFile file dest
 			liftIO $ createSymbolicLink (link ++ reldest) file
-			nocommit <- Annex.flagIsSet NoCommit
-			if (not nocommit)
-				then do
-					liftIO $ Git.run g ["add", file]
-					liftIO $ Git.run g ["commit", "-m", 
-						("git-annex annexed " ++ file), file]
-				else return ()
+			gitAdd file $ Just $ "git-annex annexed " ++ file
 
 {- Inverse of addCmd. -}
 unannexCmd :: FilePath -> Annex ()
@@ -201,11 +195,7 @@ describeCmd description = do
 	u <- getUUID g
 	describeUUID u description
 	log <- uuidLog
-	nocommit <- Annex.flagIsSet NoCommit
-	if (not nocommit)
-		then liftIO $ Git.run g ["add", log]
-		else return ()
-	Annex.flagChange NeedCommit True
+	gitAdd log Nothing -- all logs are committed at end
 	liftIO $ putStrLn "description set"
 
 {- Updates the LocationLog when a key's presence changes. -}
@@ -214,11 +204,7 @@ logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	f <- liftIO $ logChange g key u status
-	nocommit <- Annex.flagIsSet NoCommit
-	if (not nocommit)
-		then liftIO $ Git.run g ["add", f]
-		else return ()
-	Annex.flagChange NeedCommit True
+	gitAdd f Nothing -- all logs are committed at end
 
 inBackend file yes no = do
 	r <- liftIO $ Backend.lookupFile file

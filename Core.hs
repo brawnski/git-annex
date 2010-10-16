@@ -2,6 +2,7 @@
 
 module Core where
 
+import Maybe
 import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
@@ -61,4 +62,22 @@ inAnnex key = do
 	g <- Annex.gitRepo
 	liftIO $ doesFileExist $ annexLocation g key
 
-{-  -}
+{- Adds, optionally also commits a file to git.
+ -
+ - All changes to the git repository should go through this function.
+ -
+ - This is careful to not rely on the index. It may have staged changes,
+ - so only use operations that avoid committing such changes.
+ -}
+gitAdd :: FilePath -> Maybe String -> Annex ()
+gitAdd file commitmessage = do
+	nocommit <- Annex.flagIsSet NoCommit
+	if (nocommit)
+		then Annex.flagChange NeedCommit True
+		else do
+			g <- Annex.gitRepo
+			liftIO $ Git.run g ["add", file]
+			if (isJust commitmessage)
+				then liftIO $ Git.run g ["commit", "-m",
+					(fromJust commitmessage), file]
+				else return ()
