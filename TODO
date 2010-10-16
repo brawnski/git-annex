@@ -5,4 +5,7 @@
 
 * how to handle git mv file?
 
+* Support for remote git repositories (ssh:// specifically can be made to
+  work, although the other end probably needs to have git-annex installed..)
+
 * finish BackendChecksum
