@@ -21,35 +21,57 @@ import LocationLog
 import Types
 import Core
 import qualified Remotes
+import qualified BackendTypes
+
+data CmdWants = FilesInGit | FilesNotInGit | RepoName
+data Command = Command {
+	cmdname :: String,
+	cmdaction :: (String -> Annex ()),
+	cmdwants :: CmdWants
+}
+
+cmds :: [Command]
+cmds =  [ (Command "add"	addCmd		FilesNotInGit)
+	, (Command "get"	getCmd		FilesInGit)
+	, (Command "drop"	dropCmd		FilesInGit)
+	, (Command "want"	wantCmd		FilesInGit)
+	, (Command "push"	pushCmd		RepoName)
+	, (Command "pull"	pullCmd		RepoName)
+	, (Command "unannex"	unannexCmd	FilesInGit)
+	]
+
+{- Finds the type of parameters a command wants, from among the passed
+ - parameter list. -}
+findWanted :: CmdWants -> [String] -> Git.Repo -> IO [String]
+findWanted FilesNotInGit params repo = do
+	files <- mapM (Git.notInRepo repo) params
+	return $ foldl (++) [] files
+findWanted FilesInGit params repo = do
+	files <- mapM (Git.inRepo repo) params
+	return $ foldl (++) [] files
+findWanted RepoName params _ = do
+	return $ params
 
 {- Parses command line and returns a list of flags and a list of
  - actions to be run in the Annex monad. -}
-parseCmd :: [String] -> IO ([Flag], [Annex ()])
-parseCmd argv = do
+parseCmd :: [String] -> AnnexState -> IO ([Flag], [Annex ()])
+parseCmd argv state = do
 	(flags, params) <- getopt
 	case (length params) of
 		0 -> error header
 		_ -> case (lookupCmd (params !! 0)) of
 			[] -> error header
-			[(_,cmd)] ->  do
-				let locs = drop 1 params
-				files <- mapM recurseFiles locs
-				return (flags, map cmd $ foldl (++) [] files)
+			[Command _ action want] -> do
+				f <- findWanted want (drop 1 params)
+					(BackendTypes.repo state)
+				return (flags, map action f)
 	where
 		getopt = case getOpt Permute options argv of
-			(flags, nonopts, []) -> return (flags, nonopts)
+			(flags, params, []) -> return (flags, params)
 			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
-		lookupCmd cmd = filter (\(c, a) -> c == cmd) cmds
-		cmds =	[ ("add", addCmd)
-			, ("get", getCmd)
-			, ("drop", dropCmd)
-			, ("want", wantCmd)
-			, ("push", pushCmd)
-			, ("pull", pullCmd)
-			, ("unannex", unannexCmd)
-			]
+		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds
 		header = "Usage: git-annex [" ++ 
-			(join "|" $ map fst cmds) ++ "] file ..."
+			(join "|" $ map cmdname cmds) ++ "] file ..."
 		options = [ Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data" ]
 
 {- Annexes a file, storing it in a backend, and then moving it into

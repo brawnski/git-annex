@@ -6,8 +6,7 @@ module Utility (
 	hGetContentsStrict,
 	parentDir,
 	relPathCwdToDir,
-	relPathDirToDir,
-	recurseFiles,
+	relPathDirToDir
 ) where
 
 import System.IO
@@ -89,15 +88,3 @@ relPathDirToDir from to =
 		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
 		numcommon = length $ common
 		path = join s $ dotdots ++ uncommon
-
-{- Recursively returns all files and symlinks (to anything) in the specified
- - path. If the path is a file, returns only it. Does not follow symlinks to
- - directories. -}
-recurseFiles :: FilePath -> IO [FilePath]
-recurseFiles path = do
-	find <- recurseDirStat SystemFS path
-	return $ filesOnly find
-	where
-		filesOnly l = map (\(f,s) -> f) $ filter isFile l
-		isFile (f, HVFSStatEncap s) =
-			vIsRegularFile s || vIsSymbolicLink s

@@ -12,9 +12,9 @@ import qualified GitRepo as Git
 
 main = do
 	args <- getArgs
-	(flags, actions) <- parseCmd args
 	gitrepo <- Git.repoFromCwd
 	state <- new gitrepo
+	(flags, actions) <- parseCmd args state
 	tryRun state $ [startup flags] ++ actions ++ [shutdown]
 
 {- Runs a list of Annex actions. Catches exceptions, not stopping
