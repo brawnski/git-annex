@@ -11,34 +11,48 @@ versioned files, which is convenient for maintaining documents, Makefiles,
 etc that are associated with annexed files but that benefit from full
 revision control.
 
+My motivation for git-annex was the growing number of external drives I
+use. Some are used to archive data, others hold backups, and yet others
+come with me when I'm away from home to carry data that doesn't fit on my
+netbook. Maintaining all that was a nightmare, lots of ad-hoc moving files
+around, rsyncing files (unison is too slow), and deleting multiple copies
+of files from multiple places. I realized what what I needed was revision
+control where each drive was a repository, and where copying the files
+around, and deciding which copies were safe to delete was automated.
+I posted about this to the VCS-home mailing list and got a great suggestion
+to make it support arbitrary key-value stores. A week of coding later,
+and git-annex is born.
+
 Enough broad picture, here's how it actually looks:
 
 * `git annex add $file` moves the file into `.git/annex/`, and replaces
   it with a symlink pointing at the annexed file, and then calls `git add`
   to version the *symlink*. (If the file has already been annexed, it does
-  nothing.)
-* If you use normal git push/pull commands, the annexed file content
-  won't be transferred, but the symlinks will be. So different clones of a
-  repository can have different sets of annexed files available.
-* You can move the symlink around, copy it, delete it, etc, and commit changes
+  nothing.) 
+  
+  If you then use normal git push/pull commands, the annexed file content
+  won't be transferred between repositories, but the symlinks will be.
+  So different clones of a repository can have different sets of annexed
+  files available.
+  
+  You can move the symlink around, copy it, delete it, etc, and commit changes
   as desired using git. Reading the symlink will always get you the annexed
   file content, or the link may be broken if the content is not currently
   available.
+* `git annex get $file` is used to transfer a specified file from the
+  backend storage to the current repository.
+* `git annex drop $file` indicates that you no longer want the file's
+  content to be available in this repository.
 * `git annex push $repository` pushes *all* annexed files to the specified
   repository.
 * `git annex pull $repository` pulls *all* annexed files from the specified
   repository.
-* `git annex want $file` indicates that you want access to a file's
-  content, without immediatly transferring it.
-* `git annex get $file` is used to transfer a specified file, and/or
-  files previously indicated with `git annex want`. If a configured
-  repository has it, or it is available from other key/value storage,
-  it will be immediatly downloaded.
-* `git annex drop $file` indicates that you no longer want the file's
-  content to be available in this repository.
 * `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
   if you're just done with a file; only use `unannex` if you
   accidentially added a file.
+* `git annex describe "some description"` allows associating some description
+  (such as "USB archive drive 1") with a repository. This can help with
+  finding it later, see "Location Tracking" below.
 
 Oh yeah, "$file" in the above can be any number of files, or directories,
 same as you'd pass to "git add" or "git rm".
@@ -73,10 +87,10 @@ Note that different repositories can be configured with different values of
 N. So just because Laptop has N=2, this does not prevent the number of
 copies falling to 1, when USB and Server have N=1.
 
-## key/value storage
+## key-value storage
 
-git-annex uses a key/value abstraction layer to allow file contents to be
-stored in different ways. In theory, any key/value storage system could be
+git-annex uses a key-value abstraction layer to allow file contents to be
+stored in different ways. In theory, any key-value storage system could be
 used to store the file contents, and git-annex would then retrieve them
 as needed and put them in `.git/annex/`.
 
@@ -101,36 +115,40 @@ to store different files' contents in a given repository.
 
 ## location tracking
 
-git-annex keeps track of on which repository it last saw a file's content.
-This can be useful when using it for archiving with offline storage. When
-you indicate you want a file, git-annex will tell you which repositories
-have the file's content. For example:
-
-	# git annex get myfile
-	git-annex: unable to get: myfile
-	To get that file, need access to one of these remotes: usbdrive
-
-Location tracking information is stored in `.git-annex/$key.log`.
+git-annex keeps track of in which repositories it last saw a file's content.
+This location tracking information is stored in `.git-annex/$key.log`.
 Repositories record their UUID and the date when they get or drop 
 a file's content. (Git is configured to use a union merge for this file,
 so the lines may be in arbitrary order, but it will never conflict.)
 
-The optional file `.git-annex/uuid.log` can be created to add a description
-to a UUID. If git-annex needs a file from some repository, and it cannot find
-the repository amoung the remotes, it will use the description from this
-file when asking for the repository to be made available. The file format
-is a UUID, a space, and the rest of the line is its description. For
-example:
+This location tracking information is useful if you have multiple
+repositories, and not all are always accessible. For example, perhaps one
+is on a home file server, and you are away from home. Then git-annex can
+tell you what git remote it needs access to in order to get a file:
 
-	UUID d3d2474c-d5c3-11df-80a9-002170d25c55 USB drive in red enclosure
-	UUID 60cf39c8-d5c6-11df-aa8b-93fda39008d6 my colocated server
+	# git annex get myfile
+	git-annex: unable to get file with key: WORM:8b01f6d371178722367393eb26043482e1820306:myfile
+	To get that file, need access to one of these remotes: home
+
+Another way the location tracking comes in handy is if you put repositories
+on removable USB drives, that might be archived away offline in a safe
+place. In this sort of case, you probably don't have a git remotes
+configured for every USB drive. So git-annex may have to resort to talking
+about repository UUIDs. If you have previously used "git annex describe"
+in those repositories, it will include their description to help you with
+finding them:
+
+	git-annex: no available git remotes have file with key: WORM:8b01f6d371178722367393eb26043482e1820306:myfile
+	It has been seen before in these repositories:
+	  c0a28e06-d7ef-11df-885c-775af44f8882  -- USB archive drive 1
+	  e1938fee-d95b-11df-96cc-002170d25c55
 
 ## configuration
 
 * `annex.uuid` -- a unique UUID for this repository
 * `annex.numcopies` -- number of copies of files to keep (default: 1)
 * `annex.backends` -- space-separated list of names of 
-  the key/value backends to use. The first listed is used to store
+  the key-value backends to use. The first listed is used to store
   new files. (default: "WORM SHA1 URL")
 * `remote.<name>.annex-cost` -- When determining which repository to
   transfer annexed files from or to, ones with lower costs are preferred.
@@ -165,13 +183,13 @@ Need a way to tell how much free space is available on the disk containing
 a given repository. The repository may be remote, so ssh may need to be
 used.
 
-Similarly, need a way to tell the size of a file before downloading it from
-remote, to check local disk space.
+Similarly, need a way to tell the size of a file before copying it from
+a remote, to check local disk space.
 
-### auto-drop files on rm
+### auto-drop on rm
 
-When git-rm removed a file, it should get dropped too. Of course, it may
-not be dropped right away, depending on number of copies available.
+When git-rm removed a file, its key should get dropped too. Of course, it
+may not be dropped right away, depending on number of copies available.
 
 ### branching
 
@@ -180,3 +198,7 @@ and the user switched between them, git-annex will see different logs in
 the different branches, and so may miss info about what remotes have which
 files (though it can re-learn). An alternative would be to
 store the log data directly in the git repo as `pristine-tar` does.
+
+## contact
+
+Joey Hess <joey@kitenet.net>
