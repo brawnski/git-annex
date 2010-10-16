@@ -6,8 +6,8 @@ module Remotes (
 	tryGitConfigRead
 ) where
 
+import Control.Exception
 import Control.Monad.State (liftIO)
-import IO
 import qualified Data.Map as Map
 import Data.String.Utils
 import List
@@ -85,7 +85,9 @@ tryGitConfigRead :: Git.Repo -> Annex (Maybe Git.Repo)
 tryGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
-			result <- liftIO $ try (Git.configRead r)
+			-- configRead can fail due to IO error or
+			-- for other reasons; catch all possible exceptions
+			result <- liftIO $ (try (Git.configRead r)::IO (Either SomeException (Git.Repo)))
 			case (result) of
 				Left err -> return Nothing
 				Right r' -> do

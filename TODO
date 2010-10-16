@@ -8,6 +8,9 @@
 * Support for remote git repositories (ssh:// specifically can be made to
   work, although the other end probably needs to have git-annex installed..)
 
+* Copy files atomically, don't leaf a partial key on interrupt.
+  (Fix for URL download too..)
+
 * Find a way to copy a file with a progress bar, while still preserving 
   stat. Easiest way might be to use pv and fix up the permissions etc
   after?
