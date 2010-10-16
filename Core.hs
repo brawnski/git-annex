@@ -58,3 +58,5 @@ inAnnex :: Key -> Annex Bool
 inAnnex key = do
 	g <- Annex.gitRepo
 	liftIO $ doesFileExist $ annexLocation g key
+
+{-  -}

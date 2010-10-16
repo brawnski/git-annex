@@ -39,8 +39,6 @@ Enough broad picture, here's how it actually looks:
 * `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
   if you're just done with a file; only use `unannex` if you
   accidentially added a file.
-* `git annex $file` is a shorthand. If the file
-  is already known, it does `git annex get`, otherwise it does `git annex add`.
 
 Oh yeah, "$file" in the above can be any number of files, or directories.
 git-annex automatically recurses into directories, but skips files that are

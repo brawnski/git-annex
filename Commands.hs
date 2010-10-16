@@ -29,18 +29,16 @@ parseCmd argv = do
 	(flags, params) <- getopt
 	case (length params) of
 		0 -> error header
-		_ -> do
-			let (cmd, locs) = takeCmd params $ lookupCmd (params !! 0)
-			files <- mapM recurseFiles locs
-			return (flags, map cmd $ foldl (++) [] files)
+		_ -> case (lookupCmd (params !! 0)) of
+			[] -> error header
+			[(_,cmd)] ->  do
+				let locs = drop 1 params
+				files <- mapM recurseFiles locs
+				return (flags, map cmd $ foldl (++) [] files)
 	where
 		getopt = case getOpt Permute options argv of
 			(flags, nonopts, []) -> return (flags, nonopts)
 			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
-		takeCmd files cmds =
-			if (0 == length cmds)
-				then (defaultCmd, files)
-				else ((snd $ cmds !! 0), drop 1 files)
 		lookupCmd cmd = filter (\(c, a) -> c == cmd) cmds
 		cmds =	[ ("add", addCmd)
 			, ("get", getCmd)
@@ -53,15 +51,6 @@ parseCmd argv = do
 		header = "Usage: git-annex [" ++ 
 			(join "|" $ map fst cmds) ++ "] file ..."
 		options = [ Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data" ]
-
-{- Default mode is to annex a file if it is not already, and otherwise
- - get its content. -}
-defaultCmd :: FilePath -> Annex ()
-defaultCmd file = do
-	r <- liftIO $ Backend.lookupFile file
-	case (r) of
-		Just v -> getCmd file
-		Nothing -> addCmd file
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
