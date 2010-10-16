@@ -71,7 +71,7 @@ parseCmd argv state = do
 			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
 		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds
 		header = "Usage: git-annex [" ++ 
-			(join "|" $ map cmdname cmds) ++ "] file ..."
+			(join "|" $ map cmdname cmds) ++ "] ..."
 		options = [ Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data" ]
 
 {- Annexes a file, storing it in a backend, and then moving it into
