@@ -20,10 +20,13 @@ module GitRepo (
 	configMap,
 	configRead,
 	run,
+	pipeRead,
 	attributes,
 	remotes,
 	remotesAdd,
-	repoRemoteName
+	repoRemoteName,
+	inGit,
+	notInGit
 ) where
 
 import Directory
@@ -167,16 +170,30 @@ run repo params = assertlocal repo $ do
 	return ()
 
 {- Runs a git subcommand and returns its output. -}
-gitPipeRead :: Repo -> [String] -> IO String
-gitPipeRead repo params = assertlocal repo $ do
+pipeRead :: Repo -> [String] -> IO String
+pipeRead repo params = assertlocal repo $ do
 	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
 	ret <- hGetContentsStrict h
 	return ret
 
+{- Passed a location, recursively scans for all files that
+ - are checked into git at that location. -}
+inGit :: Repo -> FilePath -> IO [FilePath]
+inGit repo location = do
+	s <- pipeRead repo ["ls-files", "--cached", "--exclude-standard"]
+	return $ lines s
+
+{- Passed a location, recursively scans for all files that are not checked
+ - into git, and not gitignored. -}
+notInGit :: Repo -> FilePath -> IO [FilePath]
+notInGit repo location = do
+	s <- pipeRead repo ["ls-files", "--others", "--exclude-standard"]
+	return $ lines s
+
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
 configRead repo = assertlocal repo $ do
-	{- Cannot use gitPipeRead because it relies on the config having
+	{- Cannot use pipeRead because it relies on the config having
            been already read. Instead, chdir to the repo. -}
 	cwd <- getCurrentDirectory
 	bracket_ (changeWorkingDirectory (top repo))
