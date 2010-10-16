@@ -109,7 +109,7 @@ Repositories record their UUID and the date when they get or drop
 a file's content. (Git is configured to use a union merge for this file,
 so the lines may be in arbitrary order, but it will never conflict.)
 
-The optional file `.git-annex/uuid.map` can be created to add a description
+The optional file `.git-annex/uuid.log` can be created to add a description
 to a UUID. If git-annex needs a file from a repository and it cannot find
 the repository amoung the remotes, it will use the description from this
 file when asking for the repository to be made available. The file format

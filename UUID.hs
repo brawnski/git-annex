@@ -11,7 +11,8 @@ module UUID (
 	prepUUID,
 	genUUID,
 	reposByUUID,
-	prettyPrintUUIDs
+	prettyPrintUUIDs,
+	describeUUID
 ) where
 
 import Control.Monad.State
@@ -19,8 +20,10 @@ import Maybe
 import List
 import System.Cmd.Utils
 import System.IO
+import qualified Data.Map as M
 import qualified GitRepo as Git
 import Types
+import Locations
 import qualified Annex
 
 type UUID = String
@@ -29,7 +32,7 @@ configkey="annex.uuid"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}
-genUUID :: Annex UUID
+genUUID :: IO UUID
 genUUID = liftIO $ pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
 
 {- Looks up a repo's UUID. May return "" if none is known.
@@ -66,7 +69,7 @@ prepUUID = do
 	u <- getUUID g
 	if ("" == u)
 		then do
-			uuid <- genUUID
+			uuid <- liftIO $ genUUID
 			setConfig configkey uuid
 		else return ()
 
@@ -89,9 +92,42 @@ reposByUUID repos uuids = do
 			u <- getUUID r
 			return $ isJust $ elemIndex u uuids
 
-{- Pretty-prints a list of UUIDs 
- - TODO: use lookup file to really show pretty names. -}
+{- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
-prettyPrintUUIDs uuids = 
-	return $ unwords $ map (\u -> "\tUUID "++u++"\n") uuids
+prettyPrintUUIDs uuids = do
+	m <- uuidMap
+	return $ unwords $ map (\u -> "  "++(prettify m u)++"\n") uuids
+	where
+		prettify m u =
+			if (0 < (length $ findlog m u))
+				then u ++ "  -- " ++ (findlog m u)
+				else u
+		findlog m u = M.findWithDefault "" u m
 
+{- Records a description for a uuid in the uuidLog. -}
+describeUUID :: UUID -> String -> Annex ()
+describeUUID uuid desc = do
+	m <- uuidMap
+	let m' = M.insert uuid desc m
+	log <- uuidLog
+	liftIO $ writeFile log $ serialize m'
+	where
+		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
+
+{- Read and parse the uuidLog into a Map -}
+uuidMap :: Annex (M.Map UUID String)
+uuidMap = do
+	log <- uuidLog
+	s <- liftIO $ catch (readFile log) (\error -> return "")
+	return $ M.fromList $ map (\l -> pair l) $ lines s
+	where
+		pair l =
+			if (1 < (length $ words l))
+				then ((words l) !! 0, unwords $ drop 1 $ words l)
+				else ("", "")
+
+{- Filename of uuid.log. -}
+uuidLog :: Annex String
+uuidLog = do
+	g <- Annex.gitRepo
+	return $ (gitStateDir g) ++ "uuid.log"
