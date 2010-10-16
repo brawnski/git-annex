@@ -32,7 +32,8 @@ data Command = Command {
 }
 
 cmds :: [Command]
-cmds =  [ (Command "add"	addCmd		FilesNotInGit)
+cmds =  [
+	  (Command "add"	addCmd		FilesNotInGit)
 	, (Command "get"	getCmd		FilesInGit)
 	, (Command "drop"	dropCmd		FilesInGit)
 	, (Command "push"	pushCmd		RepoName)
@@ -40,6 +41,11 @@ cmds =  [ (Command "add"	addCmd		FilesNotInGit)
 	, (Command "unannex"	unannexCmd	FilesInGit)
 	, (Command "describe"	describeCmd	SingleString)
 	]
+
+options = [
+	    Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data"
+	  , Option ['N'] ["no-commit"] (NoArg NoCommit) "do not stage or commit changes"
+	  ]
 
 {- Finds the type of parameters a command wants, from among the passed
  - parameter list. -}
@@ -75,7 +81,6 @@ parseCmd argv state = do
 		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds
 		header = "Usage: git-annex [" ++ 
 			(join "|" $ map cmdname cmds) ++ "] ..."
-		options = [ Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data" ]
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
@@ -89,7 +94,7 @@ addCmd file = inBackend file err $ do
 		Nothing -> error $ "no backend could store: " ++ file
 		Just (key, backend) -> do
 			logStatus key ValuePresent
-			liftIO $ setup g key link
+			setup g key link
 	where
 		err = error $ "already annexed " ++ file
 		checkLegal file = do
@@ -106,12 +111,16 @@ addCmd file = inBackend file err $ do
 		setup g key link = do
 			let dest = annexLocation g key
 			let reldest = annexLocationRelative g key
-			createDirectoryIfMissing True (parentDir dest)
-			renameFile file dest
-			createSymbolicLink (link ++ reldest) file
-			Git.run g ["add", file]
-			Git.run g ["commit", "-m", 
-				("git-annex annexed " ++ file), file]
+			liftIO $ createDirectoryIfMissing True (parentDir dest)
+			liftIO $ renameFile file dest
+			liftIO $ createSymbolicLink (link ++ reldest) file
+			nocommit <- Annex.flagIsSet NoCommit
+			if (not nocommit)
+				then do
+					liftIO $ Git.run g ["add", file]
+					liftIO $ Git.run g ["commit", "-m", 
+						("git-annex annexed " ++ file), file]
+				else return ()
 
 {- Inverse of addCmd. -}
 unannexCmd :: FilePath -> Annex ()
@@ -192,7 +201,10 @@ describeCmd description = do
 	u <- getUUID g
 	describeUUID u description
 	log <- uuidLog
-	liftIO $ Git.run g ["add", log]
+	nocommit <- Annex.flagIsSet NoCommit
+	if (not nocommit)
+		then liftIO $ Git.run g ["add", log]
+		else return ()
 	Annex.flagChange NeedCommit True
 	liftIO $ putStrLn "description set"
 
@@ -202,7 +214,10 @@ logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	f <- liftIO $ logChange g key u status
-	liftIO $ Git.run g ["add", f]
+	nocommit <- Annex.flagIsSet NoCommit
+	if (not nocommit)
+		then liftIO $ Git.run g ["add", f]
+		else return ()
 	Annex.flagChange NeedCommit True
 
 inBackend file yes no = do

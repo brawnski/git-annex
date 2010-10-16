@@ -24,8 +24,9 @@ startup flags = do
 shutdown :: Annex ()
 shutdown = do
 	g <- Annex.gitRepo
+	nocommit <- Annex.flagIsSet NoCommit
 	needcommit <- Annex.flagIsSet NeedCommit
-	if (needcommit)
+	if (needcommit && not nocommit)
 		then liftIO $ Git.run g ["commit", "-q", "-m", 
 			"git-annex log update", gitStateDir g]
 		else return ()
