@@ -1,7 +1,7 @@
 Source: git-annex
 Section: utils
 Priority: optional
-Build-Depends: debhelper (>= 7.0.50), ghc6, libghc6-missingh-dev
+Build-Depends: debhelper (>= 7.0.50), ghc6, libghc6-missingh-dev, libghc6-sha-dev
 Maintainer: Joey Hess <joeyh@debian.org>
 Standards-Version: 3.9.1
 Vcs-Git: git://git.kitenet.net/git-annex
