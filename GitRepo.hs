@@ -25,8 +25,8 @@ module GitRepo (
 	remotes,
 	remotesAdd,
 	repoRemoteName,
-	inGit,
-	notInGit
+	inRepo,
+	notInRepo
 ) where
 
 import Directory
@@ -178,16 +178,16 @@ pipeRead repo params = assertlocal repo $ do
 
 {- Passed a location, recursively scans for all files that
  - are checked into git at that location. -}
-inGit :: Repo -> FilePath -> IO [FilePath]
-inGit repo location = do
-	s <- pipeRead repo ["ls-files", "--cached", "--exclude-standard"]
+inRepo :: Repo -> FilePath -> IO [FilePath]
+inRepo repo location = do
+	s <- pipeRead repo ["ls-files", "--cached", "--exclude-standard", location]
 	return $ lines s
 
 {- Passed a location, recursively scans for all files that are not checked
  - into git, and not gitignored. -}
-notInGit :: Repo -> FilePath -> IO [FilePath]
-notInGit repo location = do
-	s <- pipeRead repo ["ls-files", "--others", "--exclude-standard"]
+notInRepo :: Repo -> FilePath -> IO [FilePath]
+notInRepo repo location = do
+	s <- pipeRead repo ["ls-files", "--others", "--exclude-standard", location]
 	return $ lines s
 
 {- Runs git config and populates a repo with its config. -}
