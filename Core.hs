@@ -25,7 +25,7 @@ shutdown = do
 	g <- Annex.gitRepo
 	needcommit <- Annex.flagIsSet NeedCommit
 	if (needcommit)
-		then liftIO $ Git.run g ["commit", "-m", 
+		then liftIO $ Git.run g ["commit", "-q", "-m", 
 			"git-annex log update", gitStateDir g]
 		else return ()
 
