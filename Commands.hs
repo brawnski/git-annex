@@ -165,13 +165,20 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
  - if it's safe to do so. -}
 dropCmd :: FilePath -> Annex ()
 dropCmd file = notinBackend file err $ \(key, backend) -> do
-	force <- Annex.flagIsSet Force
-	if (not force)
-		then requireEnoughCopies key
-		else return ()
-	success <- Backend.removeKey backend key
-	if (success)
-		then do
+	inbackend <- Backend.hasKey key
+	if (not inbackend)
+		then return () -- no-op
+		else do
+			force <- Annex.flagIsSet Force
+			if (not force)
+				then requireEnoughCopies key
+				else return ()
+			success <- Backend.removeKey backend key
+			if (success)
+				then cleanup key
+				else error $ "backend refused to drop " ++ file
+	where
+		cleanup key = do
 			logStatus key ValueMissing
 			inannex <- inAnnex key
 			if (inannex)
@@ -181,8 +188,6 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 					liftIO $ removeFile loc
 					return ()
 				else return ()
-		else error $ "backend refused to drop " ++ file
-	where
 		err = error $ "not annexed " ++ file
 
 {- Fixes the symlink to an annexed file. -}
