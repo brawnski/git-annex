@@ -23,28 +23,45 @@ import Core
 import qualified Remotes
 import qualified BackendTypes
 
-data CmdWants = FilesInGit | FilesNotInGit | FilesInOrNotInGit |
-		RepoName | SingleString
+data CmdWants = FilesInGit | FilesNotInGit | RepoName | SingleString
 data Command = Command {
 	cmdname :: String,
 	cmdaction :: (String -> Annex ()),
-	cmdwants :: CmdWants
+	cmdwants :: CmdWants,
+	cmddesc :: String
 }
 
 cmds :: [Command]
 cmds =  [
-	  (Command "add"	addCmd		FilesNotInGit)
-	, (Command "get"	getCmd		FilesInGit)
-	, (Command "drop"	dropCmd		FilesInGit)
-	, (Command "unannex"	unannexCmd	FilesInGit)
-	, (Command "describe"	describeCmd	SingleString)
-	, (Command "fix"	fixCmd		FilesInOrNotInGit)
+	  (Command "add"	addCmd		FilesNotInGit
+		"add files to annex")
+	, (Command "get"	getCmd		FilesInGit
+		"make content of annexed files available")
+	, (Command "drop"	dropCmd		FilesInGit
+		"indicate content of files not currently wanted")
+	, (Command "unannex"	unannexCmd	FilesInGit
+		"undo accidential add command")
+	, (Command "init"	initCmd		SingleString
+		"initialize git-annex with repository description")
+	, (Command "fix"	fixCmd		FilesInGit
+		"fix up files' symlinks to point to annexed content")
 	]
 
 options = [
 	    Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data"
 	  , Option ['N'] ["no-commit"] (NoArg NoCommit) "do not stage or commit changes"
 	  ]
+
+header = "Usage: git-annex [" ++ (join "|" $ map cmdname cmds) ++ "] ..."
+
+usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
+	where
+		cmddescs = unlines $ map (\c -> indent $ showcmd c) cmds
+		showcmd c =
+			(cmdname c) ++
+			(take (10 - (length (cmdname c))) $ repeat ' ') ++ 
+			(cmddesc c)
+		indent l = "  " ++ l
 
 {- Finds the type of parameters a command wants, from among the passed
  - parameter list. -}
@@ -55,10 +72,6 @@ findWanted FilesNotInGit params repo = do
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
-findWanted FilesInOrNotInGit params repo = do
-	a <- findWanted FilesInGit params repo
-	b <- findWanted FilesNotInGit params repo
-	return $ union a b
 findWanted SingleString params _ = do
 	return $ [unwords params]
 findWanted RepoName params _ = do
@@ -73,7 +86,7 @@ parseCmd argv state = do
 		0 -> error usage
 		_ -> case (lookupCmd (params !! 0)) of
 			[] -> error usage
-			[Command _ action want] -> do
+			[Command _ action want _] -> do
 				f <- findWanted want (drop 1 params)
 					(BackendTypes.repo state)
 				return (flags, map action $ filter notstate f)
@@ -84,9 +97,6 @@ parseCmd argv state = do
 			(flags, params, []) -> return (flags, params)
 			(_, _, errs) -> ioError (userError (concat errs ++ usage))
 		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds
-		header = "Usage: git-annex [" ++ 
-			(join "|" $ map cmdname cmds) ++ "] ..."
-		usage = usageInfo header options
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
@@ -197,32 +207,37 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 
 {- Fixes the symlink to an annexed file. -}
 fixCmd :: String -> Annex ()
-fixCmd file = notinBackend file err $ \(key, backend) -> do
+fixCmd file = notinBackend file skip $ \(key, backend) -> do
 	link <- calcGitLink file key
-	checkLegal file link
-	showStart "fix" file
-	liftIO $ createDirectoryIfMissing True (parentDir file)
-	liftIO $ removeFile file
-	liftIO $ createSymbolicLink link file
-	gitAdd file $ Just $ "git-annex fix " ++ file
-	showEndOk
+	l <- liftIO $ readSymbolicLink file
+	if (link == l)
+		then skip
+		else do
+			showStart "fix" file
+			liftIO $ createDirectoryIfMissing True (parentDir file)
+			liftIO $ removeFile file
+			liftIO $ createSymbolicLink link file
+			gitAdd file $ Just $ "git-annex fix " ++ file
+			showEndOk
 	where
-		checkLegal file link = do
-			l <- liftIO $ readSymbolicLink file
-			if (link == l)
-				then error $ "symbolic link already ok for: " ++ file
-				else return ()
-		err = error $ "not annexed " ++ file
+		-- quietly skip non-annexed files, so this can be used
+		-- as a commit hook
+		skip = return ()
 
 {- Stores description for the repository. -}
-describeCmd :: String -> Annex ()
-describeCmd description = do
-	g <- Annex.gitRepo
-	u <- getUUID g
-	describeUUID u description
-	log <- uuidLog
-	gitAdd log $ Just $ "description for UUID " ++ (show u)
-	liftIO $ putStrLn "description set"
+initCmd :: String -> Annex ()
+initCmd description = do
+	if (0 == length description)
+		then error $ 
+			"please specify a description of this repository\n" ++
+			usage
+		else do
+			g <- Annex.gitRepo
+			u <- getUUID g
+			describeUUID u description
+			log <- uuidLog
+			gitAdd log $ Just $ "description for UUID " ++ (show u)
+			liftIO $ putStrLn "description set"
 
 -- helpers
 inBackend file yes no = do

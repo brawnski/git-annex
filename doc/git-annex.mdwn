@@ -49,7 +49,7 @@ Enough broad picture, here's how it actually looks:
   if you're just done with a file; only use `unannex` if you
   accidentially added a file. (You can also run this on all your annexed
   files come the Singularity. ;-)
-* `git annex describe "some description"` allows associating some description
+* `git annex init "some description"` allows associating some description
   (such as "USB archive drive 1") with a repository. This can help with
   finding it later, see "Location Tracking" below.
 
@@ -128,21 +128,23 @@ is on a home file server, and you are away from home. Then git-annex can
 tell you what git remote it needs access to in order to get a file:
 
 	# git annex get myfile
-	git-annex: unable to get file with key: WORM:8b01f6d371178722367393eb26043482e1820306:myfile
-	To get that file, need access to one of these remotes: home
+	get myfile (need access to one of these remotes: home)
+	git-annex: get myfile failed
 
 Another way the location tracking comes in handy is if you put repositories
 on removable USB drives, that might be archived away offline in a safe
 place. In this sort of case, you probably don't have a git remotes
 configured for every USB drive. So git-annex may have to resort to talking
-about repository UUIDs. If you have previously used "git annex describe"
-in those repositories, it will include their description to help you with
-finding them:
+about repository UUIDs. If you have previously used "git annex init"
+to attach descriptions to those repositories, it will include their
+descriptions to help you with finding them:
 
-	git-annex: no available git remotes have file with key: WORM:8b01f6d371178722367393eb26043482e1820306:myfile
-	It has been seen before in these repositories:
-	  c0a28e06-d7ef-11df-885c-775af44f8882  -- USB archive drive 1
-	  e1938fee-d95b-11df-96cc-002170d25c55
+	# git annex get myfile
+	get myfile (No available git remotes have the file.)
+	  It has been seen before in these repositories:
+	  	c0a28e06-d7ef-11df-885c-775af44f8882  -- USB archive drive 1
+	  	e1938fee-d95b-11df-96cc-002170d25c55
+	git-annex: get myfile failed
 
 ## configuration
 
