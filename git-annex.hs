@@ -9,11 +9,12 @@ import Types
 import Core
 import Commands
 import qualified GitRepo as Git
+import BackendList
 
 main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
-	state <- Annex.new gitrepo
+	state <- Annex.new gitrepo allBackends
 	(flags, actions) <- parseCmd args state
 	tryRun state $ [startup flags] ++ actions ++ [shutdown]
 

@@ -7,6 +7,8 @@ module Annex (
 	gitRepoChange,
 	backends,
 	backendsChange,
+	supportedBackends,
+	supportedBackendsChange,
 	flagIsSet,
 	flagChange,
 	Flag(..)
@@ -20,20 +22,21 @@ import qualified BackendTypes as Backend
 
 {- Create and returns an Annex state object for the specified git repo.
  -}
-new :: Git.Repo -> IO AnnexState
-new g = do
+new :: Git.Repo -> [Backend] -> IO AnnexState
+new gitrepo allbackends = do
 	let s = Backend.AnnexState {
-		Backend.repo = g,
+		Backend.repo = gitrepo,
 		Backend.backends = [],
+		Backend.supportedBackends = allbackends,
 		Backend.flags = []
 	}
-	(_,s') <- Annex.run s (prep g)
+	(_,s') <- Annex.run s (prep gitrepo)
 	return s'
 	where
-		prep g = do
+		prep gitrepo = do
 			-- read git config and update state
-			g' <- liftIO $ Git.configRead g
-			Annex.gitRepoChange g'
+			gitrepo' <- liftIO $ Git.configRead gitrepo
+			Annex.gitRepoChange gitrepo'
 
 -- performs an action in the Annex monad
 run state action = runStateT (action) state
@@ -56,6 +59,15 @@ backendsChange :: [Backend] -> Annex ()
 backendsChange b = do
 	state <- get
 	put state { Backend.backends = b }
+	return ()
+supportedBackends :: Annex [Backend]
+supportedBackends = do
+	state <- get
+	return (Backend.supportedBackends state)
+supportedBackendsChange :: [Backend] -> Annex ()
+supportedBackendsChange b = do
+	state <- get
+	put state { Backend.supportedBackends = b }
 	return ()
 flagIsSet :: Flag -> Annex Bool
 flagIsSet flag = do

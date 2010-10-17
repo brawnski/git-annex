@@ -19,6 +19,7 @@ data Flag = Force | NoCommit | NeedCommit
 data AnnexState = AnnexState {
 	repo :: Git.Repo,
 	backends :: [Backend],
+	supportedBackends :: [Backend],
 	flags :: [Flag]
 } deriving (Show)
 

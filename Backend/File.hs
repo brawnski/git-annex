@@ -25,13 +25,14 @@ import Utility
 import Core
 import qualified Annex
 import UUID
+import qualified Backend
 
 backend = Backend {
 	name = mustProvide,
 	getKey = mustProvide,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = copyKeyFile,
-	removeKey = dummyRemove,
+	removeKey = checkRemoveKey,
 	hasKey = checkKeyFile
 }
 
@@ -40,10 +41,6 @@ mustProvide = error "must provide this field"
 {- Storing a key is a no-op. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
-
-{- Allow keys to be removed. -}
-dummyRemove :: Key -> Annex Bool
-dummyRemove url = return True
 
 {- Just check if the .git/annex/ file for the key exists. -}
 checkKeyFile :: Key -> Annex Bool
@@ -102,3 +99,56 @@ copyFromRemote r key file = do
 				else error "cp failed"
 		getremote = error "get via network not yet implemented!"
 		location = annexLocation r key
+
+{- Checks remotes to verify that enough copies of a key exist to allow
+ - for a key to be safely removed (with no data loss), and fails with an
+ - error if not. -}
+checkRemoveKey :: Key -> Annex (Bool)
+checkRemoveKey key = do
+	force <- Annex.flagIsSet Force
+	if (force)
+		then return True
+		else do
+			g <- Annex.gitRepo
+			let numcopies = read $ Git.configGet g config "1"
+			remotes <- Remotes.withKey key
+			if (numcopies > length remotes)
+				then retNotEnoughCopiesKnown remotes numcopies
+				else findcopies numcopies remotes []
+	where
+		failMsg w = do
+			liftIO $ hPutStrLn stderr $ "git-annex: " ++ w
+			return False -- failure, not enough copies found
+		findcopies 0 _ _ = return True -- success, enough copies found
+		findcopies _ [] bad = notEnoughCopiesSeen bad
+		findcopies n (r:rs) bad = do
+			all <- Annex.supportedBackends
+			result <- liftIO $ ((try $ remoteHasKey r all)::IO (Either SomeException Bool))
+			case (result) of
+				Right True	-> findcopies (n-1) rs bad
+				Right False	-> findcopies n rs bad
+				Left _		-> findcopies n rs (r:bad)
+		remoteHasKey r all = do
+			-- To check if a remote has a key, construct a new
+			-- Annex monad and query its backend.
+			a <- Annex.new r all
+			(result, _) <- Annex.run a (Backend.hasKey key)
+			return result
+		notEnoughCopiesSeen bad = failMsg $
+				"I failed to find enough other copies of: " ++
+				(keyFile key) ++
+				(if (0 /= length bad) then listbad bad else "")
+				++ unsafe
+		listbad bad = "\nI was unable to access these remotes: " ++
+				(Remotes.list bad) 
+		retNotEnoughCopiesKnown remotes numcopies = failMsg $ 
+				"I only know about " ++ (show $ length remotes) ++ 
+				" out of " ++ (show numcopies) ++ 
+				" necessary copies of: " ++ (keyFile key) ++
+				unsafe
+		unsafe = "\n" ++
+			"  -- According to the " ++ config ++
+			" setting, it is not safe to remove it!\n" ++
+			"     (Use --force to override.)"
+
+		config = "annex.numcopies"

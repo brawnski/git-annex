@@ -28,14 +28,12 @@ import System.FilePath
 import Data.String.Utils
 import System.Posix.Files
 
-import BackendList
 import Locations
 import qualified GitRepo as Git
 import qualified Annex
 import Utility
 import Types
 import qualified BackendTypes as B
-import BackendList
 
 {- List of backends in the order to try them when storing a new key. -}
 backendList :: Annex [Backend]
@@ -44,10 +42,24 @@ backendList = do
 	if (0 < length l)
 		then return l
 		else do
+			all <- Annex.supportedBackends
 			g <- Annex.gitRepo
-			let l = parseBackendList $ Git.configGet g "annex.backends" ""
+			let l = parseBackendList all $ Git.configGet g "annex.backends" ""
 			Annex.backendsChange l
 			return l
+	where
+		parseBackendList all s = 
+			if (length s == 0)
+				then all
+				else map (lookupBackendName all) $ words s
+
+{- Looks up a backend in the list of supportedBackends -}
+lookupBackendName :: [Backend] -> String -> Backend
+lookupBackendName all s =
+	if ((length matches) /= 1)
+		then error $ "unknown backend " ++ s
+		else matches !! 0
+	where matches = filter (\b -> s == B.name b) all
 
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
@@ -81,21 +93,24 @@ removeKey backend key = (B.removeKey backend)  key
 
 {- Checks if a backend has its key. -}
 hasKey :: Key -> Annex Bool
-hasKey key = (B.hasKey (lookupBackendName $ backendName key)) key
+hasKey key = do
+	all <- Annex.supportedBackends
+	(B.hasKey (lookupBackendName all $ backendName key)) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
-lookupFile :: FilePath -> IO (Maybe (Key, Backend))
+lookupFile :: FilePath -> Annex (Maybe (Key, Backend))
 lookupFile file = do
-	result <- try (lookup)::IO (Either SomeException (Maybe (Key, Backend)))
+	all <- Annex.supportedBackends
+	result <- liftIO $ (try (lookup all)::IO (Either SomeException (Maybe (Key, Backend))))
 	case (result) of
 		Left err -> return Nothing
 		Right succ -> return succ
 	where 
-		lookup = do
+		lookup all = do
 			l <- readSymbolicLink file
-			return $ Just $ pair $ takeFileName l
-		pair file = (k, b)
+			return $ Just $ pair all $ takeFileName l
+		pair all file = (k, b)
 			where
 				k = fileKey file
-				b = lookupBackendName $ backendName k
+				b = lookupBackendName all $ backendName k
