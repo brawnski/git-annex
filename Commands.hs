@@ -67,9 +67,9 @@ parseCmd :: [String] -> AnnexState -> IO ([Flag], [Annex ()])
 parseCmd argv state = do
 	(flags, params) <- getopt
 	case (length params) of
-		0 -> error header
+		0 -> error usage
 		_ -> case (lookupCmd (params !! 0)) of
-			[] -> error header
+			[] -> error usage
 			[Command _ action want] -> do
 				f <- findWanted want (drop 1 params)
 					(BackendTypes.repo state)
@@ -77,10 +77,11 @@ parseCmd argv state = do
 	where
 		getopt = case getOpt Permute options argv of
 			(flags, params, []) -> return (flags, params)
-			(_, _, errs) -> ioError (userError (concat errs ++ usageInfo header options))
+			(_, _, errs) -> ioError (userError (concat errs ++ usage))
 		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds
 		header = "Usage: git-annex [" ++ 
 			(join "|" $ map cmdname cmds) ++ "] ..."
+		usage = usageInfo header options
 
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
