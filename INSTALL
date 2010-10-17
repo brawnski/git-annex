@@ -3,3 +3,5 @@ To build and use git-annex, you will need:
 * ghc
 * These haskell libraries: MissingH SHA
 * uuid <http://www.ossp.org/pkg/lib/uuid/>
+
+Then just run make; make install
