@@ -75,14 +75,14 @@ gitAdd :: FilePath -> Maybe String -> Annex ()
 gitAdd file commitmessage = do
 	nocommit <- Annex.flagIsSet NoCommit
 	if (nocommit)
-		then Annex.flagChange NeedCommit True
+		then return ()
 		else do
 			g <- Annex.gitRepo
 			liftIO $ Git.run g ["add", file]
 			if (isJust commitmessage)
 				then liftIO $ Git.run g ["commit", "-m",
 					(fromJust commitmessage), file]
-				else return ()
+				else Annex.flagChange NeedCommit True
 
 {- Calculates the relative path to use to link a file to a key. -}
 calcGitLink :: FilePath -> Key -> Annex FilePath
