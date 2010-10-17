@@ -7,6 +7,7 @@ import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
+import Data.String.Utils
 
 import Types
 import Locations
@@ -81,8 +82,8 @@ gitAdd file commitmessage = do
 			g <- Annex.gitRepo
 			liftIO $ Git.run g ["add", file]
 			if (isJust commitmessage)
-				then liftIO $ Git.run g ["commit", "-m",
-					(fromJust commitmessage), file]
+				then liftIO $ Git.run g ["commit", "--quiet", 
+					"-m", (fromJust commitmessage), file]
 				else Annex.flagChange NeedCommit True
 
 {- Calculates the relative path to use to link a file to a key. -}
@@ -104,3 +105,24 @@ logStatus key status = do
 	f <- liftIO $ logChange g key u status
 	gitAdd f Nothing -- all logs are committed at end
 
+{- Output logging -}
+showStart :: String -> String -> Annex ()
+showStart command file = do
+	liftIO $ putStr $ command ++ " " ++ file
+	liftIO $ hFlush stdout
+showNote :: String -> Annex ()
+showNote s = do
+	liftIO $ putStr $ " (" ++ s ++ ")"
+	liftIO $ hFlush stdout
+showLongNote :: String -> Annex ()
+showLongNote s = do
+	liftIO $ putStr $ "\n" ++ (indent s)
+	where
+		indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s 
+showEndOk :: Annex ()
+showEndOk = do
+	liftIO $ putStrLn " ok"
+showEndFail :: String -> String -> Annex ()
+showEndFail command file = do
+	liftIO $ putStrLn ""
+	error $ command ++ " " ++ file ++ " failed"

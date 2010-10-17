@@ -100,7 +100,7 @@ reposByUUID repos uuids = do
 prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
 	m <- uuidMap
-	return $ unwords $ map (\u -> "  "++(prettify m u)++"\n") uuids
+	return $ unwords $ map (\u -> "\t"++(prettify m u)++"\n") uuids
 	where
 		prettify m u =
 			if (0 < (length $ findlog m u))

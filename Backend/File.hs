@@ -53,12 +53,13 @@ copyKeyFile key file = do
 	remotes <- Remotes.withKey key
 	if (0 == length remotes)
 		then cantfind
-		else return ()
-	trycopy remotes remotes
+		else trycopy remotes remotes
 	where
-		trycopy full [] = error $ "unable to get file with key: " ++ (keyFile key) ++ "\n" ++
-			"To get that file, need access to one of these remotes: " ++
-			(Remotes.list full)
+		trycopy full [] = do
+			showNote $
+				"need access to one of these remotes: " ++
+				(Remotes.list full)
+			return False
 		trycopy full (r:rs) = do
 			-- annexLocation needs the git config to have been
 			-- read for a remote, so do that now,
@@ -67,6 +68,7 @@ copyKeyFile key file = do
 			case (result) of
 				Nothing -> trycopy full rs
 				Just r' -> do
+					showNote $ "copying from " ++ (Git.repoDescribe r ) ++ "..."
 					result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
 		        		case (result) of
 				                Left err -> do
@@ -77,17 +79,15 @@ copyKeyFile key file = do
 			g <- Annex.gitRepo
 			uuids <- liftIO $ keyLocations g key
 			ppuuids <- prettyPrintUUIDs uuids
-			error $ "no available git remotes have file with key: " ++
-				(keyFile key) ++ 
-				if (0 < length uuids)
-					then "\nIt has been seen before in these repositories:\n" ++ ppuuids
-					else ""
+			showNote $ "No available git remotes have the file."
+			if (0 < length uuids)
+				then showLongNote $ "It has been seen before in these repositories:\n" ++ ppuuids
+				else return ()
+			return False
 
 {- Tries to copy a file from a remote, exception on error. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()
 copyFromRemote r key file = do
-	putStrLn $ "copy from " ++ (Git.repoDescribe r ) ++ " " ++ file
-
 	if (Git.repoIsLocal r)
 		then getlocal
 		else getremote
@@ -116,9 +116,6 @@ checkRemoveKey key = do
 				then retNotEnoughCopiesKnown remotes numcopies
 				else findcopies numcopies remotes []
 	where
-		failMsg w = do
-			liftIO $ hPutStrLn stderr $ "git-annex: " ++ w
-			return False -- failure, not enough copies found
 		findcopies 0 _ _ = return True -- success, enough copies found
 		findcopies _ [] bad = notEnoughCopiesSeen bad
 		findcopies n (r:rs) bad = do
@@ -134,21 +131,25 @@ checkRemoveKey key = do
 			a <- Annex.new r all
 			(result, _) <- Annex.run a (Backend.hasKey key)
 			return result
-		notEnoughCopiesSeen bad = failMsg $
-				"I failed to find enough other copies of: " ++
-				(keyFile key) ++
-				(if (0 /= length bad) then listbad bad else "")
-				++ unsafe
-		listbad bad = "\nI was unable to access these remotes: " ++
-				(Remotes.list bad) 
-		retNotEnoughCopiesKnown remotes numcopies = failMsg $ 
+		notEnoughCopiesSeen bad = do
+			showNote "failed to find enough other copies of the file"
+			if (0 /= length bad) then listbad bad else return ()
+			unsafe
+			return False
+		listbad bad =
+			showLongNote $ 
+				"I was unable to access these remotes: " ++
+				(Remotes.list bad)
+		retNotEnoughCopiesKnown remotes numcopies = do
+			showNote $
 				"I only know about " ++ (show $ length remotes) ++ 
 				" out of " ++ (show numcopies) ++ 
-				" necessary copies of: " ++ (keyFile key) ++
-				unsafe
-		unsafe = "\n" ++
-			"  -- According to the " ++ config ++
-			" setting, it is not safe to remove it!\n" ++
-			"     (Use --force to override.)"
+				" necessary copies of the file"
+			unsafe
+			return False
+		unsafe = do
+			showLongNote $ "According to the " ++ config ++
+				" setting, it is not safe to remove it!"
+			showLongNote "(Use --force to override.)"
 
 		config = "annex.numcopies"

@@ -95,11 +95,11 @@ parseCmd argv state = do
 addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
-	liftIO $ putStrLn $ "add " ++ file
+	showStart "add" file
 	g <- Annex.gitRepo
 	stored <- Backend.storeFileKey file
 	case (stored) of
-		Nothing -> error $ "no backend could store: " ++ file
+		Nothing -> showEndFail "no backend could store" file
 		Just (key, backend) -> do
 			logStatus key ValuePresent
 			setup g key
@@ -117,11 +117,13 @@ addCmd file = inBackend file err $ do
 			link <- calcGitLink file key
 			liftIO $ createSymbolicLink link file
 			gitAdd file $ Just $ "git-annex annexed " ++ file
+			showEndOk
 
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
-	liftIO $ putStrLn $ "unannex " ++ file
+	showStart "unannex" file
+	Annex.flagChange Force True -- force backend to always remove
 	Backend.removeKey backend key
 	logStatus key ValueMissing
 	g <- Annex.gitRepo
@@ -132,16 +134,17 @@ unannexCmd file = notinBackend file err $ \(key, backend) -> do
 		moveout g src = do
 			nocommit <- Annex.flagIsSet NoCommit
 			liftIO $ removeFile file
-			liftIO $ Git.run g ["rm", file]
+			liftIO $ Git.run g ["rm", "--quiet", file]
 			if (not nocommit)
-				then liftIO $ Git.run g ["commit", "-m",
-					("git-annex unannexed " ++ file), file]
+				then liftIO $ Git.run g ["commit", "--quiet",
+					"-m", ("git-annex unannexed " ++ file),
+					file]
 				else return ()
 			-- git rm deletes empty directories;
 			-- put them back
 			liftIO $ createDirectoryIfMissing True (parentDir file)
 			liftIO $ renameFile src file
-			return ()
+			showEndOk
 
 {- Gets an annexed file from one of the backends. -}
 getCmd :: FilePath -> Annex ()
@@ -150,6 +153,7 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 	if (inannex)
 		then return ()
 		else do
+			showStart "get" file
 			g <- Annex.gitRepo
 			let dest = annexLocation g key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
@@ -157,8 +161,8 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 			if (success)
 				then do
 					logStatus key ValuePresent
-					return ()
-				else error $ "failed to get " ++ file
+					showEndOk
+				else showEndFail "get" file
 	where
 		err = error $ "not annexed " ++ file
 
@@ -170,11 +174,13 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 	if (not inbackend)
 		then return () -- no-op
 		else do
-			liftIO $ putStrLn $ "drop " ++ file
+			showStart "drop" file
 			success <- Backend.removeKey backend key
 			if (success)
-				then cleanup key
-				else error $ "backend refused to drop " ++ file
+				then do
+					cleanup key
+					showEndOk
+				else showEndFail "backend refused to drop" file
 	where
 		cleanup key = do
 			logStatus key ValueMissing
@@ -191,13 +197,14 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 {- Fixes the symlink to an annexed file. -}
 fixCmd :: String -> Annex ()
 fixCmd file = notinBackend file err $ \(key, backend) -> do
-	liftIO $ putStrLn $ "fix " ++ file
 	link <- calcGitLink file key
 	checkLegal file link
+	showStart "fix" file
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ removeFile file
 	liftIO $ createSymbolicLink link file
 	gitAdd file $ Just $ "git-annex fix " ++ file
+	showEndOk
 	where
 		checkLegal file link = do
 			l <- liftIO $ readSymbolicLink file
