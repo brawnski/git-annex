@@ -3,15 +3,17 @@
 
 * --push/--pull/--want
 
-* how to handle git mv file?
+* how to handle git mv file? -> git annex fix -> run automatically?
 
 * how to handle git rm file? (should try to drop keys that have no
   referring file, if it seems safe..)
 
+* add a git annex fsck that finds keys that have no referring file
+
 * Support for remote git repositories (ssh:// specifically can be made to
   work, although the other end probably needs to have git-annex installed..)
 
-* Copy files atomically, don't leaf a partial key on interrupt.
+* Copy files atomically, don't leave a partial key on interrupt.
   (Fix for URL download too..)
 
 * Find a way to copy a file with a progress bar, while still preserving 

@@ -24,7 +24,8 @@ import Core
 import qualified Remotes
 import qualified BackendTypes
 
-data CmdWants = FilesInGit | FilesNotInGit | RepoName | SingleString
+data CmdWants = FilesInGit | FilesNotInGit | FilesInOrNotInGit |
+		RepoName | SingleString
 data Command = Command {
 	cmdname :: String,
 	cmdaction :: (String -> Annex ()),
@@ -40,7 +41,7 @@ cmds =  [
 	, (Command "pull"	pullCmd		RepoName)
 	, (Command "unannex"	unannexCmd	FilesInGit)
 	, (Command "describe"	describeCmd	SingleString)
-	, (Command "fix"	fixCmd		FilesInGit)
+	, (Command "fix"	fixCmd		FilesInOrNotInGit)
 	]
 
 options = [
@@ -57,6 +58,10 @@ findWanted FilesNotInGit params repo = do
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
+findWanted FilesInOrNotInGit params repo = do
+	a <- findWanted FilesInGit params repo
+	b <- findWanted FilesNotInGit params repo
+	return $ union a b
 findWanted SingleString params _ = do
 	return $ [unwords params]
 findWanted RepoName params _ = do
@@ -178,20 +183,25 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 {- Fixes the symlink to an annexed file. -}
 fixCmd :: String -> Annex ()
 fixCmd file = notinBackend file err $ \(key, backend) -> do
+	liftIO $ putStrLn $ "fix " ++ file
 	link <- calcGitLink file key
-	checkLegal file
+	checkLegal file link
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ removeFile file
 	liftIO $ createSymbolicLink link file
 	gitAdd file $ Just $ "git-annex fix " ++ file
 	where
-		checkLegal file = do
+		checkLegal file link = do
 			s <- liftIO $ getSymbolicLinkStatus file
 			force <- Annex.flagIsSet Force
 			if (not (isSymbolicLink s) && not force)
 				then error $ "not a symbolic link : " ++ file ++
 					"  (use --force to override this sanity check)"
-				else return ()
+				else do
+					l <- liftIO $ readSymbolicLink file
+					if (link == l)
+						then error $ "symbolic link already ok for: " ++ file
+						else return ()
 		err = error $ "not annexed " ++ file
 
 {- Pushes all files to a remote repository. -}
