@@ -146,6 +146,19 @@ descriptions to help you with finding them:
 	  	e1938fee-d95b-11df-96cc-002170d25c55
 	git-annex: get myfile failed
 
+## symlink farming commit hook
+
+git-annex does use a lot of symlinks. Specicially, relative symlinks,
+that are checked into git. To allow you to move those around without
+annoyance, git-annex can run as a post-commit hook. This way, you can `git mv`
+a symlink to an annexed file, and as soon as you commit, it will be fixed
+up.
+
+`git annex init` tries to set up a post-commit hook that is itself a symlink
+back to git-annex. If you want to have your own shell script in the post-commit
+hook, just make it call `git annex` with no parameters. git-annex will detect
+when it's run from a git hook and do the necessary fixups.
+
 ## configuration
 
 * `annex.uuid` -- a unique UUID for this repository
@@ -164,22 +177,6 @@ descriptions to help you with finding them:
   here.
 
 ## issues
-
-### symlinks
-
-If the symlink to annexed content is relative, moving it to a subdir will
-break it. But it it's absolute, moving the git repo (or mounting its drive
-elsewhere) will break it. Either:
-
-* Use relative links and need `git annex mv` to move (or post-commit 
-  hook that caches moves and updates links).
-* Use absolute links and need `git annex fixlinks` when location changes;
-  note that would also mean that git would see the symlink targets changed
-  and want to commit the change. And, other clones of the repo would
-  diverge and there would be conflicts on the symlink text. Ugh.
-
-Hard links are not an option, because git would then happily commit the
-file content. Amoung other reasons..
 
 ### free space determination
 
