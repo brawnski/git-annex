@@ -9,6 +9,7 @@ import System.Cmd
 import System.Exit
 
 import BackendTypes
+import Core
 
 backend = Backend {
 	name = "URL",
@@ -33,7 +34,8 @@ dummyOk url = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do
-	liftIO $ putStrLn $ "download: " ++ url
+	showNote "downloading"
+	liftIO $ putStrLn "" -- make way for curl progress bar
 	result <- liftIO $ rawSystem "curl" ["-#", "-o", file, url]
 	if (result == ExitSuccess)
 		then return True
