@@ -23,7 +23,10 @@ backend = Backend.File.backend {
 -- allows multiple files with the same names to have different keys,
 -- while also allowing a file to be moved around while retaining the
 -- same key.
---
+-- 
+-- The file size and modification time are also included in the key,
+-- unhashed. This could be used as a sanity check.
+-- 
 -- The basename of the filename is also included in the key, so it's clear
 -- what the original filename was when a user sees the value.
 keyValue :: FilePath -> Annex (Maybe Key)
@@ -31,9 +34,10 @@ keyValue file = do
 	stat <- liftIO $ getFileStatus file
 	return $ Just $ Key ((name backend), key stat)
 	where
- 		key stat = (checksum $ uniqueid stat) ++ sep ++ base
+ 		key stat = (checksum $ uniqueid stat) ++ sep ++
+				uniqueid stat ++ sep ++ base
 		checksum s = show $ sha1 $ B.pack s
-		uniqueid stat = (show $ fileSize stat) ++ sep ++
-			(show $ modificationTime stat)
+		uniqueid stat = (show $ modificationTime stat) ++ sep ++
+			(show $ fileSize stat)
 		base = takeFileName file
 		sep = ":"
