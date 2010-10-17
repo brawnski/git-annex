@@ -51,7 +51,7 @@ gitAttributes repo = do
 					commit
 				else return ()
 	where
-		attrLine = stateLoc ++ "/*.log merge=union"
+		attrLine = stateLoc ++ "*.log merge=union"
 		attributes = Git.attributes repo
 		commit = do
 			Git.run repo ["add", attributes]

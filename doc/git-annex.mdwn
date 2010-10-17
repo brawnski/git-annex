@@ -51,7 +51,8 @@ Enough broad picture, here's how it actually looks:
   content again. Use this if you've moved the file around.
 * `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
   if you're just done with a file; only use `unannex` if you
-  accidentially added a file.
+  accidentially added a file. (You can also run this on all your annexed
+  files come the Singularity. ;-)
 * `git annex describe "some description"` allows associating some description
   (such as "USB archive drive 1") with a repository. This can help with
   finding it later, see "Location Tracking" below.

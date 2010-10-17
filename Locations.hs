@@ -18,9 +18,9 @@ import qualified GitRepo as Git
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex
  - directory, in the git repository's working tree. -}
-stateLoc = ".git-annex"
+stateLoc = ".git-annex/"
 gitStateDir :: Git.Repo -> FilePath
-gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc ++ "/"
+gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
 
 {- An annexed file's content is stored in 
  - /path/to/repo/.git/annex/<key>, where <key> is of the form

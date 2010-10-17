@@ -54,7 +54,10 @@ options = [
 findWanted :: CmdWants -> [String] -> Git.Repo -> IO [String]
 findWanted FilesNotInGit params repo = do
 	files <- mapM (Git.notInRepo repo) params
-	return $ foldl (++) [] files
+	return $ filter notstate $ foldl (++) [] files
+		where
+			-- never include files in the state directory
+			notstate f = f /= take (length stateLoc) f
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
