@@ -95,6 +95,7 @@ parseCmd argv state = do
 addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
+	liftIO $ putStrLn $ "add " ++ file
 	g <- Annex.gitRepo
 	stored <- Backend.storeFileKey file
 	case (stored) of
@@ -120,6 +121,7 @@ addCmd file = inBackend file err $ do
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
+	liftIO $ putStrLn $ "unannex " ++ file
 	Backend.removeKey backend key
 	logStatus key ValueMissing
 	g <- Annex.gitRepo
@@ -168,6 +170,7 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 	if (not inbackend)
 		then return () -- no-op
 		else do
+			liftIO $ putStrLn $ "drop " ++ file
 			success <- Backend.removeKey backend key
 			if (success)
 				then cleanup key
