@@ -112,7 +112,6 @@ appendLog file line = do
 	createDirectoryIfMissing True (parentDir file)
 	withFileLocked file AppendMode $ \h ->
 		hPutStrLn h $ show line
-		-- TODO git add log
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()

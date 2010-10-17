@@ -36,8 +36,6 @@ cmds =  [
 	  (Command "add"	addCmd		FilesNotInGit)
 	, (Command "get"	getCmd		FilesInGit)
 	, (Command "drop"	dropCmd		FilesInGit)
-	, (Command "push"	pushCmd		RepoName)
-	, (Command "pull"	pullCmd		RepoName)
 	, (Command "unannex"	unannexCmd	FilesInGit)
 	, (Command "describe"	describeCmd	SingleString)
 	, (Command "fix"	fixCmd		FilesInOrNotInGit)
@@ -215,14 +213,6 @@ fixCmd file = notinBackend file err $ \(key, backend) -> do
 				then error $ "symbolic link already ok for: " ++ file
 				else return ()
 		err = error $ "not annexed " ++ file
-
-{- Pushes all files to a remote repository. -}
-pushCmd :: String -> Annex ()
-pushCmd reponame = do error "not implemented" -- TODO
-
-{- Pulls all files from a remote repository. -}
-pullCmd :: String -> Annex ()
-pullCmd reponame = do error "not implemented" -- TODO
 
 {- Stores description for the repository. -}
 describeCmd :: String -> Annex ()

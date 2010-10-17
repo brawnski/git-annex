@@ -43,10 +43,6 @@ Enough broad picture, here's how it actually looks:
   backend storage to the current repository.
 * `git annex drop $file` indicates that you no longer want the file's
   content to be available in this repository.
-* `git annex push $repository` pushes *all* annexed files to the specified
-  repository.
-* `git annex pull $repository` pulls *all* annexed files from the specified
-  repository.
 * `git annex file $file` adjusts the symlink for the file to point to its
   content again. Use this if you've moved the file around.
 * `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
