@@ -7,7 +7,8 @@ module Locations (
 	keyFile,
 	fileKey,
 	annexLocation,
-	annexLocationRelative
+	annexLocationRelative,
+	annexTmpLocation
 ) where
 
 import Data.String.Utils
@@ -35,6 +36,11 @@ annexLocation r key =
 {- Annexed file's location relative to git's working tree. -}
 annexLocationRelative :: Git.Repo -> Key -> FilePath
 annexLocationRelative r key = Git.dir r ++ "/annex/" ++ (keyFile key)
+
+{- .git-annex/tmp is used for temp files
+ -}
+annexTmpLocation :: Git.Repo -> FilePath
+annexTmpLocation r = (Git.workTree r) ++ "/" ++ Git.dir r ++ "/annex/tmp/"
 
 {- Converts a key into a filename fragment.
  -

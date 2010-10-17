@@ -29,11 +29,20 @@ startup flags = do
 shutdown :: Annex ()
 shutdown = do
 	g <- Annex.gitRepo
+
+	-- handle pending commits
 	nocommit <- Annex.flagIsSet NoCommit
 	needcommit <- Annex.flagIsSet NeedCommit
 	if (needcommit && not nocommit)
 		then liftIO $ Git.run g ["commit", "-q", "-m", 
 			"git-annex log update", gitStateDir g]
+		else return ()
+
+	-- clean up any files left in the temp directory
+	let tmp = annexTmpLocation g
+	exists <- liftIO $ doesDirectoryExist tmp
+	if (exists)
+		then liftIO $ removeDirectoryRecursive $ tmp
 		else return ()
 
 {- configure git to use union merge driver on state files, if it is not

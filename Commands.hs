@@ -156,13 +156,16 @@ getCmd file = notinBackend file err $ \(key, backend) -> do
 			showStart "get" file
 			g <- Annex.gitRepo
 			let dest = annexLocation g key
-			liftIO $ createDirectoryIfMissing True (parentDir dest)
-			success <- Backend.retrieveKeyFile backend key dest
+			let tmp = (annexTmpLocation g) ++ (keyFile key)
+			liftIO $ createDirectoryIfMissing True (parentDir tmp)
+			success <- Backend.retrieveKeyFile backend key tmp
 			if (success)
 				then do
+					liftIO $ renameFile tmp dest	
 					logStatus key ValuePresent
 					showEndOk
-				else showEndFail "get" file
+				else do
+					showEndFail "get" file
 	where
 		err = error $ "not annexed " ++ file
 
