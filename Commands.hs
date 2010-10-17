@@ -123,7 +123,7 @@ addCmd file = inBackend file $ do
 			liftIO $ renameFile file dest
 			link <- calcGitLink file key
 			liftIO $ createSymbolicLink link file
-			gitAdd file $ Just $ "git-annex annexed " ++ file
+			gitAdd file $ "git-annex annexed " ++ file
 			showEndOk
 
 {- Undo addCmd. -}
@@ -212,7 +212,7 @@ fixCmd file = notinBackend file $ \(key, backend) -> do
 			liftIO $ createDirectoryIfMissing True (parentDir file)
 			liftIO $ removeFile file
 			liftIO $ createSymbolicLink link file
-			gitAdd file $ Just $ "git-annex fix " ++ file
+			gitAdd file $ "git-annex fix " ++ file
 			showEndOk
 
 {- Stores description for the repository. -}
@@ -227,7 +227,7 @@ initCmd description = do
 			u <- getUUID g
 			describeUUID u description
 			log <- uuidLog
-			gitAdd log $ Just $ "description for UUID " ++ (show u)
+			gitAdd log $ "description for UUID " ++ (show u)
 			liftIO $ putStrLn "description set"
 
 -- helpers

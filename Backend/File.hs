@@ -116,6 +116,8 @@ checkRemoveKey key = do
 				then retNotEnoughCopiesKnown remotes numcopies
 				else findcopies numcopies remotes []
 	where
+		config = "annex.numcopies"
+
 		findcopies 0 _ _ = return True -- success, enough copies found
 		findcopies _ [] bad = notEnoughCopiesSeen bad
 		findcopies n (r:rs) bad = do
@@ -151,5 +153,3 @@ checkRemoveKey key = do
 			showLongNote $ "According to the " ++ config ++
 				" setting, it is not safe to remove it!"
 			showLongNote "(Use --force to override.)"
-
-		config = "annex.numcopies"
