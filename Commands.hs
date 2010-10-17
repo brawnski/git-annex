@@ -122,11 +122,15 @@ addCmd file = inBackend file err $ do
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
-	Backend.removeKey backend key
-	logStatus key ValueMissing
-	g <- Annex.gitRepo
-	let src = annexLocation g key
-	liftIO $ moveout g src
+	nocommit <- Annex.flagIsSet NoCommit
+        if (nocommit)
+		then error "--nocommit cannot be used in unannex mode"
+		else do
+			Backend.removeKey backend key
+			logStatus key ValueMissing
+			g <- Annex.gitRepo
+			let src = annexLocation g key
+			liftIO $ moveout g src
 	where
 		err = error $ "not annexed " ++ file
 		moveout g src = do
