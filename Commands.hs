@@ -192,16 +192,10 @@ fixCmd file = notinBackend file err $ \(key, backend) -> do
 	gitAdd file $ Just $ "git-annex fix " ++ file
 	where
 		checkLegal file link = do
-			s <- liftIO $ getSymbolicLinkStatus file
-			force <- Annex.flagIsSet Force
-			if (not (isSymbolicLink s) && not force)
-				then error $ "not a symbolic link : " ++ file ++
-					"  (use --force to override this sanity check)"
-				else do
-					l <- liftIO $ readSymbolicLink file
-					if (link == l)
-						then error $ "symbolic link already ok for: " ++ file
-						else return ()
+			l <- liftIO $ readSymbolicLink file
+			if (link == l)
+				then error $ "symbolic link already ok for: " ++ file
+				else return ()
 		err = error $ "not annexed " ++ file
 
 {- Pushes all files to a remote repository. -}
