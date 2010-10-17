@@ -10,6 +10,7 @@ import System.Path
 
 import Types
 import Locations
+import LocationLog
 import UUID
 import qualified GitRepo as Git
 import qualified Annex
@@ -94,3 +95,12 @@ calcGitLink file key = do
 		Nothing -> error $ "unable to normalize " ++ file
 	return $ (relPathDirToDir (parentDir absfile) (Git.workTree g)) ++
 		annexLocationRelative g key
+
+{- Updates the LocationLog when a key's presence changes. -}
+logStatus :: Key -> LogStatus -> Annex ()
+logStatus key status = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+	f <- liftIO $ logChange g key u status
+	gitAdd f Nothing -- all logs are committed at end
+

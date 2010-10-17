@@ -221,14 +221,7 @@ describeCmd description = do
 	gitAdd log $ Just $ "description for UUID " ++ (show u)
 	liftIO $ putStrLn "description set"
 
-{- Updates the LocationLog when a key's presence changes. -}
-logStatus :: Key -> LogStatus -> Annex ()
-logStatus key status = do
-	g <- Annex.gitRepo
-	u <- getUUID g
-	f <- liftIO $ logChange g key u status
-	gitAdd f Nothing -- all logs are committed at end
-
+-- helpers
 inBackend file yes no = do
 	r <- Backend.lookupFile file
 	case (r) of
