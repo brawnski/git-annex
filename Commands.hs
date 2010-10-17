@@ -122,26 +122,25 @@ addCmd file = inBackend file err $ do
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
-	nocommit <- Annex.flagIsSet NoCommit
-        if (nocommit)
-		then error "--nocommit cannot be used in unannex mode"
-		else do
-			Backend.removeKey backend key
-			logStatus key ValueMissing
-			g <- Annex.gitRepo
-			let src = annexLocation g key
-			liftIO $ moveout g src
+	Backend.removeKey backend key
+	logStatus key ValueMissing
+	g <- Annex.gitRepo
+	let src = annexLocation g key
+	moveout g src
 	where
 		err = error $ "not annexed " ++ file
 		moveout g src = do
-			removeFile file
-			Git.run g ["rm", file]
-			Git.run g ["commit", "-m",
-				("git-annex unannexed " ++ file), file]
+			nocommit <- Annex.flagIsSet NoCommit
+			liftIO removeFile file
+			liftIO Git.run g ["rm", file]
+			if (not nocommit)
+				then liftIO Git.run g ["commit", "-m",
+					("git-annex unannexed " ++ file), file]
+				else return ()
 			-- git rm deletes empty directories;
 			-- put them back
-			createDirectoryIfMissing True (parentDir file)
-			renameFile src file
+			liftIO createDirectoryIfMissing True (parentDir file)
+			liftIO renameFile src file
 			return ()
 
 {- Gets an annexed file from one of the backends. -}
