@@ -131,16 +131,16 @@ unannexCmd file = notinBackend file err $ \(key, backend) -> do
 		err = error $ "not annexed " ++ file
 		moveout g src = do
 			nocommit <- Annex.flagIsSet NoCommit
-			liftIO removeFile file
-			liftIO Git.run g ["rm", file]
+			liftIO $ removeFile file
+			liftIO $ Git.run g ["rm", file]
 			if (not nocommit)
-				then liftIO Git.run g ["commit", "-m",
+				then liftIO $ Git.run g ["commit", "-m",
 					("git-annex unannexed " ++ file), file]
 				else return ()
 			-- git rm deletes empty directories;
 			-- put them back
-			liftIO createDirectoryIfMissing True (parentDir file)
-			liftIO renameFile src file
+			liftIO $ createDirectoryIfMissing True (parentDir file)
+			liftIO $ renameFile src file
 			return ()
 
 {- Gets an annexed file from one of the backends. -}
