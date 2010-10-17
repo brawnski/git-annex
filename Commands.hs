@@ -213,7 +213,7 @@ describeCmd description = do
 	u <- getUUID g
 	describeUUID u description
 	log <- uuidLog
-	gitAdd log Nothing -- all logs are committed at end
+	gitAdd log $ Just $ "description for UUID " ++ (show u)
 	liftIO $ putStrLn "description set"
 
 {- Updates the LocationLog when a key's presence changes. -}
