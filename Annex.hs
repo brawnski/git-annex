@@ -8,7 +8,6 @@ module Annex (
 	backends,
 	backendsChange,
 	supportedBackends,
-	supportedBackendsChange,
 	flagIsSet,
 	flagChange,
 	Flag(..)
@@ -64,11 +63,6 @@ supportedBackends :: Annex [Backend]
 supportedBackends = do
 	state <- get
 	return (Backend.supportedBackends state)
-supportedBackendsChange :: [Backend] -> Annex ()
-supportedBackendsChange b = do
-	state <- get
-	put state { Backend.supportedBackends = b }
-	return ()
 flagIsSet :: Flag -> Annex Bool
 flagIsSet flag = do
 	state <- get
