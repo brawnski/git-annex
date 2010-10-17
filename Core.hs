@@ -6,12 +6,14 @@ import Maybe
 import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
+import System.Path
 
 import Types
 import Locations
 import UUID
 import qualified GitRepo as Git
 import qualified Annex
+import Utility
 			
 {- Sets up a git repo for git-annex. -}
 startup :: [Flag] -> Annex ()
@@ -81,3 +83,14 @@ gitAdd file commitmessage = do
 				then liftIO $ Git.run g ["commit", "-m",
 					(fromJust commitmessage), file]
 				else return ()
+
+{- Calculates the relative path to use to link a file to a key. -}
+calcGitLink :: FilePath -> Key -> Annex FilePath
+calcGitLink file key = do
+	g <- Annex.gitRepo
+	cwd <- liftIO $ getCurrentDirectory
+	let absfile = case (absNormPath cwd file) of
+		Just f -> f
+		Nothing -> error $ "unable to normalize " ++ file
+	return $ (relPathDirToDir (parentDir absfile) (Git.workTree g)) ++
+		annexLocationRelative g key

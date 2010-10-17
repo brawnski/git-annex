@@ -40,6 +40,7 @@ cmds =  [
 	, (Command "pull"	pullCmd		RepoName)
 	, (Command "unannex"	unannexCmd	FilesInGit)
 	, (Command "describe"	describeCmd	SingleString)
+	, (Command "fix"	fixCmd		FilesInGit)
 	]
 
 options = [
@@ -89,13 +90,12 @@ addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file err $ do
 	liftIO $ checkLegal file
 	g <- Annex.gitRepo
-	link <- liftIO $ calcGitLink file g
 	stored <- Backend.storeFileKey file
 	case (stored) of
 		Nothing -> error $ "no backend could store: " ++ file
 		Just (key, backend) -> do
 			logStatus key ValuePresent
-			setup g key link
+			setup g key
 	where
 		err = error $ "already annexed " ++ file
 		checkLegal file = do
@@ -103,21 +103,15 @@ addCmd file = inBackend file err $ do
 			if ((isSymbolicLink s) || (not $ isRegularFile s))
 				then error $ "not a regular file: " ++ file
 				else return ()
-		calcGitLink file g = do
-			cwd <- getCurrentDirectory
-			let absfile = case (absNormPath cwd file) of
-				Just f -> f
-				Nothing -> error $ "unable to normalize " ++ file
-			return $ relPathDirToDir (parentDir absfile) (Git.workTree g)
-		setup g key link = do
+		setup g key = do
 			let dest = annexLocation g key
-			let reldest = annexLocationRelative g key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)
 			liftIO $ renameFile file dest
-			liftIO $ createSymbolicLink (link ++ reldest) file
+			link <- calcGitLink file key
+			liftIO $ createSymbolicLink link file
 			gitAdd file $ Just $ "git-annex annexed " ++ file
 
-{- Inverse of addCmd. -}
+{- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
 unannexCmd file = notinBackend file err $ \(key, backend) -> do
 	Backend.removeKey backend key
@@ -179,6 +173,25 @@ dropCmd file = notinBackend file err $ \(key, backend) -> do
 				else return ()
 		else error $ "backend refused to drop " ++ file
 	where
+		err = error $ "not annexed " ++ file
+
+{- Fixes the symlink to an annexed file. -}
+fixCmd :: String -> Annex ()
+fixCmd file = notinBackend file err $ \(key, backend) -> do
+	link <- calcGitLink file key
+	checkLegal file
+	liftIO $ createDirectoryIfMissing True (parentDir file)
+	liftIO $ removeFile file
+	liftIO $ createSymbolicLink link file
+	gitAdd file $ Just $ "git-annex fix " ++ file
+	where
+		checkLegal file = do
+			s <- liftIO $ getSymbolicLinkStatus file
+			force <- Annex.flagIsSet Force
+			if (not (isSymbolicLink s) && not force)
+				then error $ "not a symbolic link : " ++ file ++
+					"  (use --force to override this sanity check)"
+				else return ()
 		err = error $ "not annexed " ++ file
 
 {- Pushes all files to a remote repository. -}
