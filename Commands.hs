@@ -54,10 +54,7 @@ options = [
 findWanted :: CmdWants -> [String] -> Git.Repo -> IO [String]
 findWanted FilesNotInGit params repo = do
 	files <- mapM (Git.notInRepo repo) params
-	return $ filter notstate $ foldl (++) [] files
-		where
-			-- never include files in the state directory
-			notstate f = stateLoc /= take (length stateLoc) f
+	return $ foldl (++) [] files
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
@@ -82,8 +79,10 @@ parseCmd argv state = do
 			[Command _ action want] -> do
 				f <- findWanted want (drop 1 params)
 					(BackendTypes.repo state)
-				return (flags, map action f)
+				return (flags, map action $ filter notstate f)
 	where
+		-- never include files from the state directory
+		notstate f = stateLoc /= take (length stateLoc) f
 		getopt = case getOpt Permute options argv of
 			(flags, params, []) -> return (flags, params)
 			(_, _, errs) -> ioError (userError (concat errs ++ usage))
