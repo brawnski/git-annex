@@ -57,7 +57,7 @@ findWanted FilesNotInGit params repo = do
 	return $ filter notstate $ foldl (++) [] files
 		where
 			-- never include files in the state directory
-			notstate f = f /= take (length stateLoc) f
+			notstate f = stateLoc /= take (length stateLoc) f
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
