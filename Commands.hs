@@ -49,7 +49,6 @@ cmds =  [
 
 options = [
 	    Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data"
-	  , Option ['N'] ["no-commit"] (NoArg NoCommit) "do not stage or commit changes"
 	  ]
 
 header = "Usage: git-annex [" ++ (join "|" $ map cmdname cmds) ++ "] ..."
@@ -123,7 +122,7 @@ addCmd file = inBackend file $ do
 			liftIO $ renameFile file dest
 			link <- calcGitLink file key
 			liftIO $ createSymbolicLink link file
-			gitAdd file $ "git-annex annexed " ++ file
+			liftIO $ Git.run g ["add", file]
 			showEndOk
 
 {- Undo addCmd. -}
@@ -138,14 +137,8 @@ unannexCmd file = notinBackend file $ \(key, backend) -> do
 	moveout g src
 	where
 		moveout g src = do
-			nocommit <- Annex.flagIsSet NoCommit
 			liftIO $ removeFile file
 			liftIO $ Git.run g ["rm", "--quiet", file]
-			if (not nocommit)
-				then liftIO $ Git.run g ["commit", "--quiet",
-					"-m", ("git-annex unannexed " ++ file),
-					file]
-				else return ()
 			-- git rm deletes empty directories;
 			-- put them back
 			liftIO $ createDirectoryIfMissing True (parentDir file)
@@ -212,7 +205,8 @@ fixCmd file = notinBackend file $ \(key, backend) -> do
 			liftIO $ createDirectoryIfMissing True (parentDir file)
 			liftIO $ removeFile file
 			liftIO $ createSymbolicLink link file
-			gitAdd file $ "git-annex fix " ++ file
+			g <- Annex.gitRepo
+			liftIO $ Git.run g ["add", file]
 			showEndOk
 
 {- Stores description for the repository. -}
@@ -227,7 +221,7 @@ initCmd description = do
 			u <- getUUID g
 			describeUUID u description
 			log <- uuidLog
-			gitAdd log $ "description for UUID " ++ (show u)
+			liftIO $ Git.run g ["add", log]
 			liftIO $ putStrLn "description set"
 
 -- helpers

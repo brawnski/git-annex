@@ -30,15 +30,7 @@ shutdown :: Annex ()
 shutdown = do
 	g <- Annex.gitRepo
 
-	-- handle pending commits
-	nocommit <- Annex.flagIsSet NoCommit
-	needcommit <- Annex.flagIsSet NeedCommit
-	if (needcommit && not nocommit)
-		then do
-			liftIO $ Git.run g ["add", gitStateDir g]
-			liftIO $ Git.run g ["commit", "-q", "-m", 
-				"git-annex log update", gitStateDir g]
-		else return ()
+	liftIO $ Git.run g ["add", gitStateDir g]
 
 	-- clean up any files left in the temp directory
 	let tmp = annexTmpLocation g
@@ -77,22 +69,6 @@ inAnnex key = do
 	g <- Annex.gitRepo
 	liftIO $ doesFileExist $ annexLocation g key
 
-{- Adds and commits a file to git.
- -
- - This is careful to not rely on the index. It may have staged changes,
- - so only use operations that avoid committing such changes.
- -}
-gitAdd :: FilePath -> String -> Annex ()
-gitAdd file commitmessage = do
-	nocommit <- Annex.flagIsSet NoCommit
-	if (nocommit)
-		then return ()
-		else do
-			g <- Annex.gitRepo
-			liftIO $ Git.run g ["add", file]
-			liftIO $ Git.run g ["commit", "--quiet", 
-				"-m", commitmessage, file]
-
 {- Calculates the relative path to use to link a file to a key. -}
 calcGitLink :: FilePath -> Key -> Annex FilePath
 calcGitLink file key = do
@@ -109,8 +85,7 @@ logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	f <- liftIO $ logChange g key u status
-	Annex.flagChange NeedCommit True -- commit all logs at end
+	liftIO $ logChange g key u status
 
 {- Output logging -}
 showStart :: String -> String -> Annex ()

@@ -11,8 +11,7 @@ import Data.String.Utils
 import qualified GitRepo as Git
 
 -- command-line flags
-data Flag = Force | NoCommit | NeedCommit
-	deriving (Eq, Read, Show)
+data Flag = Force deriving (Eq, Read, Show)
 
 -- git-annex's runtime state type doesn't really belong here,
 -- but it uses Backend, so has to be here to avoid a depends loop.
