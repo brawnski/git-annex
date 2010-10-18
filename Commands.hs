@@ -187,7 +187,7 @@ dropCmd file = notinBackend file $ \(key, backend) -> do
 				then do
 					cleanup key
 					showEndOk
-				else showEndFail "backend refused to drop" file
+				else showEndFail "drop" file
 	where
 		cleanup key = do
 			logStatus key ValueMissing
