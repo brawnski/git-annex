@@ -14,7 +14,7 @@ module Locations (
 import Data.String.Utils
 
 import Types
-import qualified BackendTypes as Backend
+import qualified TypeInternals as Internals
 import qualified GitRepo as Git
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex

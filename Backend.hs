@@ -33,7 +33,7 @@ import qualified GitRepo as Git
 import qualified Annex
 import Utility
 import Types
-import qualified BackendTypes as B
+import qualified TypeInternals as Internals
 
 {- List of backends in the order to try them when storing a new key. -}
 backendList :: Annex [Backend]
@@ -59,7 +59,7 @@ lookupBackendName all s =
 	if ((length matches) /= 1)
 		then error $ "unknown backend " ++ s
 		else matches !! 0
-	where matches = filter (\b -> s == B.name b) all
+	where matches = filter (\b -> s == Internals.name b) all
 
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
@@ -70,11 +70,11 @@ storeFileKey file = do
 	storeFileKey' b file relfile
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do
-	try <- (B.getKey b) relfile
+	try <- (Internals.getKey b) relfile
 	case (try) of
 		Nothing -> nextbackend
 		Just key -> do
-			stored <- (B.storeFileKey b) file key
+			stored <- (Internals.storeFileKey b) file key
 			if (not stored)
 				then nextbackend
 				else do
@@ -85,17 +85,17 @@ storeFileKey' (b:bs) file relfile = do
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
 retrieveKeyFile :: Backend -> Key -> FilePath -> Annex Bool
-retrieveKeyFile backend key dest = (B.retrieveKeyFile backend) key dest
+retrieveKeyFile backend key dest = (Internals.retrieveKeyFile backend) key dest
 
 {- Removes a key from a backend. -}
 removeKey :: Backend -> Key -> Annex Bool
-removeKey backend key = (B.removeKey backend)  key
+removeKey backend key = (Internals.removeKey backend)  key
 
 {- Checks if a backend has its key. -}
 hasKey :: Key -> Annex Bool
 hasKey key = do
 	all <- Annex.supportedBackends
-	(B.hasKey (lookupBackendName all $ backendName key)) key
+	(Internals.hasKey (lookupBackendName all $ backendName key)) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

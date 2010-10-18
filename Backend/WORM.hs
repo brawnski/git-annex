@@ -9,7 +9,7 @@ import System.Posix.Files
 import qualified Data.ByteString.Lazy.Char8 as B
 
 import qualified Backend.File
-import BackendTypes
+import TypeInternals
 import Utility
 
 backend = Backend.File.backend {

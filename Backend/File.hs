@@ -16,7 +16,7 @@ import System.Cmd
 import System.Exit
 import Control.Exception
 
-import BackendTypes
+import TypeInternals
 import LocationLog
 import Locations
 import qualified Remotes

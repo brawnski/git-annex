@@ -10,4 +10,4 @@ module Types (
 	Flag(..),
 ) where
 
-import BackendTypes
+import TypeInternals

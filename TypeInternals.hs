@@ -1,9 +1,9 @@
-{- git-annex backend data types
+{- git-annex internal data types
  -
- - Mostly only backend implementations should need to import this.
+ - Most things should not need this, using Types and/or Annex instead.
  -}
 
-module BackendTypes where
+module TypeInternals where
 
 import Control.Monad.State (StateT)
 import Data.String.Utils

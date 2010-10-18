@@ -6,7 +6,7 @@ module Backend.SHA1 (backend) where
 import Data.Digest.Pure.SHA
 
 import qualified Backend.File
-import BackendTypes
+import TypeInternals
 
 backend = Backend.File.backend {
 	name = "SHA1",

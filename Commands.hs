@@ -21,7 +21,7 @@ import LocationLog
 import Types
 import Core
 import qualified Remotes
-import qualified BackendTypes
+import qualified TypeInternals
 
 data CmdWants = FilesInGit | FilesNotInGit | RepoName | SingleString
 data Command = Command {
@@ -87,7 +87,7 @@ parseCmd argv state = do
 			[] -> error usage
 			[Command _ action want _] -> do
 				f <- findWanted want (drop 1 params)
-					(BackendTypes.repo state)
+					(TypeInternals.repo state)
 				return (flags, map action $ filter notstate f)
 	where
 		-- never include files from the state directory

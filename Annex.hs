@@ -17,17 +17,17 @@ import Control.Monad.State
 
 import qualified GitRepo as Git
 import Types
-import qualified BackendTypes as Backend
+import qualified TypeInternals as Internals
 
 {- Create and returns an Annex state object for the specified git repo.
  -}
 new :: Git.Repo -> [Backend] -> IO AnnexState
 new gitrepo allbackends = do
-	let s = Backend.AnnexState {
-		Backend.repo = gitrepo,
-		Backend.backends = [],
-		Backend.supportedBackends = allbackends,
-		Backend.flags = []
+	let s = Internals.AnnexState {
+		Internals.repo = gitrepo,
+		Internals.backends = [],
+		Internals.supportedBackends = allbackends,
+		Internals.flags = []
 	}
 	(_,s') <- Annex.run s (prep gitrepo)
 	return s'
@@ -44,34 +44,34 @@ run state action = runStateT (action) state
 gitRepo :: Annex Git.Repo
 gitRepo = do
 	state <- get
-	return (Backend.repo state)
+	return (Internals.repo state)
 gitRepoChange :: Git.Repo -> Annex ()
 gitRepoChange r = do
 	state <- get
-	put state { Backend.repo = r }
+	put state { Internals.repo = r }
 	return ()
 backends :: Annex [Backend]
 backends = do
 	state <- get
-	return (Backend.backends state)
+	return (Internals.backends state)
 backendsChange :: [Backend] -> Annex ()
 backendsChange b = do
 	state <- get
-	put state { Backend.backends = b }
+	put state { Internals.backends = b }
 	return ()
 supportedBackends :: Annex [Backend]
 supportedBackends = do
 	state <- get
-	return (Backend.supportedBackends state)
+	return (Internals.supportedBackends state)
 flagIsSet :: Flag -> Annex Bool
 flagIsSet flag = do
 	state <- get
-	return $ elem flag $ Backend.flags state
+	return $ elem flag $ Internals.flags state
 flagChange :: Flag -> Bool -> Annex ()
 flagChange flag set = do
 	state <- get
-	let f = filter (/= flag) $ Backend.flags state
+	let f = filter (/= flag) $ Internals.flags state
 	if (set)
-		then put state { Backend.flags = (flag:f) }
-		else put state { Backend.flags = f }
+		then put state { Internals.flags = (flag:f) }
+		else put state { Internals.flags = f }
 	return ()

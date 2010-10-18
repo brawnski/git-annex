@@ -8,7 +8,7 @@ import Data.String.Utils
 import System.Cmd
 import System.Exit
 
-import BackendTypes
+import TypeInternals
 import Core
 
 backend = Backend {
