@@ -48,7 +48,7 @@ cmds =  [
 	]
 
 options = [
-	    Option ['f'] ["force"] (NoArg Force) "allow actions that may loose annexed data"
+	    Option ['f'] ["force"] (NoArg Force) "allow actions that may lose annexed data"
 	  ]
 
 header = "Usage: git-annex [" ++ (join "|" $ map cmdname cmds) ++ "] ..."
