@@ -101,21 +101,19 @@ parseCmd argv state = do
  - the annex directory and setting up the symlink pointing to its content. -}
 addCmd :: FilePath -> Annex ()
 addCmd file = inBackend file $ do
-	liftIO $ checkLegal file
-	showStart "add" file
-	g <- Annex.gitRepo
-	stored <- Backend.storeFileKey file
-	case (stored) of
-		Nothing -> showEndFail "no backend could store" file
-		Just (key, backend) -> do
-			logStatus key ValuePresent
-			setup g key
+	s <- liftIO $ getSymbolicLinkStatus file
+	if ((isSymbolicLink s) || (not $ isRegularFile s))
+		then return ()
+		else do
+			showStart "add" file
+			g <- Annex.gitRepo
+			stored <- Backend.storeFileKey file
+			case (stored) of
+				Nothing -> showEndFail "no backend could store" file
+				Just (key, backend) -> do
+					logStatus key ValuePresent
+					setup g key
 	where
-		checkLegal file = do
-			s <- getSymbolicLinkStatus file
-			if ((isSymbolicLink s) || (not $ isRegularFile s))
-				then error $ "not a regular file: " ++ file
-				else return ()
 		setup g key = do
 			let dest = annexLocation g key
 			liftIO $ createDirectoryIfMissing True (parentDir dest)

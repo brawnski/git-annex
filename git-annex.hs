@@ -1,6 +1,6 @@
 {- git-annex main program -}
 
-import Control.Exception
+import IO (try)
 import System.IO
 import System.Environment
 
@@ -18,8 +18,9 @@ main = do
 	(flags, actions) <- parseCmd args state
 	tryRun state $ [startup flags] ++ actions ++ [shutdown]
 
-{- Runs a list of Annex actions. Catches exceptions, not stopping
- - if some error out, and propigates an overall error status at the end.
+{- Runs a list of Annex actions. Catches IO errors and continues
+ - (but explicitly thrown errors terminate the whole command).
+ - Propigates an overall error status at the end.
  -
  - This runs in the IO monad, not in the Annex monad. It seems that
  - exceptions can only be caught in the IO monad, not in a stacked monad;
@@ -29,8 +30,7 @@ main = do
 tryRun :: AnnexState -> [Annex ()] -> IO ()
 tryRun state actions = tryRun' state 0 actions
 tryRun' state errnum (a:as) = do
-	result <- try
-		(Annex.run state a)::IO (Either SomeException ((), AnnexState))
+	result <- try $ Annex.run state a
 	case (result) of
 		Left err -> do
 			showErr err
