@@ -104,7 +104,6 @@ showLongNote s = do
 showEndOk :: Annex ()
 showEndOk = do
 	liftIO $ putStrLn " ok"
-showEndFail :: String -> String -> Annex ()
-showEndFail command file = do
-	liftIO $ putStrLn ""
-	liftIO $ hPutStrLn stderr $ command ++ " " ++ file ++ " failed"
+showEndFail :: Annex ()
+showEndFail = do
+	liftIO $ putStrLn " failed"

@@ -109,7 +109,7 @@ addCmd file = inBackend file $ do
 			g <- Annex.gitRepo
 			stored <- Backend.storeFileKey file
 			case (stored) of
-				Nothing -> showEndFail "no backend could store" file
+				Nothing -> showEndFail
 				Just (key, backend) -> do
 					logStatus key ValuePresent
 					setup g key
@@ -162,7 +162,7 @@ getCmd file = notinBackend file $ \(key, backend) -> do
 					logStatus key ValuePresent
 					showEndOk
 				else do
-					showEndFail "get" file
+					showEndFail
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
@@ -178,7 +178,7 @@ dropCmd file = notinBackend file $ \(key, backend) -> do
 				then do
 					cleanup key
 					showEndOk
-				else showEndFail "drop" file
+				else showEndFail
 	where
 		cleanup key = do
 			logStatus key ValueMissing
