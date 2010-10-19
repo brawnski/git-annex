@@ -15,6 +15,8 @@ import System.IO
 import System.Cmd
 import System.Cmd.Utils
 import Control.Exception
+import List
+import Maybe
 
 import TypeInternals
 import LocationLog
@@ -52,7 +54,10 @@ copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
 	remotes <- Remotes.withKey key
 	if (0 == length remotes)
-		then cantfind
+		then do
+			showNote $ "No available git remotes have the file."
+			showLocations key
+			return False
 		else trycopy remotes remotes
 	where
 		trycopy full [] = do
@@ -70,15 +75,6 @@ copyKeyFile key file = do
 				Just r' -> do
 					showNote $ "copying from " ++ (Git.repoDescribe r ) ++ "..."
 					liftIO $ copyFromRemote r' key file
-		cantfind = do
-			g <- Annex.gitRepo
-			uuids <- liftIO $ keyLocations g key
-			ppuuids <- prettyPrintUUIDs uuids
-			showNote $ "No available git remotes have the file."
-			if (0 < length uuids)
-				then showLongNote $ "It has been seen before in these repositories:\n" ++ ppuuids
-				else return ()
-			return False
 
 {- Tries to copy a file from a remote. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO Bool
@@ -90,6 +86,17 @@ copyFromRemote r key file = do
 		getlocal = boolSystem "cp" ["-a", location, file]
 		getremote = return False -- TODO implement get from remote
 		location = annexLocation r key
+	
+showLocations :: Key -> Annex ()
+showLocations key = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+	uuids <- liftIO $ keyLocations g key
+	let uuidsf = filter (\v -> v /= u) uuids
+	ppuuids <- prettyPrintUUIDs uuidsf
+	if (0 < length uuidsf)
+		then showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
+		else showLongNote $ "No other repository is known to contain the file."
 
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
@@ -125,22 +132,24 @@ checkRemoveKey key = do
 			(result, _) <- Annex.run a (Backend.hasKey key)
 			return result
 		notEnoughCopiesSeen bad = do
-			showNote "failed to find enough other copies of the file"
-			if (0 /= length bad) then listbad bad else return ()
 			unsafe
+			if (0 /= length bad) then listbad bad else return ()
+			showLocations key
+			hint
 			return False
 		listbad bad =
 			showLongNote $ 
 				"I was unable to access these remotes: " ++
 				(Remotes.list bad)
 		retNotEnoughCopiesKnown remotes numcopies = do
-			showNote $
-				"I only know about " ++ (show $ length remotes) ++ 
-				" out of " ++ (show numcopies) ++ 
-				" necessary copies of the file"
 			unsafe
+			showLongNote $
+				"Could only verify the existence of " ++
+				(show $ length remotes) ++ 
+				" out of " ++ (show numcopies) ++ 
+				" necessary copies"
+			showLocations key
+			hint
 			return False
-		unsafe = do
-			showLongNote $ "According to the " ++ config ++
-				" setting, it is not safe to remove it!"
-			showLongNote "(Use --force to override.)"
+		unsafe = showNote "unsafe"
+		hint = showLongNote $ "(Use --force to override this check, or adjust annex.numcopies.)"

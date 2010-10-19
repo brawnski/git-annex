@@ -51,7 +51,7 @@ getUUID r = do
 
 	let c = cached r g
 	let u = uncached r
-			
+	
 	if (c /= u && u /= "")
 		then do
 			updatecache g r u
