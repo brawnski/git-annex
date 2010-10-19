@@ -54,6 +54,7 @@ add_plugins:
   - testpagespec
   - version
   - theme
+  - sidebar
 # plugins to disable
 disable_plugins: []
 # additional directory to search for template files
@@ -228,9 +229,9 @@ langdefdir: /usr/share/highlight/langDefs
 #  - es|Español
 #  - de|Deutsch
 # PageSpec controlling which pages are translatable
-#po_translatable_pages: '* and !*/Discussion'
+po_translatable_pages: ''
 # internal linking behavior (default/current/negotiated)
-#po_link_to: current
+po_link_to: default
 
 ######################################################################
 # misc plugins
@@ -239,9 +240,8 @@ langdefdir: /usr/share/highlight/langDefs
 
 ######################################################################
 # web plugins
-#   (404, attachment, comments, editdiff, edittemplate, getsource, google,
-#    goto, mirrorlist, remove, rename, repolist, search, theme, websetup,
-#    wmd)
+#   (404, attachment, comments, editdiff, edittemplate, google, goto,
+#    mirrorlist, remove, rename, repolist, search, theme, websetup, wmd)
 ######################################################################
 
 # attachment plugin
@@ -252,21 +252,17 @@ virus_checker: clamdscan -
 
 # comments plugin
 # PageSpec of pages where comments are allowed
-#comments_pagespec: blog/* and !*/Discussion
+comments_pagespec: ''
 # PageSpec of pages where posting new comments is not allowed
-#comments_closed_pagespec: blog/controversial or blog/flamewar
+comments_closed_pagespec: ''
 # Base name for comments, e.g. "comment_" for pages like "sandbox/comment_12"
-#comments_pagename: ''
+comments_pagename: comment_
 # Interpret directives in comments?
 #comments_allowdirectives: 0
 # Allow anonymous commenters to set an author name?
 #comments_allowauthor: 0
 # commit comments to the VCS
-#comments_commit: 1
-
-# getsource plugin
-# Mime type for returned source.
-#getsource_mimetype: text/plain; charset=utf-8
+comments_commit: 1
 
 # mirrorlist plugin
 # list of mirrors
@@ -350,7 +346,7 @@ directive_description_dir: ikiwiki/directive
 
 # aggregate plugin
 # enable aggregation to internal pages?
-#aggregateinternal: 1
+aggregateinternal: 1
 # allow aggregation to be triggered via the web?
 #aggregate_webtrigger: 0
 
@@ -386,7 +382,7 @@ created: 1287531313
 
 # prettydate plugin
 # format to use to display date
-#prettydateformat: '%X, %B %o, %Y'
+prettydateformat: '%X, %B %o, %Y'
 
 # recentchanges plugin
 # name of the recentchanges page
