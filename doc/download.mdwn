@@ -1,0 +1,7 @@
+The main git repository for git-annex is `git://git.kitenet.net/git-annex`
+[[gitweb](http://git.kitenet.net/?p=git-annex;a=summary)]
+
+There are no binary packages yet, but you can build Debian packages from
+the source tree with `dpkg-buildpackage`.
+
+Next: [[install]]

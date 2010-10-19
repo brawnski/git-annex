@@ -1,0 +1,16 @@
+[[!meta title="what git-annex is not"]]
+
+* git-annex is not a backup system. It may be a useful component of an
+  [[archival|use_case/bob]] system, or a way to deliver files to a backup
+  system.
+
+  For a backup system that uses git, take a look at
+  [bup](http://github.com/apenwarr/bup).
+
+* git-annex is not unison, but if you're finding unison's checksumming
+  too slow, or its strict mirroring of everything to both places too
+  limiting, then git-annex could be a useful alternative.
+
+* git-annex is not some flaky script that was quickly thrown together.
+  I wrote it in Haskell because I wanted it to be solid and to compile
+  down to a binary.

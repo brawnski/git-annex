@@ -1,0 +1,30 @@
+The WORM and SHA1 key-value [[backends|backend]] store data inside
+your git repository's `.git` directory, not in some external data store.
+
+It's important that data not get lost by an ill-considered `git annex drop`
+command.  So, then using those backends, git-annex can be configured to try
+to keep N copies of a file's content available across all repositories. By
+default, N is 1; it is configured by annex.numcopies.
+
+`git annex drop` attempts to check with other git remotes, to check that N
+copies of the file exist. If enough repositories cannot be verified to have
+it, it will retain the file content to avoid data loss.
+
+For example, consider three repositories: Server, Laptop, and USB. Both Server
+and USB have a copy of a file, and N=1. If on Laptop, you `git annex get
+$file`, this will transfer it from either Server or USB (depending on which
+is available), and there are now 3 copies of the file.
+
+Suppose you want to free up space on Laptop again, and you `git annex drop` the file
+there. If USB is connected, or Server can be contacted, git-annex can check
+that it still has a copy of the file, and the content is removed from
+Laptop. But if USB is currently disconnected, and Server also cannot be
+contacted, it can't verify that it is safe to drop the file, and will
+refuse to do so.
+
+With N=2, in order to drop the file content from Laptop, it would need access
+to both USB and Server.
+
+Note that different repositories can be configured with different values of
+N. So just because Laptop has N=2, this does not prevent the number of
+copies falling to 1, when USB and Server have N=1.

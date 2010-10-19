@@ -1,0 +1,50 @@
+git-annex allows managing files with git, without checking the file
+contents into git. While that may seem paradoxical, it is useful when
+dealing with files larger than git can currently easily handle, whether due
+to limitations in memory, checksumming time, or disk space.
+
+Even without file content tracking, being able to manage files with git,
+move files around and delete files with versioned directory trees, and use
+branches and distributed clones, are all very handy reasons to use git. And
+annexed files can co-exist in the same git repository with regularly
+versioned files, which is convenient for maintaining documents, Makefiles,
+etc that are associated with annexed files but that benefit from full
+revision control.
+
+[[!sidebar content="""
+* **[[download]]**
+* [[install]]
+* [[news]]
+* [[bugs]]
+* [[contact]]
+"""]]
+
+
+## sample use cases
+
+<table>
+<tr>
+<td>[[!inline feeds=no template=bare pages=use_case/bob]]</td>
+<td>[[!inline feeds=no template=bare pages=use_case/alice]]</td>
+</tr>
+</table>
+
+If that describes you, or if you're some from column A and some from column
+B, then git-annex may be the tool you've been looking for to expand from
+keeping all your small important files in git, to managing your large
+files with git.
+
+## documentation
+
+* [[git-annex man page|git-annex]]
+* [[key-value backends|backends]] for data storage
+* [[location_tracking]] reminds you where git-annex has seen files
+* git-annex prevents accidential data loss by [[tracking copies|copies]]
+  of your files
+* [[what git annex is not|not]]
+* git-annex is Free Software, licensed under the [[GPL]].
+
+----
+
+git-annex's wiki is powered by [Ikiwiki](http://ikiwiki.info/) and
+hosted by [Branchable](http://branchable.com/).
