@@ -19,7 +19,8 @@ endif
 docs:
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
-		--no-usedirs --disable-plugin=openid
+		--no-usedirs --disable-plugin=openid --plugin=sidebar \
+		--underlaydir=/dev/null
 
 clean:
 	rm -rf build git-annex git-annex.1

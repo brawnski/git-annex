@@ -1,0 +1,10 @@
+[[!meta title="what git-annex is not"]]
+
+* git-annex is not a backup system. It may be a useful component of an
+  [[archival|use_case/bob]] system, or a way to deliver files to a backup
+  system.
+
+  For a backup system that uses git, take a look at
+  [bup](http://github.com/apenwarr/bup).
+
+* probably several other things..

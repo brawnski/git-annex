@@ -11,11 +11,28 @@ versioned files, which is convenient for maintaining documents, Makefiles,
 etc that are associated with annexed files but that benefit from full
 revision control.
 
+[[!sidebar content="""
 * **[[download]]**
 * [[install]]
 * [[news]]
 * [[bugs]]
 * [[contact]]
+"""]]
+
+
+## sample use cases
+
+<table>
+<tr>
+<td>[[!inline feeds=no template=bare pages=use_case/bob]]</td>
+<td>[[!inline feeds=no template=bare pages=use_case/alice]]</td>
+</tr>
+</table>
+
+If that describes you, or if you're some from column A and some from column
+B, then git-annex may be the tool you've been looking for to expand from
+keeping all your small important files in git, to managing your large
+files with git.
 
 ## documentation
 
@@ -24,6 +41,7 @@ revision control.
 * [[location_tracking]] reminds you where git-annex has seen files
 * git-annex prevents accidential data loss by [[tracking copies|copies]]
   of your files
+* [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
 
 ----
