@@ -13,6 +13,7 @@ module Backend.File (backend) where
 import Control.Monad.State
 import System.IO
 import System.Cmd
+import System.Cmd.Utils
 import System.Exit
 import Control.Exception
 
@@ -92,11 +93,7 @@ copyFromRemote r key file = do
 		then getlocal
 		else getremote
 	where
-		getlocal = do
-			res <-rawSystem "cp" ["-a", location, file]
-			if (res == ExitSuccess)
-				then return ()
-				else error "cp failed"
+		getlocal = safeSystem "cp" ["-a", location, file]
 		getremote = error "get via network not yet implemented!"
 		location = annexLocation r key
 

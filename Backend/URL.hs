@@ -3,9 +3,11 @@
 
 module Backend.URL (backend) where
 
+import Control.Exception
 import Control.Monad.State (liftIO)
 import Data.String.Utils
 import System.Cmd
+import System.Cmd.Utils
 import System.Exit
 
 import TypeInternals
@@ -36,9 +38,10 @@ downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do
 	showNote "downloading"
 	liftIO $ putStrLn "" -- make way for curl progress bar
-	result <- liftIO $ rawSystem "curl" ["-#", "-o", file, url]
-	if (result == ExitSuccess)
-		then return True
-		else return False
+	result <- liftIO $ (try curl::IO (Either SomeException ()))
+	case result of
+		Left err -> return False
+		Right succ -> return True
 	where
+		curl = safeSystem "curl" ["-#", "-o", file, url]
 		url = join ":" $ drop 1 $ split ":" $ show key 
