@@ -17,7 +17,7 @@ adminuser:
 # users who are banned from the wiki
 banned_users: []
 # where the source of the wiki is located
-srcdir: /home/b-git-annex/source
+srcdir: /home/b-git-annex/source/doc
 # where to build the wiki
 destdir: /home/b-git-annex/public_html
 # base url to the wiki
