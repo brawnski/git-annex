@@ -14,7 +14,6 @@ import Control.Monad.State
 import System.IO
 import System.Cmd
 import System.Cmd.Utils
-import System.Exit
 import Control.Exception
 
 import TypeInternals
@@ -70,12 +69,7 @@ copyKeyFile key file = do
 				Nothing -> trycopy full rs
 				Just r' -> do
 					showNote $ "copying from " ++ (Git.repoDescribe r ) ++ "..."
-					result <- liftIO $ (try (copyFromRemote r' key file)::IO (Either SomeException ()))
-		        		case (result) of
-				                Left err -> do
-							liftIO $ hPutStrLn stderr (show err)
-							trycopy full rs
-				                Right succ -> return True
+					liftIO $ copyFromRemote r' key file
 		cantfind = do
 			g <- Annex.gitRepo
 			uuids <- liftIO $ keyLocations g key
@@ -86,15 +80,15 @@ copyKeyFile key file = do
 				else return ()
 			return False
 
-{- Tries to copy a file from a remote, exception on error. -}
-copyFromRemote :: Git.Repo -> Key -> FilePath -> IO ()
+{- Tries to copy a file from a remote. -}
+copyFromRemote :: Git.Repo -> Key -> FilePath -> IO Bool
 copyFromRemote r key file = do
 	if (Git.repoIsLocal r)
 		then getlocal
 		else getremote
 	where
-		getlocal = safeSystem "cp" ["-a", location, file]
-		getremote = error "get via network not yet implemented!"
+		getlocal = boolSystem "cp" ["-a", location, file]
+		getremote = return False -- TODO implement get from remote
 		location = annexLocation r key
 
 {- Checks remotes to verify that enough copies of a key exist to allow
