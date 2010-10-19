@@ -12,6 +12,7 @@ etc that are associated with annexed files but that benefit from full
 revision control.
 
 * **[[download]]**
+* [[install]]
 * [[news]]
 * [[bugs]]
 * [[contact]]
