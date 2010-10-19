@@ -11,11 +11,18 @@ versioned files, which is convenient for maintaining documents, Makefiles,
 etc that are associated with annexed files but that benefit from full
 revision control.
 
-* [[man page|git-annex]]
 * **[[download]]**
 * [[news]]
 * [[bugs]]
 * [[contact]]
+
+## documentation
+
+* [[man page|git-annex]]
+* [[key-value backends|backends]] for data storage
+* [[location_tracking]] reminds you where git-annex has seen files
+* git-annex prevents accidential data loss by [[tracking copies|copies]]
+  of your files
 
 ----
 

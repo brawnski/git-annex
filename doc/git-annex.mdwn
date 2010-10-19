@@ -1,3 +1,13 @@
+# NAME
+
+git-annex - manage files with git, without checking their contents in
+
+# SYNOPSIS
+
+git annex subcommand [path ...]
+
+# DESCRIPTION
+
 git-annex allows managing files with git, without checking the file
 contents into git. While that may seem paradoxical, it is useful when
 dealing with files larger than git can currently easily handle, whether due
@@ -11,157 +21,94 @@ versioned files, which is convenient for maintaining documents, Makefiles,
 etc that are associated with annexed files but that benefit from full
 revision control.
 
-My motivation for git-annex was the growing number of external drives I
-use. Some are used to archive data, others hold backups, and yet others
-come with me when I'm away from home to carry data that doesn't fit on my
-netbook. Maintaining all that was a nightmare, lots of ad-hoc moving files
-around, rsyncing files (unison is too slow), and deleting multiple copies
-of files from multiple places. I realized what what I needed was a form of
-revision control where each drive was a repository, and where copying the
-files around, and deciding which copies were safe to delete was automated.
-I posted about this to the VCS-home mailing list and got a great suggestion
-to make it support arbitrary key-value stores, for more generality and
-flexability.  A week of coding later, and git-annex is born.
+When a file is annexed, its content is moved into a key-value store, and
+a symlink is made that points to the content. These symlinks are checked into
+git and versioned like regular files. You can move them around, delete 
+them, and so on. Pushing to another git repository will make git-annex
+there aware of the annexed file, and it can be used to retrieve its
+content from the key-value store.
 
-Enough broad picture, here's how it actually looks:
+# EXAMPLES
 
-* `git annex add $file` moves the file into `.git/annex/`, and replaces
-  it with a symlink pointing at the annexed file, and then calls `git add`
-  to version the *symlink*. (If the file has already been annexed, it does
-  nothing.) 
-  
-  If you then use normal git push/pull commands, the annexed file content
-  won't be transferred between repositories, but the symlinks will be.
-  So different clones of a repository can have different sets of annexed
-  files available.
-  
-  You can move the symlink around, copy it, delete it, etc, and commit changes
-  as desired using git. Reading the symlink will always get you the annexed
-  file content, or the link may be broken if the content is not currently
-  available.
-* `git annex get $file` is used to transfer a specified file from the
-  backend storage to the current repository.
-* `git annex drop $file` indicates that you no longer want the file's
-  content to be available in this repository.
-* `git annex file $file` adjusts the symlink for the file to point to its
-  content again. Use this if you've moved the file around.
-* `git annex unannex $file` undoes a `git annex add`. But use `git annex drop`
-  if you're just done with a file; only use `unannex` if you
-  accidentially added a file. (You can also run this on all your annexed
-  files come the Singularity. ;-)
-* `git annex init "some description"` allows associating some description
-  (such as "USB archive drive 1") with a repository. This can help with
-  finding it later, see "Location Tracking" below.
+	# git annex get video/hackity_hack_and_kaxxt.mov
+	get video/_why_hackity_hack_and_kaxxt.mov (not available)
+	  I was unable to access these remotes: server
+	  Try making some of these repositories available:
+	  	5863d8c0-d9a9-11df-adb2-af51e6559a49  -- my home file server
+	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
+	   	ca20064c-dbb5-11df-b2fe-002170d25c55  -- backup SATA drive
+	failed
+	# sudo mount /media/usb
+	# git remote add usbdrive /media/usb
+	# git annex get video/hackity_hack_and_kaxxt.mov
+	get video/hackity_hack_and_kaxxt.mov (copying from usbdrive...) ok
+	# git commit -a -m "got a video I want to rewatch on the plane"
+	
+	# git annex add iso
+	add iso/Debian_5.0.iso ok
+	# git commit -a -m "saving Debian CD for later"
+	
+	# git annex push usbdrive iso
+	error: push not yet implemented!
+	# git annex drop iso
+	drop iso/Debian_5.0.iso ok
+	# git commit -a -m "freed up space"
 
-Oh yeah, "$file" in the above can be any number of files, or directories,
-same as you'd pass to "git add" or "git rm".
-So "git annex add ." or "git annex get dir/" work fine.
+# SUBCOMMANDS
 
-## key-value storage
+Like many git commands, git-annex can be passed a path that 
+is either a file or a directory. In the latter case it acts on all relevant
+files in the directory.
 
-git-annex uses a key-value abstraction layer to allow file contents to be
-stored in different ways. In theory, any key-value storage system could be
-used to store the file contents, and git-annex would then retrieve them
-as needed and put them in `.git/annex/`.
+Many git-annex subcommands will stage changes for later `git commit` by you.
 
-When a file is annexed, a key is generated from its content and/or metadata.
-The file checked into git symlinks to the key. This key can later be used
-to retrieve the file's content (its value). This key generation must be
-stable for a given file content, name, and size.
+* add [path ...]
 
-Multiple pluggable backends are supported, and more than one can be used
-to store different files' contents in a given repository.
+  Adds files in the path to the annex. Files that are already checked into
+  git, or that git has been configured to ignore will be silently skipped.
 
-* `WORM` ("Write Once, Read Many") This backend stores the file's content
-  only in `.git/annex/`, and assumes that any file with the same basename,
-  size, and modification time has the same content. So with this backend,
-  files can be moved around, but should never be added to or changed.
-  This is the default, and the least expensive backend.
-* `SHA1` -- This backend stores the file's content in
-  `.git/annex/`, with a name based on its sha1 checksum. This backend allows
-  modifications of files to be tracked. Its need to generate checksums
-  can make it slow for large files.
-* `URL` -- This backend downloads the file's content from an external URL.
+* get [path ...]
 
-## copies
+  Makes the content of annexed files available in this repository. Depending
+  on the backend used, this will involve copying them from another repository,
+  or downloading them, or transferring them from some kind of key-value store.
 
-The WORM and SHA1 key-value backends store data inside your git repository.
-It's important that data not get lost by an ill-though `git annex drop`
-command.  So, then using those backends, git-annex can be configured to try
-to keep N copies of a file's content available across all repositories. By
-default, N is 1; it is configured by annex.numcopies.
+* drop [path ...]
 
-`git annex drop` attempts to check with other git remotes, to check that N
-copies of the file exist. If enough repositories cannot be verified to have
-it, it will retain the file content to avoid data loss.
+  Drops the content of annexed files from this repository. 
 
-For example, consider three repositories: Server, Laptop, and USB. Both Server
-and USB have a copy of a file, and N=1. If on Laptop, you `git annex get
-$file`, this will transfer it from either Server or USB (depending on which
-is available), and there are now 3 copies of the file.
+  git-annex may refuse to drop a content if the backend does not think
+  it is safe to do so. 
 
-Suppose you want to free up space on Laptop again, and you `git annex drop` the file
-there. If USB is connected, or Server can be contacted, git-annex can check
-that it still has a copy of the file, and the content is removed from
-Laptop. But if USB is currently disconnected, and Server also cannot be
-contacted, it can't verify that it is safe to drop the file, and will
-refuse to do so.
+* unannex [path ...]
 
-With N=2, in order to drop the file content from Laptop, it would need access
-to both USB and Server.
+  Use this to undo an accidental add command. This is not the command you
+  should use if you intentionally annexed a file and don't want its contents
+  any more. In that case you should use `git annex drop` instead, and you
+  can also `git rm` the file.
 
-Note that different repositories can be configured with different values of
-N. So just because Laptop has N=2, this does not prevent the number of
-copies falling to 1, when USB and Server have N=1.
+* init "description"
 
-## location tracking
+  Initializes git-annex with a descripotion of the git repository.
+  This is an optional, but recommended step.
 
-git-annex keeps track of in which repositories it last saw a file's content.
-This location tracking information is stored in `.git-annex/$key.log`.
-Repositories record their UUID and the date when they get or drop 
-a file's content. (Git is configured to use a union merge for this file,
-so the lines may be in arbitrary order, but it will never conflict.)
+* fix [path ...]
 
-This location tracking information is useful if you have multiple
-repositories, and not all are always accessible. For example, perhaps one
-is on a home file server, and you are away from home. Then git-annex can
-tell you what git remote it needs access to in order to get a file:
+  Fixes up symlinks that have become broken to again point to annexed content.
+  This is useful to run if you have been moving the symlinks around.
 
-	# git annex get myfile
-	get myfile (need access to one of these remotes: home)
-	git-annex: get myfile failed
+# OPTIONS
 
-Another way the location tracking comes in handy is if you put repositories
-on removable USB drives, that might be archived away offline in a safe
-place. In this sort of case, you probably don't have a git remotes
-configured for every USB drive. So git-annex may have to resort to talking
-about repository UUIDs. If you have previously used "git annex init"
-to attach descriptions to those repositories, it will include their
-descriptions to help you with finding them:
+* --force
 
-	# git annex get myfile
-	get myfile (No available git remotes have the file.)
-	  It has been seen before in these repositories:
-	  	c0a28e06-d7ef-11df-885c-775af44f8882  -- USB archive drive 1
-	  	e1938fee-d95b-11df-96cc-002170d25c55
-	git-annex: get myfile failed
+  Force unsafe actions, such as dropping a file's content when no other
+  source of it can be verified to still exist. Use with care.
 
-## symlink farming commit hook
+## CONFIGURATION
 
-git-annex does use a lot of symlinks. Specicially, relative symlinks,
-that are checked into git. To allow you to move those around without
-annoyance, git-annex can run as a post-commit hook. This way, you can `git mv`
-a symlink to an annexed file, and as soon as you commit, it will be fixed
-up.
+Like other git commands, git-annex is configured via `.git/config`.
 
-`git annex init` tries to set up a post-commit hook that is itself a symlink
-back to git-annex. If you want to have your own shell script in the post-commit
-hook, just make it call `git annex` with no parameters. git-annex will detect
-when it's run from a git hook and do the necessary fixups.
-
-## configuration
-
-* `annex.uuid` -- a unique UUID for this repository
+* `annex.uuid` -- a unique UUID for this repository (automatically set)
 * `annex.numcopies` -- number of copies of files to keep across all
   repositories (default: 1)
 * `annex.backends` -- space-separated list of names of 
@@ -176,6 +123,24 @@ when it's run from a git hook and do the necessary fixups.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
   here.
 
-## contact
+# FILES
 
-Joey Hess <joey@kitenet.net>
+These files are used, in your git repository:
+
+`.git/annex/` contains the annexed file contents that are currently
+available. Annexed files in your git repository symlink to that content.
+
+`.git-annex/uuid.log` is used to map between repository UUID and
+decscriptions. You may edit it.
+
+`.git-annex/*.log` is where git-annex records its content tracking
+information. These files should be committed to git.
+
+`.git-annex/.gitattributes` is configured to use git's union merge driver
+to avoid conflicts when merging files in the `.git-annex` directory.
+
+# AUTHOR
+
+Joey Hess <joey@ikiwiki.info>
+
+Warning: this page is automatically made into a man page via [mdwn2man](http://git.ikiwiki.info/?p=ikiwiki;a=blob;f=mdwn2man;hb=HEAD).  Edit with care

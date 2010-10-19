@@ -8,10 +8,6 @@ install:
 	install -d $(DESTDIR)/usr/bin
 	install git-annex $(DESTDIR)/usr/bin
 
-clean:
-	rm -rf build git-annex
-	rm -rf doc/.ikiwiki html
-
 # If ikiwiki is available, build static html docs suitable for being
 # shipped in the software package.
 ifeq ($(shell which ikiwiki),)
@@ -21,7 +17,12 @@ IKIWIKI=ikiwiki
 endif
 
 docs:
+	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
 		--no-usedirs
+
+clean:
+	rm -rf build git-annex git-annex.1
+	rm -rf doc/.ikiwiki html
 
 .PHONY: git-annex

@@ -51,7 +51,7 @@ options = [
 	    Option ['f'] ["force"] (NoArg Force) "allow actions that may lose annexed data"
 	  ]
 
-header = "Usage: git-annex [" ++ (join "|" $ map cmdname cmds) ++ "] ..."
+header = "Usage: git-annex " ++ (join "|" $ map cmdname cmds) ++ " [path ...]"
 
 usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 	where
