@@ -5,7 +5,7 @@ Build-Depends: debhelper (>= 7.0.50), ghc6, libghc6-missingh-dev, libghc6-sha-de
 Maintainer: Joey Hess <joeyh@debian.org>
 Standards-Version: 3.9.1
 Vcs-Git: git://git.kitenet.net/git-annex
-Homepage: http://kitenet.net/~joey/code/git-annex/
+Homepage: http://git-annex.branchable.com/
 
 Package: git-annex
 Architecture: any

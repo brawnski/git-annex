@@ -23,6 +23,7 @@ revision control.
 * [[location_tracking]] reminds you where git-annex has seen files
 * git-annex prevents accidential data loss by [[tracking copies|copies]]
   of your files
+* git-annex is Free Software, licensed under the [[GPL]].
 
 ----
 
