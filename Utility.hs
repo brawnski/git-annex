@@ -6,10 +6,15 @@ module Utility (
 	hGetContentsStrict,
 	parentDir,
 	relPathCwdToDir,
-	relPathDirToDir
+	relPathDirToDir,
+	boolSystem
 ) where
 
 import System.IO
+import System.Cmd
+import System.Exit
+import System.Posix.Signals
+import Data.Typeable
 import System.Posix.IO
 import Data.String.Utils
 import System.Path
@@ -88,3 +93,18 @@ relPathDirToDir from to =
 		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
 		numcommon = length $ common
 		path = join s $ dotdots ++ uncommon
+
+{- Run a system command, and returns True or False
+ - if it succeeded or failed.
+ -
+ - An error is thrown if the command exits due to SIGINT,
+ - to propigate ctrl-c.
+ -}
+boolSystem :: FilePath -> [String] -> IO Bool
+boolSystem command params = do
+	r <- rawSystem command params
+	case r of
+		ExitSuccess -> return True
+		ExitFailure e -> if Just e == cast sigINT
+			then error $ command ++ "interrupted"
+			else return False
