@@ -10,6 +10,7 @@ import Control.Exception
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
 import Data.String.Utils
+import Data.Either.Utils
 import List
 import Maybe
 
@@ -42,8 +43,8 @@ withKey key = do
 	where
 		tryharder allremotes uuids = do
 			-- more expensive; read each remote's config
-			mayberemotes <- mapM tryGitConfigRead allremotes
-			let allremotes' = catMaybes mayberemotes
+			eitherremotes <- mapM tryGitConfigRead allremotes
+			let allremotes' = map fromEither eitherremotes
 			remotes' <- reposByUUID allremotes' uuids
 			Annex.flagChange RemotesRead True
 			return remotes'
@@ -86,7 +87,7 @@ repoCost r = do
  - because reading it may be expensive. This function tries to read the
  - config for a specified remote, and updates state. If successful, it
  - returns the updated git repo. -}
-tryGitConfigRead :: Git.Repo -> Annex (Maybe Git.Repo)
+tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
 tryGitConfigRead r = do
 	if (Map.null $ Git.configMap r)
 		then do
@@ -94,15 +95,15 @@ tryGitConfigRead r = do
 			-- for other reasons; catch all possible exceptions
 			result <- liftIO $ (try (Git.configRead r)::IO (Either SomeException (Git.Repo)))
 			case (result) of
-				Left err -> return Nothing
+				Left err -> return $ Left r
 				Right r' -> do
 					g <- Annex.gitRepo
 					let l = Git.remotes g
 					let g' = Git.remotesAdd g $
 						exchange l r'
 					Annex.gitRepoChange g'
-					return $ Just r'
-		else return $ Just r
+					return $ Right r'
+		else return $ Right r -- config already read
 	where 
 		exchange [] new = []
 		exchange (old:ls) new =

@@ -55,15 +55,15 @@ copyKeyFile key file = do
 	remotes <- Remotes.withKey key
 	if (0 == length remotes)
 		then do
-			showNote $ "No available git remotes have the file."
+			showNote "not available"
 			showLocations key
 			return False
 		else trycopy remotes remotes
 	where
 		trycopy full [] = do
-			showNote $
-				"need access to one of these remotes: " ++
-				(Remotes.list full)
+			showNote "not available"
+			showTriedRemotes full
+			showLocations key
 			return False
 		trycopy full (r:rs) = do
 			-- annexLocation needs the git config to have been
@@ -71,8 +71,8 @@ copyKeyFile key file = do
 			-- if it hasn't been already
 			result <- Remotes.tryGitConfigRead r
 			case (result) of
-				Nothing -> trycopy full rs
-				Just r' -> do
+				Left err -> trycopy full rs
+				Right r' -> do
 					showNote $ "copying from " ++ (Git.repoDescribe r ) ++ "..."
 					liftIO $ copyFromRemote r' key file
 
@@ -86,7 +86,7 @@ copyFromRemote r key file = do
 		getlocal = boolSystem "cp" ["-a", location, file]
 		getremote = return False -- TODO implement get from remote
 		location = annexLocation r key
-	
+
 showLocations :: Key -> Annex ()
 showLocations key = do
 	g <- Annex.gitRepo
@@ -97,6 +97,10 @@ showLocations key = do
 	if (0 < length uuidsf)
 		then showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
 		else showLongNote $ "No other repository is known to contain the file."
+		
+showTriedRemotes remotes =
+	showLongNote $ "I was unable to access these remotes: " ++
+		(Remotes.list remotes)
 
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
@@ -108,46 +112,37 @@ checkRemoveKey key = do
 		then return True
 		else do
 			g <- Annex.gitRepo
-			let numcopies = read $ Git.configGet g config "1"
 			remotes <- Remotes.withKey key
+			let numcopies = read $ Git.configGet g config "1"
 			if (numcopies > length remotes)
-				then retNotEnoughCopiesKnown remotes numcopies
-				else findcopies numcopies remotes []
+				then notEnoughCopies numcopies (length remotes) []
+				else findcopies numcopies 0 remotes []
 	where
 		config = "annex.numcopies"
-
-		findcopies 0 _ _ = return True -- success, enough copies found
-		findcopies _ [] bad = notEnoughCopiesSeen bad
-		findcopies n (r:rs) bad = do
+		findcopies need have [] bad = 
+			if (have >= need)
+				then return True
+				else notEnoughCopies need have bad
+		findcopies need have (r:rs) bad = do
 			all <- Annex.supportedBackends
 			result <- liftIO $ ((try $ remoteHasKey r all)::IO (Either SomeException Bool))
 			case (result) of
-				Right True	-> findcopies (n-1) rs bad
-				Right False	-> findcopies n rs bad
-				Left _		-> findcopies n rs (r:bad)
+				Right True	-> findcopies need (have+1) rs bad
+				Right False	-> findcopies need have rs bad
+				Left _		-> findcopies need have rs (r:bad)
 		remoteHasKey r all = do
 			-- To check if a remote has a key, construct a new
 			-- Annex monad and query its backend.
 			a <- Annex.new r all
 			(result, _) <- Annex.run a (Backend.hasKey key)
 			return result
-		notEnoughCopiesSeen bad = do
-			unsafe
-			if (0 /= length bad) then listbad bad else return ()
-			showLocations key
-			hint
-			return False
-		listbad bad =
-			showLongNote $ 
-				"I was unable to access these remotes: " ++
-				(Remotes.list bad)
-		retNotEnoughCopiesKnown remotes numcopies = do
+		notEnoughCopies need have bad = do
 			unsafe
 			showLongNote $
 				"Could only verify the existence of " ++
-				(show $ length remotes) ++ 
-				" out of " ++ (show numcopies) ++ 
+				(show have) ++ " out of " ++ (show need) ++ 
 				" necessary copies"
+			if (0 /= length bad) then showTriedRemotes bad else return ()
 			showLocations key
 			hint
 			return False
