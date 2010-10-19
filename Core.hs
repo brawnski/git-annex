@@ -107,4 +107,4 @@ showEndOk = do
 showEndFail :: String -> String -> Annex ()
 showEndFail command file = do
 	liftIO $ putStrLn ""
-	error $ command ++ " " ++ file ++ " failed"
+	liftIO $ hPutStrLn stderr $ command ++ " " ++ file ++ " failed"
