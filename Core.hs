@@ -106,4 +106,4 @@ showEndOk = do
 	liftIO $ putStrLn " ok"
 showEndFail :: Annex ()
 showEndFail = do
-	liftIO $ putStrLn " failed"
+	liftIO $ putStrLn "\nfailed"
