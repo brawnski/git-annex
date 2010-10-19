@@ -7,4 +7,8 @@
   For a backup system that uses git, take a look at
   [bup](http://github.com/apenwarr/bup).
 
+* git-annex is not unison, but if you're finding unison's checksumming
+  too slow, or its strict mirroring of everything to both places too
+  limiting, then git-annex could be a useful alternative.
+
 * probably several other things..
