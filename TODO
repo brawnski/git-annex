@@ -1,9 +1,6 @@
 * bug: cannot "git annex ../foo"   (GitRepo.relative is buggy and
   git-ls-files also refuses w/o --full-name, which would need other changes)
 
-* bug: doesn't learn new remote's uuids if a known (but maybe not accessible) 
-  uuids has a wanted file
-
 * --push/--pull should take a reponame and files, and push those files
   to that repo; dropping them from the current repo
 

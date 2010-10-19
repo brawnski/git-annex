@@ -30,17 +30,22 @@ withKey key = do
 	g <- Annex.gitRepo
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
-	-- this only uses cached data, so may not find new remotes
+	-- This only uses cached data, so may not include new remotes
+	-- or remotes whose uuid has changed (eg by a different drive being
+	-- mounted at their location). So unless it happens to find all
+	-- remotes, try harder, loading the remotes' configs.
 	remotes <- reposByUUID allremotes uuids
-	if (0 == length remotes)
+	remotesread <- Annex.flagIsSet RemotesRead
+	if ((length allremotes /= length remotes) && not remotesread)
 		then tryharder allremotes uuids
 		else return remotes
 	where
 		tryharder allremotes uuids = do
-			-- more expensive; check each remote's config
+			-- more expensive; read each remote's config
 			mayberemotes <- mapM tryGitConfigRead allremotes
 			let allremotes' = catMaybes mayberemotes
 			remotes' <- reposByUUID allremotes' uuids
+			Annex.flagChange RemotesRead True
 			return remotes'
 
 {- Cost Ordered list of remotes. -}
