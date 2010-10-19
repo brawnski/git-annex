@@ -1,0 +1,8 @@
+Should check that there is enough free space before trying to copy a
+file around.
+
+* Need a way to tell how much free space is available on the disk containing
+  a given repository.
+
+* And, need a way to tell the size of a file before copying it from
+  a remote, to check local disk space.

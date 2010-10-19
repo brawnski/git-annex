@@ -176,61 +176,6 @@ when it's run from a git hook and do the necessary fixups.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
   here.
 
-## issues
-
-### free space determination
-
-Need a way to tell how much free space is available on the disk containing
-a given repository. The repository may be remote, so ssh may need to be
-used.
-
-Similarly, need a way to tell the size of a file before copying it from
-a remote, to check local disk space.
-
-### auto-drop on rm
-
-When git-rm removed a file, its key should get dropped too. Of course, it
-may not be dropped right away, depending on number of copies available.
-
-### branching
-
-The use of `.git-annex` to store logs means that if a repo has branches 
-and the user switched between them, git-annex will see different logs in
-the different branches, and so may miss info about what remotes have which
-files (though it can re-learn). 
-
-An alternative would be to store the log data directly in the git repo
-as `pristine-tar` does. Problem with that approach is that git won't merge
-conflicting changes to log files if they are not in the currently checked
-out branch.
-
-It would be possible to use a branch with a tree like this, to avoid
-conflicts:
-
-key/uuid/time/status
-
-As long as new files are only added, and old timestamped files deleted,
-there would be no conflicts.
-
-A related problem though is the size of the tree objects git needs to
-commit. Having the logs in a separate branch doesn't help with that.
-As more keys are added, the tree object size will increase, and git will
-take longer and longer to commit, and use more space. One way to deal with
-this is simply by splitting the logs amoung subdirectories. Git then can
-reuse trees for most directories. (Check: Does it still have to build
-dup trees in memory?)
-
-Another approach would be to have git-annex *delete* old logs. Keep logs
-for the currently available files, or something like that. If other log
-info is needed, look back through history to find the first occurance of a
-log. Maybe even look at other branches -- so if the logs were on master,
-a new empty branch could be made and git-annex would still know where to
-get keys in that branch. 
-
-Would have to be careful about conflicts when deleting and bringing back
-files with the same name. And would need to avoid expensive searching thru
-all history to try to find an old log file.
-
 ## contact
 
 Joey Hess <joey@kitenet.net>
