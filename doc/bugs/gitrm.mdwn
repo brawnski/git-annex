@@ -1,0 +1,2 @@
+how to handle git rm file? (should try to drop keys that have no
+referring file, if it seems safe..)
