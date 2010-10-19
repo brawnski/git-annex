@@ -1,6 +1,9 @@
 * bug: cannot "git annex ../foo"   (GitRepo.relative is buggy and
   git-ls-files also refuses w/o --full-name, which would need other changes)
 
+* bug: doesn't learn new remote's uuids if a known (but maybe not accessible) 
+  uuids has a wanted file
+
 * bug: ctrl+c does not stop it from running another action; need to
   not catch UserInterrupt exceptions.
 
