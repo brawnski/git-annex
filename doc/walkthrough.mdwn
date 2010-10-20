@@ -78,7 +78,7 @@ can get them.
 
 After a while, you'll have serveral annexes, with different file contents.
 You don't have to try to keep all that straight; git-annex does 
-[[location_tracking] for you. If you ask it to get a file and the drive
+[[location_tracking]] for you. If you ask it to get a file and the drive
 or file server is not accessible, it will let you know what it needs to get
 it:
 
