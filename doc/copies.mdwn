@@ -1,4 +1,4 @@
-The WORM and SHA1 key-value [[backends|backend]] store data inside
+The WORM and SHA1 key-value [[backends]] store data inside
 your git repository's `.git` directory, not in some external data store.
 
 It's important that data not get lost by an ill-considered `git annex drop`
