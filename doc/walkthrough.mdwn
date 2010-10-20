@@ -21,11 +21,16 @@ example.
 	# cd ~/annex
 	# git remote add usbdrive /media/usb
 
-There was nothing git-annex specific about that, except telling it the name
+This is all standard ad-hoc distributed git repository setup. Or you
+could have added a centralized bare repository on a server if you prefer
+doing things that way.
+
+Anyway, the only git-annex specific part is telling it the name
 of the new repository created on the USB drive.
 
 Notice that both repos are set up as remotes of the other one. This lets
-either get annexed files from the other.
+either get annexed files from the other. You'll want to do that even
+if you are using a centralized bare repository.
 
 ## adding files
 
