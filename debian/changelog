@@ -1,5 +1,5 @@
-git-annex (0.01) UNRELEASED; urgency=low
+git-annex (0.01) unstable; urgency=low
 
-  * First release
+  * First prerelease.
 
- -- Joey Hess <joeyh@debian.org>  Thu, 09 Sep 2010 08:24:58 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 20 Oct 2010 12:54:24 -0400
