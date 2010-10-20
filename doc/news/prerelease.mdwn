@@ -6,4 +6,4 @@ well, with these exceptions:
 
 I reserve the right to change its data formats before the first release,
 though I already have enough drives using it that I'd probably have to
-write a transition tool anyway!
+write a transition tool anyway! --[[Joey]]
