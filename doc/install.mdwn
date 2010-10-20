@@ -1,5 +1,6 @@
 To build and use git-annex, you will need:
 
+* git: <http://git-scm.com/>
 * The Haskell Platform: <http://haskell.org/platform/>
 * MissingH: <http://github.com/jgoerzen/missingh/wiki>
 * uuid: <http://www.ossp.org/pkg/lib/uuid/>
