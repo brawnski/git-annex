@@ -45,6 +45,21 @@ if you are using a centralized bare repository.
 Notice you commit at the end, this checks in git-annex's record of the
 files but not thier actual, large, content.
 
+## renaming files
+
+	# cd ~/annex
+	# git mv big_file my_cool_big_file
+	# mkdir iso
+	# git mv debian.iso iso
+	# git annex fix .
+	fix iso/debian.iso ok
+	# git commit -m moved
+
+You can use any normal git operations to move files around, or even
+make copies or delete them. `git-annex fix` needs to be run if a file
+is moved into a different directory, in order to fix up the symlink 
+pointing to the file's content.
+
 ## transferring files around
 
 Let's copy everything in the laptop's home annex to the USB drive.
