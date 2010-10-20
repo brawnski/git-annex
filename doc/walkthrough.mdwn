@@ -67,8 +67,8 @@ Let's copy everything in the laptop's home annex to the USB drive.
 	# cd /media/usb/annex
 	# git pull home master
 	# git annex get .
-	get big_file (copying from home...) ok
-	get debian.iso (copying from home...) ok
+	get my_cool_big_file (copying from home...) ok
+	get iso/debian.iso (copying from home...) ok
 
 Notice that you had to git pull from home first, this lets git-annex know
 what has changed in home, and so it knows about the files you added and
@@ -100,7 +100,7 @@ it:
 You can always drop files safely. Git-annex checks that some other annex
 has the file before removing it.
 
-	# git annex drop debian.iso
+	# git annex drop iso/debian.iso
 	drop iso/Debian_5.0.iso ok
 	# git commit -a -m "freed up space"
 
