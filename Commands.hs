@@ -220,6 +220,7 @@ initCmd description = do
 			describeUUID u description
 			log <- uuidLog
 			liftIO $ Git.run g ["add", log]
+			liftIO $ Git.run g ["commit", "-m", "git annex init", log]
 			liftIO $ putStrLn "description set"
 
 -- helpers
