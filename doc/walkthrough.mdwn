@@ -1,0 +1,112 @@
+## creating a repository
+
+This is very straightforward. Just tell it a description of the repository.
+
+	# mkdir ~/annex
+	# cd ~/annex
+	# git init
+	# git annex init "my laptop"
+
+## adding a remote
+
+This could be a USB drive, or a sshfs or NFS mount to a file server, for
+example.
+
+	# sudo mount /media/usb
+	# cd /media/usb
+	# git clone ~/annex
+	# cd annex
+	# git annex init "portable USB drive"
+	# git remote add home ~/annex
+	# cd ~/annex
+	# git remote add usbdrive /media/usb
+
+There was nothing git-annex specific about that, except telling it the name
+of the new repository created on the USB drive.
+
+Notice that both repos are set up as remotes of the other one. This lets
+either get annexed files from the other.
+
+## adding files
+
+	# cd ~/annex
+	# cp /tmp/big_file .
+	# cp /tmp/debian.iso .
+	# git annex add .
+	add big_file ok
+	add debian.iso ok
+	# git commit -a -m added
+
+Notice you commit at the end, this checks in git-annex's record of the
+files but not thier actual, large, content.
+
+## transferring files around
+
+Let's copy everything in the laptop's home annex to the USB drive.
+
+	# cd /media/usb/annex
+	# git pull home master
+	# git annex get .
+	get big_file (copying from home...) ok
+	get debian.iso (copying from home...) ok
+
+Notice that you had to git pull from home first, this lets git-annex know
+what has changed in home, and so it knows about the files you added and
+can get them.
+
+## transferring files: When things go wrong
+
+After a while, you'll have serveral annexes, with different file contents.
+You don't have to try to keep all that straight; git-annex does 
+[[location_tracking] for you. If you ask it to get a file and the drive
+or file server is not accessible, it will let you know what it needs to get
+it:
+
+	# git annex get video/hackity_hack_and_kaxxt.mov
+	get video/_why_hackity_hack_and_kaxxt.mov (not available)
+	  I was unable to access these remotes: server
+	  Try making some of these repositories available:
+	  	5863d8c0-d9a9-11df-adb2-af51e6559a49  -- my home file server
+	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
+	   	ca20064c-dbb5-11df-b2fe-002170d25c55  -- backup SATA drive
+	failed
+	# sudo mount /media/usb
+	# git annex get video/hackity_hack_and_kaxxt.mov
+	get video/hackity_hack_and_kaxxt.mov (copying from usbdrive...) ok
+	# git commit -a -m "got a video I want to rewatch on the plane"
+
+## removing files
+
+You can always drop files safely. Git-annex checks that some other annex
+has the file before removing it.
+
+	# git annex drop debian.iso
+	drop iso/Debian_5.0.iso ok
+	# git commit -a -m "freed up space"
+
+## removing files: When things go wrong
+
+Before dropping a file, git-annex wants to be able to look at other
+remotes, and verify that they still have a file. After all, it could
+have been dropped from them too. If the remotes are not mounted/available,
+you'll see something like this.
+
+	# git annex drop important_file other.iso
+	drop important_file (unsafe)
+	  Could only verify the existence of 0 out of 1 necessary copies
+	  I was unable to access these remotes: usbdrive
+	  Try making some of these repositories available:
+	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
+	   	ca20064c-dbb5-11df-b2fe-002170d25c55  -- backup SATA drive
+	  (Use --force to override this check, or adjust annex.numcopies.)
+	failed
+	drop other.iso (unsafe)
+	  Could only verify the existence of 0 out of 1 necessary copies
+          No other repository is known to contain the file.
+	  (Use --force to override this check, or adjust annex.numcopies.)
+	failed
+
+Here you might --force it to drop `important_file` if you trust your backup.
+But `other.iso` looks to have never been copied to anywhere else, so if
+it's something you want to hold onto, you'd need to transfer it to
+some other repository before dropping it.

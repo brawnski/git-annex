@@ -11,6 +11,8 @@ versioned files, which is convenient for maintaining documents, Makefiles,
 etc that are associated with annexed files but that benefit from full
 revision control.
 
+To get a feel for it, see the [[walkthrough]].
+
 [[!sidebar content="""
 * **[[download]]**
 * [[install]]
@@ -18,7 +20,6 @@ revision control.
 * [[bugs]]
 * [[contact]]
 """]]
-
 
 ## sample use cases
 
