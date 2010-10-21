@@ -24,8 +24,7 @@ import Core
 import qualified Remotes
 import qualified TypeInternals
 
-data CmdWants = FilesInGit | FilesNotInGit | FilesMissing | 
-		RepoName | Description
+data CmdWants = FilesInGit | FilesNotInGit | FilesMissing | Description
 data Command = Command {
 	cmdname :: String,
 	cmdaction :: (String -> Annex ()),
@@ -41,10 +40,12 @@ cmds =  [
 		"make content of annexed files available")
 	, (Command "drop"	dropCmd		FilesInGit
 		"indicate content of files not currently wanted")
-	, (Command "unannex"	unannexCmd	FilesInGit
-		"undo accidential add command")
+	, (Command "move"	moveCmd		FilesInGit
+		"transfer content of files to another repository")
 	, (Command "init"	initCmd		Description
 		"initialize git-annex with repository description")
+	, (Command "unannex"	unannexCmd	FilesInGit
+		"undo accidential add command")
 	, (Command "fix"	fixCmd		FilesInGit
 		"fix up files' symlinks to point to annexed content")
 	, (Command "fromkey"	fromKeyCmd	FilesMissing
@@ -55,16 +56,18 @@ cmds =  [
 -- in the Annex monad that performs the necessary setting.
 options :: [OptDescr (Annex ())]
 options = [
-	    Option ['f'] ["force"] 
-		(NoArg (Annex.flagChange "force" $ FlagBool True))
+	    Option ['f'] ["force"] (NoArg (storebool "force" True))
 		"allow actions that may lose annexed data"
-	  , Option ['b'] ["backend"]
-		(ReqArg (\s -> Annex.flagChange "backend" $ FlagString s) "NAME")
+	  , Option ['b'] ["backend"] (ReqArg (storestring "backend") "NAME")
 		"specify default key-value backend to use"
-	  , Option ['k'] ["key"]
-		(ReqArg (\s -> Annex.flagChange "key" $ FlagString s) "KEY")
+	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")
 		"specify a key to use"
+	  , Option ['r'] ["repository"] (ReqArg (storestring "repository") "REPOSITORY")
+		"specify a repository"
 	  ]
+	where
+		storebool n b = Annex.flagChange n $ FlagBool b
+		storestring n s = Annex.flagChange n $ FlagString s
 
 header = "Usage: git-annex " ++ (join "|" $ map cmdname cmds)
 
@@ -84,7 +87,6 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 {- Generate descrioptions of wanted parameters for subcommands. -}
 descWanted :: CmdWants -> String
 descWanted Description = "DESCRIPTION"
-descWanted RepoName = "REPO"
 descWanted _ = "PATH ..."
 
 {- Finds the type of parameters a command wants, from among the passed
@@ -105,8 +107,6 @@ findWanted FilesMissing params repo = do
 			if (e) then return False else return True
 findWanted Description params _ = do
 	return $ [unwords params]
-findWanted RepoName params _ = do
-	return $ params
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it
@@ -197,6 +197,18 @@ getCmd file = inBackend file $ \(key, backend) -> do
 					showEndOk
 				else do
 					showEndFail
+
+{- Moves the content of an annexed file to another repository,
+ - removing it from the current repository, and updates locationlog
+ - information on both.
+ -
+ - Note that unlike drop, this does not honor annex.numcopies.
+ - A file's content can be moved even if there are insufficient copies to
+ - allow it to be dropped.
+ -}
+moveCmd :: FilePath -> Annex ()
+moveCmd file = inBackend file $ \(key, backend) -> do
+	error "TODO"
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}

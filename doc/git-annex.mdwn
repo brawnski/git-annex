@@ -48,11 +48,12 @@ content from the key-value store.
 	add iso/Debian_5.0.iso ok
 	# git commit -a -m "saving Debian CD for later"
 	
-	# git annex push usbdrive iso
-	error: push not yet implemented!
 	# git annex drop iso
 	drop iso/Debian_5.0.iso ok
 	# git commit -a -m "freed up space"
+	
+	# git annex move video --to=usbdrive
+	move iso/Debian_5.0.iso (to usbdrive...) ok
 
 # SUBCOMMANDS
 
@@ -77,8 +78,22 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Drops the content of annexed files from this repository. 
 
-  git-annex may refuse to drop a content if the backend does not think
-  it is safe to do so. 
+  git-annex may refuse to drop content if the backend does not think
+  it is safe to do so, typically because of the setting of annex.numcopies.
+
+* move [path ...]
+
+  Moves the content of annexed files from the current repository to
+  another one. Use with the --to option.
+
+   Note that unlike drop, this does not honor annex.numcopies.
+   A file's content can be moved even if there are insufficient
+   copies to allow it to be dropped.
+
+* init description
+
+  Initializes git-annex with a descripotion of the git repository.
+  This is an optional, but recommended step.
 
 * unannex [path ...]
 
@@ -86,11 +101,6 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   should use if you intentionally annexed a file and don't want its contents
   any more. In that case you should use `git annex drop` instead, and you
   can also `git rm` the file.
-
-* init description
-
-  Initializes git-annex with a descripotion of the git repository.
-  This is an optional, but recommended step.
 
 * fix [path ...]
 
@@ -122,6 +132,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 * --key=name
 
   Specifies a key to operate on, for use with the addkey subcommand.
+
+* --to=repository
+
+  Specifies a git repository that content will be sent to. 
+  It can be specified by a path, url, or remote name.
 
 ## CONFIGURATION
 

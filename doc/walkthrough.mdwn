@@ -64,9 +64,14 @@ make copies or delete them. `git-annex fix` needs to be run if a file
 is moved into a different directory, in order to fix up the symlink 
 pointing to the file's content.
 
-## transferring files around
+## getting file content
 
-Let's copy everything in the laptop's home annex to the USB drive.
+A repository does not always have all annexed file contents available.
+When you need the content of a file, you can use "git annex get" to
+make it available.
+
+We can use this to copy everything in the laptop's home annex to the
+USB drive.
 
 	# cd /media/usb/annex
 	# git pull home master
@@ -75,8 +80,8 @@ Let's copy everything in the laptop's home annex to the USB drive.
 	get iso/debian.iso (copying from home...) ok
 
 Notice that you had to git pull from home first, this lets git-annex know
-what has changed in home, and so it knows about the files you added and
-can get them.
+what has changed in home, and so it knows about the files present there and
+can get them. See below for an easier way.
 
 ## transferring files: When things go wrong
 
@@ -134,6 +139,17 @@ Here you might --force it to drop `important_file` if you trust your backup.
 But `other.iso` looks to have never been copied to anywhere else, so if
 it's something you want to hold onto, you'd need to transfer it to
 some other repository before dropping it.
+
+## moving file content to another repository
+
+Often you will want to transfer some file contents from a repository to
+some other one, and then drop it from the first repository. For example,
+your laptop's disk is getting full; time to move some files to an external
+disk. Doing that by hand is possible, but a bit of a pain. `git annex move`
+makes it very easy.
+
+	# git annex move my_cool_big_file --to usbdrive
+	move my_cool_big_file (to usbdrive...) ok
 
 ## using the URL backend
 
