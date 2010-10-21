@@ -1,3 +1,9 @@
+git-annex (0.02) UNRELEASED; urgency=low
+
+  * New fromkey subcommand, for registering urls, etc.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 21 Oct 2010 16:38:00 -0400
+
 git-annex (0.01) unstable; urgency=low
 
   * First prerelease.
