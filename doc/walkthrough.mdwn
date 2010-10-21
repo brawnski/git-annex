@@ -135,7 +135,7 @@ But `other.iso` looks to have never been copied to anywhere else, so if
 it's something you want to hold onto, you'd need to transfer it to
 some other repository before dropping it.
 
-## using other backends: manually adding a remote URL
+## using the URL backend
 
 git-annex has multiple key-value [[backends]]. So far this walkthrough has
 demonstrated the default, WORM (Write Once, Read Many) backend. 
@@ -149,7 +149,7 @@ that use this backend:
 	# git commit -m "added a file from the Internet Archive"
 
 Now you if you ask git-annex to get that file, it will download it, 
-and cache it locally, until you have it drop it.
+and cache it locally.
 
 	# git annex get somefile
 	get somefile (downloading)
