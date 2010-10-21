@@ -15,8 +15,8 @@ main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
 	state <- Annex.new gitrepo allBackends
-	(flags, actions) <- parseCmd args state
-	tryRun state $ [startup flags] ++ actions ++ [shutdown]
+	(configure, actions) <- parseCmd args state
+	tryRun state $ [startup] ++ configure ++ actions ++ [shutdown]
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).

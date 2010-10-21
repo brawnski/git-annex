@@ -1,3 +1,7 @@
+A walkthrough of the basic features of git-annex.
+
+[[!toc]]
+
 ## creating a repository
 
 This is very straightforward. Just tell it a description of the repository.
@@ -130,3 +134,30 @@ Here you might --force it to drop `important_file` if you trust your backup.
 But `other.iso` looks to have never been copied to anywhere else, so if
 it's something you want to hold onto, you'd need to transfer it to
 some other repository before dropping it.
+
+## using other backends: manually adding a remote URL
+
+git-annex has multiple key-value [[backends]]. So far this walkthrough has
+demonstrated the default, WORM (Write Once, Read Many) backend. 
+
+Another handy backend is the URL backend, which can fetch file's content
+from remote URLs. Here's how to set up some files in your repository
+that use this backend:
+
+	# git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+	add somefile ok
+	# git commit -m "added a file from the Internet Archive"
+
+Now you if you ask git-annex to get that file, it will download it, 
+and cache it locally, until you have it drop it.
+
+	# git annex get somefile
+	get somefile (downloading)
+	#########################################################################100.0%
+	 ok
+
+You can always drop files downloaded by the URL backend. It is assumed
+that the URL is stable; no local backup is kept.
+
+	# git annex drop somefile
+	drop somefile (ok)

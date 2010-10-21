@@ -20,7 +20,7 @@ docs:
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
 		--no-usedirs --disable-plugin=openid --plugin=sidebar \
-		--underlaydir=/dev/null
+		--underlaydir=/dev/null --disable-plugin=shortcut
 
 clean:
 	rm -rf build git-annex git-annex.1

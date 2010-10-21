@@ -10,10 +10,12 @@ module Annex (
 	supportedBackends,
 	flagIsSet,
 	flagChange,
+	flagGet,
 	Flag(..)
 ) where
 
 import Control.Monad.State
+import qualified Data.Map as M
 
 import qualified GitRepo as Git
 import Types
@@ -27,7 +29,7 @@ new gitrepo allbackends = do
 		Internals.repo = gitrepo,
 		Internals.backends = [],
 		Internals.supportedBackends = allbackends,
-		Internals.flags = []
+		Internals.flags = M.empty
 	}
 	(_,s') <- Annex.run s (prep gitrepo)
 	return s'
@@ -63,15 +65,20 @@ supportedBackends :: Annex [Backend]
 supportedBackends = do
 	state <- get
 	return (Internals.supportedBackends state)
-flagIsSet :: Flag -> Annex Bool
-flagIsSet flag = do
+flagIsSet :: FlagName -> Annex Bool
+flagIsSet name = do
 	state <- get
-	return $ elem flag $ Internals.flags state
-flagChange :: Flag -> Bool -> Annex ()
-flagChange flag set = do
+	case (M.lookup name $ Internals.flags state) of
+		Just (FlagBool True) -> return True
+		_ -> return False 
+flagChange :: FlagName -> Flag -> Annex ()
+flagChange name val = do
 	state <- get
-	let f = filter (/= flag) $ Internals.flags state
-	if (set)
-		then put state { Internals.flags = (flag:f) }
-		else put state { Internals.flags = f }
+	put state { Internals.flags = M.insert name val $ Internals.flags state }
 	return ()
+flagGet :: FlagName -> Annex String
+flagGet name = do
+	state <- get
+	case (M.lookup name $ Internals.flags state) of
+		Just (FlagString s) -> return s
+		_ -> return ""

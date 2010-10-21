@@ -14,6 +14,7 @@
  - -}
 
 module Backend (
+	list,
 	storeFileKey,
 	retrieveKeyFile,
 	removeKey,
@@ -36,24 +37,28 @@ import Types
 import qualified TypeInternals as Internals
 
 {- List of backends in the order to try them when storing a new key. -}
-backendList :: Annex [Backend]
-backendList = do
-	l <- Annex.backends
+list :: Annex [Backend]
+list = do
+	l <- Annex.backends -- list is cached here
 	if (0 < length l)
 		then return l
 		else do
 			all <- Annex.supportedBackends
 			g <- Annex.gitRepo
 			let l = parseBackendList all $ Git.configGet g "annex.backends" ""
-			Annex.backendsChange l
-			return l
+			backendflag <- Annex.flagGet "backend"
+			let l' = if (0 < length backendflag)
+				then (lookupBackendName all backendflag):l
+				else l
+			Annex.backendsChange $ l'
+			return l'
 	where
 		parseBackendList all s = 
 			if (length s == 0)
 				then all
 				else map (lookupBackendName all) $ words s
 
-{- Looks up a backend in the list of supportedBackends -}
+{- Looks up a backend in a list -}
 lookupBackendName :: [Backend] -> String -> Backend
 lookupBackendName all s =
 	if ((length matches) /= 1)
@@ -66,7 +71,7 @@ storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
 storeFileKey file = do
 	g <- Annex.gitRepo
 	let relfile = Git.relative g file
-	b <- backendList
+	b <- list
 	storeFileKey' b file relfile
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do

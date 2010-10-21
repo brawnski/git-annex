@@ -18,9 +18,8 @@ import qualified Annex
 import Utility
 			
 {- Sets up a git repo for git-annex. -}
-startup :: [Flag] -> Annex ()
-startup flags = do
-	mapM (\f -> Annex.flagChange f True) flags
+startup :: Annex ()
+startup = do
 	g <- Annex.gitRepo
 	liftIO $ gitAttributes g
 	prepUUID

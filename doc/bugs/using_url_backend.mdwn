@@ -7,3 +7,5 @@ For now, we have to manually make the symlink. Something like this:
 Note the escaping of slashes.
 
 A `git annex register <url>` command could do this..
+
+[[done]]

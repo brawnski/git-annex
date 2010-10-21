@@ -8,6 +8,7 @@ import System.Posix.Files
 import System.Directory
 import System.Path
 import Data.String.Utils
+import Control.Monad (filterM)
 import List
 import IO
 
@@ -23,7 +24,8 @@ import Core
 import qualified Remotes
 import qualified TypeInternals
 
-data CmdWants = FilesInGit | FilesNotInGit | RepoName | SingleString
+data CmdWants = FilesInGit | FilesNotInGit | FilesMissing | 
+		RepoName | Description
 data Command = Command {
 	cmdname :: String,
 	cmdaction :: (String -> Annex ()),
@@ -41,26 +43,49 @@ cmds =  [
 		"indicate content of files not currently wanted")
 	, (Command "unannex"	unannexCmd	FilesInGit
 		"undo accidential add command")
-	, (Command "init"	initCmd		SingleString
+	, (Command "init"	initCmd		Description
 		"initialize git-annex with repository description")
 	, (Command "fix"	fixCmd		FilesInGit
 		"fix up files' symlinks to point to annexed content")
+	, (Command "fromkey"	fromKeyCmd	FilesMissing
+		"adds a file using a specific key")
 	]
 
+-- Each dashed command-line option results in generation of an action
+-- in the Annex monad that performs the necessary setting.
+options :: [OptDescr (Annex ())]
 options = [
-	    Option ['f'] ["force"] (NoArg Force) "allow actions that may lose annexed data"
+	    Option ['f'] ["force"] 
+		(NoArg (Annex.flagChange "force" $ FlagBool True))
+		"allow actions that may lose annexed data"
+	  , Option ['b'] ["backend"]
+		(ReqArg (\s -> Annex.flagChange "backend" $ FlagString s) "NAME")
+		"specify default key-value backend to use"
+	  , Option ['k'] ["key"]
+		(ReqArg (\s -> Annex.flagChange "key" $ FlagString s) "KEY")
+		"specify a key to use"
 	  ]
 
-header = "Usage: git-annex " ++ (join "|" $ map cmdname cmds) ++ " [path ...]"
+header = "Usage: git-annex " ++ (join "|" $ map cmdname cmds)
 
+usage :: String
 usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 	where
 		cmddescs = unlines $ map (\c -> indent $ showcmd c) cmds
 		showcmd c =
 			(cmdname c) ++
-			(take (10 - (length (cmdname c))) $ repeat ' ') ++ 
+			(pad 10 (cmdname c)) ++
+			(descWanted (cmdwants c)) ++
+			(pad 13 (descWanted (cmdwants c))) ++
 			(cmddesc c)
 		indent l = "  " ++ l
+		pad n s = take (n - (length s)) $ repeat ' '
+
+{- Generate descrioptions of wanted parameters for subcommands. -}
+descWanted :: CmdWants -> String
+descWanted Description = "DESCRIPTION"
+descWanted RepoName = "REPO"
+descWanted _ = "PATH ..."
 
 {- Finds the type of parameters a command wants, from among the passed
  - parameter list. -}
@@ -71,14 +96,23 @@ findWanted FilesNotInGit params repo = do
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
-findWanted SingleString params _ = do
+findWanted FilesMissing params repo = do
+	files <- liftIO $ filterM missing params
+	return $ files
+	where
+		missing f = do
+			e <- doesFileExist f
+			if (e) then return False else return True
+findWanted Description params _ = do
 	return $ [unwords params]
 findWanted RepoName params _ = do
 	return $ params
 
-{- Parses command line and returns a list of flags and a list of
- - actions to be run in the Annex monad. -}
-parseCmd :: [String] -> AnnexState -> IO ([Flag], [Annex ()])
+{- Parses command line and returns two lists of actions to be 
+ - run in the Annex monad. The first actions configure it
+ - according to command line options, while the second actions
+ - handle subcommands. -}
+parseCmd :: [String] -> AnnexState -> IO ([Annex ()], [Annex ()])
 parseCmd argv state = do
 	(flags, params) <- getopt
 	case (length params) of
@@ -100,7 +134,7 @@ parseCmd argv state = do
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
 addCmd :: FilePath -> Annex ()
-addCmd file = inBackend file $ do
+addCmd file = notInBackend file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
 		then return ()
@@ -125,9 +159,9 @@ addCmd file = inBackend file $ do
 
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
-unannexCmd file = notinBackend file $ \(key, backend) -> do
+unannexCmd file = inBackend file $ \(key, backend) -> do
 	showStart "unannex" file
-	Annex.flagChange Force True -- force backend to always remove
+	Annex.flagChange "force" $ FlagBool True -- force backend to always remove
 	Backend.removeKey backend key
 	logStatus key ValueMissing
 	g <- Annex.gitRepo
@@ -145,7 +179,7 @@ unannexCmd file = notinBackend file $ \(key, backend) -> do
 
 {- Gets an annexed file from one of the backends. -}
 getCmd :: FilePath -> Annex ()
-getCmd file = notinBackend file $ \(key, backend) -> do
+getCmd file = inBackend file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
 		then return ()
@@ -167,7 +201,7 @@ getCmd file = notinBackend file $ \(key, backend) -> do
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
 dropCmd :: FilePath -> Annex ()
-dropCmd file = notinBackend file $ \(key, backend) -> do
+dropCmd file = inBackend file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
 		then return () -- no-op
@@ -192,8 +226,8 @@ dropCmd file = notinBackend file $ \(key, backend) -> do
 				else return ()
 
 {- Fixes the symlink to an annexed file. -}
-fixCmd :: String -> Annex ()
-fixCmd file = notinBackend file $ \(key, backend) -> do
+fixCmd :: FilePath -> Annex ()
+fixCmd file = inBackend file $ \(key, backend) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
 	if (link == l)
@@ -223,13 +257,36 @@ initCmd description = do
 			liftIO $ Git.run g ["commit", "-m", "git annex init", log]
 			liftIO $ putStrLn "description set"
 
+{- Adds a file pointing at a manually-specified key -}
+fromKeyCmd :: FilePath -> Annex ()
+fromKeyCmd file = do
+	keyname <- Annex.flagGet "key"
+	if (0 == length keyname)
+		then error "please specify the key with --key"
+		else return ()
+	backends <- Backend.list
+	let key = genKey (backends !! 0) keyname
+
+	inbackend <- Backend.hasKey key
+	if (not inbackend)
+		then error $ "key ("++keyname++") is not present in backend"
+		else return ()
+
+	link <- calcGitLink file key
+	showStart "fromkey" file
+	liftIO $ createDirectoryIfMissing True (parentDir file)
+	liftIO $ createSymbolicLink link file
+	g <- Annex.gitRepo
+	liftIO $ Git.run g ["add", file]
+	showEndOk
+
 -- helpers
-inBackend file a = do
+notInBackend file a = do
 	r <- Backend.lookupFile file
 	case (r) of
 		Just v -> return ()
 		Nothing -> a
-notinBackend file a = do
+inBackend file a = do
 	r <- Backend.lookupFile file
 	case (r) of
 		Just v -> a v

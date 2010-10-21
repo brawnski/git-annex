@@ -4,7 +4,7 @@ git-annex - manage files with git, without checking their contents in
 
 # SYNOPSIS
 
-git annex subcommand [path ...]
+git annex subcommand [params ...]
 
 # DESCRIPTION
 
@@ -97,12 +97,31 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Fixes up symlinks that have become broken to again point to annexed content.
   This is useful to run if you have been moving the symlinks around.
 
+* fromkey file
+
+  This can be used to maually set up a file to link to a specified key
+  in the key-value backend. How you determine an existing key in the backend
+  varies. For the URL backend, the key is just a URL to the content.
+
+  Example:
+
+	git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+
 # OPTIONS
 
 * --force
 
   Force unsafe actions, such as dropping a file's content when no other
   source of it can be verified to still exist. Use with care.
+
+* --backend=name
+
+  Specify the default key-value backend to use, adding it to the front
+  of the list normally configured by `annex.backends`.
+
+* --key=name
+
+  Specifies a key to operate on, for use with the addkey subcommand.
 
 ## CONFIGURATION
 

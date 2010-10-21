@@ -36,7 +36,7 @@ withKey key = do
 	-- mounted at their location). So unless it happens to find all
 	-- remotes, try harder, loading the remotes' configs.
 	remotes <- reposByUUID allremotes uuids
-	remotesread <- Annex.flagIsSet RemotesRead
+	remotesread <- Annex.flagIsSet "remotesread"
 	if ((length allremotes /= length remotes) && not remotesread)
 		then tryharder allremotes uuids
 		else return remotes
@@ -46,7 +46,7 @@ withKey key = do
 			eitherremotes <- mapM tryGitConfigRead allremotes
 			let allremotes' = map fromEither eitherremotes
 			remotes' <- reposByUUID allremotes' uuids
-			Annex.flagChange RemotesRead True
+			Annex.flagChange "remotesread" $ FlagBool True
 			return remotes'
 
 {- Cost Ordered list of remotes. -}

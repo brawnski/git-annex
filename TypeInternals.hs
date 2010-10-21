@@ -7,12 +7,15 @@ module TypeInternals where
 
 import Control.Monad.State (StateT)
 import Data.String.Utils
+import qualified Data.Map as M
 
 import qualified GitRepo as Git
 
-data Flag = 
-	Force |		-- command-line flags
-	RemotesRead	-- indicates that remote repo configs have been read
+-- command-line flags
+type FlagName = String
+data Flag =
+	FlagBool Bool |
+	FlagString String
 		deriving (Eq, Read, Show)
 
 -- git-annex's runtime state type doesn't really belong here,
@@ -21,7 +24,7 @@ data AnnexState = AnnexState {
 	repo :: Git.Repo,
 	backends :: [Backend],
 	supportedBackends :: [Backend],
-	flags :: [Flag]
+	flags :: M.Map FlagName Flag
 } deriving (Show)
 
 -- git-annex's monad
@@ -31,6 +34,10 @@ type Annex = StateT AnnexState IO
 type KeyFrag = String
 type BackendName = String
 data Key = Key (BackendName, KeyFrag) deriving (Eq)
+
+-- constructs a key in a backend
+genKey :: Backend -> KeyFrag -> Key
+genKey b f = Key (name b,f)
 
 -- show a key to convert it to a string; the string includes the
 -- name of the backend to avoid collisions between key strings
@@ -47,10 +54,6 @@ instance Read Key where
 -- pulls the backend name out
 backendName :: Key -> BackendName
 backendName (Key (b,k)) = b
-
--- pulls the key fragment out
-keyFrag :: Key -> KeyFrag
-keyFrag (Key (b,k)) = k
 
 -- this structure represents a key-value backend
 data Backend = Backend {

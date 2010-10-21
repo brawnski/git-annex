@@ -107,7 +107,7 @@ showTriedRemotes remotes =
  - error if not. -}
 checkRemoveKey :: Key -> Annex (Bool)
 checkRemoveKey key = do
-	force <- Annex.flagIsSet Force
+	force <- Annex.flagIsSet "force"
 	if (force)
 		then return True
 		else do

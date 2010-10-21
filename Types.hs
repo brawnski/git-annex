@@ -5,9 +5,10 @@ module Types (
 	AnnexState,
 	Backend,
 	Key,
+	genKey,
 	backendName,
-	keyFrag,
-	Flag(..),
+	FlagName,
+	Flag(..)
 ) where
 
 import TypeInternals
