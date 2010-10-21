@@ -47,7 +47,7 @@ if you are using a centralized bare repository.
 	# git commit -a -m added
 
 Notice you commit at the end, this checks in git-annex's record of the
-files but not thier actual, large, content.
+files but not their actual, large, content.
 
 ## renaming files
 
