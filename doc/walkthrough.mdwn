@@ -145,7 +145,7 @@ from remote URLs. Here's how to set up some files in your repository
 that use this backend:
 
 	# git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
-	add somefile ok
+	fromkey somefile ok
 	# git commit -m "added a file from the Internet Archive"
 
 Now you if you ask git-annex to get that file, it will download it, 
