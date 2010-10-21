@@ -1,0 +1,6 @@
+There should be a backend where the file content is stored.. in a git
+repository!
+
+This way, you know your annexed content is safe & versioned, but you only
+have to deal with the pain of git with large files in one place, and can
+use all of git-annex's features everywhere else.
