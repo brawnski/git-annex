@@ -25,7 +25,7 @@ import Core
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
-list remotes = join " " $ map Git.repoDescribe remotes 
+list remotes = join ", " $ map Git.repoDescribe remotes 
 
 {- Cost ordered list of remotes that the LocationLog indicate may have a key. -}
 withKey :: Key -> Annex [Git.Repo]
