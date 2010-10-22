@@ -10,8 +10,7 @@ module GitRepo (
 	repoFromCwd,
 	repoFromPath,
 	repoFromUrl,
-	repoIsLocal,
-	repoIsRemote,
+	repoIsUrl,
 	repoIsSsh,
 	repoDescribe,
 	workTree,
@@ -46,17 +45,16 @@ import Maybe
 
 import Utility
 
-{- A git repository can be on local disk or remote. Not to be confused
- - with a git repo's configured remotes, some of which may be on local
- - disk. -}
+{- There are two types of repositories; those on local disk and those
+ - accessed via an URL. -}
 data Repo = 
-	LocalRepo {
+	Repo {
 		top :: FilePath,
 		config :: Map String String,
 		remotes :: [Repo],
 		-- remoteName holds the name used for this repo in remotes
 		remoteName :: Maybe String 
-	} | RemoteRepo {
+	} | UrlRepo {
 		url :: URI,
 		config :: Map String String,
 		remotes :: [Repo],
@@ -66,7 +64,7 @@ data Repo =
 {- Local Repo constructor. -}
 repoFromPath :: FilePath -> Repo
 repoFromPath dir =
-	LocalRepo {
+	Repo {
 		top = dir,
 		config = Map.empty,
 		remotes = [],
@@ -76,7 +74,7 @@ repoFromPath dir =
 {- Remote Repo constructor. Throws exception on invalid url. -}
 repoFromUrl :: String -> Repo
 repoFromUrl url =
-	RemoteRepo {
+	UrlRepo {
 		url = fromJust $ parseURI url,
 		config = Map.empty,
 		remotes = [],
@@ -87,7 +85,7 @@ repoFromUrl url =
 repoDescribe repo = 
 	if (isJust $ remoteName repo)
 		then fromJust $ remoteName repo
-		else if (repoIsLocal repo)
+		else if (not $ repoIsUrl repo)
 			then top repo
 			else show (url repo)
 
@@ -103,20 +101,19 @@ repoRemoteName r =
 		then fromJust $ remoteName r
 		else ""
 
-{- Some code needs to vary between remote and local repos,
+{- Some code needs to vary between URL and normal repos,
  - or bare and non-bare, these functions help with that. -}
-repoIsLocal repo = case (repo) of
-	LocalRepo {} -> True
-	RemoteRepo {} -> False
-repoIsRemote repo = not $ repoIsLocal repo
-repoIsSsh repo = repoIsRemote repo && (uriScheme $ url repo) == "ssh:"
-assertlocal repo action = 
-	if (repoIsLocal repo)
+repoIsUrl repo = case (repo) of
+	UrlRepo {} -> True
+	Repo {} -> False
+repoIsSsh repo = repoIsUrl repo && (uriScheme $ url repo) == "ssh:"
+assertLocal repo action = 
+	if (not $ repoIsUrl repo)
 		then action
 		else error $ "acting on remote git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
-assertremote repo action = 
-	if (repoIsRemote repo)
+assertUrl repo action = 
+	if (repoIsUrl repo)
 		then action
 		else error $ "acting on local git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
@@ -135,7 +132,7 @@ bare repo =
 
 {- Path to a repository's gitattributes file. -}
 attributes :: Repo -> String
-attributes repo = assertlocal repo $ do
+attributes repo = assertLocal repo $ do
 	if (bare repo)
 		then (top repo) ++ "/info/.gitattributes"
 		else (top repo) ++ "/.gitattributes"
@@ -147,13 +144,13 @@ dir repo = if (bare repo) then "" else ".git"
 {- Path to a repository's --work-tree. -}
 workTree :: Repo -> FilePath
 workTree repo =
-	if (repoIsLocal) repo
+	if (not $ repoIsUrl repo)
 		then top repo
 		else assertssh repo $ (remoteHost repo) ++ ":" ++ (uriPath $ url repo)
 
 {- Hostname for a remote repo. (May include a username and/or port too.) -}
 remoteHost :: Repo -> String
-remoteHost repo = assertremote repo $ 
+remoteHost repo = assertUrl repo $ 
 	(uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
 	where 
 		a = fromJust $ uriAuthority $ url repo
@@ -175,19 +172,19 @@ relative repo file = drop (length absrepo) absfile
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: Repo -> [String] -> [String]
-gitCommandLine repo params = assertlocal repo $
+gitCommandLine repo params = assertLocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
 	["--git-dir="++(top repo)++"/"++(dir repo), "--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 run :: Repo -> [String] -> IO ()
-run repo params = assertlocal repo $ do
+run repo params = assertLocal repo $ do
 	r <- safeSystem "git" (gitCommandLine repo params)
 	return ()
 
 {- Runs a git subcommand and returns its output. -}
 pipeRead :: Repo -> [String] -> IO String
-pipeRead repo params = assertlocal repo $ do
+pipeRead repo params = assertLocal repo $ do
 	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
 	ret <- hGetContentsStrict h
 	return ret
@@ -208,10 +205,11 @@ notInRepo repo location = do
 
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
-configRead repo = if (repoIsLocal repo)
-	{- Cannot use pipeRead because it relies on the config having
-           been already read. Instead, chdir to the repo. -}
+configRead repo = 
+	if (not $ repoIsUrl repo)
 	then do 
+		{- Cannot use pipeRead because it relies on the config having
+	           been already read. Instead, chdir to the repo. -}
 		cwd <- getCurrentDirectory
 		bracket_ (changeWorkingDirectory (top repo))
 			(\_ -> changeWorkingDirectory cwd) $
