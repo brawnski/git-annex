@@ -92,7 +92,7 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * init description
 
-  Initializes git-annex with a descripotion of the git repository.
+  Initializes git-annex with a description of the git repository.
   This is an optional, but recommended step.
 
 * unannex [path ...]
