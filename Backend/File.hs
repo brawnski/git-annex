@@ -44,9 +44,18 @@ mustProvide = error "must provide this field"
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
 
-{- Just check if the .git/annex/ file for the key exists. -}
+{- Just check if the .git/annex/ file for the key exists. 
+ -
+ - But, if running against a remote annex, need to use ssh to do it. -}
 checkKeyFile :: Key -> Annex Bool
-checkKeyFile k = inAnnex k
+checkKeyFile k = do
+	g <- Annex.gitRepo
+	if (not $ Git.repoIsUrl g)
+		then inAnnex k
+		else do
+			showNote ("checking " ++ Git.repoDescribe g ++ "...")
+			liftIO $ boolSystem "ssh" [Git.urlHost g,
+				"test -e " ++ (shellEscape $ annexLocation g k)]
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
@@ -85,11 +94,13 @@ copyFromRemote r key file = do
 			then getssh
 			else error "copying from non-ssh repo not supported"
 	where
-		location = annexLocation r key
 		getlocal = boolSystem "cp" ["-a", location, file]
 		getssh = do
 			liftIO $ putStrLn "" -- make way for scp progress bar
-			boolSystem "scp" [location, file]
+			-- TODO double-shell-quote path for scp
+			boolSystem "scp" [sshlocation, file]
+		location = annexLocation r key
+		sshlocation = (Git.urlHost r) ++ ":" ++ location
 
 showLocations :: Key -> Annex ()
 showLocations key = do

@@ -16,6 +16,8 @@ module GitRepo (
 	workTree,
 	dir,
 	relative,
+	urlPath,
+	urlHost,
 	configGet,
 	configMap,
 	configRead,
@@ -110,7 +112,7 @@ repoIsSsh repo = repoIsUrl repo && (uriScheme $ url repo) == "ssh:"
 assertLocal repo action = 
 	if (not $ repoIsUrl repo)
 		then action
-		else error $ "acting on remote git repo " ++  (repoDescribe repo) ++ 
+		else error $ "acting on URL git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
 assertUrl repo action = 
 	if (repoIsUrl repo)
@@ -137,23 +139,18 @@ attributes repo = assertLocal repo $ do
 		then (top repo) ++ "/info/.gitattributes"
 		else (top repo) ++ "/.gitattributes"
 
-{- Path to a repository's .git directory, relative to its topdir. -}
+{- Path to a repository's .git directory, relative to its workTree. -}
 dir :: Repo -> String
 dir repo = if (bare repo) then "" else ".git"
 
-{- Path to a repository's --work-tree. -}
+{- Path to a repository's --work-tree, that is, its top.
+ -
+ - Note that for URL repositories, this is relative to the urlHost -}
 workTree :: Repo -> FilePath
 workTree repo =
 	if (not $ repoIsUrl repo)
 		then top repo
-		else assertssh repo $ (remoteHost repo) ++ ":" ++ (uriPath $ url repo)
-
-{- Hostname for a remote repo. (May include a username and/or port too.) -}
-remoteHost :: Repo -> String
-remoteHost repo = assertUrl repo $ 
-	(uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
-	where 
-		a = fromJust $ uriAuthority $ url repo
+		else urlPath repo
 
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
@@ -169,6 +166,18 @@ relative repo file = drop (length absrepo) absfile
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
+
+{- Hostname of an URL repo. (May include a username and/or port too.) -}
+urlHost :: Repo -> String
+urlHost repo = assertUrl repo $ 
+	(uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
+	where 
+		a = fromJust $ uriAuthority $ url repo
+
+{- Path of an URL repo. -}
+urlPath :: Repo -> String
+urlPath repo = assertUrl repo $
+	uriPath $ url repo
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: Repo -> [String] -> [String]
@@ -215,9 +224,9 @@ configRead repo =
 			(\_ -> changeWorkingDirectory cwd) $
 				pOpen ReadFromPipe "git" ["config", "--list"] proc
 	else assertssh repo $ do
-		pOpen ReadFromPipe "ssh" [remoteHost repo, sshcommand] proc
+		pOpen ReadFromPipe "ssh" [urlHost repo, sshcommand] proc
 	where
-		sshcommand = "cd '" ++ (uriPath $ url repo) ++ "' && git config --list"
+		sshcommand = "cd " ++ (shellEscape $ urlPath repo) ++ " && git config --list"
 		proc h = do
 			val <- hGetContentsStrict h
 			let r = repo { config = configParse val }
