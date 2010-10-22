@@ -73,7 +73,7 @@ copyKeyFile key file = do
 			case (result) of
 				Left err -> trycopy full rs
 				Right r' -> do
-					showNote $ "copying from " ++ (Git.repoDescribe r ) ++ "..."
+					showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
 					liftIO $ copyFromRemote r' key file
 
 {- Tries to copy a file from a remote. -}
@@ -81,11 +81,15 @@ copyFromRemote :: Git.Repo -> Key -> FilePath -> IO Bool
 copyFromRemote r key file = do
 	if (Git.repoIsLocal r)
 		then getlocal
-		else getremote
+		else if (Git.repoIsSsh r)
+			then getssh
+			else error "copying from non-ssh repo not supported"
 	where
-		getlocal = boolSystem "cp" ["-a", location, file]
-		getremote = return False -- TODO implement get from remote
 		location = annexLocation r key
+		getlocal = boolSystem "cp" ["-a", location, file]
+		getssh = do
+			liftIO $ putStrLn "" -- make way for scp progress bar
+			boolSystem "scp" [location, file]
 
 showLocations :: Key -> Annex ()
 showLocations key = do
@@ -130,10 +134,10 @@ checkRemoveKey key = do
 				Right True	-> findcopies need (have+1) rs bad
 				Right False	-> findcopies need have rs bad
 				Left _		-> findcopies need have rs (r:bad)
-		remoteHasKey r all = do
+		remoteHasKey remote all = do
 			-- To check if a remote has a key, construct a new
 			-- Annex monad and query its backend.
-			a <- Annex.new r all
+			a <- Annex.new remote all
 			(result, _) <- Annex.run a (Backend.hasKey key)
 			return result
 		notEnoughCopies need have bad = do
