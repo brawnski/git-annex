@@ -102,21 +102,6 @@ copyFromRemote r key file = do
 		location = annexLocation r key
 		sshlocation = (Git.urlHost r) ++ ":" ++ location
 
-showLocations :: Key -> Annex ()
-showLocations key = do
-	g <- Annex.gitRepo
-	u <- getUUID g
-	uuids <- liftIO $ keyLocations g key
-	let uuidsf = filter (\v -> v /= u) uuids
-	ppuuids <- prettyPrintUUIDs uuidsf
-	if (0 < length uuidsf)
-		then showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
-		else showLongNote $ "No other repository is known to contain the file."
-		
-showTriedRemotes remotes =
-	showLongNote $ "I was unable to access these remotes: " ++
-		(Remotes.list remotes)
-
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
  - error if not. -}
@@ -163,3 +148,18 @@ checkRemoveKey key = do
 			return False
 		unsafe = showNote "unsafe"
 		hint = showLongNote $ "(Use --force to override this check, or adjust annex.numcopies.)"
+
+showLocations :: Key -> Annex ()
+showLocations key = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+	uuids <- liftIO $ keyLocations g key
+	let uuidsf = filter (\v -> v /= u) uuids
+	ppuuids <- prettyPrintUUIDs uuidsf
+	if (0 < length uuidsf)
+		then showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
+		else showLongNote $ "No other repository is known to contain the file."
+		
+showTriedRemotes remotes =
+	showLongNote $ "I was unable to access these remotes: " ++
+		(Remotes.list remotes)
