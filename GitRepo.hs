@@ -56,12 +56,11 @@ data Repo =
 		-- remoteName holds the name used for this repo in remotes
 		remoteName :: Maybe String 
 	} | RemoteRepo {
-		url :: String,
-		top :: FilePath,
+		url :: URI,
 		config :: Map String String,
 		remotes :: [Repo],
 		remoteName :: Maybe String
-	} deriving (Show, Read, Eq)
+	} deriving (Show, Eq)
 
 {- Local Repo constructor. -}
 repoFromPath :: FilePath -> Repo
@@ -77,13 +76,11 @@ repoFromPath dir =
 repoFromUrl :: String -> Repo
 repoFromUrl url =
 	RemoteRepo {
-		url = url,
-		top = path url,
+		url = fromJust $ parseURI url,
 		config = Map.empty,
 		remotes = [],
 		remoteName = Nothing
 	}
-	where path url = uriPath $ fromJust $ parseURI url
 
 {- User-visible description of a git repo. -}
 repoDescribe repo = 
@@ -91,7 +88,7 @@ repoDescribe repo =
 		then fromJust $ remoteName repo
 		else if (repoIsLocal repo)
 			then top repo
-			else url repo
+			else show (url repo)
 
 {- Constructs and returns an updated version of a repo with
  - different remotes list. -}
@@ -105,8 +102,8 @@ repoRemoteName r =
 		then fromJust $ remoteName r
 		else ""
 
-{- Some code needs to vary between remote and local repos, or bare and
- - non-bare, these functions help with that. -}
+{- Some code needs to vary between remote and local repos,
+ - or bare and non-bare, these functions help with that. -}
 repoIsLocal repo = case (repo) of
 	LocalRepo {} -> True
 	RemoteRepo {} -> False
@@ -116,6 +113,10 @@ assertlocal repo action =
 		then action
 		else error $ "acting on remote git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
+assertssh repo action = 
+	case (uriScheme $ url repo) of
+		"ssh:" -> action
+		_ -> error $ "unsupported remote repo type " ++ (show $ url repo)
 bare :: Repo -> Bool
 bare repo = 
 	if (member b (config repo))
@@ -193,16 +194,24 @@ notInRepo repo location = do
 
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
-configRead repo = assertlocal repo $ do
+configRead repo = if (repoIsLocal repo)
 	{- Cannot use pipeRead because it relies on the config having
            been already read. Instead, chdir to the repo. -}
-	cwd <- getCurrentDirectory
-	bracket_ (changeWorkingDirectory (top repo))
-		(\_ -> changeWorkingDirectory cwd) $
-			pOpen ReadFromPipe "git" ["config", "--list"] $ \h -> do
-				val <- hGetContentsStrict h
-				let r = repo { config = configParse val }
-				return r { remotes = configRemotes r }
+	then do 
+		cwd <- getCurrentDirectory
+		bracket_ (changeWorkingDirectory (top repo))
+			(\_ -> changeWorkingDirectory cwd) $
+				pOpen ReadFromPipe "git" ["config", "--list"] proc
+	else assertssh repo $ do
+		pOpen ReadFromPipe "ssh" [sshhost, sshcommand] proc
+	where
+		sshhost = (uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
+			where a = fromJust $ uriAuthority $ url repo
+		sshcommand = "cd '" ++ (uriPath $ url repo) ++ "' && git config --list"
+		proc h = do
+			val <- hGetContentsStrict h
+			let r = repo { config = configParse val }
+			return r { remotes = configRemotes r }	
 
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
 configRemotes :: Repo -> [Repo]
