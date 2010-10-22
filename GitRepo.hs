@@ -12,6 +12,7 @@ module GitRepo (
 	repoFromUrl,
 	repoIsLocal,
 	repoIsRemote,
+	repoIsSsh,
 	repoDescribe,
 	workTree,
 	dir,
@@ -108,15 +109,21 @@ repoIsLocal repo = case (repo) of
 	LocalRepo {} -> True
 	RemoteRepo {} -> False
 repoIsRemote repo = not $ repoIsLocal repo
+repoIsSsh repo = repoIsRemote repo && (uriScheme $ url repo) == "ssh:"
 assertlocal repo action = 
 	if (repoIsLocal repo)
 		then action
 		else error $ "acting on remote git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
-assertssh repo action = 
-	case (uriScheme $ url repo) of
-		"ssh:" -> action
-		_ -> error $ "unsupported remote repo type " ++ (show $ url repo)
+assertremote repo action = 
+	if (repoIsRemote repo)
+		then action
+		else error $ "acting on local git repo " ++  (repoDescribe repo) ++ 
+				" not supported"
+assertssh repo action =
+	if (repoIsSsh repo)
+		then action
+		else error $ "unsupported url " ++ (show $ url repo)
 bare :: Repo -> Bool
 bare repo = 
 	if (member b (config repo))
@@ -135,14 +142,21 @@ attributes repo = assertlocal repo $ do
 
 {- Path to a repository's .git directory, relative to its topdir. -}
 dir :: Repo -> String
-dir repo = assertlocal repo $
-	if (bare repo)
-		then ""
-		else ".git"
+dir repo = if (bare repo) then "" else ".git"
 
 {- Path to a repository's --work-tree. -}
 workTree :: Repo -> FilePath
-workTree repo = top repo
+workTree repo =
+	if (repoIsLocal) repo
+		then top repo
+		else assertssh repo $ (remoteHost repo) ++ ":" ++ (uriPath $ url repo)
+
+{- Hostname for a remote repo. (May include a username and/or port too.) -}
+remoteHost :: Repo -> String
+remoteHost repo = assertremote repo $ 
+	(uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
+	where 
+		a = fromJust $ uriAuthority $ url repo
 
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
@@ -203,10 +217,8 @@ configRead repo = if (repoIsLocal repo)
 			(\_ -> changeWorkingDirectory cwd) $
 				pOpen ReadFromPipe "git" ["config", "--list"] proc
 	else assertssh repo $ do
-		pOpen ReadFromPipe "ssh" [sshhost, sshcommand] proc
+		pOpen ReadFromPipe "ssh" [remoteHost repo, sshcommand] proc
 	where
-		sshhost = (uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
-			where a = fromJust $ uriAuthority $ url repo
 		sshcommand = "cd '" ++ (uriPath $ url repo) ++ "' && git config --list"
 		proc h = do
 			val <- hGetContentsStrict h
