@@ -154,6 +154,8 @@ Like other git commands, git-annex is configured via `.git/config`.
   repositories. Note that other factors may be configured when pushing
   files to repositories, in particular, whether the repository is on
   a filesystem with sufficient free space.
+* `remote.<name>.annex-ignore` -- If set to "true", prevents git-annex
+  from ever using this remote.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
   here.
 

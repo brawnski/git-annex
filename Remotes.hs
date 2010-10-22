@@ -8,6 +8,7 @@ module Remotes (
 
 import Control.Exception
 import Control.Monad.State (liftIO)
+import Control.Monad (filterM)
 import qualified Data.Map as Map
 import Data.String.Utils
 import Data.Either.Utils
@@ -20,6 +21,7 @@ import qualified Annex
 import LocationLog
 import Locations
 import UUID
+import Core
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -31,23 +33,36 @@ withKey key = do
 	g <- Annex.gitRepo
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
-	-- This only uses cached data, so may not include new remotes
-	-- or remotes whose uuid has changed (eg by a different drive being
-	-- mounted at their location). So unless it happens to find all
-	-- remotes, try harder, loading the remotes' configs.
-	remotes <- reposByUUID allremotes uuids
+	-- To determine if a remote has a key, its UUID needs to be known.
+	-- The locally cached UIIDs of remotes can fall out of date if
+	-- eg, a different drive is mounted at the same location.
+	-- But, reading the config of remotes can be expensive, so make
+	-- sure we only do it once per git-annex run.
 	remotesread <- Annex.flagIsSet "remotesread"
-	if ((length allremotes /= length remotes) && not remotesread)
-		then tryharder allremotes uuids
-		else return remotes
+	if (remotesread)
+		then reposByUUID allremotes uuids
+		else do
+			-- We assume that it's cheap to read the config
+			-- of non-URL remotes, so that is done each time.
+			-- But reading the config of an URL remote is
+			-- only done when there is no cached UUID value.
+			let cheap = filter (not . Git.repoIsUrl) allremotes
+			let expensive = filter Git.repoIsUrl allremotes
+			doexpensive <- filterM cachedUUID expensive
+			if (0 < length doexpensive)
+				then showNote $ "getting UUIDs for " ++ (list doexpensive) ++ "..."
+				else return ()
+			let todo = cheap ++ doexpensive
+			if (0 < length todo)
+				then do
+					e <- mapM tryGitConfigRead todo
+					Annex.flagChange "remotesread" $ FlagBool True
+					withKey key
+				else reposByUUID allremotes uuids
 	where
-		tryharder allremotes uuids = do
-			-- more expensive; read each remote's config
-			eitherremotes <- mapM tryGitConfigRead allremotes
-			let allremotes' = map fromEither eitherremotes
-			remotes' <- reposByUUID allremotes' uuids
-			Annex.flagChange "remotesread" $ FlagBool True
-			return remotes'
+		cachedUUID r = do
+			u <- getUUID r
+			return $ 0 == length u 
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
@@ -55,10 +70,11 @@ remotesByCost = do
 	g <- Annex.gitRepo
 	reposByCost $ Git.remotes g
 
-{- Orders a list of git repos by cost. -}
+{- Orders a list of git repos by cost, and throws out ignored ones. -}
 reposByCost :: [Git.Repo] -> Annex [Git.Repo]
 reposByCost l = do
-	costpairs <- mapM costpair l
+	notignored <- filterM repoNotIgnored l
+	costpairs <- mapM costpair notignored
 	return $ fst $ unzip $ sortBy bycost $ costpairs
 	where
 		costpair r = do
@@ -76,12 +92,21 @@ repoCost r = do
 	g <- Annex.gitRepo
 	if ((length $ config g r) > 0)
 		then return $ read $ config g r
-		else if (Git.repoIsLocal r)
-			then return 100
-			else return 200
+		else if (Git.repoIsUrl r)
+			then return 200
+			else return 100
 	where
 		config g r = Git.configGet g (configkey r) ""
 		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
+
+{- Checks if a repo should be ignored. -}
+repoNotIgnored :: Git.Repo -> Annex Bool
+repoNotIgnored r = do
+	g <- Annex.gitRepo
+	return ("true" /= config g r)
+	where
+		config g r = Git.configGet g (configkey r) ""
+		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
 
 {- The git configs for the git repo's remotes is not read on startup
  - because reading it may be expensive. This function tries to read the
@@ -95,7 +120,7 @@ tryGitConfigRead r = do
 			-- for other reasons; catch all possible exceptions
 			result <- liftIO $ (try (Git.configRead r)::IO (Either SomeException (Git.Repo)))
 			case (result) of
-				Left err -> return $ Left r
+				Left e -> return $ Left r
 				Right r' -> do
 					g <- Annex.gitRepo
 					let l = Git.remotes g

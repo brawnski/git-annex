@@ -1,6 +1,7 @@
 git-annex (0.02) UNRELEASED; urgency=low
 
   * New fromkey subcommand, for registering urls, etc.
+  * Can scp annexed files from remotes.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 21 Oct 2010 16:38:00 -0400
 

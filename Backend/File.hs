@@ -79,7 +79,7 @@ copyKeyFile key file = do
 {- Tries to copy a file from a remote. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> IO Bool
 copyFromRemote r key file = do
-	if (Git.repoIsLocal r)
+	if (not $ Git.repoIsUrl r)
 		then getlocal
 		else if (Git.repoIsSsh r)
 			then getssh
