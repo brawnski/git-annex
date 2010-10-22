@@ -7,7 +7,8 @@ module Utility (
 	parentDir,
 	relPathCwdToDir,
 	relPathDirToDir,
-	boolSystem
+	boolSystem,
+	shellEscape
 ) where
 
 import System.IO
@@ -108,3 +109,9 @@ boolSystem command params = do
 		ExitFailure e -> if Just e == cast sigINT
 			then error $ command ++ "interrupted"
 			else return False
+
+{- Escapes a filename to be safely able to be exposed to the shell. -}
+shellEscape f = "'" ++ quote ++ "'"
+	where
+		-- replace ' with '"'"'
+		quote = join "'\"'\"'" $ split "'" f
