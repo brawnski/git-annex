@@ -198,9 +198,10 @@ copyFromRemote r key file = do
 				else if (Git.repoIsSsh r)
 					then getssh
 					else error "copying from non-ssh repo not supported"
-		getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
-		getssh = do
-			liftIO $ putStrLn "" -- make way for scp progress bar
-			liftIO $ boolSystem "scp" [sshlocation, file]
-		location = annexLocation r key
-		sshlocation = (Git.urlHost r) ++ ":" ++ location
+			where
+				getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
+				getssh = do
+					liftIO $ putStrLn "" -- make way for scp progress bar
+					liftIO $ boolSystem "scp" [sshlocation, file]
+				location = annexLocation r key
+				sshlocation = (Git.urlHost r) ++ ":" ++ location
