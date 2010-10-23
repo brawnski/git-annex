@@ -105,7 +105,9 @@ repoCost r = do
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
 	g <- Annex.gitRepo
-	name <- Annex.flagGet "repository"
+	fromName <- Annex.flagGet "fromrepository"
+	toName <- Annex.flagGet "torepository"
+	let name = if (not $ null fromName) then fromName else toName
 	if (not $ null name)
 		then return $ match name
 		else return $ notignored g

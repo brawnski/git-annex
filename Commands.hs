@@ -62,9 +62,9 @@ options = [
 		"specify default key-value backend to use"
 	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")
 		"specify a key to use"
-	  , Option ['t'] ["to"] (ReqArg (storestring "repository") "REPOSITORY")
+	  , Option ['t'] ["to"] (ReqArg (storestring "torepository") "REPOSITORY")
 		"specify a repository to transfer content to"
-	  , Option ['f'] ["from"] (ReqArg (storestring "repository") "REPOSITORY")
+	  , Option ['f'] ["from"] (ReqArg (storestring "fromrepository") "REPOSITORY")
 		"specify a repository to transfer content from"
 	  ]
 	where
