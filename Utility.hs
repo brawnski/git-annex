@@ -45,7 +45,7 @@ hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
 {- Returns the parent directory of a path. Parent of / is "" -}
 parentDir :: String -> String
 parentDir dir =
-	if length dirs > 0
+	if (not $ null dirs)
 	then slash ++ (join s $ take ((length dirs) - 1) dirs)
 	else ""
 		where
@@ -81,7 +81,7 @@ relPathCwdToDir dir = do
  -}
 relPathDirToDir :: FilePath -> FilePath -> FilePath
 relPathDirToDir from to = 
-	if (0 < length path)
+	if (not $ null path)
 		then addTrailingPathSeparator path
 		else ""
 	where

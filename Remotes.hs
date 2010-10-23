@@ -49,11 +49,11 @@ withKey key = do
 			let cheap = filter (not . Git.repoIsUrl) allremotes
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
-			if (0 < length doexpensive)
+			if (not $ null doexpensive)
 				then showNote $ "getting UUIDs for " ++ (list doexpensive) ++ "..."
 				else return ()
 			let todo = cheap ++ doexpensive
-			if (0 < length todo)
+			if (not $ null todo)
 				then do
 					e <- mapM tryGitConfigRead todo
 					Annex.flagChange "remotesread" $ FlagBool True
@@ -62,7 +62,7 @@ withKey key = do
 	where
 		cachedUUID r = do
 			u <- getUUID r
-			return $ 0 == length u 
+			return $ null u 
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
@@ -90,7 +90,7 @@ reposByCost l = do
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
 	g <- Annex.gitRepo
-	if ((length $ config g r) > 0)
+	if (not $ null $ config g r)
 		then return $ read $ config g r
 		else if (Git.repoIsUrl r)
 			then return 200

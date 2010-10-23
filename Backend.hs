@@ -40,21 +40,21 @@ import qualified TypeInternals as Internals
 list :: Annex [Backend]
 list = do
 	l <- Annex.backends -- list is cached here
-	if (0 < length l)
+	if (not $ null l)
 		then return l
 		else do
 			all <- Annex.supportedBackends
 			g <- Annex.gitRepo
 			let l = parseBackendList all $ Git.configGet g "annex.backends" ""
 			backendflag <- Annex.flagGet "backend"
-			let l' = if (0 < length backendflag)
+			let l' = if (not $ null backendflag)
 				then (lookupBackendName all backendflag):l
 				else l
 			Annex.backendsChange $ l'
 			return l'
 	where
 		parseBackendList all s = 
-			if (length s == 0)
+			if (null s)
 				then all
 				else map (lookupBackendName all) $ words s
 

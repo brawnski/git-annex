@@ -62,7 +62,7 @@ checkKeyFile k = do
 copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
 	remotes <- Remotes.withKey key
-	if (0 == length remotes)
+	if (null remotes)
 		then do
 			showNote "not available"
 			showLocations key
@@ -142,7 +142,7 @@ checkRemoveKey key = do
 				"Could only verify the existence of " ++
 				(show have) ++ " out of " ++ (show need) ++ 
 				" necessary copies"
-			if (0 /= length bad) then showTriedRemotes bad else return ()
+			if (not $ null bad) then showTriedRemotes bad else return ()
 			showLocations key
 			hint
 			return False
@@ -156,9 +156,9 @@ showLocations key = do
 	uuids <- liftIO $ keyLocations g key
 	let uuidsf = filter (\v -> v /= u) uuids
 	ppuuids <- prettyPrintUUIDs uuidsf
-	if (0 < length uuidsf)
-		then showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
-		else showLongNote $ "No other repository is known to contain the file."
+	if (null uuidsf)
+		then showLongNote $ "No other repository is known to contain the file."
+		else showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
 		
 showTriedRemotes remotes =
 	showLongNote $ "I was unable to access these remotes: " ++

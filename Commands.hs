@@ -117,9 +117,9 @@ findWanted Description params _ = do
 parseCmd :: [String] -> AnnexState -> IO ([Annex ()], [Annex ()])
 parseCmd argv state = do
 	(flags, params) <- getopt
-	case (length params) of
-		0 -> error usage
-		_ -> case (lookupCmd (params !! 0)) of
+	if (null params)
+		then error usage
+		else case (lookupCmd (params !! 0)) of
 			[] -> error usage
 			[Command _ action want _] -> do
 				f <- findWanted want (drop 1 params)
@@ -258,7 +258,7 @@ fixCmd file = inBackend file $ \(key, backend) -> do
 {- Stores description for the repository. -}
 initCmd :: String -> Annex ()
 initCmd description = do
-	if (0 == length description)
+	if (null description)
 		then error $ 
 			"please specify a description of this repository\n" ++
 			usage
@@ -275,7 +275,7 @@ initCmd description = do
 fromKeyCmd :: FilePath -> Annex ()
 fromKeyCmd file = do
 	keyname <- Annex.flagGet "key"
-	if (0 == length keyname)
+	if (null keyname)
 		then error "please specify the key with --key"
 		else return ()
 	backends <- Backend.list

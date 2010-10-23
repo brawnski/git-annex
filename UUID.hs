@@ -103,7 +103,7 @@ prettyPrintUUIDs uuids = do
 	return $ unwords $ map (\u -> "\t"++(prettify m u)++"\n") uuids
 	where
 		prettify m u =
-			if (0 < (length $ findlog m u))
+			if (not $ null $ findlog m u)
 				then u ++ "  -- " ++ (findlog m u)
 				else u
 		findlog m u = M.findWithDefault "" u m
