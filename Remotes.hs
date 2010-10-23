@@ -4,7 +4,9 @@ module Remotes (
 	list,
 	keyPossibilities,
 	tryGitConfigRead,
-	inAnnex
+	inAnnex,
+	commandLineRemote,
+	copyFromRemote
 ) where
 
 import Control.Exception
@@ -20,10 +22,11 @@ import Types
 import qualified GitRepo as Git
 import qualified Annex
 import qualified Backend
+import qualified Core
 import LocationLog
 import Locations
 import UUID
-import qualified Core
+import Utility
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -134,6 +137,22 @@ repoNotIgnored r = do
 		config g = Git.configGet g configkey ""
 		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
 
+{- Returns the remote specified by --from or --to, may fail with error. -}
+commandLineRemote :: Annex Git.Repo
+commandLineRemote = do
+	fromName <- Annex.flagGet "fromrepository"
+	toName <- Annex.flagGet "torepository"
+	let name = if (not $ null fromName) then fromName else toName
+	if (null name)
+		then error "no remote specified"
+		else do
+			g <- Annex.gitRepo
+			let match = filter (\r -> name == Git.repoRemoteName r) $
+				Git.remotes g
+			if (null match)
+				then error $ "there is no git remote named \"" ++ name ++ "\""
+				else return $ match !! 0
+
 {- The git configs for the git repo's remotes is not read on startup
  - because reading it may be expensive. This function tries to read the
  - config for a specified remote, and updates state. If successful, it
@@ -161,3 +180,27 @@ tryGitConfigRead r = do
 			if ((Git.repoRemoteName old) == (Git.repoRemoteName new))
 				then new:(exchange ls new)
 				else old:(exchange ls new)
+
+{- Tries to copy a file from a remote. -}
+copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
+copyFromRemote r key file = do
+	-- annexLocation needs the git config to have been read for a remote,
+	-- so do that now if it hasn't been already
+	result <- tryGitConfigRead r
+	case (result) of
+		Left err -> return False
+		Right r' -> copy r'
+	where
+		copy r = do
+			Core.showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
+			if (not $ Git.repoIsUrl r)
+				then getlocal
+				else if (Git.repoIsSsh r)
+					then getssh
+					else error "copying from non-ssh repo not supported"
+		getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
+		getssh = do
+			liftIO $ putStrLn "" -- make way for scp progress bar
+			liftIO $ boolSystem "scp" [sshlocation, file]
+		location = annexLocation r key
+		sshlocation = (Git.urlHost r) ++ ":" ++ location

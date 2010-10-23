@@ -66,31 +66,10 @@ copyKeyFile key file = do
 			showLocations key
 			return False
 		trycopy full (r:rs) = do
-			-- annexLocation needs the git config to have been
-			-- read for a remote, so do that now,
-			-- if it hasn't been already
-			result <- Remotes.tryGitConfigRead r
-			case (result) of
-				Left err -> trycopy full rs
-				Right r' -> do
-					showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
-					liftIO $ copyFromRemote r' key file
-
-{- Tries to copy a file from a remote. -}
-copyFromRemote :: Git.Repo -> Key -> FilePath -> IO Bool
-copyFromRemote r key file = do
-	if (not $ Git.repoIsUrl r)
-		then getlocal
-		else if (Git.repoIsSsh r)
-			then getssh
-			else error "copying from non-ssh repo not supported"
-	where
-		getlocal = boolSystem "cp" ["-a", location, file]
-		getssh = do
-			liftIO $ putStrLn "" -- make way for scp progress bar
-			boolSystem "scp" [sshlocation, file]
-		location = annexLocation r key
-		sshlocation = (Git.urlHost r) ++ ":" ++ location
+			copied <- Remotes.copyFromRemote r key file
+			if (copied)
+				then return True
+				else trycopy full rs
 
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
