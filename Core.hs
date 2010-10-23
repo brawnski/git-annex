@@ -94,6 +94,24 @@ logStatus key status = do
 	u <- getUUID g
 	liftIO $ logChange g key u status
 
+{- Runs an action, passing it a temporary filename to download,
+ - and if the action succeeds, moves the temp file into 
+ - the annex as a key's content. -}
+getViaTmp :: Key -> (FilePath -> Annex (Bool)) -> Annex ()
+getViaTmp key action = do
+	g <- Annex.gitRepo
+	let dest = annexLocation g key
+	let tmp = (annexTmpLocation g) ++ (keyFile key)
+	liftIO $ createDirectoryIfMissing True (parentDir tmp)
+	success <- action tmp
+	if (success)
+		then do
+			liftIO $ renameFile tmp dest
+			logStatus key ValuePresent
+			showEndOk
+		else do
+			showEndFail
+
 {- Output logging -}
 showStart :: String -> String -> Annex ()
 showStart command file = do
