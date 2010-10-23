@@ -48,11 +48,11 @@ content from the key-value store.
 	add iso/Debian_5.0.iso ok
 	# git commit -a -m "saving Debian CD for later"
 	
-	# git annex drop iso
-	drop iso/Debian_5.0.iso ok
+	# git annex drop iso/Debian_4.0.iso
+	drop iso/Debian_4.0.iso ok
 	# git commit -a -m "freed up space"
 	
-	# git annex move video --to=usbdrive
+	# git annex move iso --to=usbdrive
 	move iso/Debian_5.0.iso (to usbdrive...) ok
 
 # SUBCOMMANDS
@@ -83,12 +83,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * move [path ...]
 
-  Moves the content of annexed files from the current repository to
-  another one. Use with the --to option.
+  When used with the --to option, moves the content of annexed files from
+  the current repository to the specified one.
 
-   Note that unlike drop, this does not honor annex.numcopies.
-   A file's content can be moved even if there are insufficient
-   copies to allow it to be dropped.
+  When used with the --from option, moves the content of annexed files
+  from the specified repository to the current one.
 
 * init description
 
@@ -137,8 +136,6 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Specifies a repository that content will be retrieved from.
   It should be specified using the name of a configured git remote.
-
-  This can be used to limit the repository used by 'git annex get'.
 
 * --to=repository
 
