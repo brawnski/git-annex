@@ -166,7 +166,7 @@ Now you can get files and they will be transferred by `scp`:
 	# git annex get my_cool_big_file
 	get my_cool_big_file (getting UUIDs for origin...) (copying from origin...)
 	WORM:1285650548:2159:my_cool_big_file       100% 2159     2.1KB/s   00:00
-	 ok
+	ok
 
 When you drop files, git-annex will ssh over to the remote and make
 sure the file's content is still there before removing it locally:
@@ -202,7 +202,7 @@ and cache it locally.
 	# git annex get somefile
 	get somefile (downloading)
 	#########################################################################100.0%
-	 ok
+	ok
 
 You can always drop files downloaded by the URL backend. It is assumed
 that the URL is stable; no local backup is kept.
