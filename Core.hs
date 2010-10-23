@@ -97,11 +97,11 @@ logStatus key status = do
 {- Output logging -}
 showStart :: String -> String -> Annex ()
 showStart command file = do
-	liftIO $ putStr $ command ++ " " ++ file
+	liftIO $ putStr $ command ++ " " ++ file ++ " "
 	liftIO $ hFlush stdout
 showNote :: String -> Annex ()
 showNote s = do
-	liftIO $ putStr $ " (" ++ s ++ ")"
+	liftIO $ putStr $ "(" ++ s ++ ") "
 	liftIO $ hFlush stdout
 showLongNote :: String -> Annex ()
 showLongNote s = do
@@ -110,7 +110,7 @@ showLongNote s = do
 		indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s 
 showEndOk :: Annex ()
 showEndOk = do
-	liftIO $ putStrLn " ok"
+	liftIO $ putStrLn "ok"
 showEndFail :: Annex ()
 showEndFail = do
 	liftIO $ putStrLn "\nfailed"
