@@ -308,12 +308,13 @@ moveTo file = isAnnexed file $ \(key, backend) -> do
 			isthere <- Remotes.inAnnex remote key
 			case isthere of
 				Left err -> error (show err)
-				Right True -> removeit
-				Right False -> moveit
+				Right False -> moveit remote key
+				Right True -> removeit remote key
 	where
-		moveit = do
-			error $ "TODO move" ++ file
-		removeit = do
+		moveit remote key = do
+			Remotes.copyToRemote remote key
+			removeit remote key
+		removeit remote key = do
 			error $ "TODO remove" ++ file
 
 {- Moves the content of an annexed file from another repository to the current

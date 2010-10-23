@@ -6,7 +6,8 @@ module Remotes (
 	tryGitConfigRead,
 	inAnnex,
 	commandLineRemote,
-	copyFromRemote
+	copyFromRemote,
+	copyToRemote
 ) where
 
 import Control.Exception
@@ -70,13 +71,11 @@ keyPossibilities key = do
 			return $ null u 
 
 {- Checks if a given remote has the content for a key inAnnex.
- -
- - This is done by constructing a new Annex monad using the remote.
- -
  - If the remote cannot be accessed, returns a Left error.
  -}
 inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
 inAnnex remote key = do
+	-- the check needs to run in an Annex monad using the remote
 	a <- liftIO $ Annex.new remote []
 	liftIO $ ((try $ check a)::IO (Either IOException Bool))
 	where
@@ -181,7 +180,7 @@ tryGitConfigRead r = do
 				then new:(exchange ls new)
 				else old:(exchange ls new)
 
-{- Tries to copy a file from a remote. -}
+{- Tries to copy a key's content from a remote to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyFromRemote r key file = do
 	-- annexLocation needs the git config to have been read for a remote,
@@ -189,13 +188,13 @@ copyFromRemote r key file = do
 	result <- tryGitConfigRead r
 	case (result) of
 		Left err -> return False
-		Right r' -> copy r'
+		Right from -> copy from
 	where
-		copy r = do
-			Core.showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
-			if (not $ Git.repoIsUrl r)
+		copy from = do
+			Core.showNote $ "copying from " ++ (Git.repoDescribe from) ++ "..."
+			if (not $ Git.repoIsUrl from)
 				then getlocal
-				else if (Git.repoIsSsh r)
+				else if (Git.repoIsSsh from)
 					then getssh
 					else error "copying from non-ssh repo not supported"
 			where
@@ -203,5 +202,24 @@ copyFromRemote r key file = do
 				getssh = do
 					liftIO $ putStrLn "" -- make way for scp progress bar
 					liftIO $ boolSystem "scp" [sshlocation, file]
-				location = annexLocation r key
-				sshlocation = (Git.urlHost r) ++ ":" ++ location
+				location = annexLocation from key
+				sshlocation = (Git.urlHost from) ++ ":" ++ location
+
+{- Tries to copy a key's content to a remote. -}
+copyToRemote :: Git.Repo -> Key -> Annex Bool
+copyToRemote r key = do
+	g <- Annex.gitRepo
+	Core.showNote $ "copying to " ++ (Git.repoDescribe r) ++ "..."
+	if (not $ Git.repoIsUrl r)
+		then sendlocal g
+		else if (Git.repoIsSsh r)
+			then sendssh g
+			else error "copying to non-ssh repo not supported"
+	where
+		sendlocal g = liftIO $ boolSystem "cp" ["-a", location g, file]
+		sendssh g = do
+			liftIO $ putStrLn "" -- make way for scp progress bar
+			liftIO $ boolSystem "scp" [location g, sshlocation]
+		location g = annexLocation g key
+		sshlocation = (Git.urlHost r) ++ ":" ++ file
+		file = error "TODO"
