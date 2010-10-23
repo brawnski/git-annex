@@ -2,8 +2,9 @@
 
 module Remotes (
 	list,
-	withKey,
-	tryGitConfigRead
+	keyPossibilities,
+	tryGitConfigRead,
+	inAnnex
 ) where
 
 import Control.Exception
@@ -18,18 +19,19 @@ import Maybe
 import Types
 import qualified GitRepo as Git
 import qualified Annex
+import qualified Backend
 import LocationLog
 import Locations
 import UUID
-import Core
+import qualified Core
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
 list remotes = join ", " $ map Git.repoDescribe remotes 
 
 {- Cost ordered list of remotes that the LocationLog indicate may have a key. -}
-withKey :: Key -> Annex [Git.Repo]
-withKey key = do
+keyPossibilities :: Key -> Annex [Git.Repo]
+keyPossibilities key = do
 	g <- Annex.gitRepo
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
@@ -50,19 +52,34 @@ withKey key = do
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
 			if (not $ null doexpensive)
-				then showNote $ "getting UUIDs for " ++ (list doexpensive) ++ "..."
+				then Core.showNote $ "getting UUIDs for " ++ (list doexpensive) ++ "..."
 				else return ()
 			let todo = cheap ++ doexpensive
 			if (not $ null todo)
 				then do
 					e <- mapM tryGitConfigRead todo
 					Annex.flagChange "remotesread" $ FlagBool True
-					withKey key
+					keyPossibilities key
 				else reposByUUID allremotes uuids
 	where
 		cachedUUID r = do
 			u <- getUUID r
 			return $ null u 
+
+{- Checks if a given remote has the content for a key inAnnex.
+ -
+ - This is done by constructing a new Annex monad using the remote.
+ -
+ - If the remote cannot be accessed, returns a Left error.
+ -}
+inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
+inAnnex remote key = do
+	a <- liftIO $ Annex.new remote []
+	liftIO $ ((try $ check a)::IO (Either IOException Bool))
+	where
+		check a = do
+			(result, _) <- Annex.run a (Core.inAnnex key)
+			return result
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]

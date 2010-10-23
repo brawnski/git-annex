@@ -44,24 +44,15 @@ mustProvide = error "must provide this field"
 dummyStore :: FilePath -> Key -> Annex (Bool)
 dummyStore file key = return True
 
-{- Just check if the .git/annex/ file for the key exists. 
- -
- - But, if running against a remote annex, need to use ssh to do it. -}
+{- Just check if the .git/annex/ file for the key exists. -}
 checkKeyFile :: Key -> Annex Bool
-checkKeyFile k = do
-	g <- Annex.gitRepo
-	if (not $ Git.repoIsUrl g)
-		then inAnnex k
-		else do
-			showNote ("checking " ++ Git.repoDescribe g ++ "...")
-			liftIO $ boolSystem "ssh" [Git.urlHost g,
-				"test -e " ++ (shellEscape $ annexLocation g k)]
+checkKeyFile k = inAnnex k
 
 {- Try to find a copy of the file in one of the remotes,
  - and copy it over to this one. -}
 copyKeyFile :: Key -> FilePath -> Annex (Bool)
 copyKeyFile key file = do
-	remotes <- Remotes.withKey key
+	remotes <- Remotes.keyPossibilities key
 	if (null remotes)
 		then do
 			showNote "not available"
@@ -97,7 +88,6 @@ copyFromRemote r key file = do
 		getlocal = boolSystem "cp" ["-a", location, file]
 		getssh = do
 			liftIO $ putStrLn "" -- make way for scp progress bar
-			-- TODO double-shell-quote path for scp
 			boolSystem "scp" [sshlocation, file]
 		location = annexLocation r key
 		sshlocation = (Git.urlHost r) ++ ":" ++ location
@@ -112,7 +102,7 @@ checkRemoveKey key = do
 		then return True
 		else do
 			g <- Annex.gitRepo
-			remotes <- Remotes.withKey key
+			remotes <- Remotes.keyPossibilities key
 			let numcopies = read $ Git.configGet g config "1"
 			if (numcopies > length remotes)
 				then notEnoughCopies numcopies (length remotes) []
@@ -124,18 +114,11 @@ checkRemoveKey key = do
 				then return True
 				else notEnoughCopies need have bad
 		findcopies need have (r:rs) bad = do
-			all <- Annex.supportedBackends
-			result <- liftIO $ ((try $ remoteHasKey r all)::IO (Either SomeException Bool))
-			case (result) of
+			haskey <- Remotes.inAnnex r key
+			case (haskey) of
 				Right True	-> findcopies need (have+1) rs bad
 				Right False	-> findcopies need have rs bad
 				Left _		-> findcopies need have rs (r:bad)
-		remoteHasKey remote all = do
-			-- To check if a remote has a key, construct a new
-			-- Annex monad and query its backend.
-			a <- Annex.new remote all
-			(result, _) <- Annex.run a (Backend.hasKey key)
-			return result
 		notEnoughCopies need have bad = do
 			unsafe
 			showLongNote $
