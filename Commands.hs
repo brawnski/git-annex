@@ -62,8 +62,10 @@ options = [
 		"specify default key-value backend to use"
 	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")
 		"specify a key to use"
-	  , Option ['r'] ["repository"] (ReqArg (storestring "repository") "REPOSITORY")
-		"specify a repository"
+	  , Option ['t'] ["to"] (ReqArg (storestring "repository") "REPOSITORY")
+		"specify a repository to transfer content to"
+	  , Option ['f'] ["from"] (ReqArg (storestring "repository") "REPOSITORY")
+		"specify a repository to transfer content from"
 	  ]
 	where
 		storebool n b = Annex.flagChange n $ FlagBool b

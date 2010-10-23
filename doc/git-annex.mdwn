@@ -133,10 +133,17 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Specifies a key to operate on, for use with the addkey subcommand.
 
+* --from=repository
+
+  Specifies a repository that content will be retrieved from.
+  It should be specified using the name of a configured git remote.
+
+  This can be used to limit the repository used by 'git annex get'.
+
 * --to=repository
 
   Specifies a git repository that content will be sent to. 
-  It can be specified by a path, url, or remote name.
+  It should be specified using the name of a configured git remote.
 
 ## CONFIGURATION
 

@@ -70,7 +70,7 @@ remotesByCost = do
 	g <- Annex.gitRepo
 	reposByCost $ Git.remotes g
 
-{- Orders a list of git repos by cost, and throws out ignored ones. -}
+{- Orders a list of git repos by cost. Throws out ignored ones. -}
 reposByCost :: [Git.Repo] -> Annex [Git.Repo]
 reposByCost l = do
 	notignored <- filterM repoNotIgnored l
@@ -99,14 +99,21 @@ repoCost r = do
 		config g r = Git.configGet g (configkey r) ""
 		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
 
-{- Checks if a repo should be ignored. -}
+{- Checks if a repo should be ignored, based either on annex-ignore
+ - setting, or on command-line options. Allows command-line to override
+ - annex-ignore. -}
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
 	g <- Annex.gitRepo
-	return ("true" /= config g r)
+	name <- Annex.flagGet "repository"
+	if (not $ null name)
+		then return $ match name
+		else return $ notignored g
 	where
-		config g r = Git.configGet g (configkey r) ""
-		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
+		match name = name == Git.repoRemoteName r
+		notignored g = "true" /= config g
+		config g = Git.configGet g configkey ""
+		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
 
 {- The git configs for the git repo's remotes is not read on startup
  - because reading it may be expensive. This function tries to read the

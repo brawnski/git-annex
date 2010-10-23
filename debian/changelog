@@ -5,6 +5,8 @@ git-annex (0.02) UNRELEASED; urgency=low
     file content when dropping files.
   * Add remote.annex-ignore git config setting to allow completly disabling
     a given remote.
+  * --from/--to can be used to limit the remote repository that git-annex
+    uses.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 21 Oct 2010 16:38:00 -0400
 
