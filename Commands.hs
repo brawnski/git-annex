@@ -41,7 +41,7 @@ cmds =  [
 	, (Command "drop"	dropCmd		FilesInGit
 		"indicate content of files not currently wanted")
 	, (Command "move"	moveCmd		FilesInGit
-		"transfer content of files to another repository")
+		"transfer content of files to/from another repository")
 	, (Command "init"	initCmd		Description
 		"initialize git-annex with repository description")
 	, (Command "unannex"	unannexCmd	FilesInGit
@@ -63,9 +63,9 @@ options = [
 	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")
 		"specify a key to use"
 	  , Option ['t'] ["to"] (ReqArg (storestring "torepository") "REPOSITORY")
-		"specify a repository to transfer content to"
+		"specify to where to transfer content"
 	  , Option ['f'] ["from"] (ReqArg (storestring "fromrepository") "REPOSITORY")
-		"specify a repository to transfer content from"
+		"specify from where to transfer content"
 	  ]
 	where
 		storebool n b = Annex.flagChange n $ FlagBool b
@@ -136,7 +136,7 @@ parseCmd argv state = do
 {- Annexes a file, storing it in a backend, and then moving it into
  - the annex directory and setting up the symlink pointing to its content. -}
 addCmd :: FilePath -> Annex ()
-addCmd file = notInBackend file $ do
+addCmd file = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
 		then return ()
@@ -161,7 +161,7 @@ addCmd file = notInBackend file $ do
 
 {- Undo addCmd. -}
 unannexCmd :: FilePath -> Annex ()
-unannexCmd file = inBackend file $ \(key, backend) -> do
+unannexCmd file = isAnnexed file $ \(key, backend) -> do
 	showStart "unannex" file
 	Annex.flagChange "force" $ FlagBool True -- force backend to always remove
 	Backend.removeKey backend key
@@ -181,41 +181,18 @@ unannexCmd file = inBackend file $ \(key, backend) -> do
 
 {- Gets an annexed file from one of the backends. -}
 getCmd :: FilePath -> Annex ()
-getCmd file = inBackend file $ \(key, backend) -> do
+getCmd file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
 		then return ()
 		else do
 			showStart "get" file
-			g <- Annex.gitRepo
-			let dest = annexLocation g key
-			let tmp = (annexTmpLocation g) ++ (keyFile key)
-			liftIO $ createDirectoryIfMissing True (parentDir tmp)
-			success <- Backend.retrieveKeyFile backend key tmp
-			if (success)
-				then do
-					liftIO $ renameFile tmp dest	
-					logStatus key ValuePresent
-					showEndOk
-				else do
-					showEndFail
-
-{- Moves the content of an annexed file to another repository,
- - removing it from the current repository, and updates locationlog
- - information on both.
- -
- - Note that unlike drop, this does not honor annex.numcopies.
- - A file's content can be moved even if there are insufficient copies to
- - allow it to be dropped.
- -}
-moveCmd :: FilePath -> Annex ()
-moveCmd file = inBackend file $ \(key, backend) -> do
-	error "TODO"
+			getViaTmp key (Backend.retrieveKeyFile backend key)
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
 dropCmd :: FilePath -> Annex ()
-dropCmd file = inBackend file $ \(key, backend) -> do
+dropCmd file = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
 		then return () -- no-op
@@ -241,7 +218,7 @@ dropCmd file = inBackend file $ \(key, backend) -> do
 
 {- Fixes the symlink to an annexed file. -}
 fixCmd :: FilePath -> Annex ()
-fixCmd file = inBackend file $ \(key, backend) -> do
+fixCmd file = isAnnexed file $ \(key, backend) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
 	if (link == l)
@@ -294,13 +271,83 @@ fromKeyCmd file = do
 	liftIO $ Git.run g ["add", file]
 	showEndOk
 
+{- Move a file either --to or --from a repository.
+ -
+ - This only operates on the cached file content; it does not involve
+ - moving data in the key-value backend.
+ -
+ - Note that unlike drop, this does not honor annex.numcopies.
+ - A file's content can be moved even if there are insufficient copies to
+ - allow it to be dropped.
+ -}
+moveCmd :: FilePath -> Annex ()
+moveCmd file = do
+	fromName <- Annex.flagGet "fromrepository"
+	toName <- Annex.flagGet "torepository"
+	case (fromName, toName) of
+		("", "") -> error "specify either --from or --to"
+		("", to) -> moveTo file
+		(from, "") -> moveFrom file
+		(_, _) -> error "only one of --from or --to can be specified"
+
+{- Moves the content of an annexed file to another repository,
+ - removing it from the current repository, and updates locationlog
+ - information on both.
+ -
+ - If the destination already has the content, it is still removed
+ - from the current repository.
+ -}
+moveTo :: FilePath -> Annex ()
+moveTo file = isAnnexed file $ \(key, backend) -> do
+	ishere <- inAnnex key
+	if (not ishere)
+		then return () -- not here, so nothing to do
+		else do
+			showStart "move" file
+			remote <- Remotes.commandLineRemote
+			isthere <- Remotes.inAnnex remote key
+			case isthere of
+				Left err -> error (show err)
+				Right True -> removeit
+				Right False -> moveit
+	where
+		moveit = do
+			error $ "TODO move" ++ file
+		removeit = do
+			error $ "TODO remove" ++ file
+
+{- Moves the content of an annexed file from another repository to the current
+ - repository and updates locationlog information on both.
+ -
+ - If the current repository already has the content, it is still removed
+ - from the other repository.
+ -}
+moveFrom :: FilePath -> Annex ()
+moveFrom file = isAnnexed file $ \(key, backend) -> do
+	showStart "move" file -- have to show this before checking remote
+	ishere <- inAnnex key
+	remote <- Remotes.commandLineRemote
+	isthere <- Remotes.inAnnex remote key
+	case (ishere, isthere) of
+		(_, Left err) -> error (show err)
+		(_, Right False) -> showEndFail
+		(False, Right True) -> moveit remote key
+		(True, Right True) -> removeit remote key
+	where
+		moveit remote key = do
+			getViaTmp key (Remotes.copyFromRemote remote key)
+			removeit remote key
+		removeit remote key = do
+			error $ "TODO remove" ++ file
+			showEndOk
+
 -- helpers
-notInBackend file a = do
+notAnnexed file a = do
 	r <- Backend.lookupFile file
 	case (r) of
 		Just v -> return ()
 		Nothing -> a
-inBackend file a = do
+isAnnexed file a = do
 	r <- Backend.lookupFile file
 	case (r) of
 		Just v -> a v
