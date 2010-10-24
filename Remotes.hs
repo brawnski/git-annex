@@ -76,10 +76,10 @@ keyPossibilities key = do
 inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
 inAnnex remote key = do
 	-- the check needs to run in an Annex monad using the remote
-	a <- liftIO $ Annex.new remote []
-	liftIO $ ((try $ check a)::IO (Either IOException Bool))
+	liftIO $ ((try $ check)::IO (Either IOException Bool))
 	where
-		check a = do
+		check = do
+			a <- Annex.new remote []
 			(result, _) <- Annex.run a (Core.inAnnex key)
 			return result
 
