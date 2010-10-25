@@ -61,7 +61,8 @@ doSubCmd cmdname start param = do
 
 {- A subcommand can broadly want one of several kinds of input parameters.
  - This allows a first stage of filtering before starting a subcommand. -}
-data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing | Description
+data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing
+	| Description | Keys
 
 data SubCommand = Command {
 	subcmdname :: String,
@@ -87,6 +88,8 @@ subCmds =  [
 		"fix up files' symlinks to point to annexed content")
 	, (Command "fromkey"	fromKeyStart	FilesMissing
 		"adds a file using a specific key")
+	, (Command "dropkey"	fromKeyStart	Keys
+		"drops cached content for specified keys")
 	]
 
 -- Each dashed command-line option results in generation of an action
@@ -95,6 +98,8 @@ options :: [OptDescr (Annex ())]
 options = [
 	    Option ['f'] ["force"] (NoArg (storebool "force" True))
 		"allow actions that may lose annexed data"
+	  , Option ['q'] ["quiet"] (NoArg (storebool "quiet" True))
+		"avoid verbose output"
 	  , Option ['b'] ["backend"] (ReqArg (storestring "backend") "NAME")
 		"specify default key-value backend to use"
 	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")
@@ -127,6 +132,7 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 {- Generate descriptions of wanted parameters for subcommands. -}
 descWanted :: SubCmdWants -> String
 descWanted Description = "DESCRIPTION"
+descWanted Keys = "KEY ..."
 descWanted _ = "PATH ..."
 
 {- Finds the type of parameters a subcommand wants, from among the passed
@@ -147,6 +153,7 @@ findWanted FilesMissing params repo = do
 			if (e) then return False else return True
 findWanted Description params _ = do
 	return $ [unwords params]
+findWanted Keys params _ = return params
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it
@@ -243,9 +250,9 @@ dropStart file = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
 		then return Nothing
-		else return $ Just $ dropPerform file key backend
-dropPerform :: FilePath -> Key -> Backend -> Annex (Maybe SubCmdCleanup)
-dropPerform file key backend = do
+		else return $ Just $ dropPerform key backend
+dropPerform :: Key -> Backend -> Annex (Maybe SubCmdCleanup)
+dropPerform key backend = do
 	success <- Backend.removeKey backend key
 	if (success)
 		then return $ Just $ dropCleanup key
@@ -261,6 +268,29 @@ dropCleanup key = do
 			liftIO $ removeFile loc
 			return True
 		else return True
+
+{- Drops cached content for a key. -}
+dropKeyStart :: String -> Annex (Maybe SubCmdPerform)
+dropKeyStart keyname = do
+	backends <- Backend.list
+	let key = genKey (backends !! 0) keyname
+	present <- inAnnex key
+	force <- Annex.flagIsSet "force"
+	if (not present)
+		then return Nothing
+		else if (not force)
+			then error "dropkey is can cause data loss; use --force if you're sure you want to do this"
+			else return $ Just $ dropKeyPerform key
+dropKeyPerform :: Key -> Annex (Maybe SubCmdCleanup)
+dropKeyPerform key = do
+	g <- Annex.gitRepo
+	let loc = annexLocation g key
+	liftIO $ removeFile loc
+	return $ Just $ dropKeyCleanup key
+dropKeyCleanup :: Key -> Annex Bool
+dropKeyCleanup key = do
+	logStatus key ValueMissing
+	return True
 
 {- Fixes the symlink to an annexed file. -}
 fixStart :: FilePath -> Annex (Maybe SubCmdPerform)
@@ -423,11 +453,14 @@ moveFromPerform file key = do
 			return $ Just $ moveFromCleanup remote key
 moveFromCleanup :: Git.Repo -> Key -> Annex Bool
 moveFromCleanup remote key = do
-	Remotes.removeRemoteFile remote $ annexLocation remote key
-	-- Record that the key is not on the remote.
-	u <- getUUID remote
-	liftIO $ logChange remote key u ValueMissing
-	Remotes.updateRemoteLogStatus remote key
+	-- Force drop content from the remote.
+	Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
+		"--backend=" ++ (backendName key),
+		keyName key]
+	-- Record locally that the key is not on the remote.
+	remoteuuid <- getUUID remote
+	g <- Annex.gitRepo
+	liftIO $ logChange g key remoteuuid ValueMissing
 	return True
 
 -- helpers

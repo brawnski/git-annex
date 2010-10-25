@@ -31,12 +31,12 @@ data AnnexState = AnnexState {
 type Annex = StateT AnnexState IO
 
 -- annexed filenames are mapped through a backend into keys
-type KeyFrag = String
+type KeyName = String
 type BackendName = String
-data Key = Key (BackendName, KeyFrag) deriving (Eq)
+data Key = Key (BackendName, KeyName) deriving (Eq)
 
 -- constructs a key in a backend
-genKey :: Backend -> KeyFrag -> Key
+genKey :: Backend -> KeyName -> Key
 genKey b f = Key (name b,f)
 
 -- show a key to convert it to a string; the string includes the
@@ -51,9 +51,10 @@ instance Read Key where
 			b = l !! 0
 			k = join ":" $ drop 1 l
 
--- pulls the backend name out
 backendName :: Key -> BackendName
 backendName (Key (b,k)) = b
+keyName :: Key -> KeyName
+keyName (Key (b,k)) = k
 
 -- this structure represents a key-value backend
 data Backend = Backend {

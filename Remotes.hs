@@ -8,11 +8,11 @@ module Remotes (
 	commandLineRemote,
 	copyFromRemote,
 	copyToRemote,
-	removeRemoteFile,
-	updateRemoteLogStatus
+	runCmd
 ) where
 
-import Control.Exception
+import IO (bracket_)
+import Control.Exception hiding (bracket_)
 import Control.Monad.State (liftIO)
 import Control.Monad (filterM)
 import qualified Data.Map as Map
@@ -20,9 +20,9 @@ import Data.String.Utils
 import Data.Either.Utils
 import System.Cmd.Utils
 import System.Directory
+import System.Posix.Directory
 import List
 import Maybe
-import IO (hPutStrLn)
 
 import Types
 import qualified GitRepo as Git
@@ -221,39 +221,19 @@ copyToRemote r key = do
 		sshlocation = (Git.urlHost r) ++ ":" ++ file
 		file = error "TODO"
 
-{- Removes a file from a remote. -}
-removeRemoteFile :: Git.Repo -> FilePath -> Annex ()
-removeRemoteFile r file = do
+{- Runs a command in a remote. -}
+runCmd :: Git.Repo -> String -> [String] -> Annex Bool
+runCmd r command params = do
 	if (not $ Git.repoIsUrl r)
-		then liftIO $ removeFile file
+		then do
+			cwd <- liftIO $ getCurrentDirectory
+			liftIO $ bracket_ (changeWorkingDirectory (Git.workTree r))
+				(\_ -> changeWorkingDirectory cwd) $
+					boolSystem command params
 		else if (Git.repoIsSsh r)
 			then do
-				ok <- liftIO $ boolSystem "ssh"
-					[Git.urlHost r, "rm -f " ++
-					(shellEscape file)]
-				if (ok)
-					then return ()
-					else error "failed to remove file from remote"
-			else error "removing file from non-ssh repo not supported"
-
-{- Update's a remote's location log for a key, by merging the local
- - location log into it. -}
-updateRemoteLogStatus :: Git.Repo -> Key -> Annex ()
-updateRemoteLogStatus r key = do
-	-- To merge, just append data to the remote's
-	-- log. Since the log is timestamped, the presumably newer
-	-- information from the local will superscede the older
-	-- information in the remote's log.
-	-- TODO: remote log locking
-	let mergecmd = "cat >> " ++ (shellEscape $ logFile r key) ++ " && " ++
-		"cd " ++ (shellEscape $ Git.workTree r) ++ " && " ++
-		"git add " ++ (shellEscape $ stateLoc)
-	let shellcmd = if (not $ Git.repoIsUrl r)
-		then pOpen WriteToPipe "sh" ["-c", mergecmd]
-		else if (Git.repoIsSsh r)
-			then pOpen WriteToPipe "ssh" [Git.urlHost r, mergecmd]
-			else error "updating non-ssh repo not supported"
-	g <- Annex.gitRepo
-	liftIO $ shellcmd $ \h -> do
-		lines <- readLog $ logFile g key
-		hPutStrLn h $ unlines $ map show lines
+				liftIO $ boolSystem "ssh" [Git.urlHost r,
+					"cd " ++ (shellEscape $ Git.workTree r) ++
+					" && " ++ command ++ " " ++
+					unwords params]
+			else error "running command in non-ssh repo not supported"

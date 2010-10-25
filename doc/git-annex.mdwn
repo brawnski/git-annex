@@ -116,12 +116,24 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 	git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
 
+* dropkey [key ...]
+
+  Drops the cached data for the specified keys from this repository.
+
+  This can be used to drop content for arbitrary keys, which do not need
+  to have a file in the git repository pointing at them.
+
 # OPTIONS
 
 * --force
 
   Force unsafe actions, such as dropping a file's content when no other
   source of it can be verified to still exist. Use with care.
+
+* --quiet
+
+  Avoid the default verbose logging of what is done; only show errors
+  and progress displays.
 
 * --backend=name
 

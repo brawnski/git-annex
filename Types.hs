@@ -7,6 +7,7 @@ module Types (
 	Key,
 	genKey,
 	backendName,
+	keyName,
 	FlagName,
 	Flag(..)
 ) where

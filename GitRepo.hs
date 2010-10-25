@@ -156,7 +156,7 @@ workTree repo =
  - name to use to refer to the file relative to a git repository's top.
  - This is the same form displayed and used by git. -}
 relative :: Repo -> String -> String
-relative repo file = drop (length absrepo) absfile
+relative repo file = assertLocal repo $ drop (length absrepo) absfile
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file

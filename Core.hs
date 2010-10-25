@@ -115,22 +115,26 @@ getViaTmp key action = do
 			return False
 
 {- Output logging -}
+verbose :: Annex () -> Annex ()
+verbose a = do
+	q <- Annex.flagIsSet "quiet"
+	if (q) then return () else a
 showStart :: String -> String -> Annex ()
-showStart command file = do
+showStart command file = verbose $ do
 	liftIO $ putStr $ command ++ " " ++ file ++ " "
 	liftIO $ hFlush stdout
 showNote :: String -> Annex ()
-showNote s = do
+showNote s = verbose $ do
 	liftIO $ putStr $ "(" ++ s ++ ") "
 	liftIO $ hFlush stdout
 showLongNote :: String -> Annex ()
-showLongNote s = do
+showLongNote s = verbose $ do
 	liftIO $ putStr $ "\n" ++ (indent s)
 	where
 		indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s 
 showEndOk :: Annex ()
-showEndOk = do
+showEndOk = verbose $ do
 	liftIO $ putStrLn "ok"
 showEndFail :: Annex ()
-showEndFail = do
+showEndFail = verbose $ do
 	liftIO $ putStrLn "\nfailed"
