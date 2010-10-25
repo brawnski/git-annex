@@ -188,27 +188,19 @@ tryGitConfigRead r = do
 {- Tries to copy a key's content from a remote to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyFromRemote r key file = do
-	-- annexLocation needs the git config to have been read for a remote,
-	-- so do that now if it hasn't been already
-	result <- tryGitConfigRead r
-	case (result) of
-		Left err -> return False
-		Right from -> copy from
+	Core.showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
+	if (not $ Git.repoIsUrl r)
+		then getlocal
+		else if (Git.repoIsSsh r)
+			then getssh
+			else error "copying from non-ssh repo not supported"
 	where
-		copy from = do
-			Core.showNote $ "copying from " ++ (Git.repoDescribe from) ++ "..."
-			if (not $ Git.repoIsUrl from)
-				then getlocal
-				else if (Git.repoIsSsh from)
-					then getssh
-					else error "copying from non-ssh repo not supported"
-			where
-				getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
-				getssh = do
-					liftIO $ putStrLn "" -- make way for scp progress bar
-					liftIO $ boolSystem "scp" [sshlocation, file]
-				location = annexLocation from key
-				sshlocation = (Git.urlHost from) ++ ":" ++ location
+		getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
+		getssh = do
+			liftIO $ putStrLn "" -- make way for scp progress bar
+			liftIO $ boolSystem "scp" [sshlocation, file]
+		location = annexLocation r key
+		sshlocation = (Git.urlHost r) ++ ":" ++ location
 
 {- Tries to copy a key's content to a remote. -}
 copyToRemote :: Git.Repo -> Key -> Annex Bool
@@ -255,7 +247,7 @@ updateRemoteLogStatus r key = do
 	-- TODO: remote log locking
 	let mergecmd = "cat >> " ++ (shellEscape $ logFile r key) ++ " && " ++
 		"cd " ++ (shellEscape $ Git.workTree r) ++ " && " ++
-		"git add " ++ (shellEscape $ gitStateDir r)
+		"git add " ++ (shellEscape $ stateLoc)
 	let shellcmd = if (not $ Git.repoIsUrl r)
 		then pOpen WriteToPipe "sh" ["-c", mergecmd]
 		else if (Git.repoIsSsh r)

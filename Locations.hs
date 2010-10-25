@@ -28,22 +28,22 @@ gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
  - <backend:fragment>
  -
  - That allows deriving the key and backend by looking at the symlink to it.
- -
- - Note that even if the repo is a bare repo, the annex is put in a .git
- - sub
  -}
 annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
 	(Git.workTree r) ++ "/" ++ (annexLocationRelative r key)
 
-{- Annexed file's location relative to git's working tree. -}
+{- Annexed file's location relative to git's working tree. 
+ -
+ - Note: Assumes repo is NOT bare.-}
 annexLocationRelative :: Git.Repo -> Key -> FilePath
-annexLocationRelative r key = Git.dir r ++ "/annex/" ++ (keyFile key)
+annexLocationRelative r key = ".git/annex/" ++ (keyFile key)
 
 {- .git-annex/tmp is used for temp files
- -}
+ -
+ - Note: Assumes repo is NOT bare. -}
 annexTmpLocation :: Git.Repo -> FilePath
-annexTmpLocation r = (Git.workTree r) ++ "/" ++ Git.dir r ++ "/annex/tmp/"
+annexTmpLocation r = (Git.workTree r) ++ ".git/annex/tmp/"
 
 {- Converts a key into a filename fragment.
  -
