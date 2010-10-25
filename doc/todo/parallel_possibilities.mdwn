@@ -1,0 +1,13 @@
+One of my reasons for using haskell was that it provides the possibility of
+some parallell processing. Although since git-annex hits the filesystem
+heavily and mostly runs other git commands, maybe not a whole lot.
+
+Anyway, each git-annex command is broken down into a series of independant 
+actions, which has some potential for parallelism.
+
+Probably they would need to be split further. Each action currently has 3
+distinct phases, basically "check", "do", and "record". If the check action
+returned a do action that returned a record action, then it could easily
+make sense to parallelize the check actions and start on the do actions
+(which probably won't parallelize well) while they are still being
+generated, and possibly parallelize the record actions at the end.

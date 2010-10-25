@@ -18,6 +18,7 @@ To get a feel for it, see the [[walkthrough]].
 * [[install]]
 * [[news]]
 * [[bugs]]
+* [[todo]]
 * [[contact]]
 """]]
 
