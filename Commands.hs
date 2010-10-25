@@ -438,32 +438,27 @@ moveToCleanup remote key = do
  -}
 moveFromStart :: FilePath -> Annex (Maybe SubCmdPerform)
 moveFromStart file = isAnnexed file $ \(key, backend) -> do
-	return $ Just $ moveFromPerform file key
+	g <- Annex.gitRepo
+	remote <- Remotes.commandLineRemote
+	l <- Remotes.keyPossibilities key
+	if (elem remote l)
+		then return $ Just $ moveFromPerform file key
+		else return Nothing
 moveFromPerform :: FilePath -> Key -> Annex (Maybe SubCmdCleanup)
 moveFromPerform file key = do
-	-- checking the remote is expensive, so not done in the start step
 	remote <- Remotes.commandLineRemote
-	isthere <- Remotes.inAnnex remote key
 	ishere <- inAnnex key
-	case (ishere, isthere) of
-		(_, Left err) -> do
-			showNote $ show err
-			return Nothing
-		(_, Right False) -> do
-			showNote $ "not present in " ++ (Git.repoDescribe remote)
-			return Nothing
-		(False, Right True) -> do
+	if (ishere)
+		then return $ Just $ moveFromCleanup remote key
+		else do
 			-- copy content from remote
 			ok <- getViaTmp key (Remotes.copyFromRemote remote key)
 			if (ok)
 				then return $ Just $ moveFromCleanup remote key
 				else return Nothing -- fail
-		(True, Right True) -> do
-			-- the content is already here, just remove from remote
-			return $ Just $ moveFromCleanup remote key
 moveFromCleanup :: Git.Repo -> Key -> Annex Bool
 moveFromCleanup remote key = do
-	-- Force drop content from the remote.
+	showNote $ "dropping from " ++ (Git.repoDescribe remote) ++ "..."
 	Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
 		"--backend=" ++ (backendName key),
 		keyName key]
