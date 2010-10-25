@@ -59,14 +59,16 @@ doSubCmd cmdname start param = do
 						else showEndFail
 
 
+{- A subcommand can broadly want one of several kinds of input parameters.
+ - This allows a first stage of filtering before starting a subcommand. -}
 data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing | Description
+
 data SubCommand = Command {
 	subcmdname :: String,
 	subcmdaction :: SubCmdStart,
 	subcmdwants :: SubCmdWants,
 	subcmddesc :: String
 }
-
 subCmds :: [SubCommand]
 subCmds =  [
 	  (Command "add"	addStart	FilesNotInGit
@@ -108,6 +110,7 @@ options = [
 
 header = "Usage: git-annex " ++ (join "|" $ map subcmdname subCmds)
 
+{- Usage message with lists of options and subcommands. -}
 usage :: String
 usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 	where
