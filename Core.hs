@@ -97,7 +97,7 @@ logStatus key status = do
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 
  - the annex as a key's content. -}
-getViaTmp :: Key -> (FilePath -> Annex (Bool)) -> Annex ()
+getViaTmp :: Key -> (FilePath -> Annex Bool) -> Annex Bool
 getViaTmp key action = do
 	g <- Annex.gitRepo
 	let dest = annexLocation g key
@@ -108,9 +108,9 @@ getViaTmp key action = do
 		then do
 			liftIO $ renameFile tmp dest
 			logStatus key ValuePresent
-			showEndOk
+			return True
 		else do
-			showEndFail
+			return False
 
 {- Output logging -}
 showStart :: String -> String -> Annex ()

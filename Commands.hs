@@ -86,7 +86,7 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		indent l = "  " ++ l
 		pad n s = take (n - (length s)) $ repeat ' '
 
-{- Generate descrioptions of wanted parameters for subcommands. -}
+{- Generate descriptions of wanted parameters for subcommands. -}
 descWanted :: CmdWants -> String
 descWanted Description = "DESCRIPTION"
 descWanted _ = "PATH ..."
@@ -187,7 +187,10 @@ getCmd file = isAnnexed file $ \(key, backend) -> do
 		then return ()
 		else do
 			showStart "get" file
-			getViaTmp key (Backend.retrieveKeyFile backend key)
+			ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
+			if (ok)
+				then showEndOk
+				else showEndFail
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
@@ -315,7 +318,15 @@ moveTo file = isAnnexed file $ \(key, backend) -> do
 			Remotes.copyToRemote remote key
 			removeit remote key
 		removeit remote key = do
-			error $ "TODO remove" ++ file
+			error "TODO: drop key from local"
+			-- Update local location log; key is present
+			-- there and missing here.
+			logStatus key ValueMissing
+			u <- getUUID remote
+			liftIO $ logChange remote key u ValuePresent
+			-- Propigate location log to remote.
+			error "TODO: update remote locationlog"
+			showEndOk
 
 {- Moves the content of an annexed file from another repository to the current
  - repository and updates locationlog information on both.
