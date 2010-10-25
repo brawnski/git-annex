@@ -88,7 +88,7 @@ subCmds =  [
 		"fix up files' symlinks to point to annexed content")
 	, (Command "fromkey"	fromKeyStart	FilesMissing
 		"adds a file using a specific key")
-	, (Command "dropkey"	fromKeyStart	Keys
+	, (Command "dropkey"	dropKeyStart	Keys
 		"drops cached content for specified keys")
 	]
 
