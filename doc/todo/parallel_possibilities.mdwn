@@ -5,9 +5,8 @@ heavily and mostly runs other git commands, maybe not a whole lot.
 Anyway, each git-annex command is broken down into a series of independant 
 actions, which has some potential for parallelism.
 
-Probably they would need to be split further. Each action currently has 3
-distinct phases, basically "check", "do", and "record". If the check action
-returned a do action that returned a record action, then it could easily
-make sense to parallelize the check actions and start on the do actions
-(which probably won't parallelize well) while they are still being
-generated, and possibly parallelize the record actions at the end.
+Each action has 3 distinct phases, basically "check", "perform", and
+"cleanup". The perform actions are not parellizable; the cleanup may be,
+and the check should be easily parallelizable, although they may access the
+disk or run minor git query commands, so would probably not want to run
+too many of them at once.

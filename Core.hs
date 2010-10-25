@@ -110,6 +110,8 @@ getViaTmp key action = do
 			logStatus key ValuePresent
 			return True
 		else do
+			-- the tmp file is left behind, in case caller wants
+			-- to resume its transfer
 			return False
 
 {- Output logging -}
