@@ -27,7 +27,7 @@ main = do
  - or more likely I missed an easy way to do it. So, I have to laboriously
  - thread AnnexState through this function.
  -}
-tryRun :: AnnexState -> [Annex ()] -> IO ()
+tryRun :: AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
 tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
@@ -35,7 +35,8 @@ tryRun' state errnum (a:as) = do
 		Left err -> do
 			showErr err
 			tryRun' state (errnum + 1) as
-		Right (_,state') -> tryRun' state' errnum as
+		Right (True,state') -> tryRun' state' errnum as
+		Right (False,state') -> tryRun' state' (errnum + 1) as
 tryRun' state errnum [] = do
 	if (errnum > 0)
 		then error $ (show errnum) ++ " failed"

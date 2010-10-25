@@ -18,14 +18,15 @@ import qualified Annex
 import Utility
 			
 {- Sets up a git repo for git-annex. -}
-startup :: Annex ()
+startup :: Annex Bool
 startup = do
 	g <- Annex.gitRepo
 	liftIO $ gitAttributes g
 	prepUUID
+	return True
 
 {- When git-annex is done, it runs this. -}
-shutdown :: Annex ()
+shutdown :: Annex Bool
 shutdown = do
 	g <- Annex.gitRepo
 
@@ -37,6 +38,8 @@ shutdown = do
 	if (exists)
 		then liftIO $ removeDirectoryRecursive $ tmp
 		else return ()
+
+	return True
 
 {- configure git to use union merge driver on state files, if it is not
  - already -}

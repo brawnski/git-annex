@@ -42,21 +42,27 @@ type SubCmdPerform = Annex (Maybe SubCmdCleanup)
 type SubCmdCleanup = Annex Bool
 
 {- Runs a subcommand through its three stages. -}
-doSubCmd :: String -> SubCmdStart -> String -> Annex ()
+doSubCmd :: String -> SubCmdStart -> String -> Annex Bool
 doSubCmd cmdname start param = do
 	res <- start param :: Annex (Maybe SubCmdPerform)
 	case (res) of
-		Nothing -> return ()
+		Nothing -> return True
 		Just perform -> do
 			showStart cmdname param
 			res <- perform :: Annex (Maybe SubCmdCleanup)
 			case (res) of
-				Nothing -> showEndFail
+				Nothing -> do
+					showEndFail
+					return False
 				Just cleanup -> do
 					res <- cleanup
 					if (res)
-						then showEndOk
-						else showEndFail
+						then do
+							showEndOk
+							return True
+						else do
+							showEndFail
+							return False
 
 
 {- A subcommand can broadly want one of several kinds of input parameters.
@@ -159,7 +165,7 @@ findWanted Keys params _ = return params
  - run in the Annex monad. The first actions configure it
  - according to command line options, while the second actions
  - handle subcommands. -}
-parseCmd :: [String] -> AnnexState -> IO ([Annex ()], [Annex ()])
+parseCmd :: [String] -> AnnexState -> IO ([Annex Bool], [Annex Bool])
 parseCmd argv state = do
 	(flags, params) <- getopt
 	if (null params)
@@ -169,8 +175,12 @@ parseCmd argv state = do
 			[Command name action want _] -> do
 				f <- findWanted want (drop 1 params)
 					(TypeInternals.repo state)
-				return (flags, map (doSubCmd name action) $
-					filter notstate f)
+				let actions = map (doSubCmd name action) $
+					filter notstate f
+				let configactions = map (\f -> do
+					f
+					return True) flags
+				return (configactions, actions)
 	where
 		-- never include files from the state directory
 		notstate f = stateLoc /= take (length stateLoc) f
