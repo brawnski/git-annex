@@ -7,7 +7,9 @@ module Remotes (
 	inAnnex,
 	commandLineRemote,
 	copyFromRemote,
-	copyToRemote
+	copyToRemote,
+	removeRemoteFile,
+	updateRemoteLogStatus
 ) where
 
 import Control.Exception
@@ -16,8 +18,11 @@ import Control.Monad (filterM)
 import qualified Data.Map as Map
 import Data.String.Utils
 import Data.Either.Utils
+import System.Cmd.Utils
+import System.Directory
 import List
 import Maybe
+import IO (hPutStrLn)
 
 import Types
 import qualified GitRepo as Git
@@ -223,3 +228,40 @@ copyToRemote r key = do
 		location g = annexLocation g key
 		sshlocation = (Git.urlHost r) ++ ":" ++ file
 		file = error "TODO"
+
+{- Removes a file from a remote. -}
+removeRemoteFile :: Git.Repo -> FilePath -> Annex ()
+removeRemoteFile r file = do
+	if (not $ Git.repoIsUrl r)
+		then liftIO $ removeFile file
+		else if (Git.repoIsSsh r)
+			then do
+				ok <- liftIO $ boolSystem "ssh"
+					[Git.urlHost r, "rm -f " ++
+					(shellEscape file)]
+				if (ok)
+					then return ()
+					else error "failed to remove file from remote"
+			else error "removing file from non-ssh repo not supported"
+
+{- Update's a remote's location log for a key, by merging the local
+ - location log into it. -}
+updateRemoteLogStatus :: Git.Repo -> Key -> Annex ()
+updateRemoteLogStatus r key = do
+	-- To merge, just append data to the remote's
+	-- log. Since the log is timestamped, the presumably newer
+	-- information from the local will superscede the older
+	-- information in the remote's log.
+	-- TODO: remote log locking
+	let mergecmd = "cat >> " ++ (shellEscape $ logFile r key) ++ " && " ++
+		"cd " ++ (shellEscape $ Git.workTree r) ++ " && " ++
+		"git add " ++ (shellEscape $ gitStateDir r)
+	let shellcmd = if (not $ Git.repoIsUrl r)
+		then pOpen WriteToPipe "sh" ["-c", mergecmd]
+		else if (Git.repoIsSsh r)
+			then pOpen WriteToPipe "ssh" [Git.urlHost r, mergecmd]
+			else error "updating non-ssh repo not supported"
+	g <- Annex.gitRepo
+	liftIO $ shellcmd $ \h -> do
+		lines <- readLog $ logFile g key
+		hPutStrLn h $ unlines $ map show lines

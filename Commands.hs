@@ -367,25 +367,28 @@ moveToPerform file key = do
 	remote <- Remotes.commandLineRemote
 	isthere <- Remotes.inAnnex remote key
 	case isthere of
-		Left err -> error (show err)
-		Right False -> moveit remote key
-		Right True -> removeit remote key
-	where
-		moveit remote key = do
-			Remotes.copyToRemote remote key
-			removeit remote key
-		removeit remote key = do
-			error "TODO: drop key from local"
-			return $ Just $ moveToCleanup remote key
+		Left err -> do
+			showNote $ show err
+			return Nothing
+		Right False -> do
+			ok <- Remotes.copyToRemote remote key
+			if (ok)
+				then return $ Just $ moveToCleanup remote key
+				else return Nothing -- failed
+		Right True -> return $ Just $ moveToCleanup remote key
 moveToCleanup :: Git.Repo -> Key -> Annex Bool
 moveToCleanup remote key = do
-	-- Update local location log; key is present there and missing here.
-	logStatus key ValueMissing
-	u <- getUUID remote
-	liftIO $ logChange remote key u ValuePresent
-	-- Propigate location log to remote.
-	error "TODO: update remote locationlog"
-	return True
+	-- cleanup on the local side is the same as done for the drop subcommand
+	ok <- dropCleanup key
+	if (not ok)
+		then return False
+		else do
+			-- Record that the key is present on the remote.
+			u <- getUUID remote
+			liftIO $ logChange remote key u ValuePresent
+			-- Propigate location log to remote.
+			error "TODO: update remote locationlog"
+			return True
 
 {- Moves the content of an annexed file from another repository to the current
  - repository and updates locationlog information on both.
@@ -403,22 +406,28 @@ moveFromPerform file key = do
 	isthere <- Remotes.inAnnex remote key
 	ishere <- inAnnex key
 	case (ishere, isthere) of
-		(_, Left err) -> error (show err)
-		(_, Right False) -> return Nothing -- not in remote; fail
-		(False, Right True) -> moveit remote key
-		(True, Right True) -> removeit remote key
-	where
-		moveit remote key = do
+		(_, Left err) -> do
+			showNote $ show err
+			return Nothing
+		(_, Right False) -> do
+			showNote $ "not present in " ++ (Git.repoDescribe remote)
+			return Nothing
+		(False, Right True) -> do
+			-- copy content from remote
 			ok <- getViaTmp key (Remotes.copyFromRemote remote key)
 			if (ok)
-				then removeit remote key
+				then return $ Just $ moveFromCleanup remote key
 				else return Nothing -- fail
-		removeit remote key = do
-			error $ "TODO remove" ++ file
-			return $ Just moveFromCleanup
-moveFromCleanup :: Annex Bool
-moveFromCleanup = do
-	error "update location logs"
+		(True, Right True) -> do
+			-- the content is already here, just remove from remote
+			return $ Just $ moveFromCleanup remote key
+moveFromCleanup :: Git.Repo -> Key -> Annex Bool
+moveFromCleanup remote key = do
+	Remotes.removeRemoteFile remote $ annexLocation remote key
+	-- Record that the key is not on the remote.
+	u <- getUUID remote
+	liftIO $ logChange remote key u ValueMissing
+	Remotes.updateRemoteLogStatus remote key
 	return True
 
 -- helpers

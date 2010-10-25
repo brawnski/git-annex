@@ -28,6 +28,9 @@ gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
  - <backend:fragment>
  -
  - That allows deriving the key and backend by looking at the symlink to it.
+ -
+ - Note that even if the repo is a bare repo, the annex is put in a .git
+ - sub
  -}
 annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
