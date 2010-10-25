@@ -25,17 +25,17 @@ import qualified Remotes
 import qualified TypeInternals
 
 {- A subcommand runs in three stages. Each stage can return the next stage
- - to run. 
+ - to run.
  -
  - 1. The start stage is run before anything is printed about the
  -   subcommand, and can early abort it if the input does not make sense.
  -   It should run quickly and should not modify Annex state.
  -
  - 2. The perform stage is run after a message is printed about the subcommand
- -    being run.
+ -    being run, and it should be where the bulk of the work happens.
  -
- - 3. The cleanup stage is run only if the do stage succeeds, and it returns
- -    the overall success/fail of the subcommand.
+ - 3. The cleanup stage is run only if the perform stage succeeds, and it
+ -    returns the overall success/fail of the subcommand.
  -}
 type SubCmdStart = String -> Annex (Maybe SubCmdPerform)
 type SubCmdPerform = Annex (Maybe SubCmdCleanup)
