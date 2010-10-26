@@ -111,11 +111,14 @@ checkRemoveKey key = do
 				then return True
 				else notEnoughCopies need have bad
 		findcopies need have (r:rs) bad = do
-			haskey <- Remotes.inAnnex r key
-			case (haskey) of
-				Right True	-> findcopies need (have+1) rs bad
-				Right False	-> findcopies need have rs bad
-				Left _		-> findcopies need have rs (r:bad)
+			if (have >= need)
+				then return True
+				else do
+					haskey <- Remotes.inAnnex r key
+					case (haskey) of
+						Right True	-> findcopies need (have+1) rs bad
+						Right False	-> findcopies need have rs bad
+						Left _		-> findcopies need have rs (r:bad)
 		notEnoughCopies need have bad = do
 			unsafe
 			showLongNote $
