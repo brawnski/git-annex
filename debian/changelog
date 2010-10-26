@@ -9,7 +9,7 @@ git-annex (0.02) UNRELEASED; urgency=low
   * --from/--to can be used to control the remote repository that git-annex
     uses.
   * --quiet can be used to avoid verbose output
-  * New plumbing-level dropkey subcommand.
+  * New plumbing-level dropkey and setkey subcommands.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 21 Oct 2010 16:38:00 -0400
 

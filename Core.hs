@@ -32,12 +32,14 @@ shutdown = do
 
 	liftIO $ Git.run g ["add", gitStateDir g]
 
-	-- clean up any files left in the temp directory
+	-- clean up any files left in the temp directory, but leave
+	-- the tmp directory itself
 	let tmp = annexTmpLocation g
 	exists <- liftIO $ doesDirectoryExist tmp
 	if (exists)
 		then liftIO $ removeDirectoryRecursive $ tmp
 		else return ()
+	liftIO $ createDirectoryIfMissing True tmp
 
 	return True
 

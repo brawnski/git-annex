@@ -68,7 +68,7 @@ doSubCmd cmdname start param = do
 {- A subcommand can broadly want one of several kinds of input parameters.
  - This allows a first stage of filtering before starting a subcommand. -}
 data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing
-	| Description | Keys
+	| Description | Keys | Tempfile
 
 data SubCommand = Command {
 	subcmdname :: String,
@@ -95,7 +95,9 @@ subCmds =  [
 	, (Command "fromkey"	fromKeyStart	FilesMissing
 		"adds a file using a specific key")
 	, (Command "dropkey"	dropKeyStart	Keys
-		"drops cached content for specified keys")
+		"drops annexed content for specified keys")
+	, (Command "setkey"	setKeyStart	Tempfile
+		"sets annexed content for a key using a temp file")
 	]
 
 -- Each dashed command-line option results in generation of an action
@@ -159,7 +161,7 @@ findWanted FilesMissing params repo = do
 			if (e) then return False else return True
 findWanted Description params _ = do
 	return $ [unwords params]
-findWanted Keys params _ = return params
+findWanted _ params _ = return params
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it
@@ -302,6 +304,29 @@ dropKeyCleanup key = do
 	logStatus key ValueMissing
 	return True
 
+{- Sets cached content for a key. -}
+setKeyStart :: FilePath -> Annex (Maybe SubCmdPerform)
+setKeyStart tmpfile = do
+	keyname <- Annex.flagGet "key"
+	if (null keyname)
+		then error "please specify the key with --key"
+		else return ()
+	backends <- Backend.list
+	let key = genKey (backends !! 0) keyname
+	return $ Just $ setKeyPerform tmpfile key
+setKeyPerform :: FilePath -> Key -> Annex (Maybe SubCmdCleanup)
+setKeyPerform tmpfile key = do
+	g <- Annex.gitRepo
+	let loc = annexLocation g key
+	ok <- liftIO $ boolSystem "mv" [tmpfile, loc]
+	if (not ok)
+		then error "mv failed!"
+		else return $ Just $ setKeyCleanup tmpfile key
+setKeyCleanup :: FilePath -> Key -> Annex Bool
+setKeyCleanup tmpfile key = do
+	logStatus key ValuePresent
+	return True
+
 {- Fixes the symlink to an annexed file. -}
 fixStart :: FilePath -> Annex (Maybe SubCmdPerform)
 fixStart file = isAnnexed file $ \(key, backend) -> do
@@ -411,24 +436,26 @@ moveToPerform file key = do
 			showNote $ show err
 			return Nothing
 		Right False -> do
-			ok <- Remotes.copyToRemote remote key
+			let tmpfile = (annexTmpLocation remote) ++ (keyFile key)
+			ok <- Remotes.copyToRemote remote key tmpfile
 			if (ok)
-				then return $ Just $ moveToCleanup remote key
+				then return $ Just $ moveToCleanup remote key tmpfile
 				else return Nothing -- failed
-		Right True -> return $ Just $ moveToCleanup remote key
-moveToCleanup :: Git.Repo -> Key -> Annex Bool
-moveToCleanup remote key = do
-	-- cleanup on the local side is the same as done for the drop subcommand
-	ok <- dropCleanup key
-	if (not ok)
-		then return False
-		else do
-			-- Record that the key is present on the remote.
-			u <- getUUID remote
-			liftIO $ logChange remote key u ValuePresent
-			-- Propigate location log to remote.
-			error "TODO: update remote locationlog"
-			return True
+		Right True -> return $ Just $ dropCleanup key
+moveToCleanup :: Git.Repo -> Key -> FilePath -> Annex Bool
+moveToCleanup remote key tmpfile = do
+	-- Tell remote to use the transferred content.
+	Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
+		"--backend=" ++ (backendName key),
+		"--key=" ++ keyName key,
+		tmpfile]
+	-- Record that the key is present on the remote.
+	g <- Annex.gitRepo
+	remoteuuid <- getUUID remote
+	liftIO $ logChange g key remoteuuid ValuePresent
+	-- Cleanup on the local side is the same as done for the
+	-- drop subcommand.
+	dropCleanup key
 
 {- Moves the content of an annexed file from another repository to the current
  - repository and updates locationlog information on both.

@@ -118,10 +118,19 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * dropkey [key ...]
 
-  Drops the cached data for the specified keys from this repository.
+  Drops the annexed data for the specified keys from this repository.
 
   This can be used to drop content for arbitrary keys, which do not need
   to have a file in the git repository pointing at them.
+
+* setkey file
+
+  Sets the annxed data for a key to the content of the specified file,
+  and then removes the file.
+
+  Example:
+
+	git annex setkey --key=1287765018:3 /tmp/file
 
 # OPTIONS
 

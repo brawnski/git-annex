@@ -195,31 +195,31 @@ copyFromRemote r key file = do
 			then getssh
 			else error "copying from non-ssh repo not supported"
 	where
-		getlocal = liftIO $ boolSystem "cp" ["-a", location, file]
+		getlocal = liftIO $ boolSystem "cp" ["-a", keyloc, file]
 		getssh = do
 			liftIO $ putStrLn "" -- make way for scp progress bar
-			liftIO $ boolSystem "scp" [sshlocation, file]
-		location = annexLocation r key
-		sshlocation = (Git.urlHost r) ++ ":" ++ location
+			liftIO $ boolSystem "scp" [sshLocation r keyloc, file]
+		keyloc = annexLocation r key
 
-{- Tries to copy a key's content to a remote. -}
-copyToRemote :: Git.Repo -> Key -> Annex Bool
-copyToRemote r key = do
+{- Tries to copy a key's content to a file on a remote. -}
+copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
+copyToRemote r key file = do
 	g <- Annex.gitRepo
+	let keyloc = annexLocation g key
 	Core.showNote $ "copying to " ++ (Git.repoDescribe r) ++ "..."
 	if (not $ Git.repoIsUrl r)
-		then sendlocal g
+		then putlocal keyloc
 		else if (Git.repoIsSsh r)
-			then sendssh g
+			then putssh keyloc
 			else error "copying to non-ssh repo not supported"
 	where
-		sendlocal g = liftIO $ boolSystem "cp" ["-a", location g, file]
-		sendssh g = do
+		putlocal src = liftIO $ boolSystem "cp" ["-a", src, file]
+		putssh src = do
 			liftIO $ putStrLn "" -- make way for scp progress bar
-			liftIO $ boolSystem "scp" [location g, sshlocation]
-		location g = annexLocation g key
-		sshlocation = (Git.urlHost r) ++ ":" ++ file
-		file = error "TODO"
+			liftIO $ boolSystem "scp" [src, sshLocation r file]
+
+sshLocation :: Git.Repo -> FilePath -> FilePath
+sshLocation r file = (Git.urlHost r) ++ ":" ++ file
 
 {- Runs a command in a remote. -}
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
