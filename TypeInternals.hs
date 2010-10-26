@@ -10,6 +10,7 @@ import Data.String.Utils
 import qualified Data.Map as M
 
 import qualified GitRepo as Git
+import qualified GitQueue
 
 -- command-line flags
 type FlagName = String
@@ -24,7 +25,8 @@ data AnnexState = AnnexState {
 	repo :: Git.Repo,
 	backends :: [Backend],
 	supportedBackends :: [Backend],
-	flags :: M.Map FlagName Flag
+	flags :: M.Map FlagName Flag,
+	repoqueue :: GitQueue.Queue
 } deriving (Show)
 
 -- git-annex's monad

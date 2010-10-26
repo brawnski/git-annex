@@ -14,6 +14,7 @@ import Locations
 import LocationLog
 import UUID
 import qualified GitRepo as Git
+import qualified GitQueue
 import qualified Annex
 import Utility
 			
@@ -29,6 +30,14 @@ startup = do
 shutdown :: Annex Bool
 shutdown = do
 	g <- Annex.gitRepo
+
+	-- Runs all queued git commands.
+	q <- Annex.queueGet
+	if (q == GitQueue.empty)
+		then return ()
+		else do
+			liftIO $ putStrLn "Recording state in git..."
+			liftIO $ GitQueue.run g q
 
 	liftIO $ Git.run g ["add", gitStateDir g]
 
