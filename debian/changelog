@@ -1,15 +1,15 @@
 git-annex (0.02) UNRELEASED; urgency=low
 
-  * New move subcommand, that can move files from or to a remote.
-  * New fromkey subcommand, for registering urls, etc.
   * Can scp annexed files from remote hosts, and check remote hosts for
     file content when dropping files.
+  * New move subcommand, that can move files from or to a remote.
+  * New fromkey subcommand, for registering urls, etc.
   * Add remote.annex-ignore git config setting to allow completly disabling
     a given remote.
   * --from/--to can be used to control the remote repository that git-annex
     uses.
   * --quiet can be used to avoid verbose output
-  * New plumbing-level dropkey and setkey subcommands.
+  * New plumbing-level dropkey and addkey subcommands.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 21 Oct 2010 16:38:00 -0400
 
