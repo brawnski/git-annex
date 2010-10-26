@@ -436,6 +436,7 @@ moveToPerform file key = do
 			showNote $ show err
 			return Nothing
 		Right False -> do
+			Core.showNote $ "moving to " ++ (Git.repoDescribe r) ++ "..."
 			let tmpfile = (annexTmpLocation remote) ++ (keyFile key)
 			ok <- Remotes.copyToRemote remote key tmpfile
 			if (ok)
@@ -478,14 +479,13 @@ moveFromPerform file key = do
 	if (ishere)
 		then return $ Just $ moveFromCleanup remote key
 		else do
-			-- copy content from remote
+			Core.showNote $ "moving from " ++ (Git.repoDescribe r) ++ "..."
 			ok <- getViaTmp key (Remotes.copyFromRemote remote key)
 			if (ok)
 				then return $ Just $ moveFromCleanup remote key
 				else return Nothing -- fail
 moveFromCleanup :: Git.Repo -> Key -> Annex Bool
 moveFromCleanup remote key = do
-	showNote $ "dropping from " ++ (Git.repoDescribe remote) ++ "..."
 	Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
 		"--backend=" ++ (backendName key),
 		keyName key]

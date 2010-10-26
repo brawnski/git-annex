@@ -53,7 +53,7 @@ content from the key-value store.
 	# git commit -a -m "freed up space"
 	
 	# git annex move iso --to=usbdrive
-	move iso/Debian_5.0.iso (to usbdrive...) ok
+	move iso/Debian_5.0.iso (moving to usbdrive...) ok
 
 # SUBCOMMANDS
 

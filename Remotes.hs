@@ -188,7 +188,6 @@ tryGitConfigRead r = do
 {- Tries to copy a key's content from a remote to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyFromRemote r key file = do
-	Core.showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
 	if (not $ Git.repoIsUrl r)
 		then getlocal
 		else if (Git.repoIsSsh r)
@@ -206,7 +205,6 @@ copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyToRemote r key file = do
 	g <- Annex.gitRepo
 	let keyloc = annexLocation g key
-	Core.showNote $ "copying to " ++ (Git.repoDescribe r) ++ "..."
 	if (not $ Git.repoIsUrl r)
 		then putlocal keyloc
 		else if (Git.repoIsSsh r)
