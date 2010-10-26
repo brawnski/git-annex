@@ -78,7 +78,7 @@ USB drive.
 
 Notice that you had to git pull from home first, this lets git-annex know
 what has changed in home, and so it knows about the files present there and
-can get them. See below for an easier way.
+can get them.
 
 ## transferring files: When things go wrong
 
@@ -137,17 +137,6 @@ But `other.iso` looks to have never been copied to anywhere else, so if
 it's something you want to hold onto, you'd need to transfer it to
 some other repository before dropping it.
 
-## moving file content to another repository
-
-Often you will want to transfer some file contents from a repository to
-some other one, and then drop it from the first repository. For example,
-your laptop's disk is getting full; time to move some files to an external
-disk. Doing that by hand is possible, but a bit of a pain. `git annex move`
-makes it very easy.
-
-	# git annex move my_cool_big_file --to usbdrive
-	move my_cool_big_file (to usbdrive...) ok
-
 ## using ssh remotes
 
 So far git-annex has been used with a remote repository on a USB drive.
@@ -182,6 +171,21 @@ access, if available. There is a annex-cost setting you can configure in
 
 Also, note that you need full shell access for this to work -- 
 git-annex needs to be able to ssh in and run commands.
+
+## moving file content to another repository
+
+Often you will want to move some file contents from a repository to some
+other one. For example, your laptop's disk is getting full; time to move
+some files to an external disk before moving another file from home to your
+laptop. Doing that by hand (by using `git annex get` and `git annex drop`)
+is possible, but a bit of a pain. `git annex move` makes it very easy.
+
+	# git annex move my_cool_big_file --to usbdrive
+	move my_cool_big_file (copying to usbdrive...) ok
+	# git annex move video/hackity_hack_and_kaxxt.mov --from home
+	move video/hackity_hack_and_kaxxt.mov (copying from home...)a
+	WORM:1274316523:86050597:hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
+	(dropping from home...) ok
 
 ## using the URL backend
 
