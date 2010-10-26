@@ -15,6 +15,7 @@ import System.IO
 import System.Cmd
 import System.Cmd.Utils
 import Control.Exception
+import System.Directory
 import List
 import Maybe
 
@@ -66,10 +67,27 @@ copyKeyFile key file = do
 			showLocations key
 			return False
 		trycopy full (r:rs) = do
-			copied <- Remotes.copyFromRemote r key file
-			if (copied)
-				then return True
+			probablythere <- probablyPresent r
+			if (probablythere)
+				then do
+					showNote $ "copying from " ++ (Git.repoDescribe r) ++ "..."
+					copied <- Remotes.copyFromRemote r key file
+					if (copied)
+						then return True
+						else trycopy full rs
 				else trycopy full rs
+		probablyPresent r = do
+			-- This check is to avoid an ugly message if a
+			-- remote is a drive that is not mounted.
+			-- Avoid checking inAnnex for ssh remotes because
+			-- that is unnecessarily slow, and the locationlog
+			-- should be trusted. (If the ssh remote is down
+			-- or really lacks the file, it's ok to show
+			-- an ugly message before going on to the next
+			-- remote.)
+			if (not $ Git.repoIsUrl r)
+				then liftIO $ doesFileExist $ annexLocation r key
+				else return True
 
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
