@@ -39,8 +39,6 @@ shutdown = do
 			liftIO $ putStrLn "Recording state in git..."
 			liftIO $ GitQueue.run g q
 
-	liftIO $ Git.run g ["add", gitStateDir g]
-
 	-- clean up any files left in the temp directory, but leave
 	-- the tmp directory itself
 	let tmp = annexTmpLocation g
@@ -106,7 +104,8 @@ logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	liftIO $ logChange g key u status
+	log <- liftIO $ logChange g key u status
+	Annex.queue "add" [] log
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 

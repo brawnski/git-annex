@@ -216,7 +216,7 @@ addCleanup file key = do
 	liftIO $ renameFile file dest
 	link <- calcGitLink file key
 	liftIO $ createSymbolicLink link file
-	liftIO $ Git.run g ["add", file]
+	Annex.queue "add" [] file
 	return True
 
 {- The unannex subcommand undoes an add. -}
@@ -340,11 +340,10 @@ fixPerform file link = do
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ removeFile file
 	liftIO $ createSymbolicLink link file
-	g <- Annex.gitRepo
-	liftIO $ Git.run g ["add", file]
-	return $ Just $ fixCleanup
-fixCleanup :: Annex Bool
-fixCleanup = do
+	return $ Just $ fixCleanup file
+fixCleanup :: FilePath -> Annex Bool
+fixCleanup file = do
+	Annex.queue "add" [] file
 	return True
 
 {- Stores description for the repository. -}
@@ -391,8 +390,7 @@ fromKeyPerform file key = do
 	return $ Just $ fromKeyCleanup file
 fromKeyCleanup :: FilePath -> Annex Bool
 fromKeyCleanup file = do
-	g <- Annex.gitRepo
-	liftIO $ Git.run g ["add", file]
+	Annex.queue "add" [] file
 	return True
 
 {- Move a file either --to or --from a repository.
@@ -453,7 +451,8 @@ moveToCleanup remote key tmpfile = do
 	-- Record that the key is present on the remote.
 	g <- Annex.gitRepo
 	remoteuuid <- getUUID remote
-	liftIO $ logChange g key remoteuuid ValuePresent
+	log <- liftIO $ logChange g key remoteuuid ValuePresent
+	Annex.queue "add" [] log
 	-- Cleanup on the local side is the same as done for the
 	-- drop subcommand.
 	dropCleanup key
@@ -492,7 +491,8 @@ moveFromCleanup remote key = do
 	-- Record locally that the key is not on the remote.
 	remoteuuid <- getUUID remote
 	g <- Annex.gitRepo
-	liftIO $ logChange g key remoteuuid ValueMissing
+	log <- liftIO $ logChange g key remoteuuid ValueMissing
+	Annex.queue "add" [] log
 	return True
 
 -- helpers

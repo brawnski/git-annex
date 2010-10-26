@@ -82,12 +82,14 @@ instance Read LogLine where
 			undefined = ret $ LogLine (0) Undefined ""
 			ret v = [(v, "")]
 
-{- Log a change in the presence of a key's value in a repository. -}
-logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO ()
+{- Log a change in the presence of a key's value in a repository,
+ - and returns the filename of the logfile. -}
+logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO (FilePath)
 logChange repo key uuid status = do
 	log <- logNow status uuid
 	ls <- readLog logfile
 	writeLog logfile (compactLog $ log:ls)
+	return logfile
 	where
 		logfile = logFile repo key
 
