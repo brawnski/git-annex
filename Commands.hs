@@ -68,7 +68,7 @@ doSubCmd cmdname start param = do
 {- A subcommand can broadly want one of several kinds of input parameters.
  - This allows a first stage of filtering before starting a subcommand. -}
 data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing
-	| Description | Keys | Tempfile
+	| Description | Keys | Tempfile | FilesToBeCommitted
 
 data SubCommand = Command {
 	subcmdname :: String,
@@ -91,7 +91,9 @@ subCmds =  [
 	, (Command "unannex"	unannexStart	FilesInGit
 		"undo accidential add command")
 	, (Command "fix"	fixStart	FilesInGit
-		"fix up files' symlinks to point to annexed content")
+		"fix up symlinks to point to annexed content")
+	, (Command "pre-commit"	fixStart	FilesToBeCommitted
+		"fix up symlinks before they are committed")
 	, (Command "fromkey"	fromKeyStart	FilesMissing
 		"adds a file using a specific key")
 	, (Command "dropkey"	dropKeyStart	Keys
@@ -130,7 +132,7 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		cmddescs = unlines $ map (\c -> indent $ showcmd c) subCmds
 		showcmd c =
 			(subcmdname c) ++
-			(pad 10 (subcmdname c)) ++
+			(pad 11 (subcmdname c)) ++
 			(descWanted (subcmdwants c)) ++
 			(pad 13 (descWanted (subcmdwants c))) ++
 			(subcmddesc c)
@@ -161,6 +163,17 @@ findWanted FilesMissing params repo = do
 			if (e) then return False else return True
 findWanted Description params _ = do
 	return $ [unwords params]
+findWanted FilesToBeCommitted params repo = do
+	files <- mapM gitcached params
+	return $ foldl (++) [] files
+	where
+		gitcached p = do
+			-- ask git for files staged for commit that
+			-- are being added, moved, or changed (but not deleted)
+			fs0 <- Git.pipeRead repo ["diff", "--cached", 
+				"--name-only", "--diff-filter=ACMRT",
+				"-z", "HEAD", p]
+			return $ filter (not . null) $ split "\0" fs0
 findWanted _ params _ = return params
 
 {- Parses command line and returns two lists of actions to be 
@@ -360,6 +373,7 @@ initPerform description = do
 	u <- getUUID g
 	describeUUID u description
 	liftIO $ gitAttributes g
+	liftIO $ gitPreCommitHook g
 	return $ Just $ initCleanup
 initCleanup :: Annex Bool
 initCleanup = do

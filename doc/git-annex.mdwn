@@ -107,9 +107,13 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Fixes up symlinks that have become broken to again point to annexed content.
   This is useful to run if you have been moving the symlinks around.
 
-  You do not normally need to run this by hand since `git-annex init`
-  installs a pre-commit hook that automatically fixes up symlinks when
-  they are committed.
+* pre-commit [path ...]
+
+  Fixes up symlinks that are staged as part of a commit, to ensure they
+  point to annexed content. 
+
+  This is meant to be called from git's pre-commit hook. `git annex init`
+  automatically creates a pre-commit hook using this.
 
 * fromkey file
 
@@ -202,7 +206,7 @@ decscriptions. You may edit it.
 `.git-annex/*.log` is where git-annex records its content tracking
 information. These files should be committed to git.
 
-`.git-annex/.gitattributes` is configured to use git's union merge driver
+`.gitattributes` is configured to use git's union merge driver
 to avoid conflicts when merging files in the `.git-annex` directory.
 
 # AUTHOR

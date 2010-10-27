@@ -73,6 +73,21 @@ gitAttributes repo = do
 			Git.run repo ["commit", "-m", "git-annex setup", 
 					attributes]
 
+{- set up a git pre-commit hook, if one is not already present -}
+gitPreCommitHook :: Git.Repo -> IO ()
+gitPreCommitHook repo = do
+	let hook = (Git.workTree repo) ++ "/" ++ (Git.dir repo) ++
+		"/hooks/pre-commit"
+	exists <- doesFileExist hook
+	if (exists)
+		then putStrLn $ "pre-commit hook (" ++ hook ++ ") already exists, not configuring"
+		else do
+			writeFile hook $ "#!/bin/sh\n" ++
+				"# automatically configured by git-annex\n" ++ 
+				"git annex pre-commit .\n"
+			p <- getPermissions hook
+			setPermissions hook $ p {executable = True}
+
 {- Checks if a given key is currently present in the annexLocation.
  -
  - This can be run against a remote repository to check the key there. -}

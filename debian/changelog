@@ -4,6 +4,9 @@ git-annex (0.02) UNRELEASED; urgency=low
     file content when dropping files.
   * New move subcommand, that can move files from or to a remote.
   * New fromkey subcommand, for registering urls, etc.
+  * git-annex init will now set up a pre-commit hook that fixes up symlinks
+    before they are committed, to ensure that moving symlinks around does not
+    break them.
   * Add remote.annex-ignore git config setting to allow completly disabling
     a given remote.
   * --from/--to can be used to control the remote repository that git-annex

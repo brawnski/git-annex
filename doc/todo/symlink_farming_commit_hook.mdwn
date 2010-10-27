@@ -10,3 +10,5 @@ up.
 back to git-annex. If you want to have your own shell script in the post-commit
 hook, just make it call `git annex` with no parameters. git-annex will detect
 when it's run from a git hook and do the necessary fixups.
+
+[[done]]

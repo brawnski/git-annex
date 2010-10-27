@@ -43,23 +43,25 @@ if you are using a centralized bare repository.
 	add debian.iso ok
 	# git commit -a -m added
 
-Notice you commit at the end, this checks in git-annex's record of the
-files but not their actual, large, content.
+When you add a file to the annex and commit it, only a symlink to
+the annexed content is committed. The content itself is stored in
+git-annex's backend.
 
 ## renaming files
 
 	# cd ~/annex
 	# git mv big_file my_cool_big_file
 	# mkdir iso
-	# git mv debian.iso iso
-	# git annex fix .
-	fix iso/debian.iso ok
+	# git mv debian.iso iso/
 	# git commit -m moved
 
 You can use any normal git operations to move files around, or even
-make copies or delete them. `git-annex fix` needs to be run if a file
-is moved into a different directory, in order to fix up the symlink 
-pointing to the file's content.
+make copies or delete them.
+
+Notice that, since annexed files are represented by symlinks,
+the symlink will break when the file is moved into a subdirectory.
+But, git-annex will fix this up for you when you commit --
+it has a pre-commit hook that watches for and corrects broken symlinks.
 
 ## getting file content
 
