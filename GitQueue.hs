@@ -1,4 +1,4 @@
-{- git repository command queues
+{- git repository command queue
  -}
 
 module GitQueue (
@@ -9,6 +9,9 @@ module GitQueue (
 ) where
 
 import qualified Data.Map as M
+import System.IO
+import System.Cmd.Utils
+import Data.String.Utils
 
 import qualified GitRepo as Git
 
@@ -45,20 +48,11 @@ run repo queue = do
  - Complicated by commandline length limits. -}
 runAction :: Git.Repo -> Action -> [FilePath] -> IO ()
 runAction repo action files = do
-	xargs [] 0 files
+	if (null files)
+		then return ()
+		else runxargs
 	where
-		arg_max = 2048 -- TODO get better ARG_MAX
-		maxlen = arg_max - cmdlen
-		c = (subcommand action):(params action)
-		cmdlen = (length "git") + 
-			(foldl (\a b -> a + b + 1) 1 $ map length c)
-		xargs collect _ [] = exec collect
-		xargs collect len (f:fs) = do
-			let len' = len + 1 + length f
-			if (len' >= maxlen)
-				then do
-					exec collect
-					xargs [f] (length f) fs
-				else xargs (f:collect) len' fs
-		exec [] = return ()
-		exec fs = Git.run repo $ c ++ fs
+		runxargs = pOpen WriteToPipe "xargs" 
+			(["-0", "git", subcommand action] ++ (params action))
+			feedxargs
+		feedxargs h = hPutStr h $ join "\0" files

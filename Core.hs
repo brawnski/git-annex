@@ -36,7 +36,7 @@ shutdown = do
 	if (q == GitQueue.empty)
 		then return ()
 		else do
-			liftIO $ putStrLn "Recording state in git..."
+			verbose $ liftIO $ putStrLn "Recording state in git..."
 			liftIO $ GitQueue.run g q
 
 	-- clean up any files left in the temp directory, but leave
