@@ -209,6 +209,14 @@ information. These files should be committed to git.
 `.gitattributes` is configured to use git's union merge driver
 to avoid conflicts when merging files in the `.git-annex` directory.
 
+# SEE ALSO
+
+Most of git-annex's documentation is available on its web site, 
+<http://git-annex.branchable.com/>
+
+If git-annex is installed from a package, a copy of its documentation
+should be included, in, for example, `/usr/share/doc/git-annex/`
+
 # AUTHOR
 
 Joey Hess <joey@ikiwiki.info>
