@@ -1,0 +1,18 @@
+git-annex 0.02 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Can scp annexed files from remote hosts, and check remote hosts for
+     file content when dropping files.
+   * New move subcommand, that makes it easy to move file contents from
+     or to a remote.
+   * New fromkey subcommand, for registering urls, etc.
+   * git-annex init will now set up a pre-commit hook that fixes up symlinks
+     before they are committed, to ensure that moving symlinks around does not
+     break them.
+   * More intelligent and fast staging of modified files; git add coalescing.
+   * Add remote.annex-ignore git config setting to allow completly disabling
+     a given remote.
+   * --from/--to can be used to control the remote repository that git-annex
+     uses.
+   * --quiet can be used to avoid verbose output
+   * New plumbing-level dropkey and addkey subcommands.
+   * Lots of bug fixes."""]]
