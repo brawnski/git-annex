@@ -91,7 +91,8 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * init description
 
-  Initializes git-annex with a description of the git repository.
+  Initializes git-annex with a description of the git repository,
+  and sets up `.gitattributes` and the pre-commit hook.
   This is an optional, but recommended step.
 
 * unannex [path ...]
@@ -105,6 +106,10 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Fixes up symlinks that have become broken to again point to annexed content.
   This is useful to run if you have been moving the symlinks around.
+
+  You do not normally need to run this by hand since `git-annex init`
+  installs a pre-commit hook that automatically fixes up symlinks when
+  they are committed.
 
 * fromkey file
 

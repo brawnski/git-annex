@@ -346,7 +346,7 @@ fixCleanup file = do
 	Annex.queue "add" [] file
 	return True
 
-{- Stores description for the repository. -}
+{- Stores description for the repository etc. -}
 initStart :: String -> Annex (Maybe SubCmdPerform)
 initStart description = do
 	if (null description)
@@ -359,6 +359,7 @@ initPerform description = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	describeUUID u description
+	liftIO $ gitAttributes g
 	return $ Just $ initCleanup
 initCleanup :: Annex Bool
 initCleanup = do

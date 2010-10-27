@@ -22,7 +22,6 @@ import Utility
 startup :: Annex Bool
 startup = do
 	g <- Annex.gitRepo
-	liftIO $ gitAttributes g
 	prepUUID
 	return True
 
