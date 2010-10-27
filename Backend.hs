@@ -11,7 +11,11 @@
  - 
  - Multiple pluggable backends are supported, and more than one can be used
  - to store different files' contents in a given repository.
- - -}
+ -
+ - Copyright 2010 Joey Hess <joey@kitenet.net>
+ -
+ - Licensed under the GNU GPL version 3 or higher.
+ -}
 
 module Backend (
 	list,

@@ -14,6 +14,10 @@
  - 
  - Git is configured to use a union merge for this file,
  - so the lines may be in arbitrary order, but it will never conflict.
+ -
+ - Copyright 2010 Joey Hess <joey@kitenet.net>
+ -
+ - Licensed under the GNU GPL version 3 or higher.
  -}
 
 module LocationLog (

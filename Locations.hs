@@ -1,4 +1,8 @@
 {- git-annex file locations
+ -
+ - Copyright 2010 Joey Hess <joey@kitenet.net>
+ -
+ - Licensed under the GNU GPL version 3 or higher.
  -}
 
 module Locations (

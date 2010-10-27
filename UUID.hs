@@ -3,6 +3,9 @@
  - Each git repository used by git-annex has an annex.uuid setting that
  - uniquely identifies that repository.
  -
+ - Copyright 2010 Joey Hess <joey@kitenet.net>
+ -
+ - Licensed under the GNU GPL version 3 or higher.
  -}
 
 module UUID (
