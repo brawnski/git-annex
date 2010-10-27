@@ -3,6 +3,11 @@
 
 module Backend.SHA1 (backend) where
 
+import Control.Monad.State
+import Data.String.Utils
+import System.Cmd.Utils
+import System.IO
+
 import qualified Backend.File
 import TypeInternals
 
@@ -13,4 +18,9 @@ backend = Backend.File.backend {
 
 -- checksum the file to get its key
 keyValue :: FilePath -> Annex (Maybe Key)
-keyValue k = error "SHA1 keyValue unimplemented" -- TODO
+keyValue file = liftIO $ pOpen ReadFromPipe "sha1sum" [file] $ \h -> do
+		line <- hGetLine h
+		let bits = split " " line
+		if (null bits)
+			then error "sha1sum parse error"
+			else return $ Just $ Key ((name backend), bits !! 0)

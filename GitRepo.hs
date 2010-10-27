@@ -195,8 +195,8 @@ run repo params = assertLocal repo $ do
 pipeRead :: Repo -> [String] -> IO String
 pipeRead repo params = assertLocal repo $ do
 	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
-	ret <- hGetContentsStrict h
-	return ret
+		ret <- hGetContentsStrict h
+		return ret
 
 {- Passed a location, recursively scans for all files that
  - are checked into git at that location. -}
