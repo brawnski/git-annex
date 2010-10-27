@@ -61,7 +61,7 @@ keyPossibilities key = do
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
 			if (not $ null doexpensive)
-				then Core.showNote $ "getting UUIDs for " ++ (list doexpensive) ++ "..."
+				then Core.showNote $ "getting UUID for " ++ (list doexpensive) ++ "..."
 				else return ()
 			let todo = cheap ++ doexpensive
 			if (not $ null todo)
