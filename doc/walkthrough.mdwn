@@ -21,7 +21,7 @@ Let's start by adding a USB drive as a remote.
 	# git clone ~/annex
 	# cd annex
 	# git annex init "portable USB drive"
-	# git remote add home ~/annex
+	# git remote add laptop ~/annex
 	# cd ~/annex
 	# git remote add usbdrive /media/usb
 
@@ -29,9 +29,9 @@ This is all standard ad-hoc distributed git repository setup.
 The only git-annex specific part is telling it the name
 of the new repository created on the USB drive.
 
-Notice that both repos are set up as remotes of the other one. This lets
+Notice that both repos are set up as remotes of one another. This lets
 either get annexed files from the other. You'll want to do that even
-if you are using a centralized bare repository.
+if you are using git in a more centralized fashion.
 
 ## adding files
 
@@ -69,17 +69,17 @@ A repository does not always have all annexed file contents available.
 When you need the content of a file, you can use "git annex get" to
 make it available.
 
-We can use this to copy everything in the laptop's home annex to the
+We can use this to copy everything in the laptop's annex to the
 USB drive.
 
 	# cd /media/usb/annex
-	# git pull home master
+	# git pull laptop master
 	# git annex get .
-	get my_cool_big_file (copying from home...) ok
-	get iso/debian.iso (copying from home...) ok
+	get my_cool_big_file (copying from laptop...) ok
+	get iso/debian.iso (copying from laptop...) ok
 
-Notice that you had to git pull from home first, this lets git-annex know
-what has changed in home, and so it knows about the files present there and
+Notice that you had to git pull from laptop first, this lets git-annex know
+what has changed in laptop, and so it knows about the files present there and
 can get them.
 
 ## transferring files: When things go wrong
@@ -92,7 +92,7 @@ it:
 
 	# git annex get video/hackity_hack_and_kaxxt.mov
 	get video/_why_hackity_hack_and_kaxxt.mov (not available)
-	  I was unable to access these remotes: server
+	  I was unable to access these remotes: usbdrive, server
 	  Try making some of these repositories available:
 	  	5863d8c0-d9a9-11df-adb2-af51e6559a49  -- my home file server
 	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
@@ -141,9 +141,9 @@ some other repository before dropping it.
 
 ## using ssh remotes
 
-So far git-annex has been used with a remote repository on a USB drive.
-But it can also be used with a remote that is truely remote, a host
-accessed by ssh.
+So far in this walkthrough, git-annex has been used with a remote
+repository on a USB drive. But it can also be used with a git remote
+that is truely remote, a host accessed by ssh.
 
 Say you have a desktop on the same network as your laptop and want
 to clone the laptop's annex to it:
@@ -155,7 +155,7 @@ to clone the laptop's annex to it:
 Now you can get files and they will be transferred by `scp`:
 
 	# git annex get my_cool_big_file
-	get my_cool_big_file (getting UUIDs for origin...) (copying from origin...)
+	get my_cool_big_file (getting UUID for origin...) (copying from origin...)
 	WORM:1285650548:2159:my_cool_big_file       100% 2159     2.1KB/s   00:00
 	ok
 
@@ -174,18 +174,19 @@ access, if available. There is a annex-cost setting you can configure in
 Also, note that you need full shell access for this to work -- 
 git-annex needs to be able to ssh in and run commands.
 
-## moving file content to another repository
+## moving file content between repositories
 
 Often you will want to move some file contents from a repository to some
 other one. For example, your laptop's disk is getting full; time to move
-some files to an external disk before moving another file from home to your
-laptop. Doing that by hand (by using `git annex get` and `git annex drop`)
-is possible, but a bit of a pain. `git annex move` makes it very easy.
+some files to an external disk before moving another file from a file
+server to your laptop. Doing that by hand (by using `git annex get` and
+`git annex drop`) is possible, but a bit of a pain. `git annex move`
+makes it very easy.
 
 	# git annex move my_cool_big_file --to usbdrive
 	move my_cool_big_file (moving to usbdrive...) ok
-	# git annex move video/hackity_hack_and_kaxxt.mov --from home
-	move video/hackity_hack_and_kaxxt.mov (moving from home...)
+	# git annex move video/hackity_hack_and_kaxxt.mov --from fileserver
+	move video/hackity_hack_and_kaxxt.mov (moving from fileserver...)
 	WORM:1274316523:86050597:hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
 	ok
 
