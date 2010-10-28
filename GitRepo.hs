@@ -79,7 +79,10 @@ repoFromPath dir = newFrom $ Dir dir
 
 {- Remote Repo constructor. Throws exception on invalid url. -}
 repoFromUrl :: String -> Repo
-repoFromUrl url = newFrom $ Url $ fromJust $ parseURI url
+repoFromUrl url
+	| startswith "file://" url = repoFromPath $ uriPath u
+	| otherwise = newFrom $ Url u
+		where u = fromJust $ parseURI url
 
 {- User-visible description of a git repo. -}
 repoDescribe Repo { remoteName = Just name } = name

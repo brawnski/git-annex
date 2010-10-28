@@ -1,3 +1,9 @@
+git-annex (0.03) UNRELEASED; urgency=low
+
+  * Fix support for file:// remotes.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 28 Oct 2010 13:46:59 -0400
+
 git-annex (0.02) unstable; urgency=low
 
   * Can scp annexed files from remote hosts, and check remote hosts for
