@@ -14,6 +14,7 @@ import System.Directory
 import System.Path
 import Data.String.Utils
 import Control.Monad (filterM)
+import Monad (when)
 import List
 import IO
 
@@ -326,9 +327,7 @@ dropKeyCleanup key = do
 setKeyStart :: FilePath -> Annex (Maybe SubCmdPerform)
 setKeyStart tmpfile = do
 	keyname <- Annex.flagGet "key"
-	if (null keyname)
-		then error "please specify the key with --key"
-		else return ()
+	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
 	return $ Just $ setKeyPerform tmpfile key
@@ -392,9 +391,7 @@ initCleanup = do
 fromKeyStart :: FilePath -> Annex (Maybe SubCmdPerform)
 fromKeyStart file = do
 	keyname <- Annex.flagGet "key"
-	if (null keyname)
-		then error "please specify the key with --key"
-		else return ()
+	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
 

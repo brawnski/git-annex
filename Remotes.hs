@@ -28,6 +28,7 @@ import System.Directory
 import System.Posix.Directory
 import List
 import Maybe
+import Monad (when, unless)
 
 import Types
 import qualified GitRepo as Git
@@ -65,9 +66,9 @@ keyPossibilities key = do
 			let cheap = filter (not . Git.repoIsUrl) allremotes
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
-			if (not $ null doexpensive)
-				then Core.showNote $ "getting UUID for " ++ (list doexpensive) ++ "..."
-				else return ()
+			unless (null doexpensive) $ do
+				Core.showNote $ "getting UUID for " ++
+					(list doexpensive) ++ "..."
 			let todo = cheap ++ doexpensive
 			if (not $ null todo)
 				then do

@@ -61,7 +61,6 @@ gitRepoChange :: Git.Repo -> Annex ()
 gitRepoChange r = do
 	state <- get
 	put state { Internals.repo = r }
-	return ()
 
 {- Returns the backends being used. -}
 backends :: Annex [Backend]
@@ -74,7 +73,6 @@ backendsChange :: [Backend] -> Annex ()
 backendsChange b = do
 	state <- get
 	put state { Internals.backends = b }
-	return ()
 
 {- Returns the full list of supported backends. -}
 supportedBackends :: Annex [Backend]
@@ -95,7 +93,6 @@ flagChange :: FlagName -> Flag -> Annex ()
 flagChange name val = do
 	state <- get
 	put state { Internals.flags = M.insert name val $ Internals.flags state }
-	return ()
 
 {- Gets the value of a String flag (or "" if there is no such String flag) -}
 flagGet :: FlagName -> Annex String

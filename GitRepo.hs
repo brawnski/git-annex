@@ -191,8 +191,7 @@ gitCommandLine repo params = assertLocal repo $
 {- Runs git in the specified repo. -}
 run :: Repo -> [String] -> IO ()
 run repo params = assertLocal repo $ do
-	r <- safeSystem "git" (gitCommandLine repo params)
-	return ()
+	safeSystem "git" (gitCommandLine repo params)
 
 {- Runs a git subcommand and returns its output. -}
 pipeRead :: Repo -> [String] -> IO String

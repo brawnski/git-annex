@@ -13,6 +13,7 @@ import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
 import Data.String.Utils
+import Monad (when, unless)
 
 import Types
 import Locations
@@ -37,19 +38,15 @@ shutdown = do
 
 	-- Runs all queued git commands.
 	q <- Annex.queueGet
-	if (q == GitQueue.empty)
-		then return ()
-		else do
-			verbose $ liftIO $ putStrLn "Recording state in git..."
-			liftIO $ GitQueue.run g q
+	unless (q == GitQueue.empty) $ do
+		verbose $ liftIO $ putStrLn "Recording state in git..."
+		liftIO $ GitQueue.run g q
 
 	-- clean up any files left in the temp directory, but leave
 	-- the tmp directory itself
 	let tmp = annexTmpLocation g
 	exists <- liftIO $ doesDirectoryExist tmp
-	if (exists)
-		then liftIO $ removeDirectoryRecursive $ tmp
-		else return ()
+	when (exists) $ liftIO $ removeDirectoryRecursive $ tmp
 	liftIO $ createDirectoryIfMissing True tmp
 
 	return True
@@ -65,11 +62,9 @@ gitAttributes repo = do
 			commit
 		else do
 			content <- readFile attributes
-			if (all (/= attrLine) (lines content))
-				then do
-					appendFile attributes $ attrLine ++ "\n"
-					commit
-				else return ()
+			when (all (/= attrLine) (lines content)) $ do
+				appendFile attributes $ attrLine ++ "\n"
+				commit
 	where
 		attrLine = stateLoc ++ "*.log merge=union"
 		attributes = Git.attributes repo
@@ -150,7 +145,7 @@ getViaTmp key action = do
 verbose :: Annex () -> Annex ()
 verbose a = do
 	q <- Annex.flagIsSet "quiet"
-	if (q) then return () else a
+	unless q a
 showStart :: String -> String -> Annex ()
 showStart command file = verbose $ do
 	liftIO $ putStr $ command ++ " " ++ file ++ " "

@@ -129,7 +129,7 @@ checkRemoveKey key = do
 				"Could only verify the existence of " ++
 				(show have) ++ " out of " ++ (show need) ++ 
 				" necessary copies"
-			if (not $ null bad) then showTriedRemotes bad else return ()
+			showTriedRemotes bad
 			showLocations key
 			hint
 			return False
@@ -146,7 +146,8 @@ showLocations key = do
 	if (null uuidsf)
 		then showLongNote $ "No other repository is known to contain the file."
 		else showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
-		
+	
+showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
 	showLongNote $ "I was unable to access these remotes: " ++
 		(Remotes.list remotes)

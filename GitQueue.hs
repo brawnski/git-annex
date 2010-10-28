@@ -16,6 +16,7 @@ import qualified Data.Map as M
 import System.IO
 import System.Cmd.Utils
 import Data.String.Utils
+import Monad (unless)
 
 import qualified GitRepo as Git
 
@@ -52,9 +53,7 @@ run repo queue = do
  - Complicated by commandline length limits. -}
 runAction :: Git.Repo -> Action -> [FilePath] -> IO ()
 runAction repo action files = do
-	if (null files)
-		then return ()
-		else runxargs
+	unless (null files) runxargs
 	where
 		runxargs = pOpen WriteToPipe "xargs" 
 			(["-0", "git", subcommand action] ++ (params action))

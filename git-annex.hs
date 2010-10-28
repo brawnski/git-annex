@@ -8,6 +8,7 @@
 import IO (try)
 import System.IO
 import System.Environment
+import Monad
 
 import qualified Annex
 import Types
@@ -42,12 +43,8 @@ tryRun' state errnum (a:as) = do
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' state errnum [] = do
-	if (errnum > 0)
-		then error $ (show errnum) ++ " failed"
-		else return ()
+tryRun' state errnum [] =
+	when (errnum > 0) $ error $ (show errnum) ++ " failed"
 
 {- Exception pretty-printing. -}
-showErr e = do
-	hPutStrLn stderr $ "git-annex: " ++ (show e)
-	return ()
+showErr e = hPutStrLn stderr $ "git-annex: " ++ (show e)
