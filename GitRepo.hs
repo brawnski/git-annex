@@ -54,47 +54,37 @@ import Utility
 
 {- There are two types of repositories; those on local disk and those
  - accessed via an URL. -}
-data Repo = 
+data RepoLocation = Dir FilePath | Url URI
+	deriving (Show, Eq)
+
+data Repo = Repo {
+	location :: RepoLocation,
+	config :: Map String String,
+	remotes :: [Repo],
+	-- remoteName holds the name used for this repo in remotes
+	remoteName :: Maybe String 
+} deriving (Show, Eq)
+
+newFrom l = 
 	Repo {
-		top :: FilePath,
-		config :: Map String String,
-		remotes :: [Repo],
-		-- remoteName holds the name used for this repo in remotes
-		remoteName :: Maybe String 
-	} | UrlRepo {
-		url :: URI,
-		config :: Map String String,
-		remotes :: [Repo],
-		remoteName :: Maybe String
-	} deriving (Show, Eq)
+		location = l,
+		config = Map.empty,
+		remotes = [],
+		remoteName = Nothing
+	}
 
 {- Local Repo constructor. -}
 repoFromPath :: FilePath -> Repo
-repoFromPath dir =
-	Repo {
-		top = dir,
-		config = Map.empty,
-		remotes = [],
-		remoteName = Nothing
-	}
+repoFromPath dir = newFrom $ Dir dir
 
 {- Remote Repo constructor. Throws exception on invalid url. -}
 repoFromUrl :: String -> Repo
-repoFromUrl url =
-	UrlRepo {
-		url = fromJust $ parseURI url,
-		config = Map.empty,
-		remotes = [],
-		remoteName = Nothing
-	}
+repoFromUrl url = newFrom $ Url $ fromJust $ parseURI url
 
 {- User-visible description of a git repo. -}
-repoDescribe repo = 
-	if (isJust $ remoteName repo)
-		then fromJust $ remoteName repo
-		else if (not $ repoIsUrl repo)
-			then top repo
-			else show (url repo)
+repoDescribe Repo { remoteName = Just name } = name
+repoDescribe Repo { location = Url url } = show url
+repoDescribe Repo { location = Dir dir } = dir
 
 {- Constructs and returns an updated version of a repo with
  - different remotes list. -}
@@ -103,17 +93,19 @@ remotesAdd repo rs = repo { remotes = rs }
 
 {- Returns the name of the remote that corresponds to the repo, if 
  - it is a remote. Otherwise, "" -}
-repoRemoteName r = 
-	if (isJust $ remoteName r)
-		then fromJust $ remoteName r
-		else ""
+repoRemoteName Repo { remoteName = Just name } = name
+repoRemoteName _ = ""
 
 {- Some code needs to vary between URL and normal repos,
  - or bare and non-bare, these functions help with that. -}
-repoIsUrl repo = case (repo) of
-	UrlRepo {} -> True
-	Repo {} -> False
-repoIsSsh repo = repoIsUrl repo && (uriScheme $ url repo) == "ssh:"
+repoIsUrl Repo { location = Url _ } = True
+repoIsUrl _ = False
+
+repoIsSsh Repo { location = Url url } 
+	| uriScheme url == "ssh:" = True
+	| otherwise = False
+repoIsSsh _ = False
+
 assertLocal repo action = 
 	if (not $ repoIsUrl repo)
 		then action
@@ -124,10 +116,10 @@ assertUrl repo action =
 		then action
 		else error $ "acting on local git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
-assertssh repo action =
+assertSsh repo action =
 	if (repoIsSsh repo)
 		then action
-		else error $ "unsupported url " ++ (show $ url repo)
+		else error $ "unsupported url in repo " ++ (repoDescribe repo)
 bare :: Repo -> Bool
 bare repo = case Map.lookup "core.bare" $ config repo of
 	Just v -> configTrue v
@@ -137,55 +129,56 @@ bare repo = case Map.lookup "core.bare" $ config repo of
 
 {- Path to a repository's gitattributes file. -}
 attributes :: Repo -> String
-attributes repo = assertLocal repo $ do
-	if (bare repo)
-		then (top repo) ++ "/info/.gitattributes"
-		else (top repo) ++ "/.gitattributes"
+attributes repo
+	| bare repo = (workTree repo) ++ "/info/.gitattributes"
+	| otherwise = (workTree repo) ++ "/.gitattributes"
 
 {- Path to a repository's .git directory, relative to its workTree. -}
 dir :: Repo -> String
-dir repo = if (bare repo) then "" else ".git"
+dir repo
+	| bare repo = ""
+	| otherwise = ".git"
 
 {- Path to a repository's --work-tree, that is, its top.
  -
- - Note that for URL repositories, this is relative to the urlHost -}
+ - Note that for URL repositories, this is the path on the remote host. -}
 workTree :: Repo -> FilePath
-workTree r@(UrlRepo { }) = urlPath r
-workTree (Repo { top = p }) = p
+workTree r@(Repo { location = Url _ }) = urlPath r
+workTree (Repo { location = Dir d }) = d
 
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
  - This is the same form displayed and used by git. -}
 relative :: Repo -> String -> String
-relative repo file = assertLocal repo $ drop (length absrepo) absfile
+relative repo@(Repo { location = Dir d }) file = drop (length absrepo) absfile
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
-		absrepo = case (absNormPath "/" (top repo)) of
+		absrepo = case (absNormPath "/" d) of
 			Just f -> f ++ "/"
-			Nothing -> error $ "bad repo" ++ (top repo)
+			Nothing -> error $ "bad repo" ++ (repoDescribe repo)
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
+relative repo file = assertLocal repo $ error "internal"
 
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
-urlHost repo = assertUrl repo $ 
-	uriUserInfo a ++ uriRegName a ++ uriPort a
-	where 
-		a = fromJust $ uriAuthority $ url repo
+urlHost Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
+	where a = fromJust $ uriAuthority $ u
+urlHost repo = assertUrl repo $ error "internal"
 
 {- Path of an URL repo. -}
 urlPath :: Repo -> String
-urlPath repo = assertUrl repo $
-	uriPath $ url repo
+urlPath Repo { location = Url u } = uriPath u
+urlPath repo = assertUrl repo $ error "internal"
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: Repo -> [String] -> [String]
-gitCommandLine repo params = assertLocal repo $
+gitCommandLine repo@(Repo { location = Dir d} ) params =
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++(top repo)++"/"++(dir repo),
-		"--work-tree="++(top repo)] ++ params
+	["--git-dir="++d++"/"++(dir repo), "--work-tree="++d] ++ params
+gitCommandLine repo _ = assertLocal repo $ error "internal"
 
 {- Runs git in the specified repo. -}
 run :: Repo -> [String] -> IO ()
@@ -215,23 +208,23 @@ notInRepo repo location = do
 
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
-configRead repo = 
-	if (not $ repoIsUrl repo)
-	then do 
-		{- Cannot use pipeRead because it relies on the config having
-	           been already read. Instead, chdir to the repo. -}
-		cwd <- getCurrentDirectory
-		bracket_ (changeWorkingDirectory (top repo))
-			(\_ -> changeWorkingDirectory cwd) $
-				pOpen ReadFromPipe "git" ["config", "--list"] proc
-	else assertssh repo $ do
-		pOpen ReadFromPipe "ssh" [urlHost repo, sshcommand] proc
+configRead repo@(Repo { location = Dir d }) = do
+	{- Cannot use pipeRead because it relies on the config having
+	   been already read. Instead, chdir to the repo. -}
+	cwd <- getCurrentDirectory
+	bracket_ (changeWorkingDirectory d)
+		(\_ -> changeWorkingDirectory cwd) $
+			pOpen ReadFromPipe "git" ["config", "--list"] $
+				hConfigRead repo
+configRead repo = assertSsh repo $ do
+	pOpen ReadFromPipe "ssh" [urlHost repo, sshcommand] $ hConfigRead repo
 	where
-		sshcommand = "cd " ++ (shellEscape $ urlPath repo) ++ " && git config --list"
-		proc h = do
-			val <- hGetContentsStrict h
-			let r = repo { config = configParse val }
-			return r { remotes = configRemotes r }	
+		sshcommand = "cd " ++ (shellEscape $ urlPath repo) ++
+				" && git config --list"
+hConfigRead repo h = do
+	val <- hGetContentsStrict h
+	let r = repo { config = configParse val }
+	return r { remotes = configRemotes r }	
 
 {- Checks if a string fron git config is a true value. -}
 configTrue :: String -> Bool
@@ -246,9 +239,8 @@ configRemotes repo = map construct remotes
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
 		remotename k = (split "." k) !! 1
 		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
-		gen v = if (isURI v)
-			then repoFromUrl v
-			else repoFromPath v
+		gen v	| isURI v = repoFromUrl v
+			| otherwise = repoFromPath v
 
 {- Parses git config --list output into a config map. -}
 configParse :: String -> Map.Map String String
