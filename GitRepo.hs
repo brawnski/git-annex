@@ -24,6 +24,7 @@ module GitRepo (
 	configGet,
 	configMap,
 	configRead,
+	configTrue,
 	run,
 	pipeRead,
 	attributes,
@@ -47,6 +48,7 @@ import Data.String.Utils
 import Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
+import Char
 
 import Utility
 
@@ -127,13 +129,11 @@ assertssh repo action =
 		then action
 		else error $ "unsupported url " ++ (show $ url repo)
 bare :: Repo -> Bool
-bare repo = 
-	if (member b (config repo))
-		then ("true" == fromJust (Map.lookup b (config repo)))
-		else error $ "it is not known if git repo " ++ (repoDescribe repo) ++
+bare repo = case Map.lookup "core.bare" $ config repo of
+	Just v -> configTrue v
+	Nothing -> error $ "it is not known if git repo " ++
+			(repoDescribe repo) ++
 			" is a bare repository; config not read"
-	where
-		b = "core.bare"
 
 {- Path to a repository's gitattributes file. -}
 attributes :: Repo -> String
@@ -173,7 +173,7 @@ relative repo file = assertLocal repo $ drop (length absrepo) absfile
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
 urlHost repo = assertUrl repo $ 
-	(uriUserInfo a) ++ (uriRegName a) ++ (uriPort a)
+	uriUserInfo a ++ uriRegName a ++ uriPort a
 	where 
 		a = fromJust $ uriAuthority $ url repo
 
@@ -234,6 +234,10 @@ configRead repo =
 			val <- hGetContentsStrict h
 			let r = repo { config = configParse val }
 			return r { remotes = configRemotes r }	
+
+{- Checks if a string fron git config is a true value. -}
+configTrue :: String -> Bool
+configTrue s = map toLower s == "true"
 
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
 configRemotes :: Repo -> [Repo]

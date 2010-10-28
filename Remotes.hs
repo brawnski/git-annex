@@ -139,10 +139,10 @@ repoNotIgnored r = do
 	let name = if (not $ null fromName) then fromName else toName
 	if (not $ null name)
 		then return $ match name
-		else return $ notignored g
+		else return $ not $ ignored g
 	where
 		match name = name == Git.repoRemoteName r
-		notignored g = "true" /= config g
+		ignored g = Git.configTrue $ config g
 		config g = Git.configGet g configkey ""
 		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
 
