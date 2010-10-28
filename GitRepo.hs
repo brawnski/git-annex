@@ -150,10 +150,8 @@ dir repo = if (bare repo) then "" else ".git"
  -
  - Note that for URL repositories, this is relative to the urlHost -}
 workTree :: Repo -> FilePath
-workTree repo =
-	if (not $ repoIsUrl repo)
-		then top repo
-		else urlPath repo
+workTree r@(UrlRepo { }) = urlPath r
+workTree (Repo { top = p }) = p
 
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
@@ -186,7 +184,8 @@ urlPath repo = assertUrl repo $
 gitCommandLine :: Repo -> [String] -> [String]
 gitCommandLine repo params = assertLocal repo $
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++(top repo)++"/"++(dir repo), "--work-tree="++(top repo)] ++ params
+	["--git-dir="++(top repo)++"/"++(dir repo),
+		"--work-tree="++(top repo)] ++ params
 
 {- Runs git in the specified repo. -}
 run :: Repo -> [String] -> IO ()
