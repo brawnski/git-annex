@@ -153,15 +153,13 @@ commandLineRemote = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
 	let name = if (not $ null fromName) then fromName else toName
-	if (null name)
-		then error "no remote specified"
-		else do
-			g <- Annex.gitRepo
-			let match = filter (\r -> name == Git.repoRemoteName r) $
-				Git.remotes g
-			if (null match)
-				then error $ "there is no git remote named \"" ++ name ++ "\""
-				else return $ match !! 0
+	when (null name) $ error "no remote specified"
+	g <- Annex.gitRepo
+	let match = filter (\r -> name == Git.repoRemoteName r) $
+		Git.remotes g
+	when (null match) $ error $
+		"there is no git remote named \"" ++ name ++ "\""
+	return $ match !! 0
 
 {- The git configs for the git repo's remotes is not read on startup
  - because reading it may be expensive. This function tries to read the
@@ -187,7 +185,7 @@ tryGitConfigRead r = do
 	where 
 		exchange [] new = []
 		exchange (old:ls) new =
-			if ((Git.repoRemoteName old) == (Git.repoRemoteName new))
+			if (Git.repoRemoteName old == Git.repoRemoteName new)
 				then new:(exchange ls new)
 				else old:(exchange ls new)
 

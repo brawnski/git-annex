@@ -163,6 +163,6 @@ mapLog map log =
 		then Map.insert (uuid log) log map
 		else map
 	where
-		better = case (Map.lookup (uuid log) map) of
+		better = case Map.lookup (uuid log) map of
 			Just l -> (date l <= date log)
 			Nothing -> True

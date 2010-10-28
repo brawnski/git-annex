@@ -14,7 +14,7 @@ import System.Directory
 import System.Path
 import Data.String.Utils
 import Control.Monad (filterM)
-import Monad (when)
+import Monad (when, unless)
 import List
 import IO
 
@@ -168,7 +168,7 @@ findWanted FilesMissing params repo = do
 	where
 		missing f = do
 			e <- doesFileExist f
-			if (e) then return False else return True
+			return $ not e
 findWanted Description params _ = do
 	return $ [unwords params]
 findWanted FilesToBeCommitted params repo = do
@@ -191,19 +191,18 @@ findWanted _ params _ = return params
 parseCmd :: [String] -> AnnexState -> IO ([Annex Bool], [Annex Bool])
 parseCmd argv state = do
 	(flags, params) <- getopt
-	if (null params)
-		then error usage
-		else case (lookupCmd (params !! 0)) of
-			[] -> error usage
-			[Command name action want _] -> do
-				f <- findWanted want (drop 1 params)
-					(TypeInternals.repo state)
-				let actions = map (doSubCmd name action) $
-					filter notstate f
-				let configactions = map (\f -> do
-					f
-					return True) flags
-				return (configactions, actions)
+	when (null params) $ error usage
+	case lookupCmd (params !! 0) of
+		[] -> error usage
+		[Command name action want _] -> do
+			f <- findWanted want (drop 1 params)
+				(TypeInternals.repo state)
+			let actions = map (doSubCmd name action) $
+				filter notstate f
+			let configactions = map (\f -> do
+				f
+				return True) flags
+			return (configactions, actions)
 	where
 		-- never include files from the state directory
 		notstate f = stateLoc /= take (length stateLoc) f
@@ -273,7 +272,7 @@ getPerform :: FilePath -> Key -> Backend -> Annex (Maybe SubCmdCleanup)
 getPerform file key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
 	if (ok)
-		then return $ Just $ return True
+		then return $ Just $ return True -- no cleanup needed
 		else return Nothing
 
 {- Indicates a file's content is not wanted anymore, and should be removed
@@ -368,11 +367,9 @@ fixCleanup file = do
 {- Stores description for the repository etc. -}
 initStart :: String -> Annex (Maybe SubCmdPerform)
 initStart description = do
-	if (null description)
-		then error $ 
-			"please specify a description of this repository\n" ++
-			usage
-		else return $ Just $ initPerform description
+	when (null description) $ error $
+		"please specify a description of this repository\n" ++ usage
+	return $ Just $ initPerform description
 initPerform :: String -> Annex (Maybe SubCmdCleanup)
 initPerform description = do
 	g <- Annex.gitRepo
@@ -398,9 +395,9 @@ fromKeyStart file = do
 	let key = genKey (backends !! 0) keyname
 
 	inbackend <- Backend.hasKey key
-	if (not inbackend)
-		then error $ "key ("++keyname++") is not present in backend"
-		else return $ Just $ fromKeyPerform file key
+	unless (inbackend) $ error $
+		"key ("++keyname++") is not present in backend"
+	return $ Just $ fromKeyPerform file key
 fromKeyPerform :: FilePath -> Key -> Annex (Maybe SubCmdCleanup)
 fromKeyPerform file key = do
 	link <- calcGitLink file key
