@@ -116,6 +116,8 @@ options = [
 		"allow actions that may lose annexed data"
 	  , Option ['q'] ["quiet"] (NoArg (storebool "quiet" True))
 		"avoid verbose output"
+	  , Option ['v'] ["verbose"] (NoArg (storebool "quiet" False))
+		"allow verbose output"
 	  , Option ['b'] ["backend"] (ReqArg (storestring "backend") "NAME")
 		"specify default key-value backend to use"
 	  , Option ['k'] ["key"] (ReqArg (storestring "key") "KEY")

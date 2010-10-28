@@ -153,6 +153,10 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Avoid the default verbose logging of what is done; only show errors
   and progress displays.
 
+* --verbose
+
+  Enable verbose logging.
+
 * --backend=name
 
   Specify the default key-value backend to use, adding it to the front
