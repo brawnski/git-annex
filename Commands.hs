@@ -172,16 +172,8 @@ findWanted FilesMissing params repo = do
 findWanted Description params _ = do
 	return $ [unwords params]
 findWanted FilesToBeCommitted params repo = do
-	files <- mapM gitcached params
+	files <- mapM (Git.stagedFiles repo) params
 	return $ foldl (++) [] files
-	where
-		gitcached p = do
-			-- ask git for files staged for commit that
-			-- are being added, moved, or changed (but not deleted)
-			fs0 <- Git.pipeRead repo ["diff", "--cached", 
-				"--name-only", "--diff-filter=ACMRT",
-				"-z", "HEAD", p]
-			return $ filter (not . null) $ split "\0" fs0
 findWanted _ params _ = return params
 
 {- Parses command line and returns two lists of actions to be 

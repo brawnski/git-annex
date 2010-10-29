@@ -32,7 +32,8 @@ module GitRepo (
 	remotesAdd,
 	repoRemoteName,
 	inRepo,
-	notInRepo
+	notInRepo,
+	stagedFiles
 ) where
 
 import Monad (when, unless)
@@ -46,7 +47,7 @@ import System.Cmd.Utils
 import System.IO
 import IO (bracket_)
 import Data.String.Utils
-import Data.Map as Map hiding (map, split)
+import qualified Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
 import Char
@@ -60,7 +61,7 @@ data RepoLocation = Dir FilePath | Url URI
 
 data Repo = Repo {
 	location :: RepoLocation,
-	config :: Map String String,
+	config :: Map.Map String String,
 	remotes :: [Repo],
 	-- remoteName holds the name used for this repo in remotes
 	remoteName :: Maybe String 
@@ -211,6 +212,14 @@ notInRepo repo location = do
 	s <- pipeRead repo ["ls-files", "--others", "--exclude-standard", location]
 	return $ lines s
 
+{- Passed a location, returns a list of the files that are staged for
+ - commit that are being added, moved, or changed (but not deleted). -}
+stagedFiles :: Repo -> FilePath -> IO [FilePath]
+stagedFiles repo location = do
+	fs0 <- pipeRead repo ["diff", "--cached", "--name-only",
+		"--diff-filter=ACMRT", "-z", "HEAD", location]
+	return $ filter (not . null) $ split "\0" fs0
+
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
 configRead repo@(Repo { location = Dir d }) = do
@@ -239,8 +248,8 @@ configTrue s = map toLower s == "true"
 configRemotes :: Repo -> [Repo]
 configRemotes repo = map construct remotes
 	where
-		remotes = toList $ filter $ config repo
-		filter = filterWithKey (\k _ -> isremote k)
+		remotes = Map.toList $ filter $ config repo
+		filter = Map.filterWithKey (\k _ -> isremote k)
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
 		remotename k = (split "." k) !! 1
 		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
@@ -263,7 +272,7 @@ configGet repo key defaultValue =
 	Map.findWithDefault defaultValue key (config repo)
 
 {- Access to raw config Map -}
-configMap :: Repo -> Map String String
+configMap :: Repo -> Map.Map String String
 configMap repo = config repo
 
 {- Finds the current git repository, which may be in a parent directory. -}
