@@ -41,7 +41,7 @@ dummyOk url = return True
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do
 	showNote "downloading"
-	liftIO $ putStrLn "" -- make way for curl progress bar
+	showProgress -- make way for curl progress bar
 	liftIO $ boolSystem "curl" ["-#", "-o", file, url]
 	where
 		url = join ":" $ drop 1 $ split ":" $ show key 

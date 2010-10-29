@@ -154,6 +154,8 @@ showNote :: String -> Annex ()
 showNote s = verbose $ do
 	liftIO $ putStr $ "(" ++ s ++ ") "
 	liftIO $ hFlush stdout
+showProgress :: Annex ()
+showProgress = verbose $ liftIO $ putStr $ "\n"
 showLongNote :: String -> Annex ()
 showLongNote s = verbose $ do
 	liftIO $ putStr $ "\n" ++ (indent s)

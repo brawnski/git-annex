@@ -39,6 +39,7 @@ import LocationLog
 import Locations
 import UUID
 import Utility
+import qualified Core
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -200,7 +201,7 @@ copyFromRemote r key file = do
 	where
 		getlocal = liftIO $ boolSystem "cp" ["-a", keyloc, file]
 		getssh = do
-			liftIO $ putStrLn "" -- make way for scp progress bar
+			Core.showProgress -- make way for scp progress bar
 			liftIO $ boolSystem "scp" [sshLocation r keyloc, file]
 		keyloc = annexLocation r key
 
@@ -217,7 +218,7 @@ copyToRemote r key file = do
 	where
 		putlocal src = liftIO $ boolSystem "cp" ["-a", src, file]
 		putssh src = do
-			liftIO $ putStrLn "" -- make way for scp progress bar
+			Core.showProgress -- make way for scp progress bar
 			liftIO $ boolSystem "scp" [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
