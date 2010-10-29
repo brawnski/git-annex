@@ -201,24 +201,30 @@ pipeRead repo params = assertLocal repo $ do
 {- Passed a location, recursively scans for all files that
  - are checked into git at that location. -}
 inRepo :: Repo -> FilePath -> IO [FilePath]
-inRepo repo location = do
-	s <- pipeRead repo ["ls-files", "--cached", "--exclude-standard", location]
-	return $ lines s
+inRepo repo location = pipeNullSplit repo
+	["ls-files", "--cached", "--exclude-standard", "-z", location]
 
 {- Passed a location, recursively scans for all files that are not checked
  - into git, and not gitignored. -}
 notInRepo :: Repo -> FilePath -> IO [FilePath]
-notInRepo repo location = do
-	s <- pipeRead repo ["ls-files", "--others", "--exclude-standard", location]
-	return $ lines s
+notInRepo repo location = pipeNullSplit repo
+	["ls-files", "--others", "--exclude-standard", "-z", location]
 
-{- Passed a location, returns a list of the files that are staged for
- - commit that are being added, moved, or changed (but not deleted). -}
+{- Passed a location, returns a list of the files, staged for
+ - commit, that are being added, moved, or changed (but not deleted). -}
 stagedFiles :: Repo -> FilePath -> IO [FilePath]
-stagedFiles repo location = do
-	fs0 <- pipeRead repo ["diff", "--cached", "--name-only",
-		"--diff-filter=ACMRT", "-z", "HEAD", location]
-	return $ filter (not . null) $ split "\0" fs0
+stagedFiles repo location = pipeNullSplit repo
+	["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z",
+	 "HEAD", location]
+
+{- Reads null terminated output of a git command (as enabled by the -z 
+ - parameter), and splits it into a list of files. -}
+pipeNullSplit :: Repo -> [String] -> IO [FilePath]
+pipeNullSplit repo params = do
+	fs0 <- pipeRead repo params
+	return $ split0 fs0
+	where
+		split0 s = filter (not . null) $ split "\0" s
 
 {- Runs git config and populates a repo with its config. -}
 configRead :: Repo -> IO Repo
