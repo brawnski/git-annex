@@ -35,6 +35,7 @@ module GitRepo (
 	notInRepo
 ) where
 
+import Monad (when, unless)
 import Directory
 import System
 import System.Directory
@@ -183,10 +184,11 @@ gitCommandLine repo@(Repo { location = Dir d} ) params =
 	["--git-dir="++d++"/"++(dir repo), "--work-tree="++d] ++ params
 gitCommandLine repo _ = assertLocal repo $ error "internal"
 
-{- Runs git in the specified repo. -}
+{- Runs git in the specified repo, throwing an error if it fails. -}
 run :: Repo -> [String] -> IO ()
 run repo params = assertLocal repo $ do
-	safeSystem "git" (gitCommandLine repo params)
+	ok <- boolSystem "git" (gitCommandLine repo params)
+	unless (ok) $ error $ "git " ++ (show params) ++ " failed"
 
 {- Runs a git subcommand and returns its output. -}
 pipeRead :: Repo -> [String] -> IO String
