@@ -16,8 +16,10 @@ module Utility (
 ) where
 
 import System.IO
-import System.Cmd
+import System.Cmd.Utils
 import System.Exit
+import System.Posix.Process
+import System.Posix.Process.Internals
 import System.Posix.Signals
 import System.Posix.IO
 import Data.String.Utils
@@ -101,17 +103,30 @@ relPathDirToDir from to =
 {- Run a system command, and returns True or False
  - if it succeeded or failed.
  -
- - An error is thrown if the command exits due to SIGINT,
- - to propigate ctrl-c.
+ - SIGINT(ctrl-c) is allowed to propigate and will terminate the program.
  -}
 boolSystem :: FilePath -> [String] -> IO Bool
 boolSystem command params = do
-	r <- rawSystem command params
-	case r of
-		ExitSuccess -> return True
-		ExitFailure e -> if toInteger e == toInteger sigINT
-			then error $ command ++ "interrupted"
-			else return False
+	-- Going low-level because all the high-level system functions
+	-- block SIGINT etc. We need to block SIGCHLD, but allow
+	-- SIGINT to do its default program termination.
+	let sigset = addSignal sigCHLD emptySignalSet
+	oldint <- installHandler sigINT Default Nothing
+	oldset <- getSignalMask
+	blockSignals sigset
+	childpid <- forkProcess $ childaction oldint oldset
+	mps <- getProcessStatus True False childpid
+	restoresignals oldint oldset
+	case mps of
+		Just (Exited ExitSuccess) -> return True
+		_ -> return False
+	where
+		restoresignals oldint oldset = do
+			installHandler sigINT oldint Nothing
+			setSignalMask oldset
+		childaction oldint oldset = do
+			restoresignals oldint oldset
+			executeFile command True params Nothing
 
 {- Escapes a filename to be safely able to be exposed to the shell. -}
 shellEscape f = "'" ++ quote ++ "'"
