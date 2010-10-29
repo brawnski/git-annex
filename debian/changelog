@@ -2,6 +2,7 @@ git-annex (0.03) UNRELEASED; urgency=low
 
   * Fix support for file:// remotes.
   * Add --verbose
+  * Fix SIGINT handling.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 28 Oct 2010 13:46:59 -0400
 

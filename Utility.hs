@@ -19,7 +19,6 @@ import System.IO
 import System.Cmd
 import System.Exit
 import System.Posix.Signals
-import Data.Typeable
 import System.Posix.IO
 import Data.String.Utils
 import System.Path
@@ -110,7 +109,7 @@ boolSystem command params = do
 	r <- rawSystem command params
 	case r of
 		ExitSuccess -> return True
-		ExitFailure e -> if Just e == cast sigINT
+		ExitFailure e -> if toInteger e == toInteger sigINT
 			then error $ command ++ "interrupted"
 			else return False
 
