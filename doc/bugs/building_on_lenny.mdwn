@@ -41,7 +41,7 @@ Thanks for your help! --[[cstamas]]
 >
 > Ok, found and deployed a workaround. It is not tested. Let me know how it
 > works for you. --[[Joey]]
->>
+
 >> I did a git pull and now I get:
 
 	mkdir -p build
