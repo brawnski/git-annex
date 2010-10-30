@@ -57,3 +57,9 @@ Thanks for your help! --[[cstamas]]
 	dpkg-buildpackage: failure: debian/rules build gave error exit status 2
 
 >> --[[cstamas]]
+
+>>> Ok well, I'm not going to try to reimplement all of
+>>> Control.Exception.Extensible so I've made it use it. You will have to
+>>> figure out how to install that library yourself though, I don't know
+>>> how to use cabal with such an old ghc. Library is here:
+>>> <http://hackage.haskell.org/package/extensible-exceptions> --[[Joey]] 
