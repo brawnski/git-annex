@@ -17,7 +17,7 @@ module Remotes (
 ) where
 
 import IO (bracket_)
-import Control.Exception hiding (bracket_)
+import Control.Exception.Extensible hiding (bracket_)
 import Control.Monad.State (liftIO)
 import Control.Monad (filterM)
 import qualified Data.Map as Map
@@ -40,7 +40,6 @@ import Locations
 import UUID
 import Utility
 import qualified Core
-import Portability
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String

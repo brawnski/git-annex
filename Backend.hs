@@ -27,7 +27,7 @@ module Backend (
 ) where
 
 import Control.Monad.State
-import Control.Exception
+import Control.Exception.Extensible
 import System.Directory
 import System.FilePath
 import Data.String.Utils
@@ -39,7 +39,6 @@ import qualified Annex
 import Utility
 import Types
 import qualified TypeInternals as Internals
-import Portability
 
 {- List of backends in the order to try them when storing a new key. -}
 list :: Annex [Backend]
