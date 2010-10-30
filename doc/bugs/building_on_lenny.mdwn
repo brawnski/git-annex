@@ -33,7 +33,7 @@ Then I get this:
 
 I will try to check the mentioned file for error, but I do not know how to program in haskell.
 
-Thanks for your help!
+Thanks for your help! --[[cstamas]]
 
 > Newer versions of ghc changed their exception handling types, and
 > I coded git-annex to use the new style and not the old. gch6 6.12 will
@@ -41,3 +41,19 @@ Thanks for your help!
 >
 > Ok, found and deployed a workaround. It is not tested. Let me know how it
 > works for you. --[[Joey]]
+>>
+>> I did a git pull and now I get:
+
+	mkdir -p build
+	ghc -cpp -odir build -hidir build --make git-annex
+	[ 1 of 20] Compiling Portability      ( Portability.hs, build/Portability.o )
+
+	Portability.hs:13:21:
+	    Not in scope: type constructor or class `Exception'
+	make[1]: *** [git-annex] Error 1
+	make[1]: Leaving directory `/home/cstamas/tmp/git-annex'
+	dh_auto_build: make -j1 returned exit code 2
+	make: *** [build] Error 2
+	dpkg-buildpackage: failure: debian/rules build gave error exit status 2
+
+>> --[[cstamas]]
