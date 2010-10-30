@@ -7,7 +7,7 @@ module Portability where
 --
 -- This needs ghc -cpp
 --
--- This would be better, but is not packaged in Debian yet.
+-- This would be better, but then users of old ghc would need to install it.
 -- http://hackage.haskell.org/package/extensible-exceptions
 #if __GLASGOW_HASKELL__ < 610
 type SomeException = Exception 
