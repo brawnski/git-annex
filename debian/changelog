@@ -4,6 +4,7 @@ git-annex (0.03) UNRELEASED; urgency=low
   * Add --verbose
   * Fix SIGINT handling.
   * Fix handling of files with unusual characters in their name.
+  * Support building with Debian stable's ghc.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 28 Oct 2010 13:46:59 -0400
 

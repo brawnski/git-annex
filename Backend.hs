@@ -39,6 +39,7 @@ import qualified Annex
 import Utility
 import Types
 import qualified TypeInternals as Internals
+import Portability
 
 {- List of backends in the order to try them when storing a new key. -}
 list :: Annex [Backend]

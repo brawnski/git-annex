@@ -40,6 +40,7 @@ import Locations
 import UUID
 import Utility
 import qualified Core
+import Portability
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
