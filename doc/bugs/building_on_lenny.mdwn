@@ -35,3 +35,6 @@ I will try to check the mentioned file for error, but I do not know how to progr
 
 Thanks for your help!
 
+> Newer versions of ghc changed their exception handling types, and
+> I coded git-annex to use the new style and not the old. gch6 6.12 will
+> work. I do not think there is a backport available though. --[[Joey]]
