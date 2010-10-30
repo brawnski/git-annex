@@ -1,5 +1,7 @@
 {- git-annex - Nasty portability workarounds. -}
-module Portability where
+module Portability (SomeException) where
+
+import Control.Exception
 
 -- old ghc does not know about SomeException. 
 --
