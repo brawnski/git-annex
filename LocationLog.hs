@@ -32,9 +32,7 @@ import Data.Time.Clock.POSIX
 import Data.Time
 import System.Locale
 import qualified Data.Map as Map
-import System.IO
 import System.Directory
-import Data.Char
 import System.Posix.Process
 
 import qualified GitRepo as Git
@@ -63,8 +61,7 @@ instance Read LogStatus where
 	readsPrec _ _   = [(Undefined, "")]
 
 instance Show LogLine where
-	show (LogLine date status uuid) = unwords
-		[(show date), (show status), uuid]
+	show (LogLine d s u) = unwords [show d, show s, u]
 
 instance Read LogLine where
 	-- This parser is robust in that even unparsable log lines are
@@ -74,26 +71,25 @@ instance Read LogLine where
 		if (length w == 3)
 			then case (pdate) of
 				Just v -> good v
-				Nothing -> undefined
-			else undefined
+				Nothing -> bad
+			else bad
 		where
 			w = words string
-			date = w !! 0
-			status = read $ w !! 1
-			uuid = w !! 2
-			pdate = (parseTime defaultTimeLocale "%s%Qs" date) :: Maybe UTCTime
+			s = read $ w !! 1
+			u = w !! 2
+			pdate = (parseTime defaultTimeLocale "%s%Qs" $ w !! 0) :: Maybe UTCTime
 
-			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) status uuid
-			undefined = ret $ LogLine (0) Undefined ""
+			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) s u
+			bad = ret $ LogLine (0) Undefined ""
 			ret v = [(v, "")]
 
 {- Log a change in the presence of a key's value in a repository,
  - and returns the filename of the logfile. -}
 logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO (FilePath)
-logChange repo key uuid status = do
-	log <- logNow status uuid
+logChange repo key u s = do
+	line <- logNow s u
 	ls <- readLog logfile
-	writeLog logfile (compactLog $ log:ls)
+	writeLog logfile (compactLog $ line:ls)
 	return logfile
 	where
 		logfile = logFile repo key
@@ -114,18 +110,18 @@ readLog file = do
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()
-writeLog file lines = do
+writeLog file ls = do
 	pid <- getProcessID
 	let tmpfile = file ++ ".tmp" ++ show pid
 	createDirectoryIfMissing True (parentDir file)
-	writeFile tmpfile $ unlines $ map show lines
+	writeFile tmpfile $ unlines $ map show ls
 	renameFile tmpfile file
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> UUID -> IO LogLine
-logNow status uuid = do
+logNow s u = do
 	now <- getPOSIXTime
-	return $ LogLine now status uuid
+	return $ LogLine now s u
 
 {- Returns the filename of the log file for a given key. -}
 logFile :: Git.Repo -> Key -> String
@@ -136,28 +132,33 @@ logFile repo key =
  - the value of a key. -}
 keyLocations :: Git.Repo -> Key -> IO [UUID]
 keyLocations thisrepo key = do
-	lines <- readLog $ logFile thisrepo key
-	return $ map uuid (filterPresent lines)
+	ls <- readLog $ logFile thisrepo key
+	return $ map uuid $ filterPresent ls
 
 {- Filters the list of LogLines to find ones where the value
  - is (or should still be) present. -}
 filterPresent :: [LogLine] -> [LogLine]
-filterPresent lines = filter (\l -> ValuePresent == status l) $ compactLog lines
+filterPresent ls = filter (\l -> ValuePresent == status l) $ compactLog ls
+
+type LogMap = Map.Map UUID LogLine
 
 {- Compacts a set of logs, returning a subset that contains the current
  - status. -}
 compactLog :: [LogLine] -> [LogLine]
-compactLog lines = compactLog' Map.empty lines
-compactLog' map [] = Map.elems map
-compactLog' map (l:ls) = compactLog' (mapLog map l) ls
+compactLog ls = compactLog' Map.empty ls
+compactLog' :: LogMap -> [LogLine] -> [LogLine]
+compactLog' m [] = Map.elems m
+compactLog' m (l:ls) = compactLog' (mapLog m l) ls
 
 {- Inserts a log into a map of logs, if the log has better (ie, newer)
  - information about a repo than the other logs in the map -}
-mapLog map log = 
+mapLog :: LogMap -> LogLine -> LogMap
+mapLog m l = 
 	if (better)
-		then Map.insert (uuid log) log map
-		else map
+		then Map.insert u l m
+		else m
 	where
-		better = case Map.lookup (uuid log) map of
-			Just l -> (date l <= date log)
+		better = case Map.lookup u m of
+			Just l' -> (date l' <= date l)
 			Nothing -> True
+		u = uuid l
