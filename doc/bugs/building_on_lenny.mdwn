@@ -65,3 +65,16 @@ Thanks for your help! --[[cstamas]]
 >>> <http://hackage.haskell.org/package/extensible-exceptions> 
 >>> and I asked how to get it on stable here:
 >>> <http://ask.debian.net/questions/how-to-get-haskell-extensible-extceptions-on-stable> --[[Joey]] 
+
+>>>> I made some effort with cabal on lenny. I can install (and I did it) cabal
+>>>> from squeeze as dependencies are ok. Then I installed extensible
+>>>> exceptions, but it places it in some local dir that git-annex's installer
+>>>> (or ghc itself) does not know about.
+>>>>
+>>>> Later I realized that *only* for the compilation ghc6 and its friends are
+>>>> needed. So I built the package on my other machine running squeeze. Then
+>>>> resulting deb packages cleanly installs on lenny
+>>>> 
+>>>> For me this is OK. Thanks! --[[cstamas]]
+
+[[done]]
