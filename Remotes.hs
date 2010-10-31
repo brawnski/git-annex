@@ -22,19 +22,14 @@ import Control.Monad.State (liftIO)
 import Control.Monad (filterM)
 import qualified Data.Map as Map
 import Data.String.Utils
-import Data.Either.Utils
-import System.Cmd.Utils
 import System.Directory
 import System.Posix.Directory
 import List
-import Maybe
 import Monad (when, unless)
 
 import Types
 import qualified GitRepo as Git
 import qualified Annex
-import qualified Backend
-import qualified Core
 import LocationLog
 import Locations
 import UUID
@@ -73,7 +68,7 @@ keyPossibilities key = do
 			let todo = cheap ++ doexpensive
 			if (not $ null todo)
 				then do
-					e <- mapM tryGitConfigRead todo
+					_ <- mapM tryGitConfigRead todo
 					Annex.flagChange "remotesread" $ FlagBool True
 					keyPossibilities key
 				else reposByUUID allremotes uuids
@@ -121,14 +116,14 @@ reposByCost l = do
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
 	g <- Annex.gitRepo
-	if (not $ null $ config g r)
-		then return $ read $ config g r
+	if (not $ null $ config g)
+		then return $ read $ config g
 		else if (Git.repoIsUrl r)
 			then return 200
 			else return 100
 	where
-		config g r = Git.configGet g (configkey r) ""
-		configkey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
+		config g = Git.configGet g configkey ""
+		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
 
 {- Checks if a repo should be ignored, based either on annex-ignore
  - setting, or on command-line options. Allows command-line to override
@@ -174,7 +169,7 @@ tryGitConfigRead r = do
 			-- for other reasons; catch all possible exceptions
 			result <- liftIO $ (try (Git.configRead r)::IO (Either SomeException (Git.Repo)))
 			case (result) of
-				Left e -> return $ Left r
+				Left _ -> return $ Left r
 				Right r' -> do
 					g <- Annex.gitRepo
 					let l = Git.remotes g
@@ -184,7 +179,7 @@ tryGitConfigRead r = do
 					return $ Right r'
 		else return $ Right r -- config already read
 	where 
-		exchange [] new = []
+		exchange [] _ = []
 		exchange (old:ls) new =
 			if (Git.repoRemoteName old == Git.repoRemoteName new)
 				then new:(exchange ls new)
