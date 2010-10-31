@@ -36,6 +36,7 @@ import Utility
 
 type UUID = String
 
+configkey :: String
 configkey="annex.uuid"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
@@ -53,19 +54,19 @@ getUUID :: Git.Repo -> Annex UUID
 getUUID r = do
 	g <- Annex.gitRepo
 
-	let c = cached r g
-	let u = uncached r
+	let c = cached g
+	let u = uncached
 	
 	if (c /= u && u /= "")
 		then do
-			updatecache g r u
+			updatecache g u
 			return u
 		else return c
 	where
-		uncached r = Git.configGet r "annex.uuid" ""
-		cached r g = Git.configGet g (cachekey r) ""
-		updatecache g r u = when (g /= r) $ setConfig (cachekey r) u
-		cachekey r = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
+		uncached = Git.configGet r "annex.uuid" ""
+		cached g = Git.configGet g cachekey ""
+		updatecache g u = when (g /= r) $ setConfig cachekey u
+		cachekey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
@@ -111,26 +112,27 @@ describeUUID :: UUID -> String -> Annex ()
 describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
-	log <- uuidLog
+	logfile <- uuidLog
 	pid <- liftIO $ getProcessID
-        let tmplog = log ++ ".tmp" ++ show pid
-	liftIO $ createDirectoryIfMissing True (parentDir log)
-	liftIO $ writeFile tmplog $ serialize m'
-	liftIO $ renameFile tmplog log
+        let tmplogfile = logfile ++ ".tmp" ++ show pid
+	liftIO $ createDirectoryIfMissing True (parentDir logfile)
+	liftIO $ writeFile tmplogfile $ serialize m'
+	liftIO $ renameFile tmplogfile logfile
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
 
 {- Read and parse the uuidLog into a Map -}
 uuidMap :: Annex (M.Map UUID String)
 uuidMap = do
-	log <- uuidLog
-	s <- liftIO $ catch (readFile log) (\error -> return "")
+	logfile <- uuidLog
+	s <- liftIO $ catch (readFile logfile) ignoreerror
 	return $ M.fromList $ map (\l -> pair l) $ lines s
 	where
 		pair l =
 			if (1 < (length $ words l))
 				then ((words l) !! 0, unwords $ drop 1 $ words l)
 				else ("", "")
+		ignoreerror _ = return ""
 
 {- Filename of uuid.log. -}
 uuidLog :: Annex String
