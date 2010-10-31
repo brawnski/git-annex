@@ -23,8 +23,8 @@ import qualified GitRepo as Git
 {- An action to perform in a git repository. The file to act on
  - is not included, and must be able to be appended after the params. -}
 data Action = Action {
-		subcommand :: String,
-		params :: [String]
+		getSubcommand :: String,
+		getParams :: [String]
 	} deriving (Show, Eq, Ord)
 
 {- A queue of actions to perform (in any order) on a git repository,
@@ -45,7 +45,7 @@ add queue subcommand params file = M.insertWith (++) action [file] queue
 {- Runs a queue on a git repository. -}
 run :: Git.Repo -> Queue -> IO ()
 run repo queue = do
-	mapM (\(k, v) -> runAction repo k v) $ M.toList queue
+	_ <- mapM (\(k, v) -> runAction repo k v) $ M.toList queue
 	return ()
 
 {- Runs an Action on a list of files in a git repository.
@@ -55,7 +55,7 @@ runAction :: Git.Repo -> Action -> [FilePath] -> IO ()
 runAction repo action files = do
 	unless (null files) runxargs
 	where
-		runxargs = pOpen WriteToPipe "xargs" 
-			(["-0", "git", subcommand action] ++ (params action))
-			feedxargs
+		runxargs = pOpen WriteToPipe "xargs" ("-0":gitcmd) feedxargs
+		gitcmd = ["git"] ++ Git.gitCommandLine repo
+			((getSubcommand action):(getParams action))
 		feedxargs h = hPutStr h $ join "\0" files

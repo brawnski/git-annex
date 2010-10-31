@@ -25,6 +25,7 @@ module GitRepo (
 	configMap,
 	configRead,
 	configTrue,
+	gitCommandLine,
 	run,
 	pipeRead,
 	hPipeRead,
