@@ -58,9 +58,9 @@ instance Read Key where
 			k = join ":" $ drop 1 l
 
 backendName :: Key -> BackendName
-backendName (Key (b,k)) = b
+backendName (Key (b,_)) = b
 keyName :: Key -> KeyName
-keyName (Key (b,k)) = k
+keyName (Key (_,k)) = k
 
 -- this structure represents a key-value backend
 data Backend = Backend {

@@ -15,6 +15,7 @@ import System.IO
 import qualified Backend.File
 import TypeInternals
 
+backend :: Backend
 backend = Backend.File.backend {
 	name = "SHA1",
 	getKey = keyValue

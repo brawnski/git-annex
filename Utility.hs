@@ -15,20 +15,17 @@ module Utility (
 ) where
 
 import System.IO
-import System.Cmd.Utils
 import System.Exit
 import System.Posix.Process
-import System.Posix.Process.Internals
 import System.Posix.Signals
-import System.Posix.IO
 import Data.String.Utils
 import System.Path
-import System.IO.HVFS
 import System.FilePath
 import System.Directory
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
+hGetContentsStrict :: Handle -> IO String
 hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
 
 {- Returns the parent directory of a path. Parent of / is "" -}
@@ -53,11 +50,11 @@ parentDir dir =
 relPathCwdToDir :: FilePath -> IO FilePath
 relPathCwdToDir dir = do
 	cwd <- getCurrentDirectory
-	let absdir = abs cwd dir
+	let absdir = absnorm cwd
 	return $ relPathDirToDir cwd absdir
 	where
 		-- absolute, normalized form of the directory
-		abs cwd dir = 
+		absnorm cwd = 
 			case (absNormPath cwd dir) of
 				Just d -> d
 				Nothing -> error $ "unable to normalize " ++ dir
@@ -106,13 +103,14 @@ boolSystem command params = do
 		_ -> return False
 	where
 		restoresignals oldint oldset = do
-			installHandler sigINT oldint Nothing
+			_ <- installHandler sigINT oldint Nothing
 			setSignalMask oldset
 		childaction oldint oldset = do
 			restoresignals oldint oldset
 			executeFile command True params Nothing
 
 {- Escapes a filename to be safely able to be exposed to the shell. -}
+shellEscape :: FilePath -> FilePath
 shellEscape f = "'" ++ quote ++ "'"
 	where
 		-- replace ' with '"'"'

@@ -10,12 +10,11 @@ module Backend.WORM (backend) where
 import Control.Monad.State
 import System.FilePath
 import System.Posix.Files
-import qualified Data.ByteString.Lazy.Char8 as B
 
 import qualified Backend.File
 import TypeInternals
-import Utility
 
+backend :: Backend
 backend = Backend.File.backend {
 	name = "WORM",
 	getKey = keyValue

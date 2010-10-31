@@ -15,25 +15,18 @@
 module Backend.File (backend) where
 
 import Control.Monad.State
-import System.IO
-import System.Cmd
-import System.Cmd.Utils
-import Control.Exception
 import System.Directory
-import List
-import Maybe
 
 import TypeInternals
 import LocationLog
 import Locations
 import qualified Remotes
 import qualified GitRepo as Git
-import Utility
 import Core
 import qualified Annex
 import UUID
-import qualified Backend
 
+backend :: Backend
 backend = Backend {
 	name = mustProvide,
 	getKey = mustProvide,
@@ -43,11 +36,12 @@ backend = Backend {
 	hasKey = checkKeyFile
 }
 
+mustProvide :: a
 mustProvide = error "must provide this field"
 
 {- Storing a key is a no-op. -}
 dummyStore :: FilePath -> Key -> Annex (Bool)
-dummyStore file key = return True
+dummyStore _ _ = return True
 
 {- Just check if the .git/annex/ file for the key exists. -}
 checkKeyFile :: Key -> Annex Bool
@@ -146,7 +140,8 @@ showLocations key = do
 	if (null uuidsf)
 		then showLongNote $ "No other repository is known to contain the file."
 		else showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
-	
+
+showTriedRemotes :: [Git.Repo] -> Annex ()
 showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
 	showLongNote $ "I was unable to access these remotes: " ++

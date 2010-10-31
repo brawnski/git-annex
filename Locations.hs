@@ -18,11 +18,11 @@ module Locations (
 import Data.String.Utils
 
 import Types
-import qualified TypeInternals as Internals
 import qualified GitRepo as Git
 
 {- Long-term, cross-repo state is stored in files inside the .git-annex
  - directory, in the git repository's working tree. -}
+stateLoc :: String
 stateLoc = ".git-annex/"
 gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
@@ -35,13 +35,13 @@ gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
  -}
 annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
-	(Git.workTree r) ++ "/" ++ (annexLocationRelative r key)
+	(Git.workTree r) ++ "/" ++ (annexLocationRelative key)
 
 {- Annexed file's location relative to git's working tree. 
  -
  - Note: Assumes repo is NOT bare.-}
-annexLocationRelative :: Git.Repo -> Key -> FilePath
-annexLocationRelative r key = ".git/annex/" ++ (keyFile key)
+annexLocationRelative :: Key -> FilePath
+annexLocationRelative key = ".git/annex/" ++ (keyFile key)
 
 {- .git-annex/tmp is used for temp files
  -

@@ -9,14 +9,12 @@ module Backend.URL (backend) where
 
 import Control.Monad.State (liftIO)
 import Data.String.Utils
-import System.Cmd
-import System.Cmd.Utils
-import System.Exit
 
 import TypeInternals
 import Core
 import Utility
 
+backend :: Backend
 backend = Backend {
 	name = "URL",
 	getKey = keyValue,
@@ -28,15 +26,15 @@ backend = Backend {
 
 -- cannot generate url from filename
 keyValue :: FilePath -> Annex (Maybe Key)
-keyValue file = return Nothing
+keyValue _ = return Nothing
 
 -- cannot change url contents
 dummyStore :: FilePath -> Key -> Annex Bool
-dummyStore file url = return False
+dummyStore _ _ = return False
 
 -- allow keys to be removed; presumably they can always be downloaded again
 dummyOk :: Key -> Annex Bool
-dummyOk url = return True
+dummyOk _ = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do

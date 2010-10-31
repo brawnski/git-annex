@@ -109,7 +109,7 @@ calcGitLink file key = do
 		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
 	return $ (relPathDirToDir (parentDir absfile) (Git.workTree g)) ++
-		annexLocationRelative g key
+		annexLocationRelative key
 
 {- Updates the LocationLog when a key's presence changes. -}
 logStatus :: Key -> LogStatus -> Annex ()
