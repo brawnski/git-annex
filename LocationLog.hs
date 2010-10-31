@@ -35,6 +35,7 @@ import qualified Data.Map as Map
 import System.IO
 import System.Directory
 import Data.Char
+import System.Posix.Process
 
 import qualified GitRepo as Git
 import Utility
@@ -111,19 +112,14 @@ readLog file = do
 		else do
 			return []
 
-{- Adds a LogLine to a log file -}
-appendLog :: FilePath -> LogLine -> IO ()
-appendLog file line = do
-	createDirectoryIfMissing True (parentDir file)
-	withFileLocked file AppendMode $ \h ->
-		hPutStrLn h $ show line
-
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()
 writeLog file lines = do
+	pid <- getProcessID
+	let tmpfile = file ++ ".tmp" ++ show pid
 	createDirectoryIfMissing True (parentDir file)
-	withFileLocked file WriteMode $ \h ->
-		hPutStr h $ unlines $ map show lines
+	writeFile tmpfile $ unlines $ map show lines
+	renameFile tmpfile file
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> UUID -> IO LogLine
