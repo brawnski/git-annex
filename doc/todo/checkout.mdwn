@@ -1,0 +1,5 @@
+The checkout subcommand replaces the symlink that normally points at a
+file's content, with a copy of the file. Once you've checked a file out,
+you can edit it, and `git commit` it. On commit, git-annex will detect
+if the file has been changed, and if it has, `add` its content to the
+annex.
