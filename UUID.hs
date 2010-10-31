@@ -26,6 +26,7 @@ import System.Cmd.Utils
 import System.IO
 import System.Directory
 import qualified Data.Map as M
+import System.Posix.Process
 
 import qualified GitRepo as Git
 import Types
@@ -111,8 +112,11 @@ describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
 	log <- uuidLog
+	pid <- liftIO $ getProcessID
+        let tmplog = log ++ ".tmp" ++ show pid
 	liftIO $ createDirectoryIfMissing True (parentDir log)
-	liftIO $ withFileLocked log WriteMode (\h -> hPutStr h $ serialize m')
+	liftIO $ writeFile tmplog $ serialize m'
+	liftIO $ renameFile tmplog log
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
 
@@ -120,9 +124,7 @@ describeUUID uuid desc = do
 uuidMap :: Annex (M.Map UUID String)
 uuidMap = do
 	log <- uuidLog
-	s <- liftIO $ catch
-		(withFileLocked log ReadMode $ \h -> hGetContentsStrict h)
-		(\error -> return "")
+	s <- liftIO $ catch (readFile log) (\error -> return "")
 	return $ M.fromList $ map (\l -> pair l) $ lines s
 	where
 		pair l =

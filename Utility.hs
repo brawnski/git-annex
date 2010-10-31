@@ -6,7 +6,6 @@
  -}
 
 module Utility (
-	withFileLocked,
 	hGetContentsStrict,
 	parentDir,
 	relPathCwdToDir,
@@ -27,21 +26,6 @@ import System.Path
 import System.IO.HVFS
 import System.FilePath
 import System.Directory
-
-{- Let's just say that Haskell makes reading/writing a file with
- - file locking excessively difficult. -}
-withFileLocked file mode action = do
-	-- TODO: find a way to use bracket here
-	handle <- openFile file mode
-	lockfd <- handleToFd handle -- closes handle
-	waitToSetLock lockfd (lockType mode, AbsoluteSeek, 0, 0)
-	handle' <- fdToHandle lockfd
-	ret <- action handle'
-	hClose handle'
-	return ret
-		where
-			lockType ReadMode = ReadLock
-			lockType _ = WriteLock
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
