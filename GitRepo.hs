@@ -27,6 +27,7 @@ module GitRepo (
 	configTrue,
 	run,
 	pipeRead,
+	hPipeRead,
 	attributes,
 	remotes,
 	remotesAdd,
@@ -198,6 +199,17 @@ pipeRead repo params = assertLocal repo $ do
 		ret <- hGetContentsStrict h
 		return ret
 
+{- Like pipeRead, but does not read output strictly; recommended
+ - for git commands that produce a lot of output that will be processed
+ - lazily. 
+ -
+ - ONLY AFTER the string has been read completely, You must call either
+ - getProcessStatus or forceSuccess on the PipeHandle. Zombies will result
+ - otherwise.-}
+hPipeRead :: Repo -> [String] -> IO (PipeHandle, String)
+hPipeRead repo params = assertLocal repo $ do
+	pipeFrom "git" (gitCommandLine repo params)
+
 {- Passed a location, recursively scans for all files that
  - are checked into git at that location. -}
 inRepo :: Repo -> FilePath -> IO [FilePath]
@@ -221,7 +233,9 @@ stagedFiles repo location = pipeNullSplit repo
  - parameter), and splits it into a list of files. -}
 pipeNullSplit :: Repo -> [String] -> IO [FilePath]
 pipeNullSplit repo params = do
-	fs0 <- pipeRead repo params
+	-- XXX handle is left open, this is ok for git-annex, but may need
+	-- to be cleaned up for other uses.
+	(handle, fs0) <- hPipeRead repo params
 	return $ split0 fs0
 	where
 		split0 s = filter (not . null) $ split "\0" s
