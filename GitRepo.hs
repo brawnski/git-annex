@@ -17,7 +17,7 @@ module GitRepo (
 	repoIsSsh,
 	repoDescribe,
 	workTree,
-	dir,
+	gitDir,
 	relative,
 	urlPath,
 	urlHost,
@@ -38,17 +38,14 @@ module GitRepo (
 	stagedFiles
 ) where
 
-import Monad (when, unless)
+import Monad (unless)
 import Directory
-import System
-import System.Directory
 import System.Posix.Directory
 import System.Path
-import System.Cmd
 import System.Cmd.Utils
-import System.IO
 import IO (bracket_)
 import Data.String.Utils
+import System.IO
 import qualified Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
@@ -69,6 +66,7 @@ data Repo = Repo {
 	remoteName :: Maybe String 
 } deriving (Show, Eq)
 
+newFrom :: RepoLocation -> Repo
 newFrom l = 
 	Repo {
 		location = l,
@@ -89,6 +87,7 @@ repoFromUrl url
 		where u = fromJust $ parseURI url
 
 {- User-visible description of a git repo. -}
+repoDescribe :: Repo -> String
 repoDescribe Repo { remoteName = Just name } = name
 repoDescribe Repo { location = Url url } = show url
 repoDescribe Repo { location = Dir dir } = dir
@@ -100,29 +99,35 @@ remotesAdd repo rs = repo { remotes = rs }
 
 {- Returns the name of the remote that corresponds to the repo, if 
  - it is a remote. Otherwise, "" -}
+repoRemoteName :: Repo -> String
 repoRemoteName Repo { remoteName = Just name } = name
 repoRemoteName _ = ""
 
 {- Some code needs to vary between URL and normal repos,
  - or bare and non-bare, these functions help with that. -}
+repoIsUrl :: Repo -> Bool
 repoIsUrl Repo { location = Url _ } = True
 repoIsUrl _ = False
 
+repoIsSsh :: Repo -> Bool
 repoIsSsh Repo { location = Url url } 
 	| uriScheme url == "ssh:" = True
 	| otherwise = False
 repoIsSsh _ = False
 
+assertLocal :: Repo -> a -> a
 assertLocal repo action = 
 	if (not $ repoIsUrl repo)
 		then action
 		else error $ "acting on URL git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
+assertUrl :: Repo -> a -> a
 assertUrl repo action = 
 	if (repoIsUrl repo)
 		then action
 		else error $ "acting on local git repo " ++  (repoDescribe repo) ++ 
 				" not supported"
+assertSsh :: Repo -> a -> a
 assertSsh repo action =
 	if (repoIsSsh repo)
 		then action
@@ -141,8 +146,8 @@ attributes repo
 	| otherwise = (workTree repo) ++ "/.gitattributes"
 
 {- Path to a repository's .git directory, relative to its workTree. -}
-dir :: Repo -> String
-dir repo
+gitDir :: Repo -> String
+gitDir repo
 	| bare repo = ""
 	| otherwise = ".git"
 
@@ -167,7 +172,7 @@ relative repo@(Repo { location = Dir d }) file = drop (length absrepo) absfile
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
-relative repo file = assertLocal repo $ error "internal"
+relative repo _ = assertLocal repo $ error "internal"
 
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
@@ -184,7 +189,7 @@ urlPath repo = assertUrl repo $ error "internal"
 gitCommandLine :: Repo -> [String] -> [String]
 gitCommandLine repo@(Repo { location = Dir d} ) params =
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++d++"/"++(dir repo), "--work-tree="++d] ++ params
+	["--git-dir="++d++"/"++(gitDir repo), "--work-tree="++d] ++ params
 gitCommandLine repo _ = assertLocal repo $ error "internal"
 
 {- Runs git in the specified repo, throwing an error if it fails. -}
@@ -214,21 +219,21 @@ hPipeRead repo params = assertLocal repo $ do
 {- Passed a location, recursively scans for all files that
  - are checked into git at that location. -}
 inRepo :: Repo -> FilePath -> IO [FilePath]
-inRepo repo location = pipeNullSplit repo
-	["ls-files", "--cached", "--exclude-standard", "-z", location]
+inRepo repo l = pipeNullSplit repo
+	["ls-files", "--cached", "--exclude-standard", "-z", l]
 
 {- Passed a location, recursively scans for all files that are not checked
  - into git, and not gitignored. -}
 notInRepo :: Repo -> FilePath -> IO [FilePath]
-notInRepo repo location = pipeNullSplit repo
-	["ls-files", "--others", "--exclude-standard", "-z", location]
+notInRepo repo l = pipeNullSplit repo
+	["ls-files", "--others", "--exclude-standard", "-z", l]
 
 {- Passed a location, returns a list of the files, staged for
  - commit, that are being added, moved, or changed (but not deleted). -}
 stagedFiles :: Repo -> FilePath -> IO [FilePath]
-stagedFiles repo location = pipeNullSplit repo
+stagedFiles repo l = pipeNullSplit repo
 	["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z",
-	 "HEAD", location]
+	 "HEAD", l]
 
 {- Reads null terminated output of a git command (as enabled by the -z 
  - parameter), and splits it into a list of files. -}
@@ -236,7 +241,7 @@ pipeNullSplit :: Repo -> [String] -> IO [FilePath]
 pipeNullSplit repo params = do
 	-- XXX handle is left open, this is ok for git-annex, but may need
 	-- to be cleaned up for other uses.
-	(handle, fs0) <- hPipeRead repo params
+	(_, fs0) <- hPipeRead repo params
 	return $ split0 fs0
 	where
 		split0 s = filter (not . null) $ split "\0" s
@@ -256,6 +261,7 @@ configRead repo = assertSsh repo $ do
 	where
 		sshcommand = "cd " ++ (shellEscape $ urlPath repo) ++
 				" && git config --list"
+hConfigRead :: Repo -> Handle -> IO Repo
 hConfigRead repo h = do
 	val <- hGetContentsStrict h
 	let r = repo { config = configParse val }
@@ -267,10 +273,10 @@ configTrue s = map toLower s == "true"
 
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
 configRemotes :: Repo -> [Repo]
-configRemotes repo = map construct remotes
+configRemotes repo = map construct remotepairs
 	where
-		remotes = Map.toList $ filter $ config repo
-		filter = Map.filterWithKey (\k _ -> isremote k)
+		remotepairs = Map.toList $ filterremotes $ config repo
+		filterremotes = Map.filterWithKey (\k _ -> isremote k)
 		isremote k = (startswith "remote." k) && (endswith ".url" k)
 		remotename k = (split "." k) !! 1
 		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
@@ -314,14 +320,15 @@ seekUp dir want = do
 			"" -> return Nothing
 			d -> seekUp d want
 
+isRepoTop :: FilePath -> IO Bool
 isRepoTop dir = do
-	r <- isRepo dir
-	b <- isBareRepo dir
+	r <- isRepo
+	b <- isBareRepo
 	return (r || b)
 	where
-		isRepo dir = gitSignature dir ".git" ".git/config"
-		isBareRepo dir = gitSignature dir "objects" "config"
-		gitSignature dir subdir file = do
+		isRepo = gitSignature ".git" ".git/config"
+		isBareRepo = gitSignature "objects" "config"
+		gitSignature subdir file = do
 			s <- (doesDirectoryExist (dir ++ "/" ++ subdir))
 			f <- (doesFileExist (dir ++ "/" ++ file))
 			return (s && f)

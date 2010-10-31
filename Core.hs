@@ -74,7 +74,7 @@ gitAttributes repo = do
 {- set up a git pre-commit hook, if one is not already present -}
 gitPreCommitHook :: Git.Repo -> IO ()
 gitPreCommitHook repo = do
-	let hook = (Git.workTree repo) ++ "/" ++ (Git.dir repo) ++
+	let hook = (Git.workTree repo) ++ "/" ++ (Git.gitDir repo) ++
 		"/hooks/pre-commit"
 	exists <- doesFileExist hook
 	if (exists)
