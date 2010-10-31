@@ -4,10 +4,13 @@ Bob has many drives to archive his data, most of them kept offline, in a
 safe place.
 
 With git-annex, Bob has a single directory tree that includes all
-his files, even if their content is being stored offline. He can
+his files, even those whose content is stored offline. He can
 reorganize his files using that tree, committing new versions to git,
 without worry about accidentially deleting anything. 
 
+[[!toggle id=bob text="more..."]]
+
+[[!toggleable id=bob text="""
 When Bob needs access to some files, git-annex can tell him which drive(s)
 they're on, and easily make them available. Indeed, every drive knows what
 is on every other drive.
@@ -16,3 +19,4 @@ Run in a cron job, git-annex adds new files to achival drives at night. It
 also helps Bob keep track of intentional, and unintentional copies of
 files, and logs information he can use to decide when it's time to duplicate
 the content of old drives.
+"""]]
