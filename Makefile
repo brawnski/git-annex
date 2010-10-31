@@ -2,7 +2,7 @@ all: git-annex docs
 
 git-annex:
 	mkdir -p build
-	ghc -cpp -odir build -hidir build --make git-annex
+	ghc -odir build -hidir build --make git-annex
 
 install:
 	install -d $(DESTDIR)/usr/bin
