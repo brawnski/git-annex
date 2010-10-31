@@ -6,9 +6,9 @@ out there on the net. All these things can have different files on them,
 but with git-annex Alice no longer has to deal with the tedious process
 of keeping them manually in sync.
 
-[[!toggle id=alice text="more..."]]
+[[!toggle id=use text="more..."]]
 
-[[!toggleable id=alice text="""
+[[!toggleable id=use text="""
 When she has 1 bar on her cell, Alice queues up interesting files on her
 server for later. At a coffee shop, she has git-annex download them to her
 USB drive. High in the sky or in a remote cabin, she catches up on

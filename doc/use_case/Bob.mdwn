@@ -8,9 +8,9 @@ his files, even those whose content is stored offline. He can
 reorganize his files using that tree, committing new versions to git,
 without worry about accidentially deleting anything. 
 
-[[!toggle id=bob text="more..."]]
+[[!toggle id=use text="more..."]]
 
-[[!toggleable id=bob text="""
+[[!toggleable id=use text="""
 When Bob needs access to some files, git-annex can tell him which drive(s)
 they're on, and easily make them available. Indeed, every drive knows what
 is on every other drive.
