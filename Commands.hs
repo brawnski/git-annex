@@ -11,12 +11,9 @@ import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Posix.Files
 import System.Directory
-import System.Path
 import Data.String.Utils
 import Control.Monad (filterM)
 import Monad (when, unless)
-import List
-import IO
 
 import qualified GitRepo as Git
 import qualified Annex
@@ -50,19 +47,19 @@ type SubCmdCleanup = Annex Bool
 {- Runs a subcommand through its three stages. -}
 doSubCmd :: String -> SubCmdStart -> String -> Annex Bool
 doSubCmd cmdname start param = do
-	res <- start param :: Annex (Maybe SubCmdPerform)
-	case (res) of
+	startres <- start param :: Annex (Maybe SubCmdPerform)
+	case (startres) of
 		Nothing -> return True
 		Just perform -> do
 			showStart cmdname param
-			res <- perform :: Annex (Maybe SubCmdCleanup)
-			case (res) of
+			performres <- perform :: Annex (Maybe SubCmdCleanup)
+			case (performres) of
 				Nothing -> do
 					showEndFail
 					return False
 				Just cleanup -> do
-					res <- cleanup
-					if (res)
+					cleanupres <- cleanup
+					if (cleanupres)
 						then do
 							showEndOk
 							return True
@@ -76,7 +73,7 @@ doSubCmd cmdname start param = do
 data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing
 	| Description | Keys | Tempfile | FilesToBeCommitted
 
-data SubCommand = Command {
+data SubCommand = SubCommand {
 	subcmdname :: String,
 	subcmdaction :: SubCmdStart,
 	subcmdwants :: SubCmdWants,
@@ -84,27 +81,27 @@ data SubCommand = Command {
 }
 subCmds :: [SubCommand]
 subCmds =  [
-	  (Command "add"	addStart	FilesNotInGit
+	  (SubCommand "add"	addStart	FilesNotInGit
 		"add files to annex")
-	, (Command "get"	getStart	FilesInGit
+	, (SubCommand "get"	getStart	FilesInGit
 		"make content of annexed files available")
-	, (Command "drop"	dropStart	FilesInGit
+	, (SubCommand "drop"	dropStart	FilesInGit
 		"indicate content of files not currently wanted")
-	, (Command "move"	moveStart	FilesInGit
+	, (SubCommand "move"	moveStart	FilesInGit
 		"transfer content of files to/from another repository")
-	, (Command "init"	initStart	Description
+	, (SubCommand "init"	initStart	Description
 		"initialize git-annex with repository description")
-	, (Command "unannex"	unannexStart	FilesInGit
+	, (SubCommand "unannex"	unannexStart	FilesInGit
 		"undo accidential add command")
-	, (Command "fix"	fixStart	FilesInGit
+	, (SubCommand "fix"	fixStart	FilesInGit
 		"fix up symlinks to point to annexed content")
-	, (Command "pre-commit"	fixStart	FilesToBeCommitted
+	, (SubCommand "pre-commit" fixStart	FilesToBeCommitted
 		"fix up symlinks before they are committed")
-	, (Command "fromkey"	fromKeyStart	FilesMissing
+	, (SubCommand "fromkey"	fromKeyStart	FilesMissing
 		"adds a file using a specific key")
-	, (Command "dropkey"	dropKeyStart	Keys
+	, (SubCommand "dropkey"	dropKeyStart	Keys
 		"drops annexed content for specified keys")
-	, (Command "setkey"	setKeyStart	Tempfile
+	, (SubCommand "setkey"	setKeyStart	Tempfile
 		"sets annexed content for a key using a temp file")
 	]
 
@@ -131,6 +128,7 @@ options = [
 		storebool n b = Annex.flagChange n $ FlagBool b
 		storestring n s = Annex.flagChange n $ FlagString s
 
+header :: String
 header = "Usage: git-annex " ++ (join "|" $ map subcmdname subCmds)
 
 {- Usage message with lists of options and subcommands. -}
@@ -162,7 +160,7 @@ findWanted FilesNotInGit params repo = do
 findWanted FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
 	return $ foldl (++) [] files
-findWanted FilesMissing params repo = do
+findWanted FilesMissing params _ = do
 	files <- liftIO $ filterM missing params
 	return $ files
 	where
@@ -186,15 +184,17 @@ parseCmd argv state = do
 	when (null params) $ error usage
 	case lookupCmd (params !! 0) of
 		[] -> error usage
-		[Command name action want _] -> do
-			f <- findWanted want (drop 1 params)
+		[SubCommand { subcmdname = name, subcmdaction = action,
+				subcmdwants = want, subcmddesc = _ }] -> do
+			files <- findWanted want (drop 1 params)
 				(TypeInternals.repo state)
 			let actions = map (doSubCmd name action) $
-				filter notstate f
-			let configactions = map (\f -> do
-				f
+				filter notstate files
+			let configactions = map (\flag -> do
+				flag
 				return True) flags
 			return (configactions, actions)
+		_ -> error "internal error: multiple matching subcommands"
 	where
 		-- never include files from the state directory
 		notstate f = stateLoc /= take (length stateLoc) f
@@ -214,11 +214,10 @@ addStart file = notAnnexed file $ do
 		else return $ Just $ addPerform file
 addPerform :: FilePath -> Annex (Maybe SubCmdCleanup)
 addPerform file = do
-	g <- Annex.gitRepo
 	stored <- Backend.storeFileKey file
 	case (stored) of
 		Nothing -> return Nothing
-		Just (key, backend) -> return $ Just $ addCleanup file key
+		Just (key, _) -> return $ Just $ addCleanup file key
 addCleanup :: FilePath -> Key -> Annex Bool
 addCleanup file key = do
 	logStatus key ValuePresent
@@ -239,8 +238,10 @@ unannexPerform :: FilePath -> Key -> Backend -> Annex (Maybe SubCmdCleanup)
 unannexPerform file key backend = do
 	-- force backend to always remove
 	Annex.flagChange "force" $ FlagBool True
-	Backend.removeKey backend key
-	return $ Just $ unannexCleanup file key
+	ok <- Backend.removeKey backend key
+	if (ok)
+		then return $ Just $ unannexCleanup file key
+		else return Nothing
 unannexCleanup :: FilePath -> Key -> Annex Bool
 unannexCleanup file key = do
 	logStatus key ValueMissing
@@ -259,9 +260,9 @@ getStart file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
 		then return Nothing
-		else return $ Just $ getPerform file key backend
-getPerform :: FilePath -> Key -> Backend -> Annex (Maybe SubCmdCleanup)
-getPerform file key backend = do
+		else return $ Just $ getPerform key backend
+getPerform :: Key -> Backend -> Annex (Maybe SubCmdCleanup)
+getPerform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
 	if (ok)
 		then return $ Just $ return True -- no cleanup needed
@@ -331,15 +332,15 @@ setKeyPerform tmpfile key = do
 	ok <- liftIO $ boolSystem "mv" [tmpfile, loc]
 	if (not ok)
 		then error "mv failed!"
-		else return $ Just $ setKeyCleanup tmpfile key
-setKeyCleanup :: FilePath -> Key -> Annex Bool
-setKeyCleanup tmpfile key = do
+		else return $ Just $ setKeyCleanup key
+setKeyCleanup :: Key -> Annex Bool
+setKeyCleanup key = do
 	logStatus key ValuePresent
 	return True
 
 {- Fixes the symlink to an annexed file. -}
 fixStart :: FilePath -> Annex (Maybe SubCmdPerform)
-fixStart file = isAnnexed file $ \(key, backend) -> do
+fixStart file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
 	if (link == l)
@@ -373,9 +374,9 @@ initPerform description = do
 initCleanup :: Annex Bool
 initCleanup = do
 	g <- Annex.gitRepo
-	log <- uuidLog
-	liftIO $ Git.run g ["add", log]
-	liftIO $ Git.run g ["commit", "-m", "git annex init", log]
+	logfile <- uuidLog
+	liftIO $ Git.run g ["add", logfile]
+	liftIO $ Git.run g ["commit", "-m", "git annex init", logfile]
 	return True
 
 {- Adds a file pointing at a manually-specified key -}
@@ -411,9 +412,9 @@ moveStart file = do
 	toName <- Annex.flagGet "torepository"
 	case (fromName, toName) of
 		("", "") -> error "specify either --from or --to"
-		("", to) -> moveToStart file
-		(from, "") -> moveFromStart file
-		(_, _) -> error "only one of --from or --to can be specified"
+		("",  _) -> moveToStart file
+		(_ , "") -> moveFromStart file
+		(_ ,  _) -> error "only one of --from or --to can be specified"
 
 {- Moves the content of an annexed file to another repository,
  - removing it from the current repository, and updates locationlog
@@ -427,13 +428,13 @@ moveStart file = do
  - allow it to be dropped.
  -}
 moveToStart :: FilePath -> Annex (Maybe SubCmdPerform)
-moveToStart file = isAnnexed file $ \(key, backend) -> do
+moveToStart file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if (not ishere)
 		then return Nothing -- not here, so nothing to do
-		else return $ Just $ moveToPerform file key
-moveToPerform :: FilePath -> Key -> Annex (Maybe SubCmdCleanup)
-moveToPerform file key = do
+		else return $ Just $ moveToPerform key
+moveToPerform :: Key -> Annex (Maybe SubCmdCleanup)
+moveToPerform key = do
 	-- checking the remote is expensive, so not done in the start step
 	remote <- Remotes.commandLineRemote
 	isthere <- Remotes.inAnnex remote key
@@ -452,18 +453,21 @@ moveToPerform file key = do
 moveToCleanup :: Git.Repo -> Key -> FilePath -> Annex Bool
 moveToCleanup remote key tmpfile = do
 	-- Tell remote to use the transferred content.
-	Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
+	ok <- Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
 		"--backend=" ++ (backendName key),
 		"--key=" ++ keyName key,
 		tmpfile]
-	-- Record that the key is present on the remote.
-	g <- Annex.gitRepo
-	remoteuuid <- getUUID remote
-	log <- liftIO $ logChange g key remoteuuid ValuePresent
-	Annex.queue "add" [] log
-	-- Cleanup on the local side is the same as done for the
-	-- drop subcommand.
-	dropCleanup key
+	if ok
+		then do
+			-- Record that the key is present on the remote.
+			g <- Annex.gitRepo
+			remoteuuid <- getUUID remote
+			logfile <- liftIO $ logChange g key remoteuuid ValuePresent
+			Annex.queue "add" [] logfile
+			-- Cleanup on the local side is the same as done for the
+			-- drop subcommand.
+			dropCleanup key
+		else return False
 
 {- Moves the content of an annexed file from another repository to the current
  - repository and updates locationlog information on both.
@@ -472,15 +476,14 @@ moveToCleanup remote key tmpfile = do
  - from the other repository.
  -}
 moveFromStart :: FilePath -> Annex (Maybe SubCmdPerform)
-moveFromStart file = isAnnexed file $ \(key, backend) -> do
-	g <- Annex.gitRepo
+moveFromStart file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	l <- Remotes.keyPossibilities key
 	if (elem remote l)
-		then return $ Just $ moveFromPerform file key
+		then return $ Just $ moveFromPerform key
 		else return Nothing
-moveFromPerform :: FilePath -> Key -> Annex (Maybe SubCmdCleanup)
-moveFromPerform file key = do
+moveFromPerform :: Key -> Annex (Maybe SubCmdCleanup)
+moveFromPerform key = do
 	remote <- Remotes.commandLineRemote
 	ishere <- inAnnex key
 	if (ishere)
@@ -493,22 +496,25 @@ moveFromPerform file key = do
 				else return Nothing -- fail
 moveFromCleanup :: Git.Repo -> Key -> Annex Bool
 moveFromCleanup remote key = do
-	Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
+	ok <- Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
 		"--backend=" ++ (backendName key),
 		keyName key]
-	-- Record locally that the key is not on the remote.
-	remoteuuid <- getUUID remote
-	g <- Annex.gitRepo
-	log <- liftIO $ logChange g key remoteuuid ValueMissing
-	Annex.queue "add" [] log
-	return True
+	when ok $ do
+		-- Record locally that the key is not on the remote.
+		remoteuuid <- getUUID remote
+		g <- Annex.gitRepo
+		logfile <- liftIO $ logChange g key remoteuuid ValueMissing
+		Annex.queue "add" [] logfile
+	return ok
 
 -- helpers
+notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
 notAnnexed file a = do
 	r <- Backend.lookupFile file
 	case (r) of
-		Just v -> return Nothing
+		Just _ -> return Nothing
 		Nothing -> a
+isAnnexed :: FilePath -> ((Key, Backend) -> Annex (Maybe a)) -> Annex (Maybe a)
 isAnnexed file a = do
 	r <- Backend.lookupFile file
 	case (r) of
