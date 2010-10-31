@@ -39,15 +39,16 @@ new gitrepo allbackends = do
 		Internals.flags = M.empty,
 		Internals.repoqueue = GitQueue.empty
 	}
-	(_,s') <- Annex.run s (prep gitrepo)
+	(_,s') <- Annex.run s prep
 	return s'
 	where
-		prep gitrepo = do
+		prep = do
 			-- read git config and update state
 			gitrepo' <- liftIO $ Git.configRead gitrepo
 			Annex.gitRepoChange gitrepo'
 
 {- performs an action in the Annex monad -}
+run :: AnnexState -> StateT AnnexState IO a -> IO (a, AnnexState)
 run state action = runStateT (action) state
 
 {- Returns the git repository being acted on -}

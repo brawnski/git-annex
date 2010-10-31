@@ -17,6 +17,7 @@ import Commands
 import qualified GitRepo as Git
 import BackendList
 
+main :: IO ()
 main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
@@ -35,6 +36,7 @@ main = do
  -}
 tryRun :: AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
+tryRun' :: AnnexState -> Integer -> [Annex Bool] -> IO ()
 tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
 	case (result) of
@@ -43,8 +45,9 @@ tryRun' state errnum (a:as) = do
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' state errnum [] =
+tryRun' _ errnum [] =
 	when (errnum > 0) $ error $ (show errnum) ++ " failed"
 
 {- Exception pretty-printing. -}
+showErr :: (Show a) => a -> IO ()
 showErr e = hPutStrLn stderr $ "git-annex: " ++ (show e)
