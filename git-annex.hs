@@ -6,7 +6,6 @@
  -}
 
 import IO (try)
-import System.IO
 import System.Environment
 import Monad
 
@@ -41,13 +40,9 @@ tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
 	case (result) of
 		Left err -> do
-			showErr err
+			_ <- Annex.run state $ showErr err
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
 tryRun' _ errnum [] =
 	when (errnum > 0) $ error $ (show errnum) ++ " failed"
-
-{- Exception pretty-printing. -}
-showErr :: (Show a) => a -> IO ()
-showErr e = hPutStrLn stderr $ "git-annex: " ++ (show e)

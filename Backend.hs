@@ -27,9 +27,10 @@ module Backend (
 ) where
 
 import Control.Monad.State
-import Control.Exception.Extensible
+import IO (try)
 import System.FilePath
 import System.Posix.Files
+import Core
 
 import Locations
 import qualified GitRepo as Git
@@ -59,12 +60,17 @@ list = do
 				then bs
 				else map (lookupBackendName bs) $ words s
 
-{- Looks up a backend in a list -}
+{- Looks up a backend in a list. May fail if unknown. -}
 lookupBackendName :: [Backend] -> String -> Backend
 lookupBackendName bs s =
+	case maybeLookupBackendName bs s of
+		Just b -> b
+		Nothing -> error $ "unknown backend " ++ s
+maybeLookupBackendName :: [Backend] -> String -> Maybe Backend
+maybeLookupBackendName bs s =
 	if ((length matches) /= 1)
-		then error $ "unknown backend " ++ s
-		else matches !! 0
+		then Nothing
+		else Just $ matches !! 0
 	where matches = filter (\b -> s == Internals.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
@@ -109,15 +115,24 @@ hasKey key = do
 lookupFile :: FilePath -> Annex (Maybe (Key, Backend))
 lookupFile file = do
 	bs <- Annex.supportedBackends
-	result <- liftIO $ (try (find bs)::IO (Either SomeException (Maybe (Key, Backend))))
-	case (result) of
+	tl <- liftIO $ try getsymlink
+	case tl of
 		Left _ -> return Nothing
-		Right val -> return val
-	where 
-		find bs = do
+		Right l -> makekey bs l
+	where
+		getsymlink = do
 			l <- readSymbolicLink file
-			return $ Just $ pair bs $ takeFileName l
-		pair bs f = (k, b)
+			return $ takeFileName l
+		makekey bs l = do
+			case maybeLookupBackendName bs $ bname of
+				Nothing -> do
+					unless (null kname || null bname) $
+						warning skip
+					return Nothing
+				Just backend -> return $ Just (k, backend)
 			where
-				k = fileKey f
-				b = lookupBackendName bs $ backendName k
+				k = fileKey l
+				bname = backendName k
+				kname = keyName k
+				skip = "skipping " ++ file ++ 
+					" (unknown backend " ++ bname ++ ")"

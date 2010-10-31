@@ -165,3 +165,10 @@ showEndOk = verbose $ do
 showEndFail :: Annex ()
 showEndFail = verbose $ do
 	liftIO $ putStrLn "\nfailed"
+
+{- Exception pretty-printing. -}
+showErr :: (Show a) => a -> Annex ()
+showErr e = warning $ show e
+
+warning :: String -> Annex ()
+warning s = liftIO $ hPutStrLn stderr $ "git-annex: " ++ s
