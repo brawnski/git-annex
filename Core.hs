@@ -7,7 +7,6 @@
 
 module Core where
 
-import Maybe
 import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
@@ -27,7 +26,6 @@ import Utility
 {- Sets up a git repo for git-annex. -}
 startup :: Annex Bool
 startup = do
-	g <- Annex.gitRepo
 	prepUUID
 	return True
 
@@ -118,8 +116,8 @@ logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	log <- liftIO $ logChange g key u status
-	Annex.queue "add" [] log
+	logfile <- liftIO $ logChange g key u status
+	Annex.queue "add" [] logfile
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 
@@ -158,9 +156,9 @@ showProgress :: Annex ()
 showProgress = verbose $ liftIO $ putStr $ "\n"
 showLongNote :: String -> Annex ()
 showLongNote s = verbose $ do
-	liftIO $ putStr $ "\n" ++ (indent s)
+	liftIO $ putStr $ "\n" ++ indented
 	where
-		indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s 
+		indented = join "\n" $ map (\l -> "  " ++ l) $ lines s 
 showEndOk :: Annex ()
 showEndOk = verbose $ do
 	liftIO $ putStrLn "ok"
