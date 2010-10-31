@@ -104,8 +104,7 @@ readLog file = do
 	exists <- doesFileExist file
 	if exists
 		then do
-			s <- withFileLocked file ReadMode $ \h -> 
-				hGetContentsStrict h
+			s <- readFile file
 			-- filter out any unparsable lines
 			return $ filter (\l -> (status l) /= Undefined )
 				$ map read $ lines s
