@@ -28,15 +28,12 @@ module Backend (
 
 import Control.Monad.State
 import Control.Exception.Extensible
-import System.Directory
 import System.FilePath
-import Data.String.Utils
 import System.Posix.Files
 
 import Locations
 import qualified GitRepo as Git
 import qualified Annex
-import Utility
 import Types
 import qualified TypeInternals as Internals
 
@@ -47,28 +44,28 @@ list = do
 	if (not $ null l)
 		then return l
 		else do
-			all <- Annex.supportedBackends
+			bs <- Annex.supportedBackends
 			g <- Annex.gitRepo
-			let l = parseBackendList all $ Git.configGet g "annex.backends" ""
+			let defaults = parseBackendList bs $ Git.configGet g "annex.backends" ""
 			backendflag <- Annex.flagGet "backend"
 			let l' = if (not $ null backendflag)
-				then (lookupBackendName all backendflag):l
-				else l
+				then (lookupBackendName bs backendflag):defaults
+				else defaults
 			Annex.backendsChange $ l'
 			return l'
 	where
-		parseBackendList all s = 
+		parseBackendList bs s = 
 			if (null s)
-				then all
-				else map (lookupBackendName all) $ words s
+				then bs
+				else map (lookupBackendName bs) $ words s
 
 {- Looks up a backend in a list -}
 lookupBackendName :: [Backend] -> String -> Backend
-lookupBackendName all s =
+lookupBackendName bs s =
 	if ((length matches) /= 1)
 		then error $ "unknown backend " ++ s
 		else matches !! 0
-	where matches = filter (\b -> s == Internals.name b) all
+	where matches = filter (\b -> s == Internals.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
@@ -77,10 +74,11 @@ storeFileKey file = do
 	let relfile = Git.relative g file
 	b <- list
 	storeFileKey' b file relfile
+storeFileKey' :: [Backend] -> FilePath -> FilePath -> Annex (Maybe (Key, Backend))
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do
-	try <- (Internals.getKey b) relfile
-	case (try) of
+	result <- (Internals.getKey b) relfile
+	case (result) of
 		Nothing -> nextbackend
 		Just key -> do
 			stored <- (Internals.storeFileKey b) file key
@@ -103,23 +101,23 @@ removeKey backend key = (Internals.removeKey backend)  key
 {- Checks if a backend has its key. -}
 hasKey :: Key -> Annex Bool
 hasKey key = do
-	all <- Annex.supportedBackends
-	(Internals.hasKey (lookupBackendName all $ backendName key)) key
+	bs <- Annex.supportedBackends
+	(Internals.hasKey (lookupBackendName bs $ backendName key)) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
 lookupFile :: FilePath -> Annex (Maybe (Key, Backend))
 lookupFile file = do
-	all <- Annex.supportedBackends
-	result <- liftIO $ (try (lookup all)::IO (Either SomeException (Maybe (Key, Backend))))
+	bs <- Annex.supportedBackends
+	result <- liftIO $ (try (find bs)::IO (Either SomeException (Maybe (Key, Backend))))
 	case (result) of
-		Left err -> return Nothing
-		Right succ -> return succ
+		Left _ -> return Nothing
+		Right val -> return val
 	where 
-		lookup all = do
+		find bs = do
 			l <- readSymbolicLink file
-			return $ Just $ pair all $ takeFileName l
-		pair all file = (k, b)
+			return $ Just $ pair bs $ takeFileName l
+		pair bs f = (k, b)
 			where
-				k = fileKey file
-				b = lookupBackendName all $ backendName k
+				k = fileKey f
+				b = lookupBackendName bs $ backendName k
