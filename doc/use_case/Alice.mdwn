@@ -3,12 +3,9 @@
 Alice is always on the move, often with her trusty netbook and a small
 handheld terabyte USB drive, or a smaller USB keydrive. She has a server
 out there on the net. All these things can have different files on them,
-but with git-annex Alice no longer has to deal with the tedious process
-of keeping them manually in sync.
+but Alice no longer has to deal with the tedious process of keeping them
+manually in sync.
 
-[[!toggle id=alice text="more..."]]
-
-[[!toggleable id=alice text="""
 When she has 1 bar on her cell, Alice queues up interesting files on her
 server for later. At a coffee shop, she has git-annex download them to her
 USB drive. High in the sky or in a remote cabin, she catches up on
@@ -19,4 +16,3 @@ When she's done, she tells git-annex which to keep and which to remove.
 They're all removed from her netbook to save space, and Alice knowns
 that next time she syncs up to the net, her changes will be synced back 
 to her server.
-"""]]
