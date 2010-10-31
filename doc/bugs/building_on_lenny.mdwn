@@ -62,4 +62,6 @@ Thanks for your help! --[[cstamas]]
 >>> Control.Exception.Extensible so I've made it use it. You will have to
 >>> figure out how to install that library yourself though, I don't know
 >>> how to use cabal with such an old ghc. Library is here:
->>> <http://hackage.haskell.org/package/extensible-exceptions> --[[Joey]] 
+>>> <http://hackage.haskell.org/package/extensible-exceptions> 
+>>> and I asked how to get it on stable here:
+>>> <http://ask.debian.net/questions/how-to-get-haskell-extensible-extceptions-on-stable> --[[Joey]] 
