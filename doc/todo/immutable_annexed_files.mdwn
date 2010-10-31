@@ -1,0 +1,3 @@
+> josh: Do you do anything in git-annex to try to make the files immutable?
+> For instance, removing write permission, or even chattr?
+> joey: I don't, but that's a very good idea
