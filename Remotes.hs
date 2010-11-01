@@ -217,7 +217,7 @@ copyToRemote r key file = do
 			liftIO $ boolSystem "scp" [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
-sshLocation r file = (Git.urlHost r) ++ ":" ++ file
+sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
 
 {- Runs a command in a remote. -}
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
