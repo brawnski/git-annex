@@ -86,19 +86,12 @@ gitPreCommitHook repo = do
 			p <- getPermissions hook
 			setPermissions hook $ p {executable = True}
 
-{- Checks if a given key is currently present in the annexLocation.
- -
- - This can be run against a remote repository to check the key there. -}
+{- Checks if a given key is currently present in the annexLocation. -}
 inAnnex :: Key -> Annex Bool
 inAnnex key = do
 	g <- Annex.gitRepo
-	if (not $ Git.repoIsUrl g)
-		then liftIO $ doesFileExist $ annexLocation g key
-		else do
-			showNote ("checking " ++ Git.repoDescribe g ++ "...")
-			liftIO $ boolSystem "ssh" [Git.urlHost g,
-				"test -e " ++
-				(shellEscape $ annexLocation g key)]
+	when (Git.repoIsUrl g) $ error "inAnnex cannot check remote repo"
+	liftIO $ doesFileExist $ annexLocation g key
 
 {- Calculates the relative path to use to link a file to a key. -}
 calcGitLink :: FilePath -> Key -> Annex FilePath

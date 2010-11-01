@@ -81,14 +81,24 @@ keyPossibilities key = do
  - If the remote cannot be accessed, returns a Left error.
  -}
 inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
-inAnnex remote key = do
-	-- the check needs to run in an Annex monad using the remote
-	liftIO $ ((try $ check)::IO (Either IOException Bool))
+inAnnex r key = do
+	if (not $ Git.repoIsUrl r)
+		then check local
+		else do
+			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
+			check remote
 	where
-		check = do
-			a <- Annex.new remote []
+		check a = liftIO $ ((try a)::IO (Either IOException Bool))
+		local = do
+			-- run a local check by making an Annex monad
+			-- using the remote
+			a <- Annex.new r []
 			(result, _) <- Annex.run a (Core.inAnnex key)
 			return result
+		remote = do
+			-- remote check via ssh in and test
+			boolSystem "ssh" [Git.urlHost r, "test -e " ++
+				(shellEscape $ annexLocation r key)]
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
