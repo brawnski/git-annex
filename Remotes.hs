@@ -115,33 +115,28 @@ reposByCost l = do
  -}
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
-	g <- Annex.gitRepo
-	if (not $ null $ config g)
-		then return $ read $ config g
+	cost <- repoConfig r "annex-cost" ""
+	if (not $ null cost)
+		then return $ read cost
 		else if (Git.repoIsUrl r)
 			then return 200
 			else return 100
-	where
-		config g = Git.configGet g configkey ""
-		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-cost"
 
 {- Checks if a repo should be ignored, based either on annex-ignore
  - setting, or on command-line options. Allows command-line to override
  - annex-ignore. -}
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
-	g <- Annex.gitRepo
+	ignored <- repoConfig r "annex-ignore" "false"
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
 	let name = if (not $ null fromName) then fromName else toName
 	if (not $ null name)
 		then return $ match name
-		else return $ not $ ignored g
+		else return $ not $ isIgnored ignored
 	where
 		match name = name == Git.repoRemoteName r
-		ignored g = Git.configTrue $ config g
-		config g = Git.configGet g configkey ""
-		configkey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-ignore"
+		isIgnored ignored = Git.configTrue ignored
 
 {- Returns the remote specified by --from or --to, may fail with error. -}
 commandLineRemote :: Annex Git.Repo
@@ -195,8 +190,7 @@ copyFromRemote r key file = do
 			else error "copying from non-ssh repo not supported"
 	where
 		getlocal = liftIO $ boolSystem "cp" ["-a", keyloc, file]
-		getssh = do
-			scp [sshLocation r keyloc, file]
+		getssh = scp r [sshLocation r keyloc, file]
 		keyloc = annexLocation r key
 
 {- Tries to copy a key's content to a file on a remote. -}
@@ -211,20 +205,23 @@ copyToRemote r key file = do
 			else error "copying to non-ssh repo not supported"
 	where
 		putlocal src = liftIO $ boolSystem "cp" ["-a", src, file]
-		putssh src = do
-			scp [src, sshLocation r file]
+		putssh src = scp r [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
 sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
 
-scp :: [String] -> Annex Bool
-scp params = do
+{- Runs scp against a specified remote. (Honors annex-scp-options.) -}
+scp :: Git.Repo -> [String] -> Annex Bool
+scp r params = do
+	scpoptions <- repoConfig r "annex-scp-options" ""
 	Core.showProgress -- make way for scp progress bar
-	liftIO $ boolSystem "scp" ("-p":params)
+	liftIO $ boolSystem "scp" $ "-p":(words scpoptions) ++ params
 
-{- Runs a command in a remote. -}
+{- Runs a command in a remote, using ssh if necessary.
+ - (Honors annex-ssh-options.) -}
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
 runCmd r command params = do
+	sshoptions <- repoConfig r "annex-ssh-options" ""
 	if (not $ Git.repoIsUrl r)
 		then do
 			cwd <- liftIO $ getCurrentDirectory
@@ -233,8 +230,18 @@ runCmd r command params = do
 					boolSystem command params
 		else if (Git.repoIsSsh r)
 			then do
-				liftIO $ boolSystem "ssh" [Git.urlHost r,
-					"cd " ++ (shellEscape $ Git.workTree r) ++
+				liftIO $ boolSystem "ssh" $
+					(words sshoptions) ++ 
+					[Git.urlHost r, "cd " ++ 
+					(shellEscape $ Git.workTree r) ++
 					" && " ++ (shellEscape command) ++ " " ++
 					(unwords $ map shellEscape params)]
 			else error "running command in non-ssh repo not supported"
+
+{- Looks up a per-remote config option in git config. -}
+repoConfig :: Git.Repo -> String -> String -> Annex String
+repoConfig r key def = do
+	g <- Annex.gitRepo
+	return $ Git.configGet g fullkey def
+	where
+		fullkey = "remote." ++ (Git.repoRemoteName r) ++ "." ++ key

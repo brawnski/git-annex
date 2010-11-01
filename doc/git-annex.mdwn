@@ -196,6 +196,11 @@ Like other git commands, git-annex is configured via `.git/config`.
   from ever using this remote.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
   here.
+* `remote.<name>.annex-scp-options` -- Options to use when using scp
+  to or from this repository. For example, to force ipv6, and limit
+  the bandwidth to 100Kbit/s, set it to "-6 -l 100"
+* `remote.<name>.annex-ssh-options` -- Options to use when using ssh
+  to talk to this repository.
 
 # FILES
 
