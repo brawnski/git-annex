@@ -84,21 +84,21 @@ keyPossibilities key = do
 inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
 inAnnex r key = do
 	if (not $ Git.repoIsUrl r)
-		then check local
-		else do
-			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			check remote
+		then liftIO $ ((try checklocal)::IO (Either IOException Bool))
+		else checkremote
 	where
-		check a = liftIO $ ((try a)::IO (Either IOException Bool))
-		local = do
+		checklocal = do
 			-- run a local check by making an Annex monad
 			-- using the remote
 			a <- Annex.new r []
 			Annex.eval a (Core.inAnnex key)
-		remote = do
-			-- remote check via ssh in and test
-			boolSystem "ssh" [Git.urlHost r, "test -e " ++
-				(shellEscape $ annexLocation r key)]
+		checkremote = do
+			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
+			inannex <- runCmd r ("test -e " ++
+				(shellEscape $ annexLocation r key)) []
+			-- XXX Note that ssh failing and the file not existing
+			-- are not currently differentiated.
+			return $ Right inannex
 
 {- Cost Ordered list of remotes. -}
 remotesByCost :: Annex [Git.Repo]
