@@ -40,7 +40,7 @@ tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
 	case (result) of
 		Left err -> do
-			_ <- Annex.run state $ showErr err
+			Annex.eval state $ showErr err
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as

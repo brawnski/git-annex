@@ -93,8 +93,7 @@ inAnnex r key = do
 			-- run a local check by making an Annex monad
 			-- using the remote
 			a <- Annex.new r []
-			(result, _) <- Annex.run a (Core.inAnnex key)
-			return result
+			Annex.eval a (Core.inAnnex key)
 		remote = do
 			-- remote check via ssh in and test
 			boolSystem "ssh" [Git.urlHost r, "test -e " ++
