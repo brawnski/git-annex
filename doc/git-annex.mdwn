@@ -230,7 +230,7 @@ should be included, in, for example, `/usr/share/doc/git-annex/`
 
 # AUTHOR
 
-Joey Hess <joey@ikiwiki.info>
+Joey Hess <joey@kitenet.net>
 
 <http://git-annex.branchable.com/>
 
