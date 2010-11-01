@@ -190,9 +190,7 @@ Here are all the supported configuration settings.
 * `remote.<name>.annex-cost` -- When determining which repository to
   transfer annexed files from or to, ones with lower costs are preferred.
   The default cost is 100 for local repositories, and 200 for remote
-  repositories. Note that other factors may be configured when pushing
-  files to repositories, in particular, whether the repository is on
-  a filesystem with sufficient free space.
+  repositories.
 * `remote.<name>.annex-ignore` -- If set to `true`, prevents git-annex
   from ever using this remote.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
