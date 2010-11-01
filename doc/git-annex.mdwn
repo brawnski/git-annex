@@ -178,7 +178,8 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 # CONFIGURATION
 
-Like other git commands, git-annex is configured via `.git/config`.
+Like other git commands, git-annex is configured via `git-config`.
+Here are all the supported configuration settings.
 
 * `annex.uuid` -- a unique UUID for this repository (automatically set)
 * `annex.numcopies` -- number of copies of files to keep across all
@@ -201,6 +202,8 @@ Like other git commands, git-annex is configured via `.git/config`.
   the bandwidth to 100Kbit/s, set it to "-6 -l 100"
 * `remote.<name>.annex-ssh-options` -- Options to use when using ssh
   to talk to this repository.
+* `annex.scp-options` and `annex.ssh-options` -- Default scp and ssh
+  options to use if a remote does not have specific options.
 
 # FILES
 

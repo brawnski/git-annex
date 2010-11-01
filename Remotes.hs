@@ -125,7 +125,7 @@ reposByCost l = do
  -}
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
-	cost <- repoConfig r "annex-cost" ""
+	cost <- repoConfig r "cost" ""
 	if (not $ null cost)
 		then return $ read cost
 		else if (Git.repoIsUrl r)
@@ -137,7 +137,7 @@ repoCost r = do
  - annex-ignore. -}
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
-	ignored <- repoConfig r "annex-ignore" "false"
+	ignored <- repoConfig r "ignore" "false"
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
 	let name = if (not $ null fromName) then fromName else toName
@@ -172,7 +172,7 @@ commandLineRemote = do
  - returns the updated git repo. -}
 tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
 tryGitConfigRead r = do
-	sshoptions <- repoConfig r "annex-ssh-options" ""
+	sshoptions <- repoConfig r "ssh-options" ""
 	if (Map.null $ Git.configMap r)
 		then do
 			-- configRead can fail due to IO error or
@@ -228,7 +228,7 @@ sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
 {- Runs scp against a specified remote. (Honors annex-scp-options.) -}
 scp :: Git.Repo -> [String] -> Annex Bool
 scp r params = do
-	scpoptions <- repoConfig r "annex-scp-options" ""
+	scpoptions <- repoConfig r "scp-options" ""
 	Core.showProgress -- make way for scp progress bar
 	liftIO $ boolSystem "scp" $ "-p":(words scpoptions) ++ params
 
@@ -236,7 +236,7 @@ scp r params = do
  - (Honors annex-ssh-options.) -}
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
 runCmd r command params = do
-	sshoptions <- repoConfig r "annex-ssh-options" ""
+	sshoptions <- repoConfig r "ssh-options" ""
 	if (not $ Git.repoIsUrl r)
 		then do
 			cwd <- liftIO $ getCurrentDirectory
@@ -253,10 +253,13 @@ runCmd r command params = do
 					(unwords $ map shellEscape params)]
 			else error "running command in non-ssh repo not supported"
 
-{- Looks up a per-remote config option in git config. -}
+{- Looks up a per-remote config option in git config.
+ - Failing that, tries looking for a global config option. -}
 repoConfig :: Git.Repo -> String -> String -> Annex String
 repoConfig r key def = do
 	g <- Annex.gitRepo
-	return $ Git.configGet g fullkey def
+	let def' = Git.configGet g global def
+	return $ Git.configGet g local def'
 	where
-		fullkey = "remote." ++ (Git.repoRemoteName r) ++ "." ++ key
+		local = "remote." ++ (Git.repoRemoteName r) ++ ".annex-" ++ key
+		global = "annex." ++ key
