@@ -110,7 +110,7 @@ boolSystem command params = do
 			executeFile command True params Nothing
 
 {- Escapes a filename to be safely able to be exposed to the shell. -}
-shellEscape :: FilePath -> FilePath
+shellEscape :: FilePath -> String
 shellEscape f = "'" ++ quote ++ "'"
 	where
 		-- replace ' with '"'"'
