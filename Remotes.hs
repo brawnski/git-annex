@@ -94,8 +94,8 @@ inAnnex r key = do
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
 			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			inannex <- runCmd r ("test -e " ++
-				(shellEscape $ annexLocation r key)) []
+			inannex <- runCmd r "test"
+				[ "-e", (shellEscape $ annexLocation r key)]
 			-- XXX Note that ssh failing and the file not existing
 			-- are not currently differentiated.
 			return $ Right inannex
@@ -172,11 +172,12 @@ commandLineRemote = do
  - returns the updated git repo. -}
 tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
 tryGitConfigRead r = do
+	sshoptions <- repoConfig r "annex-ssh-options" ""
 	if (Map.null $ Git.configMap r)
 		then do
 			-- configRead can fail due to IO error or
 			-- for other reasons; catch all possible exceptions
-			result <- liftIO $ (try (Git.configRead r)::IO (Either SomeException (Git.Repo)))
+			result <- liftIO $ (try (Git.configRead r $ Just $ words sshoptions)::IO (Either SomeException (Git.Repo)))
 			case (result) of
 				Left _ -> return $ Left r
 				Right r' -> do

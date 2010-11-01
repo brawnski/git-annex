@@ -83,7 +83,7 @@ setConfig key value = do
 	g <- Annex.gitRepo
 	liftIO $ Git.run g ["config", key, value]
 	-- re-read git config and update the repo's state
-	g' <- liftIO $ Git.configRead g
+	g' <- liftIO $ Git.configRead g Nothing
 	Annex.gitRepoChange g'
 
 {- Filters a list of repos to ones that have listed UUIDs. -}

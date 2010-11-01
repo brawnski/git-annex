@@ -246,9 +246,11 @@ pipeNullSplit repo params = do
 	where
 		split0 s = filter (not . null) $ split "\0" s
 
-{- Runs git config and populates a repo with its config. -}
-configRead :: Repo -> IO Repo
-configRead repo@(Repo { location = Dir d }) = do
+{- Runs git config and populates a repo with its config. 
+ -
+ - For a ssh repository, a list of ssh options may optionally be specified. -}
+configRead :: Repo -> Maybe [String] -> IO Repo
+configRead repo@(Repo { location = Dir d }) _ = do
 	{- Cannot use pipeRead because it relies on the config having
 	   been already read. Instead, chdir to the repo. -}
 	cwd <- getCurrentDirectory
@@ -256,10 +258,13 @@ configRead repo@(Repo { location = Dir d }) = do
 		(\_ -> changeWorkingDirectory cwd) $
 			pOpen ReadFromPipe "git" ["config", "--list"] $
 				hConfigRead repo
-configRead repo = assertSsh repo $ do
-	pOpen ReadFromPipe "ssh" [urlHost repo, sshcommand] $ hConfigRead repo
+configRead repo sshopts = assertSsh repo $ do
+	pOpen ReadFromPipe "ssh" params $ hConfigRead repo
 	where
-		sshcommand = "cd " ++ (shellEscape $ urlPath repo) ++
+		params = case sshopts of
+				Nothing -> [urlHost repo, command]
+				Just l -> l ++ [urlHost repo, command]
+		command = "cd " ++ (shellEscape $ urlPath repo) ++
 				" && git config --list"
 hConfigRead :: Repo -> Handle -> IO Repo
 hConfigRead repo h = do
