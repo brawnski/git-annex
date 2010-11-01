@@ -49,34 +49,39 @@ type SubCmdCleanup = Annex Bool
 
 data SubCommand = SubCommand {
 	subcmdname :: String,
+	subcmdparams :: String,
 	subcmdparse :: SubCmdParse,
 	subcmddesc :: String
 }
 subCmds :: [SubCommand]
 subCmds =  [
-	  (SubCommand "add"	(withFilesNotInGit addStart)
+	  (SubCommand "add" path	(withFilesNotInGit addStart)
 		"add files to annex")
-	, (SubCommand "get"	(withFilesInGit getStart)
+	, (SubCommand "get" path	(withFilesInGit getStart)
 		"make content of annexed files available")
-	, (SubCommand "drop"	(withFilesInGit dropStart)
+	, (SubCommand "drop" path	(withFilesInGit dropStart)
 		"indicate content of files not currently wanted")
-	, (SubCommand "move"	(withFilesInGit moveStart)
+	, (SubCommand "move" path	(withFilesInGit moveStart)
 		"transfer content of files to/from another repository")
-	, (SubCommand "init"	(withDescription initStart)
+	, (SubCommand "init" desc	(withDescription initStart)
 		"initialize git-annex with repository description")
-	, (SubCommand "unannex"	(withFilesInGit unannexStart)
+	, (SubCommand "unannex" path	(withFilesInGit unannexStart)
 		"undo accidential add command")
-	, (SubCommand "fix"	(withFilesInGit fixStart)
+	, (SubCommand "fix" path	(withFilesInGit fixStart)
 		"fix up symlinks to point to annexed content")
-	, (SubCommand "pre-commit" (withFilesToBeCommitted fixStart)
+	, (SubCommand "pre-commit" path (withFilesToBeCommitted fixStart)
 		"fix up symlinks before they are committed")
-	, (SubCommand "fromkey"	(withFilesMissing fromKeyStart)
+	, (SubCommand "fromkey" key	(withFilesMissing fromKeyStart)
 		"adds a file using a specific key")
-	, (SubCommand "dropkey"	(withKeys dropKeyStart)
+	, (SubCommand "dropkey"	key	(withKeys dropKeyStart)
 		"drops annexed content for specified keys")
-	, (SubCommand "setkey"	(withTempFile setKeyStart)
+	, (SubCommand "setkey" key	(withTempFile setKeyStart)
 		"sets annexed content for a key using a temp file")
 	]
+	where
+		path = "PATH ..."
+		key = "KEY ..."
+		desc = "DESCRIPTION"
 
 -- Each dashed command-line option results in generation of an action
 -- in the Annex monad that performs the necessary setting.
@@ -112,6 +117,8 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		showcmd c =
 			(subcmdname c) ++
 			(pad 11 (subcmdname c)) ++
+			(subcmdparams c) ++
+			(pad 13 (subcmdparams c)) ++
 			(subcmddesc c)
 		indent l = "  " ++ l
 		pad n s = take (n - (length s)) $ repeat ' '
