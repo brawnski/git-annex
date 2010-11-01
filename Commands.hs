@@ -27,12 +27,18 @@ import Core
 import qualified Remotes
 import qualified TypeInternals
 
+{- A subcommand can take one of several kinds of input parameters. -}
+data SubCmdInput = FilesInGit FilePath | FilesNotInGit FilePath |
+	FilesMissing FilePath | Description String | Keys String |
+	Tempfile FilePath | FilesToBeCommitted FilePath
+
 {- A subcommand runs in three stages. Each stage can return the next stage
  - to run.
  -
  - 1. The start stage is run before anything is printed about the
- -   subcommand, and can early abort it if the input does not make sense.
- -   It should run quickly and should not modify Annex state.
+ -   subcommand, is passed some input, and can early abort it
+ -   if the input does not make sense. It should run quickly and
+ -   should not modify Annex state.
  -
  - 2. The perform stage is run after a message is printed about the subcommand
  -    being run, and it should be where the bulk of the work happens.
@@ -40,18 +46,18 @@ import qualified TypeInternals
  - 3. The cleanup stage is run only if the perform stage succeeds, and it
  -    returns the overall success/fail of the subcommand.
  -}
-type SubCmdStart = String -> Annex (Maybe SubCmdPerform)
+type SubCmdStart = Annex (Maybe SubCmdPerform)
 type SubCmdPerform = Annex (Maybe SubCmdCleanup)
 type SubCmdCleanup = Annex Bool
 
 {- Runs a subcommand through its three stages. -}
-doSubCmd :: String -> SubCmdStart -> String -> Annex Bool
-doSubCmd cmdname start param = do
-	startres <- start param :: Annex (Maybe SubCmdPerform)
+doSubCmd :: String -> SubCmdStart -> Annex Bool
+doSubCmd cmdname start = do
+	startres <- start :: Annex (Maybe SubCmdPerform)
 	case (startres) of
 		Nothing -> return True
 		Just perform -> do
-			showStart cmdname param
+			--showStart cmdname param
 			performres <- perform :: Annex (Maybe SubCmdCleanup)
 			case (performres) of
 				Nothing -> do
@@ -68,15 +74,10 @@ doSubCmd cmdname start param = do
 							return False
 
 
-{- A subcommand can broadly want one of several kinds of input parameters.
- - This allows a first stage of filtering before starting a subcommand. -}
-data SubCmdWants = FilesInGit | FilesNotInGit | FilesMissing
-	| Description | Keys | Tempfile | FilesToBeCommitted
-
 data SubCommand = SubCommand {
 	subcmdname :: String,
-	subcmdaction :: SubCmdStart,
-	subcmdwants :: SubCmdWants,
+	subcmdaction :: (SubCmdInput -> SubCmdStart),
+	subcmdinput :: (String -> SubCmdInput),
 	subcmddesc :: String
 }
 subCmds :: [SubCommand]
@@ -139,40 +140,53 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		showcmd c =
 			(subcmdname c) ++
 			(pad 11 (subcmdname c)) ++
-			(descWanted (subcmdwants c)) ++
-			(pad 13 (descWanted (subcmdwants c))) ++
+			(descSubCmdInput (subcmdinput c)) ++
+			(pad 13 (descSubCmdInput (subcmdinput c))) ++
 			(subcmddesc c)
 		indent l = "  " ++ l
 		pad n s = take (n - (length s)) $ repeat ' '
 
 {- Generate descriptions of wanted parameters for subcommands. -}
-descWanted :: SubCmdWants -> String
-descWanted Description = "DESCRIPTION"
-descWanted Keys = "KEY ..."
-descWanted _ = "PATH ..."
+descSubCmdInput :: (String -> SubCmdInput) -> String
+descSubCmdInput Description = "DESCRIPTION"
+descSubCmdInput Keys = "KEY ..."
+descSubCmdInput _ = "PATH ..."
+
+{- Prepares a set of actions to run to handle a subcommand, based on 
+ - the parameters passed to it. -}
+prepSubCmd :: SubCommand -> Git.Repo -> [String] -> IO [Annex Bool]
+prepSubCmd SubCommand { subcmdname = name, subcmdaction = action,
+		subcmdinput = input, subcmddesc = _ } repo params = do
+	input <- findInput input params repo
+	return $ map (doSubCmd name action) input
 
 {- Finds the type of parameters a subcommand wants, from among the passed
  - parameter list. -}
-findWanted :: SubCmdWants -> [String] -> Git.Repo -> IO [String]
-findWanted FilesNotInGit params repo = do
+findInput :: (String -> SubCmdInput) -> [String] -> Git.Repo -> IO [SubCmdInput]
+findInput FilesNotInGit params repo = do
 	files <- mapM (Git.notInRepo repo) params
-	return $ foldl (++) [] files
-findWanted FilesInGit params repo = do
+	return $ map FilesNotInGit $ notState $ foldl (++) [] files
+findInput FilesInGit params repo = do
 	files <- mapM (Git.inRepo repo) params
-	return $ foldl (++) [] files
-findWanted FilesMissing params _ = do
+	return $ map FilesInGit $ notState $ foldl (++) [] files
+findInput FilesMissing params _ = do
 	files <- liftIO $ filterM missing params
-	return $ files
+	return $ map FilesMissing $ notState $ files
 	where
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
-findWanted Description params _ = do
-	return $ [unwords params]
-findWanted FilesToBeCommitted params repo = do
+findInput Description params _ = do
+	return $ map Description $ [unwords params]
+findInput FilesToBeCommitted params repo = do
 	files <- mapM (Git.stagedFiles repo) params
-	return $ foldl (++) [] files
-findWanted _ params _ = return params
+	return $ map FilesToBeCommitted $ notState $ foldl (++) [] files
+findInput Keys params _ = return $ map Keys params
+findInput Tempfile params _ = return $ map Tempfile params
+
+{- filter out files from the state directory -}
+notState :: [FilePath] -> [FilePath]
+notState fs = filter (\f -> stateLoc /= take (length stateLoc) f) fs
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it
@@ -184,20 +198,15 @@ parseCmd argv state = do
 	when (null params) $ error usage
 	case lookupCmd (params !! 0) of
 		[] -> error usage
-		[SubCommand { subcmdname = name, subcmdaction = action,
-				subcmdwants = want, subcmddesc = _ }] -> do
-			files <- findWanted want (drop 1 params)
-				(TypeInternals.repo state)
-			let actions = map (doSubCmd name action) $
-				filter notstate files
+		[subcommand] -> do
+			let repo = TypeInternals.repo state
+			actions <- prepSubCmd subcommand repo (drop 1 params)
 			let configactions = map (\flag -> do
 				flag
 				return True) flags
 			return (configactions, actions)
 		_ -> error "internal error: multiple matching subcommands"
 	where
-		-- never include files from the state directory
-		notstate f = stateLoc /= take (length stateLoc) f
 		getopt = case getOpt Permute options argv of
 			(flags, params, []) -> return (flags, params)
 			(_, _, errs) -> ioError (userError (concat errs ++ usage))
@@ -206,8 +215,8 @@ parseCmd argv state = do
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
  - to its content. -}
-addStart :: FilePath -> Annex (Maybe SubCmdPerform)
-addStart file = notAnnexed file $ do
+addStart :: SubCmdInput -> SubCmdStart
+addStart (FilesNotInGit file) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
 		then return Nothing
@@ -231,8 +240,8 @@ addCleanup file key = do
 	return True
 
 {- The unannex subcommand undoes an add. -}
-unannexStart :: FilePath -> Annex (Maybe SubCmdPerform)
-unannexStart file = isAnnexed file $ \(key, backend) -> do
+unannexStart :: SubCmdInput -> SubCmdStart
+unannexStart (FilesInGit file) = isAnnexed file $ \(key, backend) -> do
 	return $ Just $ unannexPerform file key backend
 unannexPerform :: FilePath -> Key -> Backend -> Annex (Maybe SubCmdCleanup)
 unannexPerform file key backend = do
@@ -255,8 +264,8 @@ unannexCleanup file key = do
 	return True
 
 {- Gets an annexed file from one of the backends. -}
-getStart :: FilePath -> Annex (Maybe SubCmdPerform)
-getStart file = isAnnexed file $ \(key, backend) -> do
+getStart :: SubCmdInput -> Annex (Maybe SubCmdPerform)
+getStart (FilesInGit file) = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
 		then return Nothing
@@ -270,8 +279,8 @@ getPerform key backend = do
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
-dropStart :: FilePath -> Annex (Maybe SubCmdPerform)
-dropStart file = isAnnexed file $ \(key, backend) -> do
+dropStart :: SubCmdInput -> SubCmdStart
+dropStart (FilesInGit file) = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
 		then return Nothing
@@ -295,8 +304,8 @@ dropCleanup key = do
 		else return True
 
 {- Drops cached content for a key. -}
-dropKeyStart :: String -> Annex (Maybe SubCmdPerform)
-dropKeyStart keyname = do
+dropKeyStart :: SubCmdInput -> SubCmdStart
+dropKeyStart (Keys keyname) = do
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
 	present <- inAnnex key
@@ -318,8 +327,8 @@ dropKeyCleanup key = do
 	return True
 
 {- Sets cached content for a key. -}
-setKeyStart :: FilePath -> Annex (Maybe SubCmdPerform)
-setKeyStart tmpfile = do
+setKeyStart :: SubCmdInput -> SubCmdStart
+setKeyStart (Tempfile tmpfile) = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
@@ -339,8 +348,11 @@ setKeyCleanup key = do
 	return True
 
 {- Fixes the symlink to an annexed file. -}
-fixStart :: FilePath -> Annex (Maybe SubCmdPerform)
-fixStart file = isAnnexed file $ \(key, _) -> do
+fixStart :: SubCmdInput -> SubCmdStart
+fixStart (FilesInGit file) = fixStart' file
+fixStart (FilesToBeCommitted file) = fixStart' file
+fixStart' :: FilePath -> SubCmdStart
+fixStart' file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
 	if (link == l)
@@ -358,8 +370,8 @@ fixCleanup file = do
 	return True
 
 {- Stores description for the repository etc. -}
-initStart :: String -> Annex (Maybe SubCmdPerform)
-initStart description = do
+initStart :: SubCmdInput -> SubCmdStart
+initStart (Description description) = do
 	when (null description) $ error $
 		"please specify a description of this repository\n" ++ usage
 	return $ Just $ initPerform description
@@ -380,8 +392,8 @@ initCleanup = do
 	return True
 
 {- Adds a file pointing at a manually-specified key -}
-fromKeyStart :: FilePath -> Annex (Maybe SubCmdPerform)
-fromKeyStart file = do
+fromKeyStart :: SubCmdInput -> SubCmdStart
+fromKeyStart (FilesMissing file) = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
@@ -406,8 +418,8 @@ fromKeyCleanup file = do
  -
  - This only operates on the cached file content; it does not involve
  - moving data in the key-value backend. -}
-moveStart :: FilePath -> Annex (Maybe SubCmdPerform)
-moveStart file = do
+moveStart :: SubCmdInput -> SubCmdStart
+moveStart (FilesInGit file) = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
 	case (fromName, toName) of

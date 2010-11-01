@@ -9,6 +9,8 @@ git-annex (0.03) UNRELEASED; urgency=low
     from git before starting, and will be much faster with large repos.
   * Fix crash on unknown symlinks.
   * Added remote.annex-scp-options and remote.annex-ssh-options.
+  * The backends to use when adding different sets of files can be configured
+    via gitattributes.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 28 Oct 2010 13:46:59 -0400
 
