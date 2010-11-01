@@ -111,7 +111,7 @@ boolSystem command params = do
 
 {- Escapes a filename to be safely able to be exposed to the shell. -}
 shellEscape :: FilePath -> String
-shellEscape f = "'" ++ quote ++ "'"
+shellEscape f = "'" ++ escaped ++ "'"
 	where
 		-- replace ' with '"'"'
-		quote = join "'\"'\"'" $ split "'" f
+		escaped = join "'\"'\"'" $ split "'" f
