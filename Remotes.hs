@@ -196,8 +196,7 @@ copyFromRemote r key file = do
 	where
 		getlocal = liftIO $ boolSystem "cp" ["-a", keyloc, file]
 		getssh = do
-			Core.showProgress -- make way for scp progress bar
-			liftIO $ boolSystem "scp" [sshLocation r keyloc, file]
+			scp [sshLocation r keyloc, file]
 		keyloc = annexLocation r key
 
 {- Tries to copy a key's content to a file on a remote. -}
@@ -213,11 +212,15 @@ copyToRemote r key file = do
 	where
 		putlocal src = liftIO $ boolSystem "cp" ["-a", src, file]
 		putssh src = do
-			Core.showProgress -- make way for scp progress bar
-			liftIO $ boolSystem "scp" [src, sshLocation r file]
+			scp [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
 sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
+
+scp :: [String] -> Annex Bool
+scp params = do
+	Core.showProgress -- make way for scp progress bar
+	liftIO $ boolSystem "scp" ("-p":params)
 
 {- Runs a command in a remote. -}
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
