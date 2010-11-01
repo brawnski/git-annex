@@ -192,7 +192,8 @@ Here are all the supported configuration settings.
   The default cost is 100 for local repositories, and 200 for remote
   repositories.
 * `remote.<name>.annex-ignore` -- If set to `true`, prevents git-annex
-  from ever using this remote.
+  from ever using this remote. This is, for example, useful if the
+  remote is a bare repository, which git-annex does not currently support.
 * `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
   here.
 * `remote.<name>.annex-scp-options` -- Options to use when using scp
