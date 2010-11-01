@@ -232,6 +232,6 @@ runCmd r command params = do
 			then do
 				liftIO $ boolSystem "ssh" [Git.urlHost r,
 					"cd " ++ (shellEscape $ Git.workTree r) ++
-					" && " ++ command ++ " " ++
-					unwords params]
+					" && " ++ (shellEscape command) ++ " " ++
+					(unwords $ map shellEscape params)]
 			else error "running command in non-ssh repo not supported"
