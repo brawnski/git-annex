@@ -6,8 +6,8 @@ When a file is annexed, a key is generated from its content and/or metadata.
 The file checked into git symlinks to the key. This key can later be used
 to retrieve the file's content (its value).
 
-Multiple pluggable backends are supported, and more than one can be used
-to store different files' contents in a given repository.
+Multiple pluggable backends are supported, and a single repository
+can use different backends for different files.
 
 * `WORM` ("Write Once, Read Many") This backend stores the file's content
   only in `.git/annex/`, and assumes that any file with the same basename,
@@ -20,3 +20,18 @@ to store different files' contents in a given repository.
   can make it slower for large files. **Warning** this backend is not ready
   for use.
 * `URL` -- This backend downloads the file's content from an external URL.
+
+The `annex.backends` git-config setting can be used to list the backends
+git-annex should use. The first one listed will be used by default when
+new files are added.
+
+For finer control of what backend is used when adding different types of
+files, the `.gitattributes` file can be used. The `git-annex-backend`
+attribute can be set to the name of the backend to use for matching files.
+
+For example, to use the SHA1 backend for sound files, which tend to be
+smallish and might be modified over time, you could set in
+`.gitattributes`:
+
+	*.mp3 git-annex-backend=SHA1
+	*.ogg git-annex-backend=SHA1
