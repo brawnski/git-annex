@@ -119,28 +119,31 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 {- Prepares a set of actions to run to perform a subcommand, based on
  - the parameters passed to it. -}
 prepSubCmd :: SubCommand -> Git.Repo -> [String] -> IO [Annex Bool]
-prepSubCmd SubCommand { subcmdname = name, subcmdparse = parse,
-		subcmddesc = _ } repo params = do
+prepSubCmd SubCommand { subcmdparse = parse } repo params = do
 	list <- parse params repo :: IO [SubCmdStart]
-	return map (\a -> doSubCmd name a) list
+	return $ map (\a -> doSubCmd a) list
 
-{- Runs a subcommand through the perform and cleanup stages -}
-doSubCmd :: String -> SubCmdPerform -> SubCmdCleanup
-doSubCmd cmdname perform = do
-	p <- perform
-	case (p) of
-		Nothing -> do
-			showEndFail
-			return False
-		Just cleanup -> do
-			c <- cleanup
-			if (c)
-				then do
-					showEndOk
-					return True
-				else do
+{- Runs a subcommand through the start, perform and cleanup stages -}
+doSubCmd :: SubCmdStart -> SubCmdCleanup
+doSubCmd start = do
+	s <- start
+	case (s) of
+		Nothing -> return True
+		Just perform -> do
+			p <- perform
+			case (p) of
+				Nothing -> do
 					showEndFail
 					return False
+				Just cleanup -> do
+					c <- cleanup
+					if (c)
+						then do
+							showEndOk
+							return True
+						else do
+							showEndFail
+							return False
 
 {- These functions parse a user's parameters into a list of SubCmdStart
    actions to perform. -}
@@ -209,7 +212,9 @@ addStart file = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
 		then return Nothing
-		else return $ Just $ addPerform file
+		else do
+			showStart "add" file
+			return $ Just $ addPerform file
 addPerform :: FilePath -> SubCmdPerform
 addPerform file = do
 	stored <- Backend.storeFileKey file
@@ -231,6 +236,7 @@ addCleanup file key = do
 {- The unannex subcommand undoes an add. -}
 unannexStart :: FilePath -> SubCmdStart
 unannexStart file = isAnnexed file $ \(key, backend) -> do
+	showStart "unannex" file
 	return $ Just $ unannexPerform file key backend
 unannexPerform :: FilePath -> Key -> Backend -> SubCmdPerform
 unannexPerform file key backend = do
@@ -258,7 +264,9 @@ getStart file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
 		then return Nothing
-		else return $ Just $ getPerform key backend
+		else do
+			showStart "get" file
+			return $ Just $ getPerform key backend
 getPerform :: Key -> Backend -> SubCmdPerform
 getPerform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
@@ -273,7 +281,9 @@ dropStart file = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
 		then return Nothing
-		else return $ Just $ dropPerform key backend
+		else do
+			showStart "drop" file
+			return $ Just $ dropPerform key backend
 dropPerform :: Key -> Backend -> SubCmdPerform
 dropPerform key backend = do
 	success <- Backend.removeKey backend key
@@ -303,7 +313,9 @@ dropKeyStart keyname = do
 		then return Nothing
 		else if (not force)
 			then error "dropkey is can cause data loss; use --force if you're sure you want to do this"
-			else return $ Just $ dropKeyPerform key
+			else do
+				showStart "dropkey" keyname
+				return $ Just $ dropKeyPerform key
 dropKeyPerform :: Key -> SubCmdPerform
 dropKeyPerform key = do
 	g <- Annex.gitRepo
@@ -322,6 +334,7 @@ setKeyStart tmpfile = do
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
+	showStart "setkey" tmpfile
 	return $ Just $ setKeyPerform tmpfile key
 setKeyPerform :: FilePath -> Key -> SubCmdPerform
 setKeyPerform tmpfile key = do
@@ -343,7 +356,9 @@ fixStart file = isAnnexed file $ \(key, _) -> do
 	l <- liftIO $ readSymbolicLink file
 	if (link == l)
 		then return Nothing
-		else return $ Just $ fixPerform file link
+		else do
+			showStart "fix" file
+			return $ Just $ fixPerform file link
 fixPerform :: FilePath -> FilePath -> SubCmdPerform
 fixPerform file link = do
 	liftIO $ createDirectoryIfMissing True (parentDir file)
@@ -360,6 +375,7 @@ initStart :: String -> SubCmdStart
 initStart description = do
 	when (null description) $ error $
 		"please specify a description of this repository\n" ++ usage
+	showStart "init" description
 	return $ Just $ initPerform description
 initPerform :: String -> SubCmdPerform
 initPerform description = do
@@ -388,6 +404,7 @@ fromKeyStart file = do
 	inbackend <- Backend.hasKey key
 	unless (inbackend) $ error $
 		"key ("++keyname++") is not present in backend"
+	showStart "fromkey" file
 	return $ Just $ fromKeyPerform file key
 fromKeyPerform :: FilePath -> Key -> SubCmdPerform
 fromKeyPerform file key = do
@@ -430,7 +447,9 @@ moveToStart file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if (not ishere)
 		then return Nothing -- not here, so nothing to do
-		else return $ Just $ moveToPerform key
+		else do
+			showStart "move" file
+			return $ Just $ moveToPerform key
 moveToPerform :: Key -> SubCmdPerform
 moveToPerform key = do
 	-- checking the remote is expensive, so not done in the start step
@@ -477,9 +496,11 @@ moveFromStart :: FilePath -> SubCmdStart
 moveFromStart file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	l <- Remotes.keyPossibilities key
-	if (not $ null $ filter (\r -> Remotes.same r remote) l)
-		then return $ Just $ moveFromPerform key
-		else return Nothing
+	if (null $ filter (\r -> Remotes.same r remote) l)
+		then return Nothing
+		else do
+			showStart "move" file
+			return $ Just $ moveFromPerform key
 moveFromPerform :: Key -> SubCmdPerform
 moveFromPerform key = do
 	remote <- Remotes.commandLineRemote
