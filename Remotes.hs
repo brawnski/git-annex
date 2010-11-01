@@ -10,6 +10,7 @@ module Remotes (
 	keyPossibilities,
 	tryGitConfigRead,
 	inAnnex,
+	same,
 	commandLineRemote,
 	copyFromRemote,
 	copyToRemote,
@@ -47,7 +48,7 @@ keyPossibilities key = do
 	uuids <- liftIO $ keyLocations g key
 	allremotes <- remotesByCost
 	-- To determine if a remote has a key, its UUID needs to be known.
-	-- The locally cached UIIDs of remotes can fall out of date if
+	-- The locally cached UUIDs of remotes can fall out of date if
 	-- eg, a different drive is mounted at the same location.
 	-- But, reading the config of remotes can be expensive, so make
 	-- sure we only do it once per git-annex run.
@@ -146,6 +147,10 @@ repoNotIgnored r = do
 	where
 		match name = name == Git.repoRemoteName r
 		isIgnored ignored = Git.configTrue ignored
+
+{- Checks if two repos are the same, by comparing their remote names. -}
+same :: Git.Repo -> Git.Repo -> Bool
+same a b = Git.repoRemoteName a == Git.repoRemoteName b
 
 {- Returns the remote specified by --from or --to, may fail with error. -}
 commandLineRemote :: Annex Git.Repo

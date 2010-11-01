@@ -479,7 +479,7 @@ moveFromStart :: FilePath -> Annex (Maybe SubCmdPerform)
 moveFromStart file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	l <- Remotes.keyPossibilities key
-	if (elem remote l)
+	if (not $ null $ filter (\r -> Remotes.same r remote) l)
 		then return $ Just $ moveFromPerform key
 		else return Nothing
 moveFromPerform :: Key -> Annex (Maybe SubCmdCleanup)
