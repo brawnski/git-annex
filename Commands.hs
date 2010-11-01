@@ -25,7 +25,6 @@ import LocationLog
 import Types
 import Core
 import qualified Remotes
-import qualified TypeInternals
 
 {- A subcommand runs in four stages. Each stage can return the next stage
  - to run.
@@ -34,7 +33,7 @@ import qualified TypeInternals
  -    looks through the repo to find the ones that are relevant
  -    to that subcommand (ie, new files to add), and returns a list of
  -    start stage actions to run. -}
-type SubCmdParse = [String] -> Git.Repo -> IO [SubCmdStart]
+type SubCmdParse = [String] -> Annex [SubCmdStart]
 {- 1. The start stage is run before anything is printed about the
   -   subcommand, is passed some input, and can early abort it
   -   if the input does not make sense. It should run quickly and
@@ -125,9 +124,9 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 
 {- Prepares a set of actions to run to perform a subcommand, based on
  - the parameters passed to it. -}
-prepSubCmd :: SubCommand -> Git.Repo -> [String] -> IO [Annex Bool]
-prepSubCmd SubCommand { subcmdparse = parse } repo params = do
-	list <- parse params repo :: IO [SubCmdStart]
+prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
+prepSubCmd SubCommand { subcmdparse = parse } state params = do
+	list <- Annex.eval state $ parse params
 	return $ map (\a -> doSubCmd a) list
 
 {- Runs a subcommand through the start, perform and cleanup stages -}
@@ -155,37 +154,43 @@ doSubCmd start = do
 {- These functions parse a user's parameters into a list of SubCmdStart
    actions to perform. -}
 type ParseStrings = (String -> SubCmdStart) -> SubCmdParse
-withFilesNotInGit :: ParseStrings
-withFilesNotInGit a params repo = do
-	files <- mapM (Git.notInRepo repo) params
-	return $ map a $ notState $ foldl (++) [] files
+type ParseBackendFiles = ((FilePath, Maybe Backend) -> SubCmdStart) -> SubCmdParse
+withFilesNotInGit :: ParseBackendFiles
+withFilesNotInGit a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ mapM (Git.notInRepo repo) params
+	let files' = foldl (++) [] files
+	pairs <- Backend.chooseBackends files'
+	return $ map a $ filter (\(f,_) -> notState f) pairs
 withFilesInGit :: ParseStrings
-withFilesInGit a params repo = do
-	files <- mapM (Git.inRepo repo) params
-	return $ map a $ notState $ foldl (++) [] files
+withFilesInGit a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ mapM (Git.inRepo repo) params
+	return $ map a $ filter notState $ foldl (++) [] files
 withFilesMissing :: ParseStrings
-withFilesMissing a params _ = do
+withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
-	return $ map a $ notState files
+	return $ map a $ filter notState files
 	where
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
 withDescription :: ParseStrings
-withDescription a params _ = do
+withDescription a params = do
 	return $ [a $ unwords params]
 withFilesToBeCommitted :: ParseStrings
-withFilesToBeCommitted a params repo = do
-	files <- mapM (Git.stagedFiles repo) params
-	return $ map a $ notState $ foldl (++) [] files
+withFilesToBeCommitted a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ mapM (Git.stagedFiles repo) params
+	return $ map a $ filter notState $ foldl (++) [] files
 withKeys :: ParseStrings
-withKeys a params _ = return $ map a params
+withKeys a params = return $ map a params
 withTempFile :: ParseStrings
-withTempFile a params _ = return $ map a params
+withTempFile a params = return $ map a params
 
 {- filter out files from the state directory -}
-notState :: [FilePath] -> [FilePath]
-notState fs = filter (\f -> stateLoc /= take (length stateLoc) f) fs
+notState :: FilePath -> Bool
+notState f = stateLoc /= take (length stateLoc) f
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it
@@ -198,8 +203,7 @@ parseCmd argv state = do
 	case lookupCmd (params !! 0) of
 		[] -> error usage
 		[subcommand] -> do
-			let repo = TypeInternals.repo state
-			actions <- prepSubCmd subcommand repo (drop 1 params)
+			actions <- prepSubCmd subcommand state (drop 1 params)
 			let configactions = map (\flag -> do
 				flag
 				return True) flags
@@ -214,17 +218,17 @@ parseCmd argv state = do
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
  - to its content. -}
-addStart :: FilePath -> SubCmdStart
-addStart file = notAnnexed file $ do
+addStart :: (FilePath, Maybe Backend) -> SubCmdStart
+addStart pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
 		then return Nothing
 		else do
 			showStart "add" file
-			return $ Just $ addPerform file
-addPerform :: FilePath -> SubCmdPerform
-addPerform file = do
-	stored <- Backend.storeFileKey file
+			return $ Just $ addPerform pair
+addPerform :: (FilePath, Maybe Backend) -> SubCmdPerform
+addPerform (file, backend) = do
+	stored <- Backend.storeFileKey file backend
 	case (stored) of
 		Nothing -> return Nothing
 		Just (key, _) -> return $ Just $ addCleanup file key

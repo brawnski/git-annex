@@ -23,7 +23,8 @@ module Backend (
 	retrieveKeyFile,
 	removeKey,
 	hasKey,
-	lookupFile
+	lookupFile,
+	chooseBackends
 ) where
 
 import Control.Monad.State
@@ -74,12 +75,15 @@ maybeLookupBackendName bs s =
 	where matches = filter (\b -> s == Internals.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
-storeFileKey :: FilePath -> Annex (Maybe (Key, Backend))
-storeFileKey file = do
+storeFileKey :: FilePath -> Maybe Backend -> Annex (Maybe (Key, Backend))
+storeFileKey file trybackend = do
 	g <- Annex.gitRepo
 	let relfile = Git.relative g file
-	b <- list
-	storeFileKey' b file relfile
+	bs <- list
+	let bs' = case trybackend of
+		Nothing -> bs
+		Just backend -> backend:bs
+	storeFileKey' bs' file relfile
 storeFileKey' :: [Backend] -> FilePath -> FilePath -> Annex (Maybe (Key, Backend))
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do
@@ -136,3 +140,11 @@ lookupFile file = do
 				kname = keyName k
 				skip = "skipping " ++ file ++ 
 					" (unknown backend " ++ bname ++ ")"
+
+{- Looks up the backends that should be used for each file in a list.
+ - That can be configured on a per-file basis in the gitattributes file.
+ -}
+chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe Backend)]
+chooseBackends fs = do
+	-- TODO
+	return $ map (\f -> (f, Nothing)) fs
