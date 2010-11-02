@@ -36,7 +36,11 @@ module GitRepo (
 	inRepo,
 	notInRepo,
 	stagedFiles,
-	checkAttr
+	checkAttr,
+	decodeGitFile,
+	encodeGitFile,
+
+	prop_idempotent_encode
 ) where
 
 import Monad (unless)
@@ -51,6 +55,9 @@ import qualified Data.Map as Map hiding (map, split)
 import Network.URI
 import Maybe
 import Char
+import Text.Printf
+import Data.Word (Word8)
+import Codec.Binary.UTF8.String (encode)
 
 import Utility
 
@@ -332,25 +339,70 @@ checkAttr repo attr files = do
 decodeGitFile :: String -> FilePath
 decodeGitFile [] = []
 decodeGitFile f@(c:s)
-	| c == '"' = unescape middle
+	| c == '"' = unescape ("", middle)
 	| otherwise = f
 	where
-		e = "\\"
 		middle = take (length s - 1) s
-		unescape v = foldl (++) beginning $ map decode $ split e rest
+		unescape (b, []) = b
+		unescape (b, v) = b ++ beginning ++ unescape (decode rest)
 			where
 				pair = span (/= '\\') v
 				beginning = fst pair
 				rest = snd pair
-		decode [] = ""
-		decode n
-			| length num == 3 = (chr $ readoctal num):rest
-			| otherwise = e++n
+		isescape c = c == '\\'
+		decode (e:n1:n2:n3:rest)
+			| isescape e && alloctal = (fromoctal, rest)
+				where
+					alloctal = isOctDigit n1 &&
+						isOctDigit n2 &&
+						isOctDigit n3
+					fromoctal = [chr $ readoctal (n1:n2:n3:[])]
+					readoctal o = read $ "0o" ++ o :: Int
+		decode (e:nc:rest)
+			| isescape e = ([echar nc], rest)
 			where
-				pair = span isOctDigit n
-				num = fst pair
-				rest = snd pair
-				readoctal o = read $ "0o" ++ o :: Int
+				-- special character escapes
+				echar 'a' = '\a'
+				echar 'b' = '\b'
+				echar 'f' = '\f'
+				echar 'n' = '\n'
+				echar 'r' = '\r'
+				echar 't' = '\t'
+				echar 'v' = '\v'
+				echar x = x
+		decode n = ("", n)
+
+{- Should not need to use this, except for testing decodeGitFile. -}
+encodeGitFile :: FilePath -> String
+encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
+	where
+		e c = "\\" ++ [c]
+		echar '\a' = e 'a'
+		echar '\b' = e 'b'
+		echar '\f' = e 'f'
+		echar '\n' = e 'n'
+		echar '\r' = e 'r'
+		echar '\t' = e 't'
+		echar '\v' = e 'v'
+		echar '\\' = e '\\'
+		echar '"'  = e '"'
+		echar x
+			| ord x < 0x20 = e_num x -- low ascii
+			| ord x >= 256 = e_utf x
+			| ord x > 0x7E = e_num x -- high ascii
+			| otherwise = [x]        -- printable ascii
+			where 
+				showoctal i = "\\" ++ (printf "%03o" i)
+				e_num c = showoctal $ ord c
+				-- unicode character is decomposed to Word8
+				-- and each is shown with e_num
+				e_utf c = foldl (++) "" $ map showoctal $
+						(encode [c] :: [Word8])
+
+
+{- for quickcheck -}
+prop_idempotent_encode :: String -> Bool
+prop_idempotent_encode s = s == (decodeGitFile $ encodeGitFile s)
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo
