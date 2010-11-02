@@ -9,7 +9,7 @@ import System.Environment
 
 import qualified Annex
 import Core
-import Commands
+import CmdLine
 import qualified GitRepo as Git
 import BackendList
 
