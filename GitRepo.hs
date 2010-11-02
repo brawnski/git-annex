@@ -40,7 +40,7 @@ module GitRepo (
 	decodeGitFile,
 	encodeGitFile,
 
-	prop_idempotent_encode
+	prop_idempotent_deencode
 ) where
 
 import Monad (unless)
@@ -351,10 +351,10 @@ decodeGitFile f@(c:s)
 				pair = span (/= e) v
 				beginning = fst pair
 				rest = snd pair
-		isescape c = c == e
+		isescape x = x == e
 		-- \NNN is an octal encoded character
-		decode (e:n1:n2:n3:rest)
-			| isescape e && alloctal = (fromoctal, rest)
+		decode (x:n1:n2:n3:rest)
+			| isescape x && alloctal = (fromoctal, rest)
 				where
 					alloctal = isOctDigit n1 &&
 						isOctDigit n2 &&
@@ -362,8 +362,8 @@ decodeGitFile f@(c:s)
 					fromoctal = [chr $ readoctal (n1:n2:n3:[])]
 					readoctal o = read $ "0o" ++ o :: Int
 		-- \C is used for a few special characters
-		decode (e:nc:rest)
-			| isescape e = ([echar nc], rest)
+		decode (x:nc:rest)
+			| isescape x = ([echar nc], rest)
 			where
 				echar 'a' = '\a'
 				echar 'b' = '\b'
@@ -372,7 +372,7 @@ decodeGitFile f@(c:s)
 				echar 'r' = '\r'
 				echar 't' = '\t'
 				echar 'v' = '\v'
-				echar x = x
+				echar a = a
 		decode n = ("", n)
 
 {- Should not need to use this, except for testing decodeGitFile. -}
@@ -404,8 +404,8 @@ encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
 
 
 {- for quickcheck -}
-prop_idempotent_encode :: String -> Bool
-prop_idempotent_encode s = s == (decodeGitFile $ encodeGitFile s)
+prop_idempotent_deencode :: String -> Bool
+prop_idempotent_deencode s = s == (decodeGitFile $ encodeGitFile s)
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo

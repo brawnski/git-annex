@@ -16,6 +16,9 @@ else
 IKIWIKI=ikiwiki
 endif
 
+test:
+	runghc test.hs
+
 docs:
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
