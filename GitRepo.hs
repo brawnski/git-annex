@@ -146,50 +146,6 @@ attributes repo
 	| bare repo = (workTree repo) ++ "/info/.gitattributes"
 	| otherwise = (workTree repo) ++ "/.gitattributes"
 
-{- Looks up a gitattributes value for each file in a list. -}
-checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
-checkAttr repo attr files = do
-	(_, s) <- pipeBoth "git" params files0
-	return $ map topair $ lines s
-	-- XXX handle is left open, this is ok for git-annex, but may need
-	-- to be cleaned up for other uses.
-	where
-		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
-		files0 = join "\0" files
-		topair l = (file, value)
-			where 
-				file = decodeGitFile $ join sep $ take end bits
-				value = bits !! end
-				end = length bits - 1
-				bits = split sep l
-				sep = ": " ++ attr ++ ": "
-
-{- Some git commands output encoded filenames. Such a filename
- - will always be double-quoted, and then \nnn (in octal) is used
- - to escape high characters. -}
-decodeGitFile :: String -> FilePath
-decodeGitFile [] = []
-decodeGitFile f@(c:s)
-	| c == '"' = unescape middle
-	| otherwise = f
-	where
-		e = "\\"
-		middle = take (length s - 1) s
-		unescape v = foldl (++) beginning $ map decode $ split e rest
-			where
-				pair = span (/= '\\') v
-				beginning = fst pair
-				rest = snd pair
-		decode [] = ""
-		decode n
-			| length num == 3 = (chr $ readoctal num):rest
-			| otherwise = e++n
-			where
-				pair = span isOctDigit n
-				num = fst pair
-				rest = snd pair
-				readoctal o = read $ "0o" ++ o :: Int
-
 {- Path to a repository's .git directory, relative to its workTree. -}
 gitDir :: Repo -> String
 gitDir repo
@@ -351,6 +307,50 @@ configGet repo key defaultValue =
 {- Access to raw config Map -}
 configMap :: Repo -> Map.Map String String
 configMap repo = config repo
+
+{- Looks up a gitattributes value for each file in a list. -}
+checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
+checkAttr repo attr files = do
+	(_, s) <- pipeBoth "git" params files0
+	return $ map topair $ lines s
+	-- XXX handle is left open, this is ok for git-annex, but may need
+	-- to be cleaned up for other uses.
+	where
+		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
+		files0 = join "\0" files
+		topair l = (file, value)
+			where 
+				file = decodeGitFile $ join sep $ take end bits
+				value = bits !! end
+				end = length bits - 1
+				bits = split sep l
+				sep = ": " ++ attr ++ ": "
+
+{- Some git commands output encoded filenames. Such a filename
+ - will always be double-quoted, and then \nnn (in octal) is used
+ - to escape high characters. -}
+decodeGitFile :: String -> FilePath
+decodeGitFile [] = []
+decodeGitFile f@(c:s)
+	| c == '"' = unescape middle
+	| otherwise = f
+	where
+		e = "\\"
+		middle = take (length s - 1) s
+		unescape v = foldl (++) beginning $ map decode $ split e rest
+			where
+				pair = span (/= '\\') v
+				beginning = fst pair
+				rest = snd pair
+		decode [] = ""
+		decode n
+			| length num == 3 = (chr $ readoctal num):rest
+			| otherwise = e++n
+			where
+				pair = span isOctDigit n
+				num = fst pair
+				rest = snd pair
+				readoctal o = read $ "0o" ++ o :: Int
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo
