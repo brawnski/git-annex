@@ -25,7 +25,7 @@ backend = Backend.File.backend {
 -- checksum the file to get its key
 keyValue :: FilePath -> Annex (Maybe Key)
 keyValue file = do
-	showNote "checksum"
+	showNote "checksum..."
 	liftIO $ pOpen ReadFromPipe "sha1sum" [file] $ \h -> do
 		line <- hGetLine h
 		let bits = split " " line
