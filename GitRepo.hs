@@ -156,10 +156,39 @@ checkAttr repo attr files = do
 	where
 		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
 		files0 = join "\0" files
-		topair l = (bits !! 0, join sep $ drop 1 $ bits)
+		topair l = (file, value)
 			where 
+				file = decodeGitFile $ join sep $ take end bits
+				value = bits !! end
+				end = length bits - 1
 				bits = split sep l
 				sep = ": " ++ attr ++ ": "
+
+{- Some git commands output encoded filenames. Such a filename
+ - will always be double-quoted, and then \nnn (in octal) is used
+ - to escape high characters. -}
+decodeGitFile :: String -> FilePath
+decodeGitFile [] = []
+decodeGitFile f@(c:s)
+	| c == '"' = unescape middle
+	| otherwise = f
+	where
+		e = "\\"
+		middle = take (length s - 1) s
+		unescape v = foldl (++) beginning $ map decode $ split e rest
+			where
+				pair = span (/= '\\') v
+				beginning = fst pair
+				rest = snd pair
+		decode [] = ""
+		decode n
+			| length num == 3 = (chr $ readoctal num):rest
+			| otherwise = e++n
+			where
+				pair = span isOctDigit n
+				num = fst pair
+				rest = snd pair
+				readoctal o = read $ "0o" ++ o :: Int
 
 {- Path to a repository's .git directory, relative to its workTree. -}
 gitDir :: Repo -> String
