@@ -47,8 +47,8 @@ type SubCmdCleanup = Annex Bool
 {- Some helper functions are used to build up SubCmdSeek and SubCmdStart
  - functions. -}
 type SubCmdSeekStrings = SubCmdStartString -> SubCmdSeek
-type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartString = String -> SubCmdStart
+type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartBackendFile = (FilePath, Maybe Backend) -> SubCmdStart
 
 data SubCommand = SubCommand {
