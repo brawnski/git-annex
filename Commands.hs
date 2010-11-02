@@ -26,20 +26,21 @@ import Types
 import Core
 import qualified Remotes
 
-{- A subcommand runs in four stages. Each stage can return the next stage
- - to run.
+{- A subcommand runs in four stages.
  -
- - 0. The parse stage takes the parameters passed to the subcommand,
+ - 0. The seek stage takes the parameters passed to the subcommand,
  -    looks through the repo to find the ones that are relevant
- -    to that subcommand (ie, new files to add), and returns a list of
- -    start stage actions to run. -}
-type SubCmdParseStrings = (String -> SubCmdPerform) -> SubCmdStart
-type SubCmdParseBackendFiles = ((FilePath, Maybe Backend) -> SubCmdPerform) -> SubCmdStart
+ -    to that subcommand (ie, new files to add), and generates
+ -    a start stage action. -}
+type SubCmdSeekStrings = SubCmdStartString -> SubCmdSeek
+type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
+type SubCmdSeek = [String] -> Annex [SubCmdPerform]
 {- 1. The start stage is run before anything is printed about the
   -   subcommand, is passed some input, and can early abort it
   -   if the input does not make sense. It should run quickly and
   -   should not modify Annex state. -}
-type SubCmdStart = [String] -> Annex [SubCmdPerform]
+type SubCmdStartString = String -> SubCmdPerform
+type SubCmdStartBackendFile = (FilePath, Maybe Backend) -> SubCmdPerform
 {- 2. The perform stage is run after a message is printed about the subcommand
  -    being run, and it should be where the bulk of the work happens. -}
 type SubCmdPerform = Annex (Maybe SubCmdCleanup)
@@ -51,7 +52,7 @@ type SubCmdStatus = Annex Bool
 data SubCommand = SubCommand {
 	subcmdname :: String,
 	subcmdparams :: String,
-	subcmdparse :: SubCmdStart,
+	subcmdseek :: SubCmdSeek,
 	subcmddesc :: String
 }
 subCmds :: [SubCommand]
@@ -127,8 +128,8 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 {- Prepares a set of actions to run to perform a subcommand, based on
  - the parameters passed to it. -}
 prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
-prepSubCmd SubCommand { subcmdparse = parse } state params = do
-	list <- Annex.eval state $ parse params
+prepSubCmd SubCommand { subcmdseek = seek } state params = do
+	list <- Annex.eval state $ seek params
 	return $ map (\a -> doSubCmd a) list
 
 {- Runs a subcommand through the start, perform and cleanup stages -}
@@ -153,21 +154,21 @@ doSubCmd start = do
 							showEndFail
 							return False
 
-{- These functions parse a user's parameters into a list of SubCmdPerform
-   actions to perform. -}
-withFilesNotInGit :: SubCmdParseBackendFiles
+{- These functions find appropriate files or other things based on a
+   user's parameters. -}
+withFilesNotInGit :: SubCmdSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.notInRepo repo) params
 	let files' = foldl (++) [] files
 	pairs <- Backend.chooseBackends files'
 	return $ map a $ filter (\(f,_) -> notState f) pairs
-withFilesInGit :: SubCmdParseStrings
+withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.inRepo repo) params
 	return $ map a $ filter notState $ foldl (++) [] files
-withFilesMissing :: SubCmdParseStrings
+withFilesMissing :: SubCmdSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
 	return $ map a $ filter notState files
@@ -175,17 +176,17 @@ withFilesMissing a params = do
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
-withDescription :: SubCmdParseStrings
+withDescription :: SubCmdSeekStrings
 withDescription a params = do
 	return $ [a $ unwords params]
-withFilesToBeCommitted :: SubCmdParseStrings
+withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.stagedFiles repo) params
 	return $ map a $ filter notState $ foldl (++) [] files
-withKeys :: SubCmdParseStrings
+withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
-withTempFile :: SubCmdParseStrings
+withTempFile :: SubCmdSeekStrings
 withTempFile a params = return $ map a params
 
 {- filter out files from the state directory -}
@@ -218,7 +219,7 @@ parseCmd argv state = do
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
  - to its content. -}
-addStart :: (FilePath, Maybe Backend) -> SubCmdPerform
+addStart :: SubCmdStartBackendFile
 addStart pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if ((isSymbolicLink s) || (not $ isRegularFile s))
@@ -245,7 +246,7 @@ addCleanup file key = do
 	return True
 
 {- The unannex subcommand undoes an add. -}
-unannexStart :: FilePath -> SubCmdPerform
+unannexStart :: SubCmdStartString
 unannexStart file = isAnnexed file $ \(key, backend) -> do
 	showStart "unannex" file
 	return $ Just $ unannexPerform file key backend
@@ -270,7 +271,7 @@ unannexCleanup file key = do
 	return True
 
 {- Gets an annexed file from one of the backends. -}
-getStart :: FilePath -> SubCmdPerform
+getStart :: SubCmdStartString
 getStart file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if (inannex)
@@ -287,7 +288,7 @@ getPerform key backend = do
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
-dropStart :: FilePath -> SubCmdPerform
+dropStart :: SubCmdStartString
 dropStart file = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if (not inbackend)
@@ -314,7 +315,7 @@ dropCleanup key = do
 		else return True
 
 {- Drops cached content for a key. -}
-dropKeyStart :: String -> SubCmdPerform
+dropKeyStart :: SubCmdStartString
 dropKeyStart keyname = do
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
@@ -339,7 +340,7 @@ dropKeyCleanup key = do
 	return True
 
 {- Sets cached content for a key. -}
-setKeyStart :: FilePath -> SubCmdPerform
+setKeyStart :: SubCmdStartString
 setKeyStart tmpfile = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
@@ -361,7 +362,7 @@ setKeyCleanup key = do
 	return True
 
 {- Fixes the symlink to an annexed file. -}
-fixStart :: FilePath -> SubCmdPerform
+fixStart :: SubCmdStartString
 fixStart file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
@@ -382,7 +383,7 @@ fixCleanup file = do
 	return True
 
 {- Stores description for the repository etc. -}
-initStart :: String -> SubCmdPerform
+initStart :: SubCmdStartString
 initStart description = do
 	when (null description) $ error $
 		"please specify a description of this repository\n" ++ usage
@@ -405,7 +406,7 @@ initCleanup = do
 	return True
 
 {- Adds a file pointing at a manually-specified key -}
-fromKeyStart :: FilePath -> SubCmdPerform
+fromKeyStart :: SubCmdStartString
 fromKeyStart file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
@@ -432,7 +433,7 @@ fromKeyCleanup file = do
  -
  - This only operates on the cached file content; it does not involve
  - moving data in the key-value backend. -}
-moveStart :: FilePath -> SubCmdPerform
+moveStart :: SubCmdStartString
 moveStart file = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
@@ -453,7 +454,7 @@ moveStart file = do
  - A file's content can be moved even if there are insufficient copies to
  - allow it to be dropped.
  -}
-moveToStart :: FilePath -> SubCmdPerform
+moveToStart :: SubCmdStartString
 moveToStart file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if (not ishere)
@@ -503,7 +504,7 @@ moveToCleanup remote key tmpfile = do
  - If the current repository already has the content, it is still removed
  - from the other repository.
  -}
-moveFromStart :: FilePath -> SubCmdPerform
+moveFromStart :: SubCmdStartString
 moveFromStart file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	l <- Remotes.keyPossibilities key
