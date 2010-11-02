@@ -397,8 +397,8 @@ encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
 			where 
 				showoctal i = "\\" ++ (printf "%03o" i)
 				e_num c = showoctal $ ord c
-				-- unicode character is decomposed to Word8
-				-- and each is shown with e_num
+				-- unicode character is decomposed to
+				-- Word8s and each is shown in octal
 				e_utf c = foldl (++) "" $ map showoctal $
 						(encode [c] :: [Word8])
 
