@@ -14,6 +14,7 @@ import System.IO
 
 import qualified Backend.File
 import TypeInternals
+import Core
 
 backend :: Backend
 backend = Backend.File.backend {
@@ -23,7 +24,9 @@ backend = Backend.File.backend {
 
 -- checksum the file to get its key
 keyValue :: FilePath -> Annex (Maybe Key)
-keyValue file = liftIO $ pOpen ReadFromPipe "sha1sum" [file] $ \h -> do
+keyValue file = do
+	showNote "checksum"
+	liftIO $ pOpen ReadFromPipe "sha1sum" [file] $ \h -> do
 		line <- hGetLine h
 		let bits = split " " line
 		if (null bits)

@@ -149,7 +149,7 @@ attributes repo
 {- Looks up a gitattributes value for each file in a list. -}
 checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
 checkAttr repo attr files = do
-	(handle, s) <- pipeBoth "git" params files0
+	(_, s) <- pipeBoth "git" params files0
 	return $ map topair $ lines s
 	-- XXX handle is left open, this is ok for git-annex, but may need
 	-- to be cleaned up for other uses.
