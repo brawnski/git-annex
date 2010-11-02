@@ -149,17 +149,12 @@ attributes repo
 {- Looks up a gitattributes value for each file in a list. -}
 checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
 checkAttr repo attr files = do
-	(pid, fromh, toh) <- hPipeBoth "git" $
-		gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
-	-- git-check-attr reads all its stdin before outputting anything,
-	-- so we don't need to worry about deadlock
-	hPutStr toh files0
-	hClose toh
-	c <- hGetContentsStrict fromh
-	hClose fromh
-	forceSuccess pid
-	return $ map topair $ lines c
+	(handle, s) <- pipeBoth "git" params files0
+	return $ map topair $ lines s
+	-- XXX handle is left open, this is ok for git-annex, but may need
+	-- to be cleaned up for other uses.
 	where
+		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
 		files0 = join "\0" files
 		topair l = (bits !! 0, join sep $ drop 1 $ bits)
 			where 
