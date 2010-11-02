@@ -333,23 +333,26 @@ checkAttr repo attr files = do
 				bits = split sep l
 				sep = ": " ++ attr ++ ": "
 
-{- Some git commands output encoded filenames. Such a filename
- - will always be double-quoted, and then \nnn (in octal) is used
- - to escape high characters. -}
+{- Some git commands output encoded filenames. Decode that (annoyingly
+ - complex) encoding. -}
 decodeGitFile :: String -> FilePath
 decodeGitFile [] = []
 decodeGitFile f@(c:s)
+	-- encoded strings will be inside double quotes
 	| c == '"' = unescape ("", middle)
 	| otherwise = f
 	where
+		e = '\\'
 		middle = take (length s - 1) s
 		unescape (b, []) = b
+		-- look for escapes starting with '\'
 		unescape (b, v) = b ++ beginning ++ unescape (decode rest)
 			where
-				pair = span (/= '\\') v
+				pair = span (/= e) v
 				beginning = fst pair
 				rest = snd pair
-		isescape c = c == '\\'
+		isescape c = c == e
+		-- \NNN is an octal encoded character
 		decode (e:n1:n2:n3:rest)
 			| isescape e && alloctal = (fromoctal, rest)
 				where
@@ -358,10 +361,10 @@ decodeGitFile f@(c:s)
 						isOctDigit n3
 					fromoctal = [chr $ readoctal (n1:n2:n3:[])]
 					readoctal o = read $ "0o" ++ o :: Int
+		-- \C is used for a few special characters
 		decode (e:nc:rest)
 			| isescape e = ([echar nc], rest)
 			where
-				-- special character escapes
 				echar 'a' = '\a'
 				echar 'b' = '\b'
 				echar 'f' = '\f'
