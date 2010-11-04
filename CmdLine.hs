@@ -10,7 +10,6 @@ module CmdLine (parseCmd) where
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Directory
-import Data.String.Utils
 import Control.Monad (filterM)
 import Monad (when)
 
@@ -19,7 +18,6 @@ import qualified Annex
 import Locations
 import qualified Backend
 import Types
-import Core
 
 import Command
 import qualified Command.Add
@@ -91,7 +89,7 @@ options = [
 		storestring n s = Annex.flagChange n $ FlagString s
 
 header :: String
-header = "Usage: git-annex " ++ (join "|" $ map subcmdname subCmds)
+header = "Usage: git-annex subcommand [option ..]"
 
 {- Usage message with lists of options and subcommands. -}
 usage :: String
@@ -142,7 +140,7 @@ withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: SubCmdSeekNothing
-withNothing a params = return [a]
+withNothing a _ = return [a]
 
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool
