@@ -32,6 +32,7 @@ import qualified Command.DropKey
 import qualified Command.SetKey
 import qualified Command.Fix
 import qualified Command.Init
+import qualified Command.Fsck
 
 subCmds :: [SubCommand]
 subCmds =  [
@@ -47,8 +48,6 @@ subCmds =  [
 		"initialize git-annex with repository description")
 	, (SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
 		"undo accidential add command")
-	, (SubCommand "fix" path	(withFilesInGit Command.Fix.start)
-		"fix up symlinks to point to annexed content")
 	, (SubCommand "pre-commit" path (withFilesToBeCommitted Command.Fix.start)
 		"fix up symlinks before they are committed")
 	, (SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
@@ -57,11 +56,16 @@ subCmds =  [
 		"drops annexed content for specified keys")
 	, (SubCommand "setkey" key	(withTempFile Command.SetKey.start)
 		"sets annexed content for a key using a temp file")
+	, (SubCommand "fix" path	(withFilesInGit Command.Fix.start)
+		"fix up symlinks to point to annexed content")
+	, (SubCommand "fsck" nothing	(withNothing Command.Fsck.start)
+		"check annex for problems")
 	]
 	where
 		path = "PATH ..."
 		key = "KEY ..."
 		desc = "DESCRIPTION"
+		nothing = ""
 
 -- Each dashed command-line option results in generation of an action
 -- in the Annex monad that performs the necessary setting.
@@ -137,6 +141,8 @@ withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
 withTempFile a params = return $ map a params
+withNothing :: SubCmdSeekNothing
+withNothing a params = return [a]
 
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool

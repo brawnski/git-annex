@@ -36,6 +36,7 @@ type SubCmdSeekStrings = SubCmdStartString -> SubCmdSeek
 type SubCmdStartString = String -> SubCmdStart
 type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartBackendFile = (FilePath, Maybe Backend) -> SubCmdStart
+type SubCmdSeekNothing = SubCmdStart -> SubCmdSeek
 
 data SubCommand = SubCommand {
 	subcmdname :: String,
