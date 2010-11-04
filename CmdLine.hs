@@ -33,12 +33,6 @@ import qualified Command.SetKey
 import qualified Command.Fix
 import qualified Command.Init
 
-data SubCommand = SubCommand {
-	subcmdname :: String,
-	subcmdparams :: String,
-	subcmdseek :: SubCmdSeek,
-	subcmddesc :: String
-}
 subCmds :: [SubCommand]
 subCmds =  [
 	  (SubCommand "add" path	(withFilesNotInGit Command.Add.start)
@@ -108,35 +102,6 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 			(subcmddesc c)
 		indent l = "  " ++ l
 		pad n s = take (n - (length s)) $ repeat ' '
-
-{- Prepares a list of actions to run to perform a subcommand, based on
- - the parameters passed to it. -}
-prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
-prepSubCmd SubCommand { subcmdseek = seek } state params = do
-	list <- Annex.eval state $ seek params
-	return $ map (\a -> doSubCmd a) list
-
-{- Runs a subcommand through the start, perform and cleanup stages -}
-doSubCmd :: SubCmdStart -> SubCmdCleanup
-doSubCmd start = do
-	s <- start
-	case (s) of
-		Nothing -> return True
-		Just perform -> do
-			p <- perform
-			case (p) of
-				Nothing -> do
-					showEndFail
-					return False
-				Just cleanup -> do
-					c <- cleanup
-					if (c)
-						then do
-							showEndOk
-							return True
-						else do
-							showEndFail
-							return False
 
 {- These functions find appropriate files or other things based on a
    user's parameters. -}

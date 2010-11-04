@@ -8,7 +8,9 @@
 module Command where
 
 import Types
-import Backend
+import qualified Backend
+import Core
+import qualified Annex
 
 {- A subcommand runs in four stages.
  -
@@ -34,6 +36,42 @@ type SubCmdSeekStrings = SubCmdStartString -> SubCmdSeek
 type SubCmdStartString = String -> SubCmdStart
 type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartBackendFile = (FilePath, Maybe Backend) -> SubCmdStart
+
+data SubCommand = SubCommand {
+	subcmdname :: String,
+	subcmdparams :: String,
+	subcmdseek :: SubCmdSeek,
+	subcmddesc :: String
+}
+
+{- Prepares a list of actions to run to perform a subcommand, based on
+ - the parameters passed to it. -}
+prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
+prepSubCmd SubCommand { subcmdseek = seek } state params = do
+	list <- Annex.eval state $ seek params
+	return $ map (\a -> doSubCmd a) list
+
+{- Runs a subcommand through the start, perform and cleanup stages -}
+doSubCmd :: SubCmdStart -> SubCmdCleanup
+doSubCmd start = do
+	s <- start
+	case (s) of
+		Nothing -> return True
+		Just perform -> do
+			p <- perform
+			case (p) of
+				Nothing -> do
+					showEndFail
+					return False
+				Just cleanup -> do
+					c <- cleanup
+					if (c)
+						then do
+							showEndOk
+							return True
+						else do
+							showEndFail
+							return False
 
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
 notAnnexed file a = do
