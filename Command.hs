@@ -50,7 +50,7 @@ data SubCommand = SubCommand {
 prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
 prepSubCmd SubCommand { subcmdseek = seek } state params = do
 	list <- Annex.eval state $ seek params
-	return $ map (\a -> doSubCmd a) list
+	return $ map doSubCmd list
 
 {- Runs a subcommand through the start, perform and cleanup stages -}
 doSubCmd :: SubCmdStart -> SubCmdCleanup

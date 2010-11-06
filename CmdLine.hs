@@ -10,8 +10,7 @@ module CmdLine (parseCmd) where
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Directory
-import Control.Monad (filterM)
-import Monad (when)
+import Control.Monad (filterM, when)
 
 import qualified GitRepo as Git
 import qualified Annex
@@ -33,31 +32,31 @@ import qualified Command.Init
 import qualified Command.Fsck
 
 subCmds :: [SubCommand]
-subCmds =  [
-	  (SubCommand "add" path	(withFilesNotInGit Command.Add.start)
-		"add files to annex")
-	, (SubCommand "get" path	(withFilesInGit Command.Get.start)
-		"make content of annexed files available")
-	, (SubCommand "drop" path	(withFilesInGit Command.Drop.start)
-		"indicate content of files not currently wanted")
-	, (SubCommand "move" path	(withFilesInGit Command.Move.start)
-		"transfer content of files to/from another repository")
-	, (SubCommand "init" desc	(withDescription Command.Init.start)
-		"initialize git-annex with repository description")
-	, (SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
-		"undo accidential add command")
-	, (SubCommand "pre-commit" path (withFilesToBeCommitted Command.Fix.start)
-		"fix up symlinks before they are committed")
-	, (SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
-		"adds a file using a specific key")
-	, (SubCommand "dropkey"	key	(withKeys Command.DropKey.start)
-		"drops annexed content for specified keys")
-	, (SubCommand "setkey" key	(withTempFile Command.SetKey.start)
-		"sets annexed content for a key using a temp file")
-	, (SubCommand "fix" path	(withFilesInGit Command.Fix.start)
-		"fix up symlinks to point to annexed content")
-	, (SubCommand "fsck" nothing	(withNothing Command.Fsck.start)
-		"check annex for problems")
+subCmds =
+	[ SubCommand "add" path	(withFilesNotInGit Command.Add.start)
+		"add files to annex"
+	, SubCommand "get" path	(withFilesInGit Command.Get.start)
+		"make content of annexed files available"
+	, SubCommand "drop" path	(withFilesInGit Command.Drop.start)
+		"indicate content of files not currently wanted"
+	, SubCommand "move" path	(withFilesInGit Command.Move.start)
+		"transfer content of files to/from another repository"
+	, SubCommand "init" desc	(withDescription Command.Init.start)
+		"initialize git-annex with repository description"
+	, SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
+		"undo accidential add command"
+	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.Fix.start)
+		"fix up symlinks before they are committed"
+	, SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
+		"adds a file using a specific key"
+	, SubCommand "dropkey"	key	(withKeys Command.DropKey.start)
+		"drops annexed content for specified keys"
+	, SubCommand "setkey" key	(withTempFile Command.SetKey.start)
+		"sets annexed content for a key using a temp file"
+	, SubCommand "fix" path	(withFilesInGit Command.Fix.start)
+		"fix up symlinks to point to annexed content"
+	, SubCommand "fsck" nothing	(withNothing Command.Fsck.start)
+		"check annex for problems"
 	]
 	where
 		path = "PATH ..."
@@ -95,15 +94,15 @@ header = "Usage: git-annex subcommand [option ..]"
 usage :: String
 usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 	where
-		cmddescs = unlines $ map (\c -> indent $ showcmd c) subCmds
+		cmddescs = unlines $ map (indent . showcmd) subCmds
 		showcmd c =
-			(subcmdname c) ++
-			(pad 11 (subcmdname c)) ++
-			(subcmdparams c) ++
-			(pad 13 (subcmdparams c)) ++
-			(subcmddesc c)
+			subcmdname c ++
+			pad 11 (subcmdname c) ++
+			subcmdparams c ++
+			pad 13 (subcmdparams c) ++
+			subcmddesc c
 		indent l = "  " ++ l
-		pad n s = take (n - (length s)) $ repeat ' '
+		pad n s = replicate (n - length s) ' '
 
 {- These functions find appropriate files or other things based on a
    user's parameters. -}
@@ -128,8 +127,7 @@ withFilesMissing a params = do
 			e <- doesFileExist f
 			return $ not e
 withDescription :: SubCmdSeekStrings
-withDescription a params = do
-	return $ [a $ unwords params]
+withDescription a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
@@ -154,7 +152,7 @@ parseCmd :: [String] -> AnnexState -> IO ([Annex Bool], [Annex Bool])
 parseCmd argv state = do
 	(flags, params) <- getopt
 	when (null params) $ error usage
-	case lookupCmd (params !! 0) of
+	case lookupCmd (head params) of
 		[] -> error usage
 		[subcommand] -> do
 			actions <- prepSubCmd subcommand state (drop 1 params)
