@@ -16,7 +16,7 @@ import qualified Data.Map as M
 import System.IO
 import System.Cmd.Utils
 import Data.String.Utils
-import Monad (unless)
+import Control.Monad (unless)
 
 import qualified GitRepo as Git
 
@@ -57,5 +57,5 @@ runAction repo action files = do
 	where
 		runxargs = pOpen WriteToPipe "xargs" ("-0":gitcmd) feedxargs
 		gitcmd = ["git"] ++ Git.gitCommandLine repo
-			((getSubcommand action):(getParams action))
+			(getSubcommand action:getParams action)
 		feedxargs h = hPutStr h $ join "\0" files

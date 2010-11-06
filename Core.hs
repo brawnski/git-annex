@@ -13,7 +13,7 @@ import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
 import Data.String.Utils
-import Monad (when, unless)
+import Control.Monad (when, unless)
 
 import Types
 import Locations
@@ -40,7 +40,7 @@ tryRun' state errnum (a:as) = do
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
 tryRun' _ errnum [] =
-	when (errnum > 0) $ error $ (show errnum) ++ " failed"
+	when (errnum > 0) $ error $ show errnum ++ " failed"
 			
 {- Sets up a git repo for git-annex. -}
 startup :: Annex Bool
@@ -63,7 +63,7 @@ shutdown = do
 	-- the tmp directory itself
 	let tmp = annexTmpLocation g
 	exists <- liftIO $ doesDirectoryExist tmp
-	when (exists) $ liftIO $ removeDirectoryRecursive $ tmp
+	when (exists) $ liftIO $ removeDirectoryRecursive tmp
 	liftIO $ createDirectoryIfMissing True tmp
 
 	return True
@@ -93,7 +93,7 @@ gitAttributes repo = do
 {- set up a git pre-commit hook, if one is not already present -}
 gitPreCommitHook :: Git.Repo -> IO ()
 gitPreCommitHook repo = do
-	let hook = (Git.workTree repo) ++ "/" ++ (Git.gitDir repo) ++
+	let hook = Git.workTree repo ++ "/" ++ Git.gitDir repo ++
 		"/hooks/pre-commit"
 	exists <- doesFileExist hook
 	if (exists)
@@ -120,7 +120,7 @@ calcGitLink file key = do
 	let absfile = case (absNormPath cwd file) of
 		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
-	return $ (relPathDirToDir (parentDir absfile) (Git.workTree g)) ++
+	return $ relPathDirToDir (parentDir absfile) (Git.workTree g) ++
 		annexLocationRelative key
 
 {- Updates the LocationLog when a key's presence changes. -}
@@ -138,7 +138,7 @@ getViaTmp :: Key -> (FilePath -> Annex Bool) -> Annex Bool
 getViaTmp key action = do
 	g <- Annex.gitRepo
 	let dest = annexLocation g key
-	let tmp = (annexTmpLocation g) ++ (keyFile key)
+	let tmp = annexTmpLocation g ++ keyFile key
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	success <- action tmp
 	if (success)
@@ -165,7 +165,7 @@ showNote s = verbose $ do
 	liftIO $ putStr $ "(" ++ s ++ ") "
 	liftIO $ hFlush stdout
 showProgress :: Annex ()
-showProgress = verbose $ liftIO $ putStr $ "\n"
+showProgress = verbose $ liftIO $ putStr "\n"
 showLongNote :: String -> Annex ()
 showLongNote s = verbose $ do
 	liftIO $ putStr $ "\n" ++ indented

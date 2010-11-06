@@ -53,7 +53,7 @@ list = do
 			let l' = if (not $ null backendflag)
 				then (lookupBackendName bs backendflag):defaults
 				else defaults
-			Annex.backendsChange $ l'
+			Annex.backendsChange l'
 			return l'
 	where
 		parseBackendList bs s = 
@@ -71,7 +71,7 @@ maybeLookupBackendName :: [Backend] -> String -> Maybe Backend
 maybeLookupBackendName bs s =
 	if ((length matches) /= 1)
 		then Nothing
-		else Just $ matches !! 0
+		else Just $ head matches
 	where matches = filter (\b -> s == Internals.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
@@ -88,14 +88,13 @@ storeFileKey' :: [Backend] -> FilePath -> FilePath -> Annex (Maybe (Key, Backend
 storeFileKey' [] _ _ = return Nothing
 storeFileKey' (b:bs) file relfile = do
 	result <- (Internals.getKey b) relfile
-	case (result) of
+	case result of
 		Nothing -> nextbackend
 		Just key -> do
 			stored <- (Internals.storeFileKey b) file key
 			if (not stored)
 				then nextbackend
-				else do
-					return $ Just (key, b)
+				else return $ Just (key, b)
 	where
 		nextbackend = storeFileKey' bs file relfile
 
@@ -127,8 +126,8 @@ lookupFile file = do
 		getsymlink = do
 			l <- readSymbolicLink file
 			return $ takeFileName l
-		makekey bs l = do
-			case maybeLookupBackendName bs $ bname of
+		makekey bs l =
+			case maybeLookupBackendName bs bname of
 				Nothing -> do
 					unless (null kname || null bname) $
 						warning skip

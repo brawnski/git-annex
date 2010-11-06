@@ -43,8 +43,8 @@ module GitRepo (
 	prop_idempotent_deencode
 ) where
 
-import Monad (unless)
-import Directory
+import Control.Monad (unless)
+import System.Directory
 import System.Posix.Directory
 import System.Path
 import System.Cmd.Utils
@@ -53,11 +53,11 @@ import Data.String.Utils
 import System.IO
 import qualified Data.Map as Map hiding (map, split)
 import Network.URI
-import Maybe
-import Char
-import Text.Printf
+import Data.Maybe
+import Data.Char
 import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
+import Text.Printf
 
 import Utility
 
@@ -127,31 +127,31 @@ assertLocal :: Repo -> a -> a
 assertLocal repo action = 
 	if (not $ repoIsUrl repo)
 		then action
-		else error $ "acting on URL git repo " ++  (repoDescribe repo) ++ 
+		else error $ "acting on URL git repo " ++  repoDescribe repo ++ 
 				" not supported"
 assertUrl :: Repo -> a -> a
 assertUrl repo action = 
 	if (repoIsUrl repo)
 		then action
-		else error $ "acting on local git repo " ++  (repoDescribe repo) ++ 
+		else error $ "acting on local git repo " ++  repoDescribe repo ++ 
 				" not supported"
 assertSsh :: Repo -> a -> a
 assertSsh repo action =
 	if (repoIsSsh repo)
 		then action
-		else error $ "unsupported url in repo " ++ (repoDescribe repo)
+		else error $ "unsupported url in repo " ++ repoDescribe repo
 bare :: Repo -> Bool
 bare repo = case Map.lookup "core.bare" $ config repo of
 	Just v -> configTrue v
 	Nothing -> error $ "it is not known if git repo " ++
-			(repoDescribe repo) ++
+			repoDescribe repo ++
 			" is a bare repository; config not read"
 
 {- Path to a repository's gitattributes file. -}
 attributes :: Repo -> String
 attributes repo
-	| bare repo = (workTree repo) ++ "/info/.gitattributes"
-	| otherwise = (workTree repo) ++ "/.gitattributes"
+	| bare repo = workTree repo ++ "/info/.gitattributes"
+	| otherwise = workTree repo ++ "/.gitattributes"
 
 {- Path to a repository's .git directory, relative to its workTree. -}
 gitDir :: Repo -> String
@@ -176,7 +176,7 @@ relative repo@(Repo { location = Dir d }) file = drop (length absrepo) absfile
 		-- will be substring of file
 		absrepo = case (absNormPath "/" d) of
 			Just f -> f ++ "/"
-			Nothing -> error $ "bad repo" ++ (repoDescribe repo)
+			Nothing -> error $ "bad repo" ++ repoDescribe repo
 		absfile = case (secureAbsNormPath absrepo file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
@@ -185,7 +185,7 @@ relative repo _ = assertLocal repo $ error "internal"
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
 urlHost Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
-	where a = fromJust $ uriAuthority $ u
+	where a = fromJust $ uriAuthority u
 urlHost repo = assertUrl repo $ error "internal"
 
 {- Path of an URL repo. -}
@@ -204,14 +204,13 @@ gitCommandLine repo _ = assertLocal repo $ error "internal"
 run :: Repo -> [String] -> IO ()
 run repo params = assertLocal repo $ do
 	ok <- boolSystem "git" (gitCommandLine repo params)
-	unless (ok) $ error $ "git " ++ (show params) ++ " failed"
+	unless (ok) $ error $ "git " ++ show params ++ " failed"
 
 {- Runs a git subcommand and returns its output. -}
 pipeRead :: Repo -> [String] -> IO String
 pipeRead repo params = assertLocal repo $ do
 	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
-		ret <- hGetContentsStrict h
-		return ret
+		hGetContentsStrict h
 
 {- Like pipeRead, but does not read output strictly; recommended
  - for git commands that produce a lot of output that will be processed
