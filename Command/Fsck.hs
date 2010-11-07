@@ -7,10 +7,20 @@
 
 module Command.Fsck where
 
+import qualified Data.Map as M
+import System.Directory
+import System.Posix.Files
+import Monad (filterM)
+import Control.Monad.State (liftIO)
+import Data.Maybe
+
 import Command
 import Types
 import Core
-import qualified Data.Map as M
+import Locations
+import qualified Annex
+import qualified GitRepo as Git
+import qualified Backend
 
 {- Checks the whole annex for problems. -}
 start :: SubCmdStart
@@ -38,10 +48,12 @@ checkUnused = do
 			return False
 	where
 		w u = unlines $ [
-			"Some annexed data is no longer pointed to by any file.",
+			"Some annexed data is no longer pointed to by any files in the repository.",
 			"If this data is no longer needed, it can be removed using git-annex dropkey:"
-			] ++ map show u
+			] ++ map (\k -> "  " ++ show k) u
 
+{- Finds keys whose content is present, but that do not seem to be used
+ - by any files in the git repo. -}
 unusedKeys :: Annex [Key]
 unusedKeys = do
 	present <- getKeysPresent
@@ -62,8 +74,19 @@ existsMap l = M.fromList $ map (\k -> (k, 1)) l
 
 getKeysPresent :: Annex [Key]
 getKeysPresent = do
-	return []
+	g <- Annex.gitRepo
+	let top = annexDir g
+	contents <- liftIO $ getDirectoryContents top
+	files <- liftIO $ filterM (isreg top) contents
+	return $ map fileKey files
+	where
+		isreg top f = do
+			s <- getFileStatus $ top ++ "/" ++ f
+			return $ isRegularFile s
 
 getKeysReferenced :: Annex [Key]
 getKeysReferenced = do
-	return []
+	g <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	keypairs <- mapM Backend.lookupFile files
+	return $ map fst $ catMaybes keypairs
