@@ -94,8 +94,7 @@ inAnnex r key = do
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
 			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			inannex <- runCmd r "test"
-				[ "-e", (shellEscape $ annexLocation r key)]
+			inannex <- runCmd r "test" ["-e", annexLocation r key]
 			-- XXX Note that ssh failing and the file not existing
 			-- are not currently differentiated.
 			return $ Right inannex
