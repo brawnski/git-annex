@@ -12,7 +12,8 @@ git-annex (0.03) UNRELEASED; urgency=low
     via gitattributes.
   * In .gitattributes, the git-annex-backend attribute can be set to the
     names of backends to use when adding different types of files.
-  * Add fsck subcommand.
+  * Add fsck subcommand. (For now it only finds unused key contents in the
+    annex.)
 
  -- Joey Hess <joeyh@debian.org>  Thu, 28 Oct 2010 13:46:59 -0400
 
