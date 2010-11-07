@@ -6,8 +6,9 @@ to contain:
 	UUID hostname URI
 
 The URI comes from configured remotes and maybe from 
-`file://$(pwd)` for the current repo. This format will merge
-without conflicts or data loss.
+`file://$(pwd)`, or even `ssh://$(hostname -f)`
+for the current repo. This format will merge without
+conflicts or data loss.
 
 Then when content is belived to be in a UUID, and no
 configured remote has it, the remote.log can be consulted and
@@ -17,4 +18,4 @@ to be mounted at the same location on different hosts),
 otherwise ssh:// ones.)
 
 Question: When should git-annex update the remote.log? 
-(Not just on init.) Whenever it reads in a repo's remotes?
+(If not just on init.) Whenever it reads in a repo's remotes?
