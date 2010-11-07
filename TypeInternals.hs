@@ -39,7 +39,7 @@ type Annex = StateT AnnexState IO
 -- annexed filenames are mapped through a backend into keys
 type KeyName = String
 type BackendName = String
-data Key = Key (BackendName, KeyName) deriving (Eq)
+data Key = Key (BackendName, KeyName) deriving (Eq, Ord)
 
 -- constructs a key in a backend
 genKey :: Backend -> KeyName -> Key
