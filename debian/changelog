@@ -1,3 +1,9 @@
+git-annex (0.04) UNRELEASED; urgency=low
+
+  * Add build dep on libghc6-testpack-dev.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
+
 git-annex (0.03) unstable; urgency=low
 
   * Fix support for file:// remotes.
