@@ -20,6 +20,9 @@ verbose a = do
 	q <- Annex.flagIsSet "quiet"
 	unless q a
 
+showSideAction :: String -> Annex ()
+showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ ")"
+
 showStart :: String -> String -> Annex ()
 showStart command file = verbose $ do
 	liftIO $ putStr $ command ++ " " ++ file ++ " "
