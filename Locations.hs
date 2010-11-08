@@ -13,7 +13,8 @@ module Locations (
 	annexLocation,
 	annexLocationRelative,
 	annexTmpLocation,
-	annexDir
+	annexDir,
+	annexObjectDir
 ) where
 
 import Data.String.Utils
@@ -29,7 +30,7 @@ gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
 
 {- An annexed file's content is stored in 
- - /path/to/repo/.git/annex/<key>, where <key> is of the form
+ - /path/to/repo/.git/annex/objects/<key>/<key>, where <key> is of the form
  - <backend:fragment>
  -
  - That allows deriving the key and backend by looking at the symlink to it.
@@ -42,13 +43,19 @@ annexLocation r key =
  -
  - Note: Assumes repo is NOT bare.-}
 annexLocationRelative :: Key -> FilePath
-annexLocationRelative key = ".git/annex/" ++ (keyFile key)
+annexLocationRelative key = ".git/annex/objects/" ++ f ++ f
+	where f = keyFile key
 
 {- The annex directory of a repository.
  -
  - Note: Assumes repo is NOT bare. -}
 annexDir :: Git.Repo -> FilePath
 annexDir r = Git.workTree r ++ "/.git/annex"
+
+{- The part of the annex directory where file contents are stored.
+ -}
+annexObjectDir :: Git.Repo -> FilePath
+annexObjectDir r = annexDir r ++ "/objects"
 
 {- .git-annex/tmp is used for temp files -}
 annexTmpLocation :: Git.Repo -> FilePath
