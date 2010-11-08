@@ -7,12 +7,9 @@
 
 module Command.Drop where
 
-import Control.Monad.State (liftIO)
-import System.Directory
+import Control.Monad (when)
 
 import Command
-import qualified Annex
-import Locations
 import qualified Backend
 import LocationLog
 import Types
@@ -39,13 +36,7 @@ perform key backend = do
 
 cleanup :: Key -> SubCmdCleanup
 cleanup key = do
-	logStatus key ValueMissing
 	inannex <- inAnnex key
-	if (inannex)
-		then do
-			g <- Annex.gitRepo
-			let loc = annexLocation g key
-			liftIO $ removeFile loc
-			return True
-		else return True
-
+	when (inannex) $ removeAnnex key
+	logStatus key ValueMissing
+	return True

@@ -13,7 +13,6 @@ import Control.Monad (when)
 import Command
 import qualified Annex
 import Utility
-import Locations
 import qualified Backend
 import LocationLog
 import Types
@@ -22,21 +21,22 @@ import Messages
 
 {- Sets cached content for a key. -}
 start :: SubCmdStartString
-start tmpfile = do
+start file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
 	let key = genKey (backends !! 0) keyname
-	showStart "setkey" tmpfile
-	return $ Just $ perform tmpfile key
+	showStart "setkey" file
+	return $ Just $ perform file key
 perform :: FilePath -> Key -> SubCmdPerform
-perform tmpfile key = do
-	g <- Annex.gitRepo
-	let loc = annexLocation g key
-	ok <- liftIO $ boolSystem "mv" [tmpfile, loc]
-	if (not ok)
-		then error "mv failed!"
-		else return $ Just $ cleanup key
+perform file key = do
+	-- the file might be on a different filesystem, so mv is used
+	-- rather than simply calling moveToObjectDir key file
+	ok <- getViaTmp key $ \dest -> liftIO $ boolSystem "mv" [file, dest]
+	if ok
+		then return $ Just $ cleanup key
+		else error "mv failed!"
+
 cleanup :: Key -> SubCmdCleanup
 cleanup key = do
 	logStatus key ValuePresent

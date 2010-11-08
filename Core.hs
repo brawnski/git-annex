@@ -144,7 +144,7 @@ getViaTmp key action = do
 	success <- action tmp
 	if (success)
 		then do
-			moveToObjectDir key tmp
+			moveAnnex key tmp
 			logStatus key ValuePresent
 			return True
 		else do
@@ -152,14 +152,53 @@ getViaTmp key action = do
 			-- to resume its transfer
 			return False
 
+{- Removes the write bits from a file. -}
+preventWrite :: FilePath -> IO ()
+preventWrite f = unsetFileMode f writebits
+	where
+		writebits = foldl unionFileModes ownerWriteMode
+					[groupWriteMode, otherWriteMode]
+
+{- Turns a file's write bit back on. -}
+allowWrite :: FilePath -> IO ()
+allowWrite f = do
+	s <- getFileStatus f
+	setFileMode f $ (fileMode s) `unionFileModes` ownerWriteMode
+
 {- Moves a file into .git/annex/objects/ -}
-moveToObjectDir :: Key -> FilePath -> Annex ()
-moveToObjectDir key src = do
+moveAnnex :: Key -> FilePath -> Annex ()
+moveAnnex key src = do
 	g <- Annex.gitRepo
 	let dest = annexLocation g key
-	liftIO $ createDirectoryIfMissing True (parentDir dest)
-	liftIO $ renameFile src dest
-	-- TODO directory and file mode tweaks
+	let dir = parentDir dest
+	liftIO $ do
+		createDirectoryIfMissing True dir
+		renameFile src dest
+		preventWrite dest
+		preventWrite dir
+
+{- Removes a key's file from .git/annex/objects/ -}
+removeAnnex :: Key -> Annex ()
+removeAnnex key = do
+	g <- Annex.gitRepo
+	let file = annexLocation g key
+	let dir = parentDir file
+	liftIO $ do
+		allowWrite dir
+		removeFile file
+		removeDirectory dir
+
+{- Moves a key's file out of .git/annex/objects/ -}
+fromAnnex :: Key -> FilePath -> Annex ()
+fromAnnex key dest = do
+	g <- Annex.gitRepo
+	let file = annexLocation g key
+	let dir = parentDir file
+	liftIO $ do
+		allowWrite dir
+		allowWrite file
+		renameFile file dest
+		removeDirectory dir
 
 {- List of keys whose content exists in .git/annex/objects/ -}
 getKeysPresent :: Annex [Key]
@@ -202,7 +241,7 @@ upgradeFrom0 = do
 	-- do the reorganisation of the files
 	let olddir = annexDir g
 	keys <- getKeysPresent' olddir
-	_ <- mapM (\k -> moveToObjectDir k $ olddir ++ "/" ++ keyFile k) keys
+	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
 
 	-- update the symlinks to the files
 	files <- liftIO $ Git.inRepo g $ Git.workTree g

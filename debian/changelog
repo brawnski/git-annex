@@ -8,6 +8,9 @@ git-annex (0.04) UNRELEASED; urgency=low
     git-annex is used in a repository with the old layout.
   * Note that git-annex 0.04 cannot transfer content from old repositories
     that have not yet been upgraded.
+  * Annexed file contents are now made unwritable and put in unwriteable
+    directories, to avoid them accidentially being removed or modified.
+    (Thanks Josh Triplett for the idea.)
 
  -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
 

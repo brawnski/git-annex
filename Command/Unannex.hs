@@ -13,7 +13,6 @@ import System.Directory
 import Command
 import qualified Annex
 import Utility
-import Locations
 import qualified Backend
 import LocationLog
 import Types
@@ -38,12 +37,14 @@ perform file key backend = do
 
 cleanup :: FilePath -> Key -> SubCmdCleanup
 cleanup file key = do
-	logStatus key ValueMissing
 	g <- Annex.gitRepo
-	let src = annexLocation g key
+
 	liftIO $ removeFile file
 	liftIO $ Git.run g ["rm", "--quiet", file]
 	-- git rm deletes empty directories; put them back
 	liftIO $ createDirectoryIfMissing True (parentDir file)
-	liftIO $ renameFile src file
+
+	fromAnnex key file
+	logStatus key ValueMissing
+
 	return True

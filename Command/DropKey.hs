@@ -7,12 +7,8 @@
 
 module Command.DropKey where
 
-import Control.Monad.State (liftIO)
-import System.Directory
-
 import Command
 import qualified Annex
-import Locations
 import qualified Backend
 import LocationLog
 import Types
@@ -36,9 +32,7 @@ start keyname = do
 
 perform :: Key -> SubCmdPerform
 perform key = do
-	g <- Annex.gitRepo
-	let loc = annexLocation g key
-	liftIO $ removeFile loc
+	removeAnnex key
 	return $ Just $ cleanup key
 
 cleanup :: Key -> SubCmdCleanup
