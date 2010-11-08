@@ -15,6 +15,7 @@ import qualified Annex
 import Core
 import qualified GitRepo as Git
 import UUID
+import Messages
 
 {- Stores description for the repository etc. -}
 start :: SubCmdStartString

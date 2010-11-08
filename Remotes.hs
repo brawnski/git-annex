@@ -36,6 +36,7 @@ import Locations
 import UUID
 import Utility
 import qualified Core
+import Messages
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -64,7 +65,7 @@ keyPossibilities key = do
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
 			unless (null doexpensive) $ do
-				Core.showNote $ "getting UUID for " ++
+				showNote $ "getting UUID for " ++
 					(list doexpensive) ++ "..."
 			let todo = cheap ++ doexpensive
 			if (not $ null todo)
@@ -93,7 +94,7 @@ inAnnex r key = do
 			a <- Annex.new r []
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
-			Core.showNote ("checking " ++ Git.repoDescribe r ++ "...")
+			showNote ("checking " ++ Git.repoDescribe r ++ "...")
 			inannex <- runCmd r "test" ["-e", annexLocation r key]
 			-- XXX Note that ssh failing and the file not existing
 			-- are not currently differentiated.
@@ -228,7 +229,7 @@ sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
 scp :: Git.Repo -> [String] -> Annex Bool
 scp r params = do
 	scpoptions <- repoConfig r "scp-options" ""
-	Core.showProgress -- make way for scp progress bar
+	showProgress -- make way for scp progress bar
 	liftIO $ boolSystem "scp" $ "-p":(words scpoptions) ++ params
 
 {- Runs a command in a remote, using ssh if necessary.

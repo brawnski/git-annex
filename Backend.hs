@@ -31,13 +31,13 @@ import Control.Monad.State
 import IO (try)
 import System.FilePath
 import System.Posix.Files
-import Core
 
 import Locations
 import qualified GitRepo as Git
 import qualified Annex
 import Types
 import qualified TypeInternals as Internals
+import Messages
 
 {- List of backends in the order to try them when storing a new key. -}
 list :: Annex [Backend]

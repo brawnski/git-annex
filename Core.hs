@@ -8,12 +8,12 @@
 module Core where
 
 import IO (try)
-import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
-import Data.String.Utils
-import Control.Monad (when, unless)
+import Control.Monad (when, unless, filterM)
+import System.Posix.Files
+import Data.Maybe
 
 import Types
 import Locations
@@ -22,7 +22,9 @@ import UUID
 import qualified GitRepo as Git
 import qualified GitQueue
 import qualified Annex
+import qualified Backend
 import Utility
+import Messages
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).
@@ -152,6 +154,27 @@ getViaTmp key action = do
 			-- to resume its transfer
 			return False
 
+{- List of keys whose content exists in .git/annex/objects/ -}
+getKeysPresent :: Annex [Key]
+getKeysPresent = do
+	g <- Annex.gitRepo
+	let top = annexObjectDir g
+	contents <- liftIO $ getDirectoryContents top
+	files <- liftIO $ filterM (isreg top) contents
+	return $ map fileKey files
+	where
+		isreg top f = do
+			s <- getFileStatus $ top ++ "/" ++ f
+			return $ isRegularFile s
+
+{- List of keys referenced by symlinks in the git repo. -}
+getKeysReferenced :: Annex [Key]
+getKeysReferenced = do
+	g <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	keypairs <- mapM Backend.lookupFile files
+	return $ map fst $ catMaybes keypairs
+
 {- Uses the annex.version git config setting to automate upgrades. -}
 autoUpgrade :: Annex ()
 autoUpgrade = do
@@ -159,6 +182,8 @@ autoUpgrade = do
 
 	case Git.configGet g field "0" of
 		"0" -> do -- before there was repo versioning
+			upgradeNote "Upgrading object directory layout..."
+			
 			setVersion
 		v | v == currentVersion -> return ()
 		_ -> error "this version of git-annex is too old for this git repository!"
@@ -166,37 +191,4 @@ autoUpgrade = do
 		currentVersion = "1"
 		setVersion = Annex.setConfig field currentVersion
 		field = "annex.version"
-
-{- Output logging -}
-verbose :: Annex () -> Annex ()
-verbose a = do
-	q <- Annex.flagIsSet "quiet"
-	unless q a
-showStart :: String -> String -> Annex ()
-showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ file ++ " "
-	liftIO $ hFlush stdout
-showNote :: String -> Annex ()
-showNote s = verbose $ do
-	liftIO $ putStr $ "(" ++ s ++ ") "
-	liftIO $ hFlush stdout
-showProgress :: Annex ()
-showProgress = verbose $ liftIO $ putStr "\n"
-showLongNote :: String -> Annex ()
-showLongNote s = verbose $ do
-	liftIO $ putStr $ "\n" ++ indented
-	where
-		indented = join "\n" $ map (\l -> "  " ++ l) $ lines s 
-showEndOk :: Annex ()
-showEndOk = verbose $ do
-	liftIO $ putStrLn "ok"
-showEndFail :: Annex ()
-showEndFail = verbose $ do
-	liftIO $ putStrLn "\nfailed"
-
-{- Exception pretty-printing. -}
-showErr :: (Show a) => a -> Annex ()
-showErr e = warning $ show e
-
-warning :: String -> Annex ()
-warning s = liftIO $ hPutStrLn stderr $ "git-annex: " ++ s
+		upgradeNote s = verbose $ liftIO $ putStrLn $ "("++s++")"

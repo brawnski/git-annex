@@ -25,6 +25,7 @@ import qualified GitRepo as Git
 import Core
 import qualified Annex
 import UUID
+import Messages
 
 backend :: Backend
 backend = Backend {

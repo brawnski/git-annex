@@ -18,6 +18,7 @@ import qualified Backend
 import LocationLog
 import Types
 import Core
+import Messages
 
 {- Sets cached content for a key. -}
 start :: SubCmdStartString

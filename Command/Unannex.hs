@@ -19,6 +19,7 @@ import LocationLog
 import Types
 import Core
 import qualified GitRepo as Git
+import Messages
 
 {- The unannex subcommand undoes an add. -}
 start :: SubCmdStartString

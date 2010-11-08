@@ -19,6 +19,7 @@ import qualified Backend
 import LocationLog
 import Types
 import Core
+import Messages
 
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
