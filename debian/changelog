@@ -1,9 +1,13 @@
 git-annex (0.04) UNRELEASED; urgency=low
 
   * Add build dep on libghc6-testpack-dev.
-  * Add annex.version, which will be used to automate upgrades.
-  * Reorganised the layout of .git/annex/ , moving cached file contents
-    to .git/annex/objects/<key>/<key>
+  * Add annex.version, which will be used to automate upgrades
+    between incompatable versions.
+  * Reorganised the layout of .git/annex/
+  * The new layout will be automatically upgraded to the first time
+    git-annex is used in a repository with the old layout.
+  * Note that git-annex 0.04 cannot transfer content from old repositories
+    that have not yet been upgraded.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
 

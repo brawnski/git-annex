@@ -14,7 +14,9 @@ module Locations (
 	annexLocationRelative,
 	annexTmpLocation,
 	annexDir,
-	annexObjectDir
+	annexObjectDir,
+
+	prop_idempotent_fileKey
 ) where
 
 import Data.String.Utils
@@ -29,12 +31,7 @@ stateLoc = ".git-annex/"
 gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
 
-{- An annexed file's content is stored in 
- - /path/to/repo/.git/annex/objects/<key>/<key>, where <key> is of the form
- - <backend:fragment>
- -
- - That allows deriving the key and backend by looking at the symlink to it.
- -}
+{- Annexed file's absolute location. -}
 annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
 	(Git.workTree r) ++ "/" ++ (annexLocationRelative key)
@@ -43,8 +40,9 @@ annexLocation r key =
  -
  - Note: Assumes repo is NOT bare.-}
 annexLocationRelative :: Key -> FilePath
-annexLocationRelative key = ".git/annex/objects/" ++ f ++ f
-	where f = keyFile key
+annexLocationRelative key = ".git/annex/objects/" ++ f ++ "/" ++ f
+	where
+		f = keyFile key
 
 {- The annex directory of a repository.
  -
@@ -72,10 +70,15 @@ annexTmpLocation r = annexDir r ++ "/tmp/"
  -     is one to one.
  - -}
 keyFile :: Key -> FilePath
-keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a" $ show key
+keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a"  $ show key
 
 {- Reverses keyFile, converting a filename fragment (ie, the basename of
  - the symlink target) into a key. -}
 fileKey :: FilePath -> Key
 fileKey file = read $
 	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
+
+{- for quickcheck -}
+prop_idempotent_fileKey :: String -> Bool
+prop_idempotent_fileKey s = k == (fileKey $ keyFile k)
+	where k = read "test:s"

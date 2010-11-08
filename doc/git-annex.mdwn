@@ -223,7 +223,7 @@ but the SHA1 backend for ogg files:
 
 These files are used, in your git repository:
 
-`.git/annex/` contains the annexed file contents that are currently
+`.git/annex/objects/` contains the annexed file contents that are currently
 available. Annexed files in your git repository symlink to that content.
 
 `.git-annex/uuid.log` is used to map between repository UUID and
