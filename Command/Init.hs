@@ -15,6 +15,7 @@ import qualified Annex
 import Core
 import qualified GitRepo as Git
 import UUID
+import Version
 import Messages
 
 {- Stores description for the repository etc. -}
@@ -30,6 +31,7 @@ perform description = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	describeUUID u description
+	setVersion
 	liftIO $ gitAttributes g
 	liftIO $ gitPreCommitHook g
 	return $ Just $ cleanup
