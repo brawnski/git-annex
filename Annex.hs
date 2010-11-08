@@ -20,6 +20,7 @@ module Annex (
 	Flag(..),
 	queue,
 	queueGet,
+	queueRun,
 	setConfig
 ) where
 
@@ -119,6 +120,15 @@ queueGet :: Annex GitQueue.Queue
 queueGet = do
 	state <- get
 	return (Internals.repoqueue state)
+
+{- Runs (and empties) the queue. -}
+queueRun :: Annex ()
+queueRun = do
+	state <- get
+	let q = Internals.repoqueue state
+	g <- gitRepo
+	liftIO $ GitQueue.run g q
+	put state { Internals.repoqueue = GitQueue.empty }
 
 {- Changes a git config setting in both internal state and .git/config -}
 setConfig :: String -> String -> Annex ()
