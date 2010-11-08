@@ -46,6 +46,7 @@ tryRun' _ errnum [] =
 startup :: Annex Bool
 startup = do
 	prepUUID
+	autoUpgrade
 	return True
 
 {- When git-annex is done, it runs this. -}
@@ -150,6 +151,21 @@ getViaTmp key action = do
 			-- the tmp file is left behind, in case caller wants
 			-- to resume its transfer
 			return False
+
+{- Uses the annex.version git config setting to automate upgrades. -}
+autoUpgrade :: Annex ()
+autoUpgrade = do
+	g <- Annex.gitRepo
+
+	case Git.configGet g field "0" of
+		"0" -> do -- before there was repo versioning
+			setVersion
+		v | v == currentVersion -> return ()
+		_ -> error "this version of git-annex is too old for this git repository!"
+	where
+		currentVersion = "1"
+		setVersion = Annex.setConfig field currentVersion
+		field = "annex.version"
 
 {- Output logging -}
 verbose :: Annex () -> Annex ()

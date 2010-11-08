@@ -207,6 +207,8 @@ Here are all the supported configuration settings.
   to talk to this repository.
 * `annex.scp-options` and `annex.ssh-options` -- Default scp and ssh
   options to use if a remote does not have specific options.
+* `annex.version` -- Automatically maintained, and used to automate upgrades
+  between versions.
 
 The backend used when adding a new file to the annex can be configured
 on a per-file-type basis via the `.gitattributes` file. In the file,

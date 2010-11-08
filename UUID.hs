@@ -65,7 +65,7 @@ getUUID r = do
 	where
 		uncached = Git.configGet r "annex.uuid" ""
 		cached g = Git.configGet g cachekey ""
-		updatecache g u = when (g /= r) $ setConfig cachekey u
+		updatecache g u = when (g /= r) $ Annex.setConfig cachekey u
 		cachekey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
 
 {- Make sure that the repo has an annex.uuid setting. -}
@@ -75,16 +75,7 @@ prepUUID = do
 	u <- getUUID g
 	when ("" == u) $ do
 		uuid <- liftIO $ genUUID
-		setConfig configkey uuid
-
-{- Changes a git config setting in both internal state and .git/config -}
-setConfig :: String -> String -> Annex ()
-setConfig key value = do
-	g <- Annex.gitRepo
-	liftIO $ Git.run g ["config", key, value]
-	-- re-read git config and update the repo's state
-	g' <- liftIO $ Git.configRead g Nothing
-	Annex.gitRepoChange g'
+		Annex.setConfig configkey uuid
 
 {- Filters a list of repos to ones that have listed UUIDs. -}
 reposByUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
