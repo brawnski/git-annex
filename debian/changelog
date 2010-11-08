@@ -1,3 +1,11 @@
+git-annex (0.04) UNRELEASED; urgency=low
+
+  * Add checkout subcommand, which allows checking out file content
+    in preparation of changing it.
+  * Add uncheckout subcommand.
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 07 Nov 2010 21:01:29 -0400
+
 git-annex (0.03) unstable; urgency=low
 
   * Fix support for file:// remotes.

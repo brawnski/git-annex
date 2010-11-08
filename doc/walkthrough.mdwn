@@ -190,6 +190,26 @@ makes it very easy.
 	WORM:1274316523:86050597:hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
 	ok
 
+## modifying annexed files
+
+Normally, the content of files in the annex cannot be modified.
+In order to modify a file, it should first be checked out:
+
+	# git annex checkout my_cool_big_file
+	checkout my_cool_big_file (copying...) ok
+
+Checking a file out replaces the symlink that normally points at its content
+with a copy of the content. You can then modify the file like any regular
+file. Because it is a regular file.
+
+When you `git commit`, git-annex's pre-commit hook will automatically
+notice that you are committing a checked-out file, and add its new content
+to the annex. The file will be replaced with a symlink to the new content,
+and this symlink is what gets committed to git.
+
+If you decide you don't need to modify the file after all, or want to discard
+modifications, just use the uncheckout subcommand to undo the checkout.
+
 ## using the URL backend
 
 git-annex has multiple key-value [[backends]]. So far this walkthrough has
@@ -216,3 +236,17 @@ that the URL is stable; no local backup is kept.
 
 	# git annex drop somefile
 	drop somefile (ok)
+
+## using the SHA1 backend
+
+Another handy alternative to the default [[backend|backends]] is the
+SHA1 backend. This backend provides more git-style assurance that your data
+has not been damanged. And the checksum means that when you add the same
+content to the annex twice, only one copy need be stored in the backend.
+
+The only reason it's not the default is that it needs to checksum
+files when they're added to the annex, and this can slow things down
+significantly for really big files. To make SHA1 the detault, just
+add something like this to `.gitattributes`:
+
+	* git-annex-backend=SHA1
