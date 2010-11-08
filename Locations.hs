@@ -81,4 +81,4 @@ fileKey file = read $
 {- for quickcheck -}
 prop_idempotent_fileKey :: String -> Bool
 prop_idempotent_fileKey s = k == (fileKey $ keyFile k)
-	where k = read "test:s"
+	where k = read $ "test:" ++ s
