@@ -19,7 +19,9 @@ module Annex (
 	flagGet,
 	Flag(..),
 	queue,
-	queueGet
+	queueGet,
+	queueRun,
+	setConfig
 ) where
 
 import Control.Monad.State
@@ -118,3 +120,21 @@ queueGet :: Annex GitQueue.Queue
 queueGet = do
 	state <- get
 	return (Internals.repoqueue state)
+
+{- Runs (and empties) the queue. -}
+queueRun :: Annex ()
+queueRun = do
+	state <- get
+	let q = Internals.repoqueue state
+	g <- gitRepo
+	liftIO $ GitQueue.run g q
+	put state { Internals.repoqueue = GitQueue.empty }
+
+{- Changes a git config setting in both internal state and .git/config -}
+setConfig :: String -> String -> Annex ()
+setConfig key value = do
+	g <- Annex.gitRepo
+	liftIO $ Git.run g ["config", key, value]
+	-- re-read git config and update the repo's state
+	g' <- liftIO $ Git.configRead g Nothing
+	Annex.gitRepoChange g'

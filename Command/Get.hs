@@ -11,6 +11,7 @@ import Command
 import qualified Backend
 import Types
 import Core
+import Messages
 
 {- Gets an annexed file from one of the backends. -}
 start :: SubCmdStartString

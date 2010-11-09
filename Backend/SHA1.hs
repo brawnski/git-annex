@@ -14,7 +14,7 @@ import System.IO
 
 import qualified Backend.File
 import TypeInternals
-import Core
+import Messages
 
 backend :: Backend
 backend = Backend.File.backend {

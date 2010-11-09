@@ -3,8 +3,19 @@ git-annex (0.04) UNRELEASED; urgency=low
   * Add checkout subcommand, which allows checking out file content
     in preparation of changing it.
   * Add uncheckout subcommand.
+  * Add build dep on libghc6-testpack-dev.
+  * Add annex.version, which will be used to automate upgrades
+    between incompatable versions.
+  * Reorganised the layout of .git/annex/
+  * The new layout will be automatically upgraded to the first time
+    git-annex is used in a repository with the old layout.
+  * Note that git-annex 0.04 cannot transfer content from old repositories
+    that have not yet been upgraded.
+  * Annexed file contents are now made unwritable and put in unwriteable
+    directories, to avoid them accidentially being removed or modified.
+    (Thanks Josh Triplett for the idea.)
 
- -- Joey Hess <joeyh@debian.org>  Sun, 07 Nov 2010 21:01:29 -0400
+ -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
 
 git-annex (0.03) unstable; urgency=low
 

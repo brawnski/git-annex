@@ -9,7 +9,7 @@ module Command where
 
 import Types
 import qualified Backend
-import Core
+import Messages
 import qualified Annex
 
 {- A subcommand runs in four stages.

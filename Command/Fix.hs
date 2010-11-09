@@ -15,6 +15,7 @@ import Command
 import qualified Annex
 import Utility
 import Core
+import Messages
 
 {- Fixes the symlink to an annexed file. -}
 start :: SubCmdStartString

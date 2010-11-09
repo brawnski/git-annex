@@ -8,12 +8,12 @@
 module Core where
 
 import IO (try)
-import System.IO
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
-import Data.String.Utils
-import Control.Monad (when, unless)
+import Control.Monad (when, unless, filterM)
+import System.Posix.Files
+import Data.Maybe
 
 import Types
 import Locations
@@ -22,7 +22,10 @@ import UUID
 import qualified GitRepo as Git
 import qualified GitQueue
 import qualified Annex
+import qualified Backend
 import Utility
+import Messages
+import Version
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).
@@ -46,21 +49,20 @@ tryRun' _ errnum [] =
 startup :: Annex Bool
 startup = do
 	prepUUID
+	autoUpgrade
 	return True
 
 {- When git-annex is done, it runs this. -}
 shutdown :: Annex Bool
 shutdown = do
-	g <- Annex.gitRepo
-
-	-- Runs all queued git commands.
 	q <- Annex.queueGet
 	unless (q == GitQueue.empty) $ do
-		verbose $ liftIO $ putStrLn "Recording state in git..."
-		liftIO $ GitQueue.run g q
+		showSideAction "Recording state in git..."
+		Annex.queueRun
 
 	-- clean up any files left in the temp directory, but leave
 	-- the tmp directory itself
+	g <- Annex.gitRepo
 	let tmp = annexTmpLocation g
 	exists <- liftIO $ doesDirectoryExist tmp
 	when (exists) $ liftIO $ removeDirectoryRecursive tmp
@@ -137,13 +139,12 @@ logStatus key status = do
 getViaTmp :: Key -> (FilePath -> Annex Bool) -> Annex Bool
 getViaTmp key action = do
 	g <- Annex.gitRepo
-	let dest = annexLocation g key
 	let tmp = annexTmpLocation g ++ keyFile key
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	success <- action tmp
 	if (success)
 		then do
-			liftIO $ renameFile tmp dest
+			moveAnnex key tmp
 			logStatus key ValuePresent
 			return True
 		else do
@@ -151,36 +152,113 @@ getViaTmp key action = do
 			-- to resume its transfer
 			return False
 
-{- Output logging -}
-verbose :: Annex () -> Annex ()
-verbose a = do
-	q <- Annex.flagIsSet "quiet"
-	unless q a
-showStart :: String -> String -> Annex ()
-showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ file ++ " "
-	liftIO $ hFlush stdout
-showNote :: String -> Annex ()
-showNote s = verbose $ do
-	liftIO $ putStr $ "(" ++ s ++ ") "
-	liftIO $ hFlush stdout
-showProgress :: Annex ()
-showProgress = verbose $ liftIO $ putStr "\n"
-showLongNote :: String -> Annex ()
-showLongNote s = verbose $ do
-	liftIO $ putStr $ "\n" ++ indented
+{- Removes the write bits from a file. -}
+preventWrite :: FilePath -> IO ()
+preventWrite f = unsetFileMode f writebits
 	where
-		indented = join "\n" $ map (\l -> "  " ++ l) $ lines s 
-showEndOk :: Annex ()
-showEndOk = verbose $ do
-	liftIO $ putStrLn "ok"
-showEndFail :: Annex ()
-showEndFail = verbose $ do
-	liftIO $ putStrLn "\nfailed"
+		writebits = foldl unionFileModes ownerWriteMode
+					[groupWriteMode, otherWriteMode]
 
-{- Exception pretty-printing. -}
-showErr :: (Show a) => a -> Annex ()
-showErr e = warning $ show e
+{- Turns a file's write bit back on. -}
+allowWrite :: FilePath -> IO ()
+allowWrite f = do
+	s <- getFileStatus f
+	setFileMode f $ (fileMode s) `unionFileModes` ownerWriteMode
 
-warning :: String -> Annex ()
-warning s = liftIO $ hPutStrLn stderr $ "git-annex: " ++ s
+{- Moves a file into .git/annex/objects/ -}
+moveAnnex :: Key -> FilePath -> Annex ()
+moveAnnex key src = do
+	g <- Annex.gitRepo
+	let dest = annexLocation g key
+	let dir = parentDir dest
+	liftIO $ do
+		createDirectoryIfMissing True dir
+		renameFile src dest
+		preventWrite dest
+		preventWrite dir
+
+{- Removes a key's file from .git/annex/objects/ -}
+removeAnnex :: Key -> Annex ()
+removeAnnex key = do
+	g <- Annex.gitRepo
+	let file = annexLocation g key
+	let dir = parentDir file
+	liftIO $ do
+		allowWrite dir
+		removeFile file
+		removeDirectory dir
+
+{- Moves a key's file out of .git/annex/objects/ -}
+fromAnnex :: Key -> FilePath -> Annex ()
+fromAnnex key dest = do
+	g <- Annex.gitRepo
+	let file = annexLocation g key
+	let dir = parentDir file
+	liftIO $ do
+		allowWrite dir
+		allowWrite file
+		renameFile file dest
+		removeDirectory dir
+
+{- List of keys whose content exists in .git/annex/objects/ -}
+getKeysPresent :: Annex [Key]
+getKeysPresent = do
+	g <- Annex.gitRepo
+	getKeysPresent' $ annexObjectDir g
+getKeysPresent' :: FilePath -> Annex [Key]
+getKeysPresent' dir = do
+	contents <- liftIO $ getDirectoryContents dir
+	files <- liftIO $ filterM isreg contents
+	return $ map fileKey files
+	where
+		isreg f = do
+			s <- getFileStatus $ dir ++ "/" ++ f
+			return $ isRegularFile s
+
+{- List of keys referenced by symlinks in the git repo. -}
+getKeysReferenced :: Annex [Key]
+getKeysReferenced = do
+	g <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	keypairs <- mapM Backend.lookupFile files
+	return $ map fst $ catMaybes keypairs
+
+{- Uses the annex.version git config setting to automate upgrades. -}
+autoUpgrade :: Annex ()
+autoUpgrade = do
+	version <- getVersion
+	case version of
+		Just "0" -> upgradeFrom0
+		Nothing -> return () -- repo not initted yet, no version
+		Just v | v == currentVersion -> return ()
+		Just _ -> error "this version of git-annex is too old for this git repository!"
+
+upgradeFrom0 :: Annex ()
+upgradeFrom0 = do
+	showSideAction "Upgrading object directory layout..."
+	g <- Annex.gitRepo
+
+	-- do the reorganisation of the files
+	let olddir = annexDir g
+	keys <- getKeysPresent' olddir
+	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
+
+	-- update the symlinks to the files
+	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	fixlinks files
+	Annex.queueRun
+
+	setVersion
+
+	where
+		fixlinks [] = return ()
+		fixlinks (f:fs) = do
+			r <- Backend.lookupFile f
+			case r of
+				Nothing -> return ()
+				Just (k, _) -> do
+					link <- calcGitLink f k
+					liftIO $ removeFile f
+					liftIO $ createSymbolicLink link f
+					Annex.queue "add" [] f
+			fixlinks fs

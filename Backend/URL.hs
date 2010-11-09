@@ -11,8 +11,8 @@ import Control.Monad.State (liftIO)
 import Data.String.Utils
 
 import TypeInternals
-import Core
 import Utility
+import Messages
 
 backend :: Backend
 backend = Backend {

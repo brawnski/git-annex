@@ -11,17 +11,21 @@ module Utility (
 	relPathCwdToDir,
 	relPathDirToDir,
 	boolSystem,
-	shellEscape
+	shellEscape,
+	unsetFileMode
 ) where
 
 import System.IO
 import System.Exit
 import System.Posix.Process
 import System.Posix.Signals
+import System.Posix.Files
+import System.Posix.Types
 import Data.String.Utils
 import System.Path
 import System.FilePath
 import System.Directory
+import Foreign (complement)
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
@@ -115,3 +119,10 @@ shellEscape f = "'" ++ escaped ++ "'"
 	where
 		-- replace ' with '"'"'
 		escaped = join "'\"'\"'" $ split "'" f
+
+{- Removes a FileMode from a file.
+ - For example, call with otherWriteMode to chmod o-w -}
+unsetFileMode :: FilePath -> FileMode -> IO ()
+unsetFileMode f m = do
+	s <- getFileStatus f
+	setFileMode f $ (fileMode s) `intersectFileModes` (complement m)

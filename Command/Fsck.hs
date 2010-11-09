@@ -8,19 +8,11 @@
 module Command.Fsck where
 
 import qualified Data.Map as M
-import System.Directory
-import System.Posix.Files
-import Monad (filterM)
-import Control.Monad.State (liftIO)
-import Data.Maybe
 
 import Command
 import Types
 import Core
-import Locations
-import qualified Annex
-import qualified GitRepo as Git
-import qualified Backend
+import Messages
 
 {- Checks the whole annex for problems. -}
 start :: SubCmdStart
@@ -71,22 +63,3 @@ unusedKeys = do
 
 existsMap :: Ord k => [k] -> M.Map k Int
 existsMap l = M.fromList $ map (\k -> (k, 1)) l
-
-getKeysPresent :: Annex [Key]
-getKeysPresent = do
-	g <- Annex.gitRepo
-	let top = annexDir g
-	contents <- liftIO $ getDirectoryContents top
-	files <- liftIO $ filterM (isreg top) contents
-	return $ map fileKey files
-	where
-		isreg top f = do
-			s <- getFileStatus $ top ++ "/" ++ f
-			return $ isRegularFile s
-
-getKeysReferenced :: Annex [Key]
-getKeysReferenced = do
-	g <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo g $ Git.workTree g
-	keypairs <- mapM Backend.lookupFile files
-	return $ map fst $ catMaybes keypairs

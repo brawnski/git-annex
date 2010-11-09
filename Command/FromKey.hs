@@ -18,6 +18,7 @@ import Utility
 import qualified Backend
 import Types
 import Core
+import Messages
 
 {- Adds a file pointing at a manually-specified key -}
 start :: SubCmdStartString

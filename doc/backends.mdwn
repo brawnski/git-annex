@@ -10,14 +10,15 @@ Multiple pluggable backends are supported, and a single repository
 can use different backends for different files.
 
 * `WORM` ("Write Once, Read Many") This backend stores the file's content
-  only in `.git/annex/`, and assumes that any file with the same basename,
-  size, and modification time has the same content. So with this backend,
-  files can be moved around, but should never be added to or changed.
-  This is the default, and the least expensive backend.
+  only in `.git/annex/objects/`, and assumes that any file with the same
+  basename, size, and modification time has the same content. So with
+  this backend, files can be moved around, but should never be added to
+  or changed. This is the default, and the least expensive backend.
 * `SHA1` -- This backend stores the file's content in
-  `.git/annex/`, with a name based on its sha1 checksum. This backend allows
-  modifications of files to be tracked. Its need to generate checksums
+  `.git/annex/objects/`, with a name based on its sha1 checksum. This backend
+  allows modifications of files to be tracked. Its need to generate checksums
   can make it slower for large files.
+  for use.
 * `URL` -- This backend downloads the file's content from an external URL.
 
 The `annex.backends` git-config setting can be used to list the backends
