@@ -81,9 +81,10 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   git-annex may refuse to drop content if the backend does not think
   it is safe to do so, typically because of the setting of annex.numcopies.
 
-* checkout [path ...]
+* unlock [path ...]
 
-  Checks out annexed files so they can be modified. This replaces the
+  Normally, the content of annexed files is protected from being changed.
+  Unlocking a annexed file allows it to be modified. This replaces the
   symlink for each specified file with a copy of the file content.
   When you `git commit`, the file, the new content is injected back into
   the annex.
@@ -102,10 +103,10 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   and sets up `.gitattributes` and the pre-commit hook.
   This is an optional, but recommended step.
 
-* uncheckout [path ...]
+* lock [path ...]
 
-  Use this to undo a checkout command if you don't want to modify
-  the checked out files, or have made modifications you want to discard.
+  Use this to undo an unlock command if you don't want to modify
+  the files, or have made modifications you want to discard.
 
 * unannex [path ...]
 

@@ -4,4 +4,4 @@ In particular, while files can be added using it, git-annex will not notice
 when their content changes, and will not create a new key for the new sha1
 of the net content.
 
-[[done]]; use checkout subcommand
+[[done]]; use unlock subcommand and commit changes with git

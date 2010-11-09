@@ -192,23 +192,23 @@ makes it very easy.
 
 ## modifying annexed files
 
-Normally, the content of files in the annex cannot be modified.
-In order to modify a file, it should first be checked out:
+Normally, the content of files in the annex is prevented from being modified.
+In order to modify a file, it should first be unlocked:
 
-	# git annex checkout my_cool_big_file
-	checkout my_cool_big_file (copying...) ok
+	# git annex unlock my_cool_big_file
+	unlock my_cool_big_file (copying...) ok
 
-Checking a file out replaces the symlink that normally points at its content
-with a copy of the content. You can then modify the file like any regular
-file. Because it is a regular file.
+They replaces the symlink that normally points at its content with a copy
+of the content. You can then modify the file like any regular file. Because
+it is a regular file.
 
 When you `git commit`, git-annex's pre-commit hook will automatically
-notice that you are committing a checked-out file, and add its new content
+notice that you are committing an unlocked file, and add its new content
 to the annex. The file will be replaced with a symlink to the new content,
 and this symlink is what gets committed to git.
 
 If you decide you don't need to modify the file after all, or want to discard
-modifications, just use the uncheckout subcommand to undo the checkout.
+modifications, just use the lock subcommand.
 
 ## using the URL backend
 
