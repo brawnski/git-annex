@@ -235,7 +235,7 @@ autoUpgrade = do
 
 upgradeFrom0 :: Annex ()
 upgradeFrom0 = do
-	showSideAction "Upgrading object directory layout for git-annex 0.04..."
+	showSideAction "Upgrading object directory layout..."
 	g <- Annex.gitRepo
 
 	-- do the reorganisation of the files
