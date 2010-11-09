@@ -30,6 +30,8 @@ import qualified Command.SetKey
 import qualified Command.Fix
 import qualified Command.Init
 import qualified Command.Fsck
+import qualified Command.Unlock
+import qualified Command.Lock
 
 subCmds :: [SubCommand]
 subCmds =
@@ -41,6 +43,10 @@ subCmds =
 		"indicate content of files not currently wanted"
 	, SubCommand "move" path	(withFilesInGit Command.Move.start)
 		"transfer content of files to/from another repository"
+	, SubCommand "unlock" path	(withFilesInGit Command.Unlock.start)
+		"unlock files for modification"
+	, SubCommand "lock" path	(withFilesInGit Command.Lock.start)
+		"undo unlock command"
 	, SubCommand "init" desc	(withDescription Command.Init.start)
 		"initialize git-annex with repository description"
 	, SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
