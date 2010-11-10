@@ -1,0 +1,23 @@
+git-annex 0.04 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Add unlock subcommand, which replaces the symlink with a copy of
+     the file's content in preparation of changing it. The "edit" subcommand
+     is an alias for unlock.
+   * Add lock subcommand.
+   * Unlocked files will now automatically be added back into the annex when
+     committed (and the updated symlink committed), by some magic in the
+     pre-commit hook.
+   * The SHA1 backend is now fully usable.
+   * Add annex.version, which will be used to automate upgrades
+     between incompatible versions.
+   * Reorganised the layout of .git/annex/
+   * The new layout will be automatically upgraded to the first time
+     git-annex is used in a repository with the old layout.
+   * Note that git-annex 0.04 cannot transfer content from old repositories
+     that have not yet been upgraded.
+   * Annexed file contents are now made unwritable and put in unwriteable
+     directories, to avoid them accidentially being removed or modified.
+     (Thanks Josh Triplett for the idea.)
+   * Add build dep on libghc6-testpack-dev. Closes: #[603016](http://bugs.debian.org/603016)
+   * Avoid using runghc to run test suite as it is not available on all
+     architectures. Closes: #[603006](http://bugs.debian.org/603006)"""]]
