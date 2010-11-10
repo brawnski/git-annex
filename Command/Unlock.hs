@@ -16,6 +16,7 @@ import Types
 import Messages
 import Locations
 import Utility
+import Core
 
 {- The unlock subcommand replaces the symlink with a copy of the file's
  - content. -}
@@ -32,5 +33,7 @@ perform dest key = do
 	showNote "copying..."
 	ok <- liftIO $ boolSystem "cp" ["-p", src, dest]
         if ok
-                then return $ Just $ return True -- no cleanup needed
+                then do
+			liftIO $ allowWrite dest
+			return $ Just $ return True
                 else error "cp failed!"
