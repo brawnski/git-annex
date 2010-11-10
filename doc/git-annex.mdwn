@@ -89,6 +89,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   When you `git commit`, the file, the new content is injected back into
   the annex.
 
+* edit [path ...]
+
+  This is an alias for the unlock subcommand. May be easier to remember,
+  if you think of this as allowing you to edit an annexed file.
+
 * move [path ...]
 
   When used with the --to option, moves the content of annexed files from

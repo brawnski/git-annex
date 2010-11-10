@@ -46,6 +46,8 @@ subCmds =
 		"transfer content of files to/from another repository"
 	, SubCommand "unlock" path	(withFilesInGit Command.Unlock.start)
 		"unlock files for modification"
+	, SubCommand "edit" path	(withFilesInGit Command.Unlock.start)
+		"same as unlock"
 	, SubCommand "lock" path	(withFilesInGit Command.Lock.start)
 		"undo unlock command"
 	, SubCommand "init" desc	(withDescription Command.Init.start)

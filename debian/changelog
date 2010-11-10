@@ -1,7 +1,8 @@
 git-annex (0.04) UNRELEASED; urgency=low
 
   * Add unlock subcommand, which replaces the symlink with a copy of
-    the file's content in preparation of changing it.
+    the file's content in preparation of changing it. The "edit" subcommand
+    is an alias for unlock.
   * Add lock subcommand.
   * Unlocked files will now automatically be added back into the annex when
     committed (and the updated symlink committed), by some magic in the
