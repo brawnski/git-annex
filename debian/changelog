@@ -3,6 +3,9 @@ git-annex (0.04) UNRELEASED; urgency=low
   * Add unlock subcommand, which replaces the symlink with a copy of
     the file's content in preparation of changing it.
   * Add lock subcommand.
+  * Unlocked files will now automatically be added back into the annex when
+    committed (and the updated symlink committed), by some magic in the
+    pre-commit hook.
   * Add build dep on libghc6-testpack-dev.
   * Add annex.version, which will be used to automate upgrades
     between incompatable versions.
