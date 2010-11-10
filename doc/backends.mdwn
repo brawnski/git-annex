@@ -17,7 +17,7 @@ can use different backends for different files.
 * `SHA1` -- This backend stores the file's content in
   `.git/annex/objects/`, with a name based on its sha1 checksum. This backend
   allows modifications of files to be tracked. Its need to generate checksums
-  can make it slower for large files. **Warning** this backend is not ready
+  can make it slower for large files.
   for use.
 * `URL` -- This backend downloads the file's content from an external URL.
 

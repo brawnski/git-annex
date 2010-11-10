@@ -81,6 +81,19 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   git-annex may refuse to drop content if the backend does not think
   it is safe to do so, typically because of the setting of annex.numcopies.
 
+* unlock [path ...]
+
+  Normally, the content of annexed files is protected from being changed.
+  Unlocking a annexed file allows it to be modified. This replaces the
+  symlink for each specified file with a copy of the file's content.
+  You can then modify it and `git annex add` (or `git commit`) to inject
+  it back into the annex.
+
+* edit [path ...]
+
+  This is an alias for the unlock subcommand. May be easier to remember,
+  if you think of this as allowing you to edit an annexed file.
+
 * move [path ...]
 
   When used with the --to option, moves the content of annexed files from
@@ -93,7 +106,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Initializes git-annex with a description of the git repository,
   and sets up `.gitattributes` and the pre-commit hook.
-  This is an optional, but recommended step.
+
+* lock [path ...]
+
+  Use this to undo an unlock command if you don't want to modify
+  the files, or have made modifications you want to discard.
 
 * unannex [path ...]
 
@@ -110,7 +127,8 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 * pre-commit [path ...]
 
   Fixes up symlinks that are staged as part of a commit, to ensure they
-  point to annexed content. 
+  point to annexed content. Also handles injecting changes to unlocked
+  files into the annex.
 
   This is meant to be called from git's pre-commit hook. `git annex init`
   automatically creates a pre-commit hook using this.

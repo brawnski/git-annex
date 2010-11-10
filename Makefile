@@ -1,8 +1,10 @@
 all: git-annex docs
 
+ghcmake=ghc -Wall -odir build -hidir build --make 
+
 git-annex:
 	mkdir -p build
-	ghc -Wall -odir build -hidir build --make git-annex
+	$(ghcmake) git-annex
 
 install:
 	install -d $(DESTDIR)/usr/bin
@@ -17,7 +19,8 @@ IKIWIKI=ikiwiki
 endif
 
 test:
-	runghc test.hs
+	$(ghcmake) test
+	./test
 
 docs:
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
@@ -27,7 +30,7 @@ docs:
 		--disable-plugin=smiley
 
 clean:
-	rm -rf build git-annex git-annex.1
+	rm -rf build git-annex git-annex.1 test
 	rm -rf doc/.ikiwiki html
 
-.PHONY: git-annex
+.PHONY: git-annex test

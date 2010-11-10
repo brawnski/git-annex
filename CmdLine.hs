@@ -30,10 +30,13 @@ import qualified Command.SetKey
 import qualified Command.Fix
 import qualified Command.Init
 import qualified Command.Fsck
+import qualified Command.Unlock
+import qualified Command.Lock
+import qualified Command.PreCommit
 
 subCmds :: [SubCommand]
 subCmds =
-	[ SubCommand "add" path	(withFilesNotInGit Command.Add.start)
+	[ SubCommand "add" path	(withFilesToAdd Command.Add.start)
 		"add files to annex"
 	, SubCommand "get" path	(withFilesInGit Command.Get.start)
 		"make content of annexed files available"
@@ -41,12 +44,18 @@ subCmds =
 		"indicate content of files not currently wanted"
 	, SubCommand "move" path	(withFilesInGit Command.Move.start)
 		"transfer content of files to/from another repository"
+	, SubCommand "unlock" path	(withFilesInGit Command.Unlock.start)
+		"unlock files for modification"
+	, SubCommand "edit" path	(withFilesInGit Command.Unlock.start)
+		"same as unlock"
+	, SubCommand "lock" path	(withFilesInGit Command.Lock.start)
+		"undo unlock command"
 	, SubCommand "init" desc	(withDescription Command.Init.start)
 		"initialize git-annex with repository description"
 	, SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
 		"undo accidential add command"
-	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.Fix.start)
-		"fix up symlinks before they are committed"
+	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.PreCommit.start)
+		"run by git pre-commit hook"
 	, SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
 		"adds a file using a specific key"
 	, SubCommand "dropkey"	key	(withKeys Command.DropKey.start)
@@ -106,13 +115,6 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 
 {- These functions find appropriate files or other things based on a
    user's parameters. -}
-withFilesNotInGit :: SubCmdSeekBackendFiles
-withFilesNotInGit a params = do
-	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.notInRepo repo) params
-	let files' = foldl (++) [] files
-	pairs <- Backend.chooseBackends files'
-	return $ map a $ filter (\(f,_) -> notState f) pairs
 withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
@@ -126,6 +128,14 @@ withFilesMissing a params = do
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
+withFilesToAdd :: SubCmdSeekBackendFiles
+withFilesToAdd a params = do
+	repo <- Annex.gitRepo
+	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
+	unlockedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
+	let files = foldl (++) [] $ newfiles ++ unlockedfiles
+	pairs <- Backend.chooseBackends files
+	return $ map a $ filter (\(f,_) -> notState f) pairs
 withDescription :: SubCmdSeekStrings
 withDescription a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
