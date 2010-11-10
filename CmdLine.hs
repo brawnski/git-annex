@@ -36,7 +36,7 @@ import qualified Command.PreCommit
 
 subCmds :: [SubCommand]
 subCmds =
-	[ SubCommand "add" path	(withFilesNotInGit Command.Add.start)
+	[ SubCommand "add" path	(withFilesToAdd Command.Add.start)
 		"add files to annex"
 	, SubCommand "get" path	(withFilesInGit Command.Get.start)
 		"make content of annexed files available"
@@ -115,13 +115,6 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 
 {- These functions find appropriate files or other things based on a
    user's parameters. -}
-withFilesNotInGit :: SubCmdSeekBackendFiles
-withFilesNotInGit a params = do
-	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.notInRepo repo) params
-	let files' = foldl (++) [] files
-	pairs <- Backend.chooseBackends files'
-	return $ map a $ filter (\(f,_) -> notState f) pairs
 withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
@@ -135,6 +128,14 @@ withFilesMissing a params = do
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
+withFilesToAdd :: SubCmdSeekBackendFiles
+withFilesToAdd a params = do
+	repo <- Annex.gitRepo
+	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
+	unlockedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
+	let files = foldl (++) [] $ newfiles ++ unlockedfiles
+	pairs <- Backend.chooseBackends files
+	return $ map a $ filter (\(f,_) -> notState f) pairs
 withDescription :: SubCmdSeekStrings
 withDescription a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
