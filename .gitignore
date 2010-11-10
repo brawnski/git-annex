@@ -1,4 +1,5 @@
 build/*
+test
 git-annex
 git-annex.1
 doc/.ikiwiki
