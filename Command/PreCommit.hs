@@ -33,7 +33,7 @@ start file = do
 		-- drop that and stage the symlink
 		g <- Annex.gitRepo
 		liftIO $ Git.run g ["reset", "-q", "--", file]
-		liftIO $ Git.run g ["add", "--", file]
+		Annex.queueRun
 
 	-- Fix symlinks as they are committed, this ensures the
 	-- relative links are not broken when moved around.
