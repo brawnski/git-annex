@@ -101,7 +101,6 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Initializes git-annex with a description of the git repository,
   and sets up `.gitattributes` and the pre-commit hook.
-  This is an optional, but recommended step.
 
 * lock [path ...]
 
@@ -123,7 +122,8 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 * pre-commit [path ...]
 
   Fixes up symlinks that are staged as part of a commit, to ensure they
-  point to annexed content. Also handles committing checked-out files.
+  point to annexed content. Also handles injecting changes to unlocked
+  files into the annex.
 
   This is meant to be called from git's pre-commit hook. `git annex init`
   automatically creates a pre-commit hook using this.

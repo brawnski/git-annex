@@ -32,6 +32,7 @@ import qualified Command.Init
 import qualified Command.Fsck
 import qualified Command.Unlock
 import qualified Command.Lock
+import qualified Command.PreCommit
 
 subCmds :: [SubCommand]
 subCmds =
@@ -51,8 +52,8 @@ subCmds =
 		"initialize git-annex with repository description"
 	, SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
 		"undo accidential add command"
-	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.Fix.start)
-		"fix up symlinks before they are committed"
+	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.PreCommit.start)
+		"run by git pre-commit hook"
 	, SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
 		"adds a file using a specific key"
 	, SubCommand "dropkey"	key	(withKeys Command.DropKey.start)
