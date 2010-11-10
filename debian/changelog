@@ -7,7 +7,6 @@ git-annex (0.04) UNRELEASED; urgency=low
   * Unlocked files will now automatically be added back into the annex when
     committed (and the updated symlink committed), by some magic in the
     pre-commit hook.
-  * Add build dep on libghc6-testpack-dev.
   * Add annex.version, which will be used to automate upgrades
     between incompatable versions.
   * Reorganised the layout of .git/annex/
@@ -18,9 +17,9 @@ git-annex (0.04) UNRELEASED; urgency=low
   * Annexed file contents are now made unwritable and put in unwriteable
     directories, to avoid them accidentially being removed or modified.
     (Thanks Josh Triplett for the idea.)
+  * Add build dep on libghc6-testpack-dev. Closes: #603016
   * Avoid using runghc to run test suite as it is not available on all
     architectures. Closes: #603006
-  * Missing build dep. Closes: #603016
 
  -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
 
