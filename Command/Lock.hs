@@ -45,12 +45,6 @@ perform file = do
 isLocked :: FilePath -> Annex Bool
 isLocked file = do
 	g <- Annex.gitRepo
-	changed <- typechanged g Nothing
-	changedCached <- typechanged g $ Just "--cached"
+	typechanged <- liftIO $ Git.typeChangedFiles g file
 	s <- liftIO $ getSymbolicLinkStatus file
-	return $ null (changed++changedCached) || isSymbolicLink s
-	where
-		typechanged g Nothing = typechanged' g params
-		typechanged g (Just param) = typechanged' g $ params++[param]
-		typechanged' g p = liftIO $ Git.pipeRead g $ p++[file]
-		params = ["diff", "--name-only", "--diff-filter=T"]
+	return $ (not $ elem file typechanged) || isSymbolicLink s
