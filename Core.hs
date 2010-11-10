@@ -173,6 +173,7 @@ moveAnnex key src = do
 	let dir = parentDir dest
 	liftIO $ do
 		createDirectoryIfMissing True dir
+		allowWrite dir -- in case the directory already exists
 		renameFile src dest
 		preventWrite dest
 		preventWrite dir
