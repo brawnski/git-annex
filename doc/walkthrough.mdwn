@@ -142,6 +142,8 @@ some other repository before dropping it.
 ## modifying annexed files
 
 Normally, the content of files in the annex is prevented from being modified.
+That's a good thing, because it might be the only copy, you wouldn't
+want to lose it in a fumblefingered mistake.
 
 	# echo oops > my_cool_big_file
 	bash: my_cool_big_file: Permission deined
@@ -151,12 +153,12 @@ In order to modify a file, it should first be unlocked.
 	# git annex unlock my_cool_big_file
 	unlock my_cool_big_file (copying...) ok
 
-They replaces the symlink that normally points at its content with a copy
+That replaces the symlink that normally points at its content with a copy
 of the content. You can then modify the file like any regular file. Because
 it is a regular file.
 
-If you decide you don't need to modify the file after all, or want to discard
-modifications, just use `git annex lock`.
+(If you decide you don't need to modify the file after all, or want to discard
+modifications, just use `git annex lock`.)
 
 When you `git commit`, git-annex's pre-commit hook will automatically
 notice that you are committing an unlocked file, and add its new content
