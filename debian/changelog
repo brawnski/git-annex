@@ -16,6 +16,7 @@ git-annex (0.04) UNRELEASED; urgency=low
     (Thanks Josh Triplett for the idea.)
   * Avoid using runghc to run test suite as it is not available on all
     architectures. Closes: #603006
+  * Missing build dep. Closes: #603016
 
  -- Joey Hess <joeyh@debian.org>  Mon, 08 Nov 2010 12:36:39 -0400
 
