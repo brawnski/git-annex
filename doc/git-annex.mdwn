@@ -85,9 +85,9 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Normally, the content of annexed files is protected from being changed.
   Unlocking a annexed file allows it to be modified. This replaces the
-  symlink for each specified file with a copy of the file content.
-  When you `git commit`, the file, the new content is injected back into
-  the annex.
+  symlink for each specified file with a copy of the file's content.
+  You can then modify it and `git annex add` (or `git commit`) to inject
+  it back into the annex.
 
 * edit [path ...]
 
