@@ -37,5 +37,5 @@ perform file link = do
 
 cleanup :: FilePath -> SubCmdCleanup
 cleanup file = do
-	Annex.queue "add" [] file
+	Annex.queue "add" ["--"] file
 	return True

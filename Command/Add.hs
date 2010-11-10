@@ -44,5 +44,5 @@ cleanup file key = do
 
 	link <- calcGitLink file key
 	liftIO $ createSymbolicLink link file
-	Annex.queue "add" [] file
+	Annex.queue "add" ["--"] file
 	return True

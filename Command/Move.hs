@@ -85,7 +85,7 @@ moveToCleanup remote key tmpfile = do
 			g <- Annex.gitRepo
 			remoteuuid <- getUUID remote
 			logfile <- liftIO $ logChange g key remoteuuid ValuePresent
-			Annex.queue "add" [] logfile
+			Annex.queue "add" ["--"] logfile
 			-- Cleanup on the local side is the same as done for the
 			-- drop subcommand.
 			Command.Drop.cleanup key
@@ -128,5 +128,5 @@ moveFromCleanup remote key = do
 		remoteuuid <- getUUID remote
 		g <- Annex.gitRepo
 		logfile <- liftIO $ logChange g key remoteuuid ValueMissing
-		Annex.queue "add" [] logfile
+		Annex.queue "add" ["--"] logfile
 	return ok

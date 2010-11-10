@@ -40,7 +40,7 @@ cleanup file key = do
 	g <- Annex.gitRepo
 
 	liftIO $ removeFile file
-	liftIO $ Git.run g ["rm", "--quiet", file]
+	liftIO $ Git.run g ["rm", "--quiet", "--", file]
 	-- git rm deletes empty directories; put them back
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 

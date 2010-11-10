@@ -41,5 +41,5 @@ perform file key = do
 	return $ Just $ cleanup file
 cleanup :: FilePath -> SubCmdCleanup
 cleanup file = do
-	Annex.queue "add" [] file
+	Annex.queue "add" ["--"] file
 	return True

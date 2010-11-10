@@ -131,7 +131,7 @@ logStatus key status = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	logfile <- liftIO $ logChange g key u status
-	Annex.queue "add" [] logfile
+	Annex.queue "add" ["--"] logfile
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 
@@ -261,5 +261,5 @@ upgradeFrom0 = do
 					link <- calcGitLink f k
 					liftIO $ removeFile f
 					liftIO $ createSymbolicLink link f
-					Annex.queue "add" [] f
+					Annex.queue "add" ["--"] f
 			fixlinks fs
