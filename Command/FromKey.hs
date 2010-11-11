@@ -20,6 +20,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withFilesMissing start]
+
 {- Adds a file pointing at a manually-specified key -}
 start :: SubCmdStartString
 start file = do

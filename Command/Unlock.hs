@@ -18,6 +18,9 @@ import Locations
 import Utility
 import Core
 
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
+
 {- The unlock subcommand replaces the symlink with a copy of the file's
  - content. -}
 start :: SubCmdStartString

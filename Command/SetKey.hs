@@ -19,6 +19,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withTempFile start]
+
 {- Sets cached content for a key. -}
 start :: SubCmdStartString
 start file = do

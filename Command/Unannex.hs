@@ -20,6 +20,9 @@ import Core
 import qualified GitRepo as Git
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
+
 {- The unannex subcommand undoes an add. -}
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, backend) -> do

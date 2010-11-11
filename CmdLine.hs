@@ -8,15 +8,9 @@
 module CmdLine (parseCmd) where
 
 import System.Console.GetOpt
-import Control.Monad.State (liftIO)
-import System.Directory
-import System.Posix.Files
-import Control.Monad (filterM, when)
+import Control.Monad (when)
 
-import qualified GitRepo as Git
 import qualified Annex
-import Locations
-import qualified Backend
 import Types
 
 import Command
@@ -37,37 +31,35 @@ import qualified Command.PreCommit
 
 subCmds :: [SubCommand]
 subCmds =
-	[ SubCommand "add" path		[withFilesNotInGit Command.Add.start,
-					 withFilesUnlocked Command.Add.start]
+	[ SubCommand "add" path		Command.Add.seek
 		"add files to annex"
-	, SubCommand "get" path		[withFilesInGit Command.Get.start]
+	, SubCommand "get" path		Command.Get.seek
 		"make content of annexed files available"
-	, SubCommand "drop" path	[withFilesInGit Command.Drop.start]
+	, SubCommand "drop" path	Command.Drop.seek
 		"indicate content of files not currently wanted"
-	, SubCommand "move" path	[withFilesInGit Command.Move.start]
+	, SubCommand "move" path	Command.Move.seek
 		"transfer content of files to/from another repository"
-	, SubCommand "unlock" path	[withFilesInGit Command.Unlock.start]
+	, SubCommand "unlock" path	Command.Unlock.seek
 		"unlock files for modification"
-	, SubCommand "edit" path	[withFilesInGit Command.Unlock.start]
+	, SubCommand "edit" path	Command.Unlock.seek
 		"same as unlock"
-	, SubCommand "lock" path	[withFilesUnlocked Command.Lock.start]
+	, SubCommand "lock" path	Command.Lock.seek
 		"undo unlock command"
-	, SubCommand "init" desc	[withDescription Command.Init.start]
+	, SubCommand "init" desc	Command.Init.seek
 		"initialize git-annex with repository description"
-	, SubCommand "unannex" path	[withFilesInGit Command.Unannex.start]
+	, SubCommand "unannex" path	Command.Unannex.seek
 		"undo accidential add command"
-	, SubCommand "pre-commit" path	[withFilesToBeCommitted Command.Fix.start,
-					 withUnlockedFilesToBeCommitted Command.PreCommit.start]
+	, SubCommand "pre-commit" path	Command.PreCommit.seek
 		"run by git pre-commit hook"
-	, SubCommand "fromkey" key	[withFilesMissing Command.FromKey.start]
+	, SubCommand "fromkey" key	Command.FromKey.seek
 		"adds a file using a specific key"
-	, SubCommand "dropkey"	key	[withKeys Command.DropKey.start]
+	, SubCommand "dropkey"	key	Command.DropKey.seek
 		"drops annexed content for specified keys"
-	, SubCommand "setkey" key	[withTempFile Command.SetKey.start]
+	, SubCommand "setkey" key	Command.SetKey.seek
 		"sets annexed content for a key using a temp file"
-	, SubCommand "fix" path		[withFilesInGit Command.Fix.start]
+	, SubCommand "fix" path		Command.Fix.seek
 		"fix up symlinks to point to annexed content"
-	, SubCommand "fsck" nothing	[withNothing Command.Fsck.start]
+	, SubCommand "fsck" nothing	Command.Fsck.seek
 		"check annex for problems"
 	]
 	where
@@ -115,67 +107,6 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 			subcmddesc c
 		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
-
-{- These functions find appropriate files or other things based on a
-   user's parameters, and run a specified action on them. -}
-withFilesInGit :: SubCmdSeekStrings
-withFilesInGit a params = do
-	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.inRepo repo) params
-	return $ map a $ filter notState $ foldl (++) [] files
-withFilesMissing :: SubCmdSeekStrings
-withFilesMissing a params = do
-	files <- liftIO $ filterM missing params
-	return $ map a $ filter notState files
-	where
-		missing f = do
-			e <- doesFileExist f
-			return $ not e
-withFilesNotInGit :: SubCmdSeekBackendFiles
-withFilesNotInGit a params = do
-	repo <- Annex.gitRepo
-	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
-	backendPairs a $ filter notState $ foldl (++) [] newfiles
-withFilesUnlocked :: SubCmdSeekBackendFiles
-withFilesUnlocked a params = do
-	-- unlocked files have changed type from a symlink to a regular file
-	repo <- Annex.gitRepo
-	typechangedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
-	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
-	backendPairs a $ filter notState unlockedfiles
-backendPairs :: SubCmdSeekBackendFiles
-backendPairs a files = do
-	pairs <- Backend.chooseBackends files
-	return $ map a pairs
-withDescription :: SubCmdSeekStrings
-withDescription a params = return [a $ unwords params]
-withFilesToBeCommitted :: SubCmdSeekStrings
-withFilesToBeCommitted a params = do
-	repo <- Annex.gitRepo
-	tocommit <- liftIO $ mapM (Git.stagedFiles repo) params
-	return $ map a $ filter notState $ foldl (++) [] tocommit
-withUnlockedFilesToBeCommitted :: SubCmdSeekStrings
-withUnlockedFilesToBeCommitted a params = do
-	repo <- Annex.gitRepo
-	typechangedfiles <- liftIO $ mapM (Git.typeChangedStagedFiles repo) params
-	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
-	return $ map a $ filter notState unlockedfiles
-withKeys :: SubCmdSeekStrings
-withKeys a params = return $ map a params
-withTempFile :: SubCmdSeekStrings
-withTempFile a params = return $ map a params
-withNothing :: SubCmdSeekNothing
-withNothing a _ = return [a]
-
-{- filter out files from the state directory -}
-notState :: FilePath -> Bool
-notState f = stateLoc /= take (length stateLoc) f
-	
-{- filter out symlinks -}	
-notSymlink :: FilePath -> IO Bool
-notSymlink f = do
-	s <- liftIO $ getSymbolicLinkStatus f
-	return $ not $ isSymbolicLink s
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it

@@ -1,4 +1,4 @@
-{- git-annex command types
+{- git-annex commands
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
@@ -7,10 +7,17 @@
 
 module Command where
 
+import Control.Monad.State (liftIO)
+import System.Directory
+import System.Posix.Files
+import Control.Monad (filterM)
+
 import Types
 import qualified Backend
 import Messages
 import qualified Annex
+import qualified GitRepo as Git
+import Locations
 
 {- A subcommand runs in four stages.
  -
@@ -87,3 +94,64 @@ isAnnexed file a = do
 	case (r) of
 		Just v -> a v
 		Nothing -> return Nothing
+
+{- These functions find appropriate files or other things based on a
+   user's parameters, and run a specified action on them. -}
+withFilesInGit :: SubCmdSeekStrings
+withFilesInGit a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ mapM (Git.inRepo repo) params
+	return $ map a $ filter notState $ foldl (++) [] files
+withFilesMissing :: SubCmdSeekStrings
+withFilesMissing a params = do
+	files <- liftIO $ filterM missing params
+	return $ map a $ filter notState files
+	where
+		missing f = do
+			e <- doesFileExist f
+			return $ not e
+withFilesNotInGit :: SubCmdSeekBackendFiles
+withFilesNotInGit a params = do
+	repo <- Annex.gitRepo
+	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
+	backendPairs a $ filter notState $ foldl (++) [] newfiles
+withFilesUnlocked :: SubCmdSeekBackendFiles
+withFilesUnlocked a params = do
+	-- unlocked files have changed type from a symlink to a regular file
+	repo <- Annex.gitRepo
+	typechangedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
+	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
+	backendPairs a $ filter notState unlockedfiles
+backendPairs :: SubCmdSeekBackendFiles
+backendPairs a files = do
+	pairs <- Backend.chooseBackends files
+	return $ map a pairs
+withDescription :: SubCmdSeekStrings
+withDescription a params = return [a $ unwords params]
+withFilesToBeCommitted :: SubCmdSeekStrings
+withFilesToBeCommitted a params = do
+	repo <- Annex.gitRepo
+	tocommit <- liftIO $ mapM (Git.stagedFiles repo) params
+	return $ map a $ filter notState $ foldl (++) [] tocommit
+withUnlockedFilesToBeCommitted :: SubCmdSeekStrings
+withUnlockedFilesToBeCommitted a params = do
+	repo <- Annex.gitRepo
+	typechangedfiles <- liftIO $ mapM (Git.typeChangedStagedFiles repo) params
+	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
+	return $ map a $ filter notState unlockedfiles
+withKeys :: SubCmdSeekStrings
+withKeys a params = return $ map a params
+withTempFile :: SubCmdSeekStrings
+withTempFile a params = return $ map a params
+withNothing :: SubCmdSeekNothing
+withNothing a _ = return [a]
+
+{- filter out files from the state directory -}
+notState :: FilePath -> Bool
+notState f = stateLoc /= take (length stateLoc) f
+	
+{- filter out symlinks -}	
+notSymlink :: FilePath -> IO Bool
+notSymlink f = do
+	s <- liftIO $ getSymbolicLinkStatus f
+	return $ not $ isSymbolicLink s

@@ -11,7 +11,7 @@ import Control.Monad.State (liftIO)
 import Monad (when)
 
 import Command
-import Command.Drop
+import qualified Command.Drop
 import qualified Annex
 import Locations
 import LocationLog
@@ -21,6 +21,9 @@ import qualified GitRepo as Git
 import qualified Remotes
 import UUID
 import Messages
+
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
 
 {- Move a file either --to or --from a repository.
  -

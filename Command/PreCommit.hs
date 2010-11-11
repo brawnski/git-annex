@@ -14,9 +14,14 @@ import qualified Annex
 import qualified Backend
 import qualified GitRepo as Git
 import qualified Command.Add
+import qualified Command.Fix
 
-{- Run by git pre-commit hook; passed unlocked files that are being
- - committed. -}
+{- The pre-commit hook needs to fix symlinks to all files being committed.
+ - And, it needs to inject unlocked files into the annex. -}
+seek :: [SubCmdSeek]
+seek = [withFilesToBeCommitted Command.Fix.start,
+	withUnlockedFilesToBeCommitted start]
+
 start :: SubCmdStartString
 start file = return $ Just $ perform file
 

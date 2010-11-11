@@ -15,6 +15,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withKeys start]
+
 {- Drops cached content for a key. -}
 start :: SubCmdStartString
 start keyname = do

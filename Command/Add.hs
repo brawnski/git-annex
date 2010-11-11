@@ -18,6 +18,10 @@ import Types
 import Core
 import Messages
 
+{- Add acts on both files not checked into git yet, and unlocked files. -}
+seek :: [SubCmdSeek]
+seek = [withFilesNotInGit start, withFilesUnlocked start]
+
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
  - to its content. -}

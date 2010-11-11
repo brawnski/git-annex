@@ -17,6 +17,9 @@ import Utility
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
+
 {- Fixes the symlink to an annexed file. -}
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, _) -> do

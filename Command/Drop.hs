@@ -16,6 +16,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
+
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
 start :: SubCmdStartString

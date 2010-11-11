@@ -14,6 +14,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withNothing start]
+
 {- Checks the whole annex for problems. -}
 start :: SubCmdStart
 start = do

@@ -18,6 +18,9 @@ import UUID
 import Version
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withDescription start]
+
 {- Stores description for the repository etc. -}
 start :: SubCmdStartString
 start description = do

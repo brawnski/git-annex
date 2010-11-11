@@ -13,6 +13,9 @@ import Types
 import Core
 import Messages
 
+seek :: [SubCmdSeek]
+seek = [withFilesInGit start]
+
 {- Gets an annexed file from one of the backends. -}
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, backend) -> do

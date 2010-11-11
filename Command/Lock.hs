@@ -15,6 +15,9 @@ import Messages
 import qualified Annex
 import qualified GitRepo as Git
 
+seek :: [SubCmdSeek]
+seek = [withFilesUnlocked start]
+
 {- Undo unlock -}
 start :: SubCmdStartBackendFile
 start (file, _) = do
