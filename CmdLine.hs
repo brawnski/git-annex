@@ -17,6 +17,7 @@ import qualified Annex
 import Locations
 import qualified Backend
 import Types
+import Core
 
 import Command
 import qualified Command.Add
@@ -36,35 +37,37 @@ import qualified Command.PreCommit
 
 subCmds :: [SubCommand]
 subCmds =
-	[ SubCommand "add" path	(withFilesToAdd Command.Add.start)
+	[ SubCommand "add" path		[withFilesNotInGit Command.Add.start,
+					 withFilesUnlocked Command.Add.start]
 		"add files to annex"
-	, SubCommand "get" path	(withFilesInGit Command.Get.start)
+	, SubCommand "get" path		[withFilesInGit Command.Get.start]
 		"make content of annexed files available"
-	, SubCommand "drop" path	(withFilesInGit Command.Drop.start)
+	, SubCommand "drop" path	[withFilesInGit Command.Drop.start]
 		"indicate content of files not currently wanted"
-	, SubCommand "move" path	(withFilesInGit Command.Move.start)
+	, SubCommand "move" path	[withFilesInGit Command.Move.start]
 		"transfer content of files to/from another repository"
-	, SubCommand "unlock" path	(withFilesInGit Command.Unlock.start)
+	, SubCommand "unlock" path	[withFilesInGit Command.Unlock.start]
 		"unlock files for modification"
-	, SubCommand "edit" path	(withFilesInGit Command.Unlock.start)
+	, SubCommand "edit" path	[withFilesInGit Command.Unlock.start]
 		"same as unlock"
-	, SubCommand "lock" path	(withFilesInGit Command.Lock.start)
+	, SubCommand "lock" path	[withFilesUnlocked Command.Lock.start]
 		"undo unlock command"
-	, SubCommand "init" desc	(withDescription Command.Init.start)
+	, SubCommand "init" desc	[withDescription Command.Init.start]
 		"initialize git-annex with repository description"
-	, SubCommand "unannex" path	(withFilesInGit Command.Unannex.start)
+	, SubCommand "unannex" path	[withFilesInGit Command.Unannex.start]
 		"undo accidential add command"
-	, SubCommand "pre-commit" path (withFilesToBeCommitted Command.PreCommit.start)
+	, SubCommand "pre-commit" path	[withFilesToBeCommitted Command.Fix.start,
+					 withUnlockedFilesToBeCommitted Command.PreCommit.start]
 		"run by git pre-commit hook"
-	, SubCommand "fromkey" key	(withFilesMissing Command.FromKey.start)
+	, SubCommand "fromkey" key	[withFilesMissing Command.FromKey.start]
 		"adds a file using a specific key"
-	, SubCommand "dropkey"	key	(withKeys Command.DropKey.start)
+	, SubCommand "dropkey"	key	[withKeys Command.DropKey.start]
 		"drops annexed content for specified keys"
-	, SubCommand "setkey" key	(withTempFile Command.SetKey.start)
+	, SubCommand "setkey" key	[withTempFile Command.SetKey.start]
 		"sets annexed content for a key using a temp file"
-	, SubCommand "fix" path	(withFilesInGit Command.Fix.start)
+	, SubCommand "fix" path		[withFilesInGit Command.Fix.start]
 		"fix up symlinks to point to annexed content"
-	, SubCommand "fsck" nothing	(withNothing Command.Fsck.start)
+	, SubCommand "fsck" nothing	[withNothing Command.Fsck.start]
 		"check annex for problems"
 	]
 	where
@@ -128,12 +131,17 @@ withFilesMissing a params = do
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
-withFilesToAdd :: SubCmdSeekBackendFiles
-withFilesToAdd a params = do
+withFilesNotInGit :: SubCmdSeekBackendFiles
+withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
-	unlockedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
-	let files = foldl (++) [] $ newfiles ++ unlockedfiles
+	backendPairs a $ foldl (++) [] newfiles
+withFilesUnlocked :: SubCmdSeekBackendFiles
+withFilesUnlocked a params = do
+	unlocked <- mapM unlockedFiles params
+	backendPairs a $ foldl (++) [] unlocked
+backendPairs :: SubCmdSeekBackendFiles
+backendPairs a files = do
 	pairs <- Backend.chooseBackends files
 	return $ map a $ filter (\(f,_) -> notState f) pairs
 withDescription :: SubCmdSeekStrings
@@ -141,8 +149,15 @@ withDescription a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.stagedFiles repo) params
-	return $ map a $ filter notState $ foldl (++) [] files
+	tocommit <- liftIO $ mapM (Git.stagedFiles repo) params
+	return $ map a $ filter notState $ foldl (++) [] tocommit
+withUnlockedFilesToBeCommitted :: SubCmdSeekStrings
+withUnlockedFilesToBeCommitted a params = do
+	repo <- Annex.gitRepo
+	unlocked <- mapM unlockedFiles params
+	tocommit <- liftIO $ mapM (Git.stagedFiles repo) $
+		filter notState $ foldl (++) [] unlocked
+	return $ map a $ foldl (++) [] tocommit
 withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings

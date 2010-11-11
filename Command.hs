@@ -41,7 +41,7 @@ type SubCmdSeekNothing = SubCmdStart -> SubCmdSeek
 data SubCommand = SubCommand {
 	subcmdname :: String,
 	subcmdparams :: String,
-	subcmdseek :: SubCmdSeek,
+	subcmdseek :: [SubCmdSeek],
 	subcmddesc :: String
 }
 
@@ -49,8 +49,8 @@ data SubCommand = SubCommand {
  - the parameters passed to it. -}
 prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
 prepSubCmd SubCommand { subcmdseek = seek } state params = do
-	list <- Annex.eval state $ seek params
-	return $ map doSubCmd list
+	lists <- Annex.eval state $ mapM (\s -> s params) seek
+	return $ map doSubCmd $ foldl (++) [] lists
 
 {- Runs a subcommand through the start, perform and cleanup stages -}
 doSubCmd :: SubCmdStart -> SubCmdCleanup

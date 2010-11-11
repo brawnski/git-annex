@@ -1,6 +1,12 @@
 git-annex (0.05) UNRELEASED; urgency=low
 
-  * Optimize both pre-commit and lock subcommands.
+  * Optimize both pre-commit and lock subcommands to not call git diff
+    on every file being committed or locked.
+    (This actually also works around a bug in ghc 6.12.1, that caused
+    git-annex 0.04 pre-commit to sometimes corrupt filenames and fail.
+    The excessive number of calls made by pre-commit exposed the ghc bug.
+    Thanks Josh Triplett for the debugging.)
+  * Build with -O3.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 11 Nov 2010 14:52:05 -0400
 
