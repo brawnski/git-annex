@@ -1,3 +1,9 @@
+git-annex (0.05) UNRELEASED; urgency=low
+
+  * Optimize both pre-commit and lock subcommands.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 11 Nov 2010 14:52:05 -0400
+
 git-annex (0.04) unstable; urgency=low
 
   * Add unlock subcommand, which replaces the symlink with a copy of

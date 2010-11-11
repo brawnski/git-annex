@@ -37,14 +37,16 @@ perform file = do
 	liftIO $ Git.run g ["checkout", "--", file]
 	return $ Just $ return True -- no cleanup needed
 
-{- Checks if a file is unlocked for edit.
- -
- - But, without the symlink to the annex, cannot tell for sure if the
- - file was annexed before. So, check if git thinks the file's type has
- - changed (from a symlink to a regular file). -}
+{- Checks if a file is unlocked for edit. -}
 isLocked :: FilePath -> Annex Bool
 isLocked file = do
-	g <- Annex.gitRepo
-	typechanged <- liftIO $ Git.typeChangedFiles g file
+	-- check if it's a symlink first, as that's cheapest
 	s <- liftIO $ getSymbolicLinkStatus file
-	return $ (not $ elem file typechanged) || isSymbolicLink s
+	if (isSymbolicLink s)
+		then return True -- Symlinked files are always locked.
+		else do
+			-- Not a symlink, so see if the type has changed,
+			-- if so it is presumed to have been unlocked.
+			g <- Annex.gitRepo
+			typechanged <- liftIO $ Git.typeChangedFiles g file
+			return $ not $ elem file typechanged

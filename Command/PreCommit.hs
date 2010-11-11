@@ -22,7 +22,7 @@ import qualified Command.Add
 start :: SubCmdStartString
 start file = do
 	-- If a file is unlocked for edit, add its new content to the
-	-- annex, -}
+	-- annex. -}
 	locked <- Command.Lock.isLocked file
 	when (not locked) $ do
 		pairs <- Backend.chooseBackends [file]
@@ -30,7 +30,8 @@ start file = do
 		unless (ok) $ do
 			error $ "failed to add " ++ file ++ "; canceling commit"
 		-- git commit will have staged the file's content;
-		-- drop that and stage the symlink
+		-- drop that and run command queued by Add.state to
+		-- stage the symlink
 		g <- Annex.gitRepo
 		liftIO $ Git.run g ["reset", "-q", "--", file]
 		Annex.queueRun
