@@ -1,6 +1,6 @@
 all: git-annex docs
 
-ghcmake=ghc -Wall -odir build -hidir build --make 
+ghcmake=ghc -Wall -odir build -hidir build -O2 --make 
 
 git-annex:
 	$(ghcmake) git-annex
