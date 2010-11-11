@@ -2,12 +2,12 @@ git-annex (0.05) unstable; urgency=low
 
   * Optimize both pre-commit and lock subcommands to not call git diff
     on every file being committed/locked.
-    (This actually also works around a bug in ghc 6.12.1, that caused
+    (This actually also works around a bug in ghc, that caused
     git-annex 0.04 pre-commit to sometimes corrupt filename being read
     from git ls-files and fail.
     The excessive number of calls made by pre-commit exposed the ghc bug.
     Thanks Josh Triplett for the debugging.)
-  * Build with -O3.
+  * Build with -O2.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 11 Nov 2010 18:31:09 -0400
 
