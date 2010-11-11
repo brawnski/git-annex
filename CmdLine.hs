@@ -10,6 +10,7 @@ module CmdLine (parseCmd) where
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import System.Directory
+import System.Posix.Files
 import Control.Monad (filterM, when)
 
 import qualified GitRepo as Git
@@ -17,7 +18,6 @@ import qualified Annex
 import Locations
 import qualified Backend
 import Types
-import Core
 
 import Command
 import qualified Command.Add
@@ -138,8 +138,11 @@ withFilesNotInGit a params = do
 	backendPairs a $ foldl (++) [] newfiles
 withFilesUnlocked :: SubCmdSeekBackendFiles
 withFilesUnlocked a params = do
-	unlocked <- mapM unlockedFiles params
-	backendPairs a $ foldl (++) [] unlocked
+	-- unlocked files have changed type from a symlink to a regular file
+	repo <- Annex.gitRepo
+	typechangedfiles <- liftIO $ mapM (Git.typeChangedFiles repo) params
+	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
+	backendPairs a $ filter notState unlockedfiles
 backendPairs :: SubCmdSeekBackendFiles
 backendPairs a files = do
 	pairs <- Backend.chooseBackends files
@@ -154,10 +157,9 @@ withFilesToBeCommitted a params = do
 withUnlockedFilesToBeCommitted :: SubCmdSeekStrings
 withUnlockedFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	unlocked <- mapM unlockedFiles params
-	tocommit <- liftIO $ mapM (Git.stagedFiles repo) $
-		filter notState $ foldl (++) [] unlocked
-	return $ map a $ foldl (++) [] tocommit
+	typechangedfiles <- liftIO $ mapM (Git.typeChangedStagedFiles repo) params
+	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
+	return $ map a $ filter notState unlockedfiles
 withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
@@ -168,6 +170,12 @@ withNothing a _ = return [a]
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool
 notState f = stateLoc /= take (length stateLoc) f
+	
+{- filter out symlinks -}	
+notSymlink :: FilePath -> IO Bool
+notSymlink f = do
+	s <- liftIO $ getSymbolicLinkStatus f
+	return $ not $ isSymbolicLink s
 
 {- Parses command line and returns two lists of actions to be 
  - run in the Annex monad. The first actions configure it

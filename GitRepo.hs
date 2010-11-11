@@ -40,6 +40,7 @@ module GitRepo (
 	decodeGitFile,
 	encodeGitFile,
 	typeChangedFiles,
+	typeChangedStagedFiles,
 
 	prop_idempotent_deencode
 ) where
@@ -59,7 +60,6 @@ import Data.Char
 import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
-import Data.List
 
 import Utility
 
@@ -244,16 +244,22 @@ stagedFiles repo l = pipeNullSplit repo
 	["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z", 
 		"--", l]
 
-{- Passed a location, returns a list of the files whose type has changed. -}
+{- Passed a location, returns a list of the files, staged for
+ - commit, whose type has changed. -}
+typeChangedStagedFiles :: Repo -> FilePath -> IO [FilePath]
+typeChangedStagedFiles repo l = typeChangedFiles' repo l ["--cached"]
+
+{- Passed a location, returns a list of the files whose type has changed. 
+ - Files only staged for commit will not be included. -}
 typeChangedFiles :: Repo -> FilePath -> IO [FilePath]
-typeChangedFiles repo l = do
-	changed <- pipeNullSplit repo $ start ++ end
-	changedCached <- pipeNullSplit repo $ start ++ ["--cached"] ++ end
-	-- a file can be found twice by the above, so nub
-	return $ nub $ changed ++ changedCached
+typeChangedFiles repo l = typeChangedFiles' repo l []
+
+typeChangedFiles' :: Repo -> FilePath -> [String] -> IO [FilePath]
+typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = ["diff", "--name-only", "--diff-filter=T", "-z"]
 		end = ["--", l]
+	
 
 {- Reads null terminated output of a git command (as enabled by the -z 
  - parameter), and splits it into a list of files. -}

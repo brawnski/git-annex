@@ -224,20 +224,6 @@ getKeysReferenced = do
 	keypairs <- mapM Backend.lookupFile files
 	return $ map fst $ catMaybes keypairs
 
-{- Passed a location (a directory or a single file, returns
- - files there that are unlocked for editing. -}
-unlockedFiles :: FilePath -> Annex [FilePath]
-unlockedFiles l = do
-	-- unlocked files have changed type from a symlink to a regular file
-	g <- Annex.gitRepo
-	typechangedfiles <- liftIO $ Git.typeChangedFiles g l
-	unlockedfiles <- filterM notsymlink typechangedfiles
-	return unlockedfiles
-	where
-		notsymlink f = do
-			s <- liftIO $ getSymbolicLinkStatus f
-			return $ not $ isSymbolicLink s
-
 {- Uses the annex.version git config setting to automate upgrades. -}
 autoUpgrade :: Annex ()
 autoUpgrade = do
