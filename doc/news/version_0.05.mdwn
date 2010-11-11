@@ -1,0 +1,10 @@
+git-annex 0.05 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Optimize both pre-commit and lock subcommands to not call git diff
+     on every file being committed/locked.
+     (This actually also works around a bug in ghc, that caused
+     git-annex 0.04 pre-commit to sometimes corrupt filename being read
+     from git ls-files and fail.
+     The excessive number of calls made by pre-commit exposed the ghc bug.
+     Thanks Josh Triplett for the debugging.)
+   * Build with -O2."""]]
