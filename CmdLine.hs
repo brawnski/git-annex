@@ -117,7 +117,7 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		pad n s = replicate (n - length s) ' '
 
 {- These functions find appropriate files or other things based on a
-   user's parameters. -}
+   user's parameters, and run a specified action on them. -}
 withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
@@ -135,7 +135,7 @@ withFilesNotInGit :: SubCmdSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
-	backendPairs a $ foldl (++) [] newfiles
+	backendPairs a $ filter notState $ foldl (++) [] newfiles
 withFilesUnlocked :: SubCmdSeekBackendFiles
 withFilesUnlocked a params = do
 	-- unlocked files have changed type from a symlink to a regular file
@@ -146,7 +146,7 @@ withFilesUnlocked a params = do
 backendPairs :: SubCmdSeekBackendFiles
 backendPairs a files = do
 	pairs <- Backend.chooseBackends files
-	return $ map a $ filter (\(f,_) -> notState f) pairs
+	return $ map a pairs
 withDescription :: SubCmdSeekStrings
 withDescription a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
