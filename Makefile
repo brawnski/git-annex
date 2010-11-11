@@ -3,7 +3,6 @@ all: git-annex docs
 ghcmake=ghc -Wall -odir build -hidir build --make 
 
 git-annex:
-	mkdir -p build
 	$(ghcmake) git-annex
 
 install:
