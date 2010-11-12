@@ -34,3 +34,41 @@ get keys in that branch.
 Would have to be careful about conflicts when deleting and bringing back
 files with the same name. And would need to avoid expensive searching thru
 all history to try to find an old log file.
+
+## fleshed out proposal
+
+Let's use one branch per uuid, named git-annex/$UUID.
+
+- I came to realize this would be a good idea when thinking about how
+  to upgrade. Each individual annex will be upgraded independantly,
+  so each will want to make a branch, and if the branches aren't distinct,
+  they will merge conflict for sure.
+- TODO: What will need to be done to git to make it push/pull these new
+  branches?
+- A given repo only ever writes to its UUID branch. So no conflicts.
+- (BTW, UUIDs probably don't compress well, and this reduces the bloat of having
+  them repeated lots of times in the tree.)
+- Per UUID branches mean that if it wants to find a file's location
+  amoung configured remotes, it can examine only their branches, if
+  desired.
+
+In the branch, only one file is needed. Call it locationlog. git-annex
+can cache location log changes and write them all to locationlog in
+a single git operation on shutdown.
+
+- TODO: what if it's ctrl-c'd with changes pending? Perhaps it should
+  collect them to ,git/annex/locationlog, and inject that file on shutdown?
+- This will be less overhead than the current staging of all the log files.
+
+The log is not appended to, so in git we have a series of commits each of
+which replaces the log's entire contens.
+
+To find locations of a key, all (or all relevant) branches need to be
+examined, looking backward through the history of each until a log
+with a indication of the presense/absense of the key is found.
+
+- This will be less expensive for files that have recently been added
+  or transfered.
+- It could get pretty slow when digging deeper.
+- Only 3 places in git-annex will be affected by any slowdown: move --from,
+  get and drop.
