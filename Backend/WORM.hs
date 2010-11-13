@@ -47,7 +47,7 @@ keyValue file = do
 
 {- Extracts the file size from a key. -}
 keySize :: Key -> FileOffset
-keySize key = read $ section !! 2
+keySize key = read $ section !! 1
 	where
 		section = split ":" (keyName key)
 

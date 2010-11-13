@@ -207,9 +207,11 @@ fromAnnex key dest = do
 moveBad :: Key -> Annex FilePath
 moveBad key = do
 	g <- Annex.gitRepo
-	let src = parentDir $ annexLocation g key
+	let src = annexLocation g key
 	let dest = annexBadLocation g
-	liftIO $ renameDirectory src dest
+	liftIO $ createDirectoryIfMissing True dest
+	liftIO $ renameFile src (dest ++ takeFileName src)
+	liftIO $ removeDirectory (parentDir src)
 	return dest
 
 {- List of keys whose content exists in .git/annex/objects/ -}
