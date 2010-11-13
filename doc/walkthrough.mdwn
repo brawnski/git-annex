@@ -288,7 +288,7 @@ in `.git/annex/objects/`.
 
 	# git annex fsck
 	fsck  (checking for unused data...) ok
-	fsck my_cool_big_file (checksum..) ok
+	fsck my_cool_big_file (checksum...) ok
 	......
 
 You can also specifiy the files to check.  This is particularly useful if 
@@ -296,7 +296,7 @@ you're using sha1 and don't want to spend a long time checksumming everything.
 
 	# git annex fsck my_cool_big_file
 	fsck  (checking for unused data...) ok
-	fsck my_cool_big_file (checksum..) ok
+	fsck my_cool_big_file (checksum...) ok
 
 ## fsck: When things go wrong
 
@@ -310,7 +310,7 @@ might say about a badly messed up annex:
 	  If this data is no longer needed, it can be removed using git-annex dropkey:
 	    WORM:1289672605:3:file
 	failed
-	fsck my_cool_big_file (checksum..)
+	fsck my_cool_big_file (checksum...)
 	  Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2
 	  ** No known copies of the file exist!
 	failed
