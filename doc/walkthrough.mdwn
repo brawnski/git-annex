@@ -311,7 +311,7 @@ might say about a badly messed up annex:
 	    WORM:1289672605:3:file
 	failed
 	fsck my_cool_big_file (checksum..)
-	  Bad file content; moved to .git/annex/bad/
+	  Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2
 	  ** No known copies of the file exist!
 	failed
 	fsck important_file

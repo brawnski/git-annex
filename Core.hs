@@ -203,14 +203,14 @@ fromAnnex key dest = do
 		removeDirectory dir
 
 {- Moves a key out of .git/annex/objects/ into .git/annex/bad, and
- - returns the directory it was moved to. -}
+ - returns the file it was moved to. -}
 moveBad :: Key -> Annex FilePath
 moveBad key = do
 	g <- Annex.gitRepo
 	let src = annexLocation g key
-	let dest = annexBadLocation g
+	let dest = annexBadLocation g ++ takeFileName src
 	liftIO $ createDirectoryIfMissing True dest
-	liftIO $ renameFile src (dest ++ takeFileName src)
+	liftIO $ renameFile src dest
 	liftIO $ removeDirectory (parentDir src)
 	return dest
 
