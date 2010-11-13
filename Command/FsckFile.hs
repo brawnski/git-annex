@@ -18,12 +18,8 @@ seek = [withFilesInGit start]
 {- Checks a file's backend data for problems. -}
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, backend) -> do
-	inbackend <- Backend.hasKey key
-	if (not inbackend)
-		then return Nothing
-		else do
-			showStart "fsck" file
-			return $ Just $ perform key backend
+	showStart "fsck" file
+	return $ Just $ perform key backend
 
 perform :: Key -> Backend -> SubCmdPerform
 perform key backend = do
