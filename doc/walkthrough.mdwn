@@ -295,7 +295,6 @@ You can also specifiy the files to check.  This is particularly useful if
 you're using sha1 and don't want to spend a long time checksumming everything.
 
 	# git annex fsck my_cool_big_file
-	fsck  (only checking specified files) ok
 	fsck my_cool_big_file (checksum...) ok
 
 ## fsck: When things go wrong

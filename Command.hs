@@ -44,6 +44,7 @@ type SubCmdStartString = String -> SubCmdStart
 type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartBackendFile = (FilePath, Maybe Backend) -> SubCmdStart
 type SubCmdSeekNothing = SubCmdStart -> SubCmdSeek
+type SubCmdStartNothing = SubCmdStart
 
 data SubCommand = SubCommand {
 	subcmdname :: String,
@@ -143,6 +144,9 @@ withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
 withTempFile a params = return $ map a params
+withNothing :: SubCmdSeekNothing
+withNothing a [] = return [a]
+withNothing _ _ = return []
 
 {- Default to acting on all files matching the seek action if
  - none are specified. -}
