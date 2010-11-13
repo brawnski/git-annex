@@ -1,0 +1,8 @@
+git-annex 0.06 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * fsck: Check if annex.numcopies is satisfied.
+   * fsck: Verify the sha1 of files when the SHA1 backend is used.
+   * fsck: Verify the size of files when the WORM backend is used.
+   * fsck: Allow specifying individual files if fscking everything
+     is not desired.
+   * fsck: Fix bug, introduced in 0.04, in detection of unused data."""]]
