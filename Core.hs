@@ -14,6 +14,7 @@ import System.Path
 import Control.Monad (when, unless, filterM)
 import System.Posix.Files
 import Data.Maybe
+import System.FilePath
 
 import Types
 import Locations
@@ -201,6 +202,16 @@ fromAnnex key dest = do
 		renameFile file dest
 		removeDirectory dir
 
+{- Moves a key out of .git/annex/objects/ into .git/annex/bad, and
+ - returns the directory it was moved to. -}
+moveBad :: Key -> Annex FilePath
+moveBad key = do
+	g <- Annex.gitRepo
+	let src = parentDir $ annexLocation g key
+	let dest = annexBadLocation g
+	liftIO $ renameDirectory src dest
+	return dest
+
 {- List of keys whose content exists in .git/annex/objects/ -}
 getKeysPresent :: Annex [Key]
 getKeysPresent = do
@@ -209,11 +220,12 @@ getKeysPresent = do
 getKeysPresent' :: FilePath -> Annex [Key]
 getKeysPresent' dir = do
 	contents <- liftIO $ getDirectoryContents dir
-	files <- liftIO $ filterM isreg contents
+	files <- liftIO $ filterM present contents
 	return $ map fileKey files
 	where
-		isreg f = do
-			s <- getFileStatus $ dir ++ "/" ++ f
+		present d = do
+			s <- getFileStatus $ dir ++ "/" ++ d ++ "/" 
+				++ (takeFileName d)
 			return $ isRegularFile s
 
 {- List of keys referenced by symlinks in the git repo. -}

@@ -146,6 +146,16 @@ withTempFile a params = return $ map a params
 withNothing :: SubCmdSeekNothing
 withNothing a _ = return [a]
 
+{- Default to acting on all files matching the seek action if
+ - none are specified. -}
+withAll :: SubCmdSeekStrings -> SubCmdSeekStrings
+withAll w a params = do
+	if null params
+		then do
+			g <- Annex.gitRepo
+			w a [Git.workTree g]
+		else w a params
+
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool
 notState f = stateLoc /= take (length stateLoc) f

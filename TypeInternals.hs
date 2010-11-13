@@ -75,7 +75,9 @@ data Backend = Backend {
 	-- removes a key
 	removeKey :: Key -> Annex Bool,
 	-- checks if a backend is storing the content of a key
-	hasKey :: Key -> Annex Bool
+	hasKey :: Key -> Annex Bool,
+	-- called during fsck to check a key
+	fsckKey :: Key -> Annex Bool
 }
 
 instance Show Backend where

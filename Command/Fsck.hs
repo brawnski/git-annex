@@ -13,9 +13,10 @@ import Command
 import Types
 import Core
 import Messages
+import qualified Command.FsckFile
 
 seek :: [SubCmdSeek]
-seek = [withNothing start]
+seek = [withNothing start, withAll withFilesInGit Command.FsckFile.start]
 
 {- Checks the whole annex for problems. -}
 start :: SubCmdStart
@@ -26,11 +27,9 @@ start = do
 perform :: SubCmdPerform
 perform = do
 	ok <- checkUnused
-	if (ok)
+	if ok
 		then return $ Just $ return True
-		else do
-			showLongNote "Possible problems detected."
-			return Nothing
+		else return Nothing
 
 checkUnused :: Annex Bool
 checkUnused = do

@@ -4,15 +4,15 @@
  - it relies on the file contents in .git/annex/ in this repo,
  - and other accessible repos.
  -
- - This is an abstract backend; getKey has to be implemented to complete
- - it.
+ - This is an abstract backend; name, getKey and fsckKey have to be implemented
+ - to complete it.
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Backend.File (backend) where
+module Backend.File (backend, checkKey) where
 
 import Control.Monad.State
 import System.Directory
@@ -34,7 +34,8 @@ backend = Backend {
 	storeFileKey = dummyStore,
 	retrieveKeyFile = copyKeyFile,
 	removeKey = checkRemoveKey,
-	hasKey = checkKeyFile
+	hasKey = checkKeyFile,
+	fsckKey = mustProvide
 }
 
 mustProvide :: a
@@ -97,14 +98,12 @@ checkRemoveKey key = do
 	if (force)
 		then return True
 		else do
-			g <- Annex.gitRepo
 			remotes <- Remotes.keyPossibilities key
-			let numcopies = read $ Git.configGet g config "1"
+			numcopies <- getNumCopies
 			if (numcopies > length remotes)
 				then notEnoughCopies numcopies (length remotes) []
 				else findcopies numcopies 0 remotes []
 	where
-		config = "annex.numcopies"
 		findcopies need have [] bad = 
 			if (have >= need)
 				then return True
@@ -147,3 +146,33 @@ showTriedRemotes [] = return ()
 showTriedRemotes remotes =
 	showLongNote $ "I was unable to access these remotes: " ++
 		(Remotes.list remotes)
+
+getNumCopies :: Annex Int
+getNumCopies = do
+	g <- Annex.gitRepo
+	return $ read $ Git.configGet g config "1"
+	where
+		config = "annex.numcopies"
+
+{- This is used to check that numcopies is satisfied for the key on fsck.
+ - This trusts the location log, and so checks all keys, even those with
+ - data not present in the current annex.
+ -
+ - The passed action is first run to allow backends deriving this one
+ - to do their own checks.
+ -}
+checkKey :: (Key -> Annex Bool) -> Key -> Annex Bool
+checkKey a key = do
+	a_ok <- a key
+	copies_ok <- checkKeyNumCopies key
+	return $ a_ok && copies_ok
+
+checkKeyNumCopies :: Key -> Annex Bool
+checkKeyNumCopies key = do
+	remotes <- Remotes.keyPossibilities key
+	numcopies <- getNumCopies
+	if (length remotes < numcopies)
+		then do
+			showLongNote $ "only " ++ show (length remotes) ++ " of " ++ show numcopies ++ " copies"
+			return False
+		else return True

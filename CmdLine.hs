@@ -59,14 +59,14 @@ subCmds =
 		"sets annexed content for a key using a temp file"
 	, SubCommand "fix" path		Command.Fix.seek
 		"fix up symlinks to point to annexed content"
-	, SubCommand "fsck" nothing	Command.Fsck.seek
-		"check annex for problems"
+	, SubCommand "fsck" maybepath	Command.Fsck.seek
+		"check for problems"
 	]
 	where
 		path = "PATH ..."
+		maybepath = "[PATH ...]"
 		key = "KEY ..."
 		desc = "DESCRIPTION"
-		nothing = ""
 
 -- Each dashed command-line option results in generation of an action
 -- in the Annex monad that performs the necessary setting.

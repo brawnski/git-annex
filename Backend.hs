@@ -23,6 +23,7 @@ module Backend (
 	retrieveKeyFile,
 	removeKey,
 	hasKey,
+	fsckKey,
 	lookupFile,
 	chooseBackends
 ) where
@@ -105,13 +106,17 @@ retrieveKeyFile backend key dest = (Internals.retrieveKeyFile backend) key dest
 
 {- Removes a key from a backend. -}
 removeKey :: Backend -> Key -> Annex Bool
-removeKey backend key = (Internals.removeKey backend)  key
+removeKey backend key = (Internals.removeKey backend) key
 
 {- Checks if a key is present in its backend. -}
 hasKey :: Key -> Annex Bool
 hasKey key = do
 	bs <- Annex.supportedBackends
 	(Internals.hasKey (lookupBackendName bs $ backendName key)) key
+
+{- Checks a key's backend for problems. -}
+fsckKey :: Backend -> Key -> Annex Bool
+fsckKey backend key = (Internals.fsckKey backend) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

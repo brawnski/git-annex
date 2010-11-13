@@ -13,6 +13,7 @@ module Locations (
 	annexLocation,
 	annexLocationRelative,
 	annexTmpLocation,
+	annexBadLocation,
 	annexDir,
 	annexObjectDir,
 
@@ -58,6 +59,10 @@ annexObjectDir r = annexDir r ++ "/objects"
 {- .git-annex/tmp is used for temp files -}
 annexTmpLocation :: Git.Repo -> FilePath
 annexTmpLocation r = annexDir r ++ "/tmp/"
+
+{- .git-annex/bad is used for bad files found during fsck -}
+annexBadLocation :: Git.Repo -> FilePath
+annexBadLocation r = annexDir r ++ "/bad/"
 
 {- Converts a key into a filename fragment.
  -

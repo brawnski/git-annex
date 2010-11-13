@@ -20,8 +20,13 @@ backend = Backend {
 	getKey = keyValue,
 	storeFileKey = dummyStore,
 	retrieveKeyFile = downloadUrl,
+	-- allow keys to be removed; presumably they can always be
+	-- downloaded again
 	removeKey = dummyOk,
-	hasKey = dummyOk
+	-- similarly, keys are always assumed to be out there on the web
+	hasKey = dummyOk,
+	-- and nothing needed to fsck
+	fsckKey = dummyOk
 }
 
 -- cannot generate url from filename
@@ -32,7 +37,6 @@ keyValue _ = return Nothing
 dummyStore :: FilePath -> Key -> Annex Bool
 dummyStore _ _ = return False
 
--- allow keys to be removed; presumably they can always be downloaded again
 dummyOk :: Key -> Annex Bool
 dummyOk _ = return True
 

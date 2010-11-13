@@ -159,10 +159,12 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 	git annex setkey --key=1287765018:3 /tmp/file
 
-* fsck
+* fsck [path ...]
 
-  This subcommand checks the whole annex for consistency, and warns
-  about any problems found.
+  With no parameters, this subcommand checks the whole annex for consistency,
+  and warns about any problems found.
+
+  With parameters, only the specified files are checked.
 
 # OPTIONS
 

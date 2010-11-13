@@ -1,3 +1,14 @@
+git-annex (0.06) UNRELEASED; urgency=low
+
+  * fsck: Check if annex.numcopies is satisfied.
+  * fsck: Verify the sha1 of files when the SHA1 backend is used.
+  * fsck: Verify the size of files when the WORM backend is used.
+  * fsck: Allow specifying individual files to fsk if fscking everything
+    is not desired.
+  * fsck: Fix bug, introduced in 0.04, in detection of unused data.
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 13 Nov 2010 14:08:58 -0400
+
 git-annex (0.05) unstable; urgency=low
 
   * Optimize both pre-commit and lock subcommands to not call git diff
