@@ -170,7 +170,7 @@ and this symlink is what gets committed to git in the end.
 	add my_cool_big_file ok
 	[master 64cda67] changed an annexed file
 	 2 files changed, 2 insertions(+), 1 deletions(-)
-	 create mode 100644 .git-annex/SHA1:0b1d8616d0238cb9418a0e0a649bdad2e9e7faae.log
+	 create mode 100644 .git-annex/WORM:1289672605:30:file.log
 
 There is one problem with using `git commit` like this: Git wants to first
 stage the entire contents of the file in its index. That can be slow for
@@ -287,20 +287,21 @@ setting is satisfied for all files, and it warns about any dangling values
 in `.git/annex/objects/`. 
 
 	# git annex fsck
-	fsck  (checking for unused data...) (checking files...) ok
+	fsck  (checking for unused data...) ok
+	fsck my_cool_big_file (checksum..) ok
+	......
 
-Fsck checks the entire repository for problems by default. But you can
-also specify the files to check.
-This is particularly useful if you're using sha1 and don't want to spend
-a long time checksumming everything.
+You can also specifiy the files to check.  This is particularly useful if 
+you're using sha1 and don't want to spend a long time checksumming everything.
 
 	# git annex fsck my_cool_big_file
+	fsck  (checking for unused data...) ok
 	fsck my_cool_big_file (checksum..) ok
 
 ## fsck: When things go wrong
 
 Fsck never deletes possibly bad data; instead it will be moved to
-`.git/annex/bad/` for you to review. Here is a sample of what fsck
+`.git/annex/bad/` for you to recover. Here is a sample of what fsck
 might say about a badly messed up annex:
 
 	# git annex fsck
@@ -308,5 +309,12 @@ might say about a badly messed up annex:
 	  Some annexed data is no longer pointed to by any files in the repository.
 	  If this data is no longer needed, it can be removed using git-annex dropkey:
 	    WORM:1289672605:3:file
-	(checking files...)
-	  
+	failed
+	fsck my_cool_big_file (checksum..)
+	  Bad file content; moved to .git/annex/bad/
+	  ** No known copies of the file exist!
+	failed
+	fsck important_file
+	  Only 1 of 2 copies exist. Run git annex get somewhere else to back it up.
+	failed
+	git-annex: 3 failed
