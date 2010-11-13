@@ -7,3 +7,5 @@ add a git annex fsck that finds keys that have no referring file
 
 * Both can check that annex.numcopies is satisfied. Probably only
   querying the locationlog, not doing an online verification.
+
+[[done]]
