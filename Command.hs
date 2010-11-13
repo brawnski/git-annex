@@ -126,8 +126,8 @@ backendPairs :: SubCmdSeekBackendFiles
 backendPairs a files = do
 	pairs <- Backend.chooseBackends files
 	return $ map a pairs
-withDescription :: SubCmdSeekStrings
-withDescription a params = return [a $ unwords params]
+withString :: SubCmdSeekStrings
+withString a params = return [a $ unwords params]
 withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
@@ -143,8 +143,6 @@ withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
 withTempFile a params = return $ map a params
-withNothing :: SubCmdSeekNothing
-withNothing a _ = return [a]
 
 {- Default to acting on all files matching the seek action if
  - none are specified. -}

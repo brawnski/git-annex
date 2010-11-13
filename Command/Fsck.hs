@@ -16,13 +16,20 @@ import Messages
 import qualified Command.FsckFile
 
 seek :: [SubCmdSeek]
-seek = [withNothing start, withAll withFilesInGit Command.FsckFile.start]
+seek = [withString start, withAll withFilesInGit Command.FsckFile.start]
 
-{- Checks the whole annex for problems. -}
-start :: SubCmdStart
-start = do
-	showStart "fsck" ""
-	return $ Just perform
+{- Checks the whole annex for problems, only if specific files were not
+ - specified. -}
+start :: SubCmdStartString
+start whatspecified = do
+	if (null whatspecified)
+		then do
+			showStart "fsck" ""
+			return $ Just perform
+		else do
+			showStart "fsck" ""
+			showNote "only checking specified files"
+			return $ Just $ return $ Just $ return True
 
 perform :: SubCmdPerform
 perform = do

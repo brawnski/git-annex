@@ -19,7 +19,7 @@ import Version
 import Messages
 
 seek :: [SubCmdSeek]
-seek = [withDescription start]
+seek = [withString start]
 
 {- Stores description for the repository etc. -}
 start :: SubCmdStartString
