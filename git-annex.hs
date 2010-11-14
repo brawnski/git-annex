@@ -9,6 +9,7 @@ import System.Environment
 
 import qualified Annex
 import Core
+import Upgrade
 import CmdLine
 import qualified GitRepo as Git
 import BackendList
@@ -19,4 +20,4 @@ main = do
 	gitrepo <- Git.repoFromCwd
 	state <- Annex.new gitrepo allBackends
 	(configure, actions) <- parseCmd args state
-	tryRun state $ [startup] ++ configure ++ actions ++ [shutdown]
+	tryRun state $ [startup, upgrade] ++ configure ++ actions ++ [shutdown]

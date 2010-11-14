@@ -26,7 +26,6 @@ import qualified Annex
 import qualified Backend
 import Utility
 import Messages
-import Version
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).
@@ -46,11 +45,10 @@ tryRun' state errnum (a:as) = do
 tryRun' _ errnum [] =
 	when (errnum > 0) $ error $ show errnum ++ " failed"
 			
-{- Sets up a git repo for git-annex. -}
+{- Actions to perform each time ran. -}
 startup :: Annex Bool
 startup = do
 	prepUUID
-	autoUpgrade
 	return True
 
 {- When git-annex is done, it runs this. -}
@@ -70,43 +68,6 @@ shutdown = do
 	liftIO $ createDirectoryIfMissing True tmp
 
 	return True
-
-{- configure git to use union merge driver on state files, if it is not
- - already -}
-gitAttributes :: Git.Repo -> IO ()
-gitAttributes repo = do
-	exists <- doesFileExist attributes
-	if (not exists)
-		then do
-			writeFile attributes $ attrLine ++ "\n"
-			commit
-		else do
-			content <- readFile attributes
-			when (all (/= attrLine) (lines content)) $ do
-				appendFile attributes $ attrLine ++ "\n"
-				commit
-	where
-		attrLine = stateLoc ++ "*.log merge=union"
-		attributes = Git.attributes repo
-		commit = do
-			Git.run repo ["add", attributes]
-			Git.run repo ["commit", "-m", "git-annex setup", 
-					attributes]
-
-{- set up a git pre-commit hook, if one is not already present -}
-gitPreCommitHook :: Git.Repo -> IO ()
-gitPreCommitHook repo = do
-	let hook = Git.workTree repo ++ "/" ++ Git.gitDir repo ++
-		"/hooks/pre-commit"
-	exists <- doesFileExist hook
-	if (exists)
-		then putStrLn $ "pre-commit hook (" ++ hook ++ ") already exists, not configuring"
-		else do
-			writeFile hook $ "#!/bin/sh\n" ++
-				"# automatically configured by git-annex\n" ++ 
-				"git annex pre-commit .\n"
-			p <- getPermissions hook
-			setPermissions hook $ p {executable = True}
 
 {- Checks if a given key is currently present in the annexLocation. -}
 inAnnex :: Key -> Annex Bool
@@ -237,43 +198,3 @@ getKeysReferenced = do
 	files <- liftIO $ Git.inRepo g $ Git.workTree g
 	keypairs <- mapM Backend.lookupFile files
 	return $ map fst $ catMaybes keypairs
-
-{- Uses the annex.version git config setting to automate upgrades. -}
-autoUpgrade :: Annex ()
-autoUpgrade = do
-	version <- getVersion
-	case version of
-		Just "0" -> upgradeFrom0
-		Nothing -> return () -- repo not initted yet, no version
-		Just v | v == currentVersion -> return ()
-		Just _ -> error "this version of git-annex is too old for this git repository!"
-
-upgradeFrom0 :: Annex ()
-upgradeFrom0 = do
-	showSideAction "Upgrading object directory layout..."
-	g <- Annex.gitRepo
-
-	-- do the reorganisation of the files
-	let olddir = annexDir g
-	keys <- getKeysPresent' olddir
-	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
-
-	-- update the symlinks to the files
-	files <- liftIO $ Git.inRepo g $ Git.workTree g
-	fixlinks files
-	Annex.queueRun
-
-	setVersion
-
-	where
-		fixlinks [] = return ()
-		fixlinks (f:fs) = do
-			r <- Backend.lookupFile f
-			case r of
-				Nothing -> return ()
-				Just (k, _) -> do
-					link <- calcGitLink f k
-					liftIO $ removeFile f
-					liftIO $ createSymbolicLink link f
-					Annex.queue "add" ["--"] f
-			fixlinks fs
