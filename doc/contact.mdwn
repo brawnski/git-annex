@@ -1,4 +1,4 @@
 Joey Hess <joey@kitenet.net> is the author of git-annex.
 
 The [VCS-home mailing list](http://lists.madduck.net/listinfo/vcs-home)
-is a good place to discuss it.
+is a good place to discuss it, or use the [[forum]].

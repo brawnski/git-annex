@@ -21,6 +21,7 @@ To get a feel for it, see the [[walkthrough]].
 * [[news]]
 * [[bugs]]
 * [[todo]]
+* [[forum]]
 * [[contact]]
 """]]
 
