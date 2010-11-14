@@ -13,7 +13,7 @@ git clone  git://git.kitenet.net/git-annex
 
 cd git-annex
 make
-sudo install git-annex /usr/local/bin/ # makefile is weird
+sudo make install
 </pre>
 
 Originally posted by Jon at <https://gist.github.com/671785> --[[Joey]]
