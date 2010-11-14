@@ -158,7 +158,7 @@ withAll w a params = do
 			w a [Git.workTree g]
 		else w a params
 
-{- Provides a default parameter to a with search. -}
+{- Provides a default parameter to act on if none is specified. -}
 withDefault :: String-> SubCmdSeekStrings -> SubCmdSeekStrings
 withDefault d w a params = do
 	if null params
