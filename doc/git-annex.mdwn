@@ -166,6 +166,13 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   With parameters, only the specified files are checked.
 
+* find [path ...]
+
+  Outputs a list of annexed files whose content is currently present.
+
+  With no parameters, defaults to finding all files in the current directory
+  and its subdirectories.
+
 # OPTIONS
 
 * --force

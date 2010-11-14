@@ -158,6 +158,13 @@ withAll w a params = do
 			w a [Git.workTree g]
 		else w a params
 
+{- Provides a default parameter to a with search. -}
+withDefault :: String-> SubCmdSeekStrings -> SubCmdSeekStrings
+withDefault d w a params = do
+	if null params
+		then w a [d]
+		else w a params
+
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool
 notState f = stateLoc /= take (length stateLoc) f

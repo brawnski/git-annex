@@ -28,6 +28,7 @@ import qualified Command.Fsck
 import qualified Command.Unlock
 import qualified Command.Lock
 import qualified Command.PreCommit
+import qualified Command.Find
 
 subCmds :: [SubCommand]
 subCmds =
@@ -61,6 +62,8 @@ subCmds =
 		"fix up symlinks to point to annexed content"
 	, SubCommand "fsck" maybepath	Command.Fsck.seek
 		"check for problems"
+	, SubCommand "find" maybepath	Command.Find.seek
+		"lists available files"
 	]
 	where
 		path = "PATH ..."
