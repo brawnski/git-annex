@@ -55,6 +55,8 @@ add_plugins:
   - version
   - theme
   - sidebar
+  - blogspam
+  - comments
 # plugins to disable
 disable_plugins: []
 # additional directory to search for template files
@@ -170,7 +172,7 @@ pingurl: []
 
 # blogspam plugin
 # PageSpec of pages to check for spam
-#blogspam_pagespec: postcomment(*)
+blogspam_pagespec: postcomment(*)
 # options to send to blogspam server
 #blogspam_options: 'blacklist=1.2.3.4,blacklist=8.7.6.5,max-links=10'
 # blogspam server XML-RPC url
@@ -252,7 +254,7 @@ virus_checker: clamdscan -
 
 # comments plugin
 # PageSpec of pages where comments are allowed
-comments_pagespec: ''
+comments_pagespec: forum/* and !*/Discussion
 # PageSpec of pages where posting new comments is not allowed
 comments_closed_pagespec: ''
 # Base name for comments, e.g. "comment_" for pages like "sandbox/comment_12"
