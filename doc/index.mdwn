@@ -14,6 +14,8 @@ revision control.
 To get a feel for it, see the [[walkthrough]].
 
 [[!sidebar content="""
+[[!img logo.png size=200x]]
+
 * **[[download]]**
 * [[install]]
 * [[news]]
