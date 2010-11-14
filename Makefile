@@ -32,4 +32,4 @@ clean:
 	rm -rf build git-annex git-annex.1 test
 	rm -rf doc/.ikiwiki html
 
-.PHONY: git-annex test
+.PHONY: git-annex test install
