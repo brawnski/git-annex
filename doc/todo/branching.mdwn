@@ -46,6 +46,7 @@ Let's use one branch per uuid, named git-annex/$UUID.
 - TODO: What will need to be done to git to make it push/pull these new
   branches?
 - A given repo only ever writes to its UUID branch. So no conflicts.
+  - **problem**: git annex move needs to update log info for other repos!
 - (BTW, UUIDs probably don't compress well, and this reduces the bloat of having
   them repeated lots of times in the tree.)
 - Per UUID branches mean that if it wants to find a file's location
@@ -57,7 +58,7 @@ can cache location log changes and write them all to locationlog in
 a single git operation on shutdown.
 
 - TODO: what if it's ctrl-c'd with changes pending? Perhaps it should
-  collect them to ,git/annex/locationlog, and inject that file on shutdown?
+  collect them to .git/annex/locationlog, and inject that file on shutdown?
 - This will be less overhead than the current staging of all the log files.
 
 The log is not appended to, so in git we have a series of commits each of
