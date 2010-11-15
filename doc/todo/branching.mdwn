@@ -52,6 +52,11 @@ Let's use one branch per uuid, named git-annex/$UUID.
 - Per UUID branches mean that if it wants to find a file's location
   amoung configured remotes, it can examine only their branches, if
   desired.
+- It's important that the per-repo branches propigate beyond immediate
+  remotes. If there is a central bare repo, that means push --all. Without
+  one, it means that when repo B pulls from A, and then C pulls from B,
+  C needs to get A's branch -- which means that B should have a tracking
+  branch for A's branch.
 
 In the branch, only one file is needed. Call it locationlog. git-annex
 can cache location log changes and write them all to locationlog in
@@ -73,3 +78,18 @@ with a indication of the presense/absense of the key is found.
 - It could get pretty slow when digging deeper.
 - Only 3 places in git-annex will be affected by any slowdown: move --from,
   get and drop.
+
+## alternate
+
+As above, but use a single git-annex branch, and keep the per-UUID
+info in their own log files. Hope that git can auto-merge as long as
+each observing repo only writes to its own files. (Well, it can, but for
+non-fast-forward merges, the git-annex branch would need to be checked out,
+which is problimatic.)
+
+Use filenames like:
+
+	<observing uuid>/<location uuid>
+
+That allows one repo to record another's state when doing a
+`move`.
