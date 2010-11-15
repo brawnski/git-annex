@@ -171,19 +171,30 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * dropkey [key ...]
 
-  Drops the annexed data for the specified keys from this repository.
+  This plumbing-level command drops the annexed data for the specified
+  keys from this repository.
 
   This can be used to drop content for arbitrary keys, which do not need
   to have a file in the git repository pointing at them.
 
-* setkey file
-
-  Sets the annxed data for a key to the content of the specified file,
-  and then removes the file.
+  A backend will typically need to be specified with --backend. If none
+  is specified, the first configured backend is used.
 
   Example:
 
-	git annex setkey --key=1287765018:3 /tmp/file
+	git annex dropkey --backend=SHA1 7da006579dd64330eb2456001fd01948430572f2
+
+* setkey file
+
+  This plumbing-level command sets the annxed data for a key to the content of
+  the specified file, and then removes the file.
+
+  A backend will typically need to be specified with --backend. If none
+  is specified, the first configured backend is used.
+
+  Example:
+
+	git annex setkey --backend=WORM --key=1287765018:3 /tmp/file
 
 # OPTIONS
 
