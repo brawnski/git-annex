@@ -8,8 +8,22 @@
 module Command.Fsck where
 
 import Command
-import qualified Command.FsckFile
-import qualified Command.Unused
+import qualified Backend
+import Types
+import Messages
 
 seek :: [SubCmdSeek]
-seek = [withNothing Command.Unused.start, withAll withFilesInGit Command.FsckFile.start]
+seek = [withFilesInGit start]
+
+{- Checks a file's backend data for problems. -}
+start :: SubCmdStartString
+start file = isAnnexed file $ \(key, backend) -> do
+	showStart "fsck" file
+	return $ Just $ perform key backend
+
+perform :: Key -> Backend -> SubCmdPerform
+perform key backend = do
+	success <- Backend.fsckKey backend key
+	if (success)
+		then return $ Just $ return True
+		else return Nothing

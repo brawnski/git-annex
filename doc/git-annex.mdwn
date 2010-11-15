@@ -124,12 +124,10 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Checks the annex for data that is not used by any files currently
   in the annex, and prints a numbered list of the data. 
 
-  (This is run as part of `git annex fsck`.)
-
 * dropunused [number ...]
 
   Drops the data corresponding to the numbers, as listed by the last
-  `git annex unused` or `git annex fsck`
+  `git annex unused`
 
 * find [path ...]
 

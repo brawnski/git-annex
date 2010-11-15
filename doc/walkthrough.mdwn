@@ -311,8 +311,7 @@ You can use the fsck subcommand to check for problems in your data.
 What can be checked depends on the [[backend|backends]] you've used to store
 the data. For example, when you use the SHA1 backend, fsck will verify that
 the checksums of your files are good. Fsck also checks that the annex.numcopies
-setting is satisfied for all files, and it warns about any dangling values
-in `.git/annex/objects/`. 
+setting is satisfied for all files.
 
 	# git annex fsck
 	unused  (checking for unused data...) ok
@@ -332,13 +331,6 @@ Fsck never deletes possibly bad data; instead it will be moved to
 might say about a badly messed up annex:
 
 	# git annex fsck
-	unused  (checking for unused data...) 
-	  Some annexed data is no longer pointed to by any files in the repository.
-	    NUMBER  KEY
-	    1       WORM:1289672605:3:file
-	  (To see where data was previously used, try: git log --stat -S'KEY')
-	  (To remove unwanted data: git-annex dropunused NUMBER)
-	failed
 	fsck my_cool_big_file (checksum...)
 	  Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2
 	  ** No known copies of the file exist!
@@ -346,4 +338,4 @@ might say about a badly messed up annex:
 	fsck important_file
 	  Only 1 of 2 copies exist. Run git annex get somewhere else to back it up.
 	failed
-	git-annex: 3 failed
+	git-annex: 2 failed
