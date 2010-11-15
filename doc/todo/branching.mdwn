@@ -93,3 +93,15 @@ Use filenames like:
 
 That allows one repo to record another's state when doing a
 `move`.
+
+## outside the box approach
+
+If the problem is limited to only that the `.git-annex/` files make
+branching difficult (and not to the related problem that commits to them
+and having them in the tree are sorta annoying), then a simple approach
+would be to have git-annex look in other branches for location log info
+too.
+
+The problem would then be that any locationlog lookup would need to look in
+all other branches (any branch could have more current info after all),
+which could get expensive.
