@@ -1,0 +1,8 @@
+git-annex 0.07 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * find: New subcommand.
+   * unused: New subcommand, finds unused data. (Split out from fsck.)
+   * dropunused: New subcommand, provides for easy dropping of unused keys
+     by number, as listed by the unused subcommand.
+   * fsck: Print warnings to stderr; --quiet can now be used to only see
+     problems."""]]
