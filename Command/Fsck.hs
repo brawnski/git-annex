@@ -13,7 +13,7 @@ import Types
 import Messages
 
 seek :: [SubCmdSeek]
-seek = [withFilesInGit start]
+seek = [withAll withFilesInGit start]
 
 {- Checks a file's backend data for problems. -}
 start :: SubCmdStartString
