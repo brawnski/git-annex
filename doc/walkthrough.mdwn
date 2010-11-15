@@ -296,7 +296,7 @@ eliminate it to save space.
 	    2       WORM:1289672605:14:file
 	  (To see where data was previously used, try: git log --stat -S'KEY')
 	  (To remove unwanted data: git-annex dropunused NUMBER)
-	failed
+	ok
 
 After running `git annex unused`, you can follow the instructions to examine
 the history of files that used the data, and if you decide you don't need that
@@ -316,7 +316,7 @@ setting is satisfied for all files.
 	# git annex fsck
 	unused  (checking for unused data...) ok
 	fsck my_cool_big_file (checksum...) ok
-	......
+	...
 
 You can also specifiy the files to check.  This is particularly useful if 
 you're using sha1 and don't want to spend a long time checksumming everything.
@@ -332,10 +332,10 @@ might say about a badly messed up annex:
 
 	# git annex fsck
 	fsck my_cool_big_file (checksum...)
-	  Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2
-	  ** No known copies of the file exist!
+	git-annex: Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2
+	git-annex: ** No known copies of the file exist!
 	failed
 	fsck important_file
-	  Only 1 of 2 copies exist. Run git annex get somewhere else to back it up.
+	git-annex: Only 1 of 2 copies exist. Run git annex get somewhere else to back it up.
 	failed
 	git-annex: 2 failed

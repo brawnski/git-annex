@@ -175,12 +175,12 @@ checkKeyNumCopies key = do
 	let present = length remotes + if inannex then 1 else 0
 	if (present < needed)
 		then do
-			showLongNote $ note present needed
+			warning $ note present needed
 			return False
 		else return True
 	where
 		note 0 _ = "** No known copies of the file exist!"
 		note present needed = 
 			"Only " ++ show present ++ " of " ++ show needed ++ 
-			" copies exist. " ++
+			" copies of "++show key++" exist. " ++
 			"Run git annex get somewhere else to back it up."

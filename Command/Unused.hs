@@ -28,10 +28,8 @@ start = do
 
 perform :: SubCmdPerform
 perform = do
-	ok <- checkUnused
-	if ok
-		then return $ Just $ return True
-		else return Nothing
+	_ <- checkUnused
+	return $ Just $ return True
 
 checkUnused :: Annex Bool
 checkUnused = do

@@ -54,4 +54,6 @@ showErr :: (Show a) => a -> Annex ()
 showErr e = warning $ show e
 
 warning :: String -> Annex ()
-warning s = liftIO $ hPutStrLn stderr $ "git-annex: " ++ s
+warning s = do
+	verbose $ liftIO $ putStr "\n"
+	liftIO $ hPutStrLn stderr $ "git-annex: " ++ s

@@ -66,5 +66,5 @@ checkKeySize key = do
 				then return True
 				else do
 					dest <- moveBad key
-					showLongNote $ "Bad file size; moved to "++dest
+					warning $ "Bad file size; moved to "++dest
 					return False
