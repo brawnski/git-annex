@@ -1,6 +1,7 @@
 git-annex (0.07) UNRELEASED; urgency=low
 
   * find: New subcommand.
+  * unused: New subcommand, finds unused data (the global part of fsck).
 
  -- Joey Hess <joeyh@debian.org>  Sun, 14 Nov 2010 12:34:49 -0400
 

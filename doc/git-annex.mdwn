@@ -166,6 +166,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   With parameters, only the specified files are checked.
 
+* unused
+
+  Checks the annex for data that is not used by any files currently
+  in the annex, and prints a report.
+
 * find [path ...]
 
   Outputs a list of annexed files whose content is currently present.
