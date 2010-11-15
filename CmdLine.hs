@@ -26,6 +26,7 @@ import qualified Command.Fix
 import qualified Command.Init
 import qualified Command.Fsck
 import qualified Command.Unused
+import qualified Command.DropUnused
 import qualified Command.Unlock
 import qualified Command.Lock
 import qualified Command.PreCommit
@@ -65,6 +66,8 @@ subCmds =
 		"check for problems"
 	, SubCommand "unused" nothing	Command.Unused.seek
 		"look for unused file content"
+	, SubCommand "dropunused" number Command.DropUnused.seek
+		"drop unused file content"
 	, SubCommand "find" maybepath	Command.Find.seek
 		"lists available files"
 	]
@@ -73,6 +76,7 @@ subCmds =
 		maybepath = "[PATH ...]"
 		key = "KEY ..."
 		desc = "DESCRIPTION"
+		number = "NUMBER ..."
 		nothing = ""
 
 -- Each dashed command-line option results in generation of an action

@@ -7,12 +7,7 @@
 
 module Command.Fsck where
 
-import qualified Data.Map as M
-
 import Command
-import Types
-import Core
-import Messages
 import qualified Command.FsckFile
 import qualified Command.Unused
 

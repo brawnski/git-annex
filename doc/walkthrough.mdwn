@@ -287,7 +287,7 @@ setting is satisfied for all files, and it warns about any dangling values
 in `.git/annex/objects/`. 
 
 	# git annex fsck
-	fsck  (checking for unused data...) ok
+	unused  (checking for unused data...) ok
 	fsck my_cool_big_file (checksum...) ok
 	......
 
@@ -304,10 +304,12 @@ Fsck never deletes possibly bad data; instead it will be moved to
 might say about a badly messed up annex:
 
 	# git annex fsck
-	fsck  (checking for unused data...) 
+	unused  (checking for unused data...) 
 	  Some annexed data is no longer pointed to by any files in the repository.
-	  If this data is no longer needed, it can be removed using git-annex dropkey:
-	    WORM:1289672605:3:file
+	    NUMBER  KEY
+	    1       WORM:1289672605:3:file
+	  (To see where data was previously used, try: git log --stat -S'KEY')
+	  (To remove unwanted data: git-annex dropunused NUMBER)
 	failed
 	fsck my_cool_big_file (checksum...)
 	  Bad file content; moved to .git/annex/bad/SHA1:7da006579dd64330eb2456001fd01948430572f2

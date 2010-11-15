@@ -7,12 +7,15 @@
 
 module Command.Unused where
 
+import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 
 import Command
 import Types
 import Core
 import Messages
+import Locations
+import qualified Annex
 
 seek :: [SubCmdSeek]
 seek = [withNothing start]
@@ -37,13 +40,24 @@ checkUnused = do
 	if (null unused)
 		then return True
 		else do
-			showLongNote $ w unused
+			let list = number 1 unused
+			g <- Annex.gitRepo
+			liftIO $ writeFile (annexUnusedLog g) $ unlines $ 
+				map (\(n, k) -> show n ++ " " ++ show k) list
+			showLongNote $ w list
 			return False
 	where
-		w u = unlines $ [
-			"Some annexed data is no longer pointed to by any files in the repository.",
-			"If this data is no longer needed, it can be removed using git-annex dropkey:"
-			] ++ map (\k -> "  " ++ show k) u
+		w u = unlines $
+			["Some annexed data is no longer pointed to by any files in the repository:",
+			 "  NUMBER  KEY"]
+			++ (map (\(n, k) -> "  " ++ (pad 6 $ show n) ++ "  " ++ show k) u) ++
+			["(To see where data was previously used, try: git log --stat -S'KEY')",
+			 "(To remove unwanted data: git-annex dropunused NUMBER)"]
+		pad n s = s ++ replicate (n - length s) ' '
+
+number :: Integer -> [a] -> [(Integer, a)]
+number _ [] = []
+number n (x:xs) = (n, x):(number (n+1) xs)
 
 {- Finds keys whose content is present, but that do not seem to be used
  - by any files in the git repo. -}

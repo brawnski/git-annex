@@ -25,7 +25,8 @@ module Backend (
 	hasKey,
 	fsckKey,
 	lookupFile,
-	chooseBackends
+	chooseBackends,
+	keyBackend
 ) where
 
 import Control.Monad.State
@@ -111,8 +112,8 @@ removeKey backend key = (Internals.removeKey backend) key
 {- Checks if a key is present in its backend. -}
 hasKey :: Key -> Annex Bool
 hasKey key = do
-	bs <- Annex.supportedBackends
-	(Internals.hasKey (lookupBackendName bs $ backendName key)) key
+	backend <- keyBackend key
+	(Internals.hasKey backend) key
 
 {- Checks a key's backend for problems. -}
 fsckKey :: Backend -> Key -> Annex Bool
@@ -154,3 +155,9 @@ chooseBackends fs = do
 	bs <- Annex.supportedBackends
 	pairs <- liftIO $ Git.checkAttr g "git-annex-backend" fs
 	return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
+
+{- Returns the backend to use for a key. -}
+keyBackend :: Key -> Annex Backend
+keyBackend key = do
+	bs <- Annex.supportedBackends
+	return $ lookupBackendName bs $ backendName key

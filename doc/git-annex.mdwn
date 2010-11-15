@@ -112,6 +112,32 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Use this to undo an unlock command if you don't want to modify
   the files, or have made modifications you want to discard.
 
+* fsck [path ...]
+
+  With no parameters, this subcommand checks the whole annex for consistency,
+  and warns about any problems found.
+
+  With parameters, only the specified files are checked.
+
+* unused
+
+  Checks the annex for data that is not used by any files currently
+  in the annex, and prints a numbered list of the data. 
+
+  (This is run as part of `git annex fsck`.)
+
+* dropunused [number ...]
+
+  Drops the data corresponding to the numbers, as listed by the last
+  `git annex unused` or `git annex fsck`
+
+* find [path ...]
+
+  Outputs a list of annexed files whose content is currently present.
+
+  With no parameters, defaults to finding all files in the current directory
+  and its subdirectories.
+
 * unannex [path ...]
 
   Use this to undo an accidental add command. This is not the command you
@@ -159,25 +185,6 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 	git annex setkey --key=1287765018:3 /tmp/file
 
-* fsck [path ...]
-
-  With no parameters, this subcommand checks the whole annex for consistency,
-  and warns about any problems found.
-
-  With parameters, only the specified files are checked.
-
-* unused
-
-  Checks the annex for data that is not used by any files currently
-  in the annex, and prints a report.
-
-* find [path ...]
-
-  Outputs a list of annexed files whose content is currently present.
-
-  With no parameters, defaults to finding all files in the current directory
-  and its subdirectories.
-
 # OPTIONS
 
 * --force
@@ -194,14 +201,6 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Enable verbose logging.
 
-* --backend=name
-
-  Specifies the key-value backend to use when adding a file.
-
-* --key=name
-
-  Specifies a key to operate on, for use with the addkey subcommand.
-
 * --from=repository
 
   Specifies a repository that content will be retrieved from.
@@ -211,6 +210,14 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
   Specifies a git repository that content will be sent to. 
   It should be specified using the name of a configured git remote.
+
+* --backend=name
+
+  Specifies which key-value backend to use.
+
+* --key=name
+
+  Specifies a key to operate on.
 
 # CONFIGURATION
 

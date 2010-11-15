@@ -129,6 +129,8 @@ backendPairs a files = do
 	return $ map a pairs
 withString :: SubCmdSeekStrings
 withString a params = return [a $ unwords params]
+withStrings :: SubCmdSeekStrings
+withStrings a params = return $ map a params
 withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
