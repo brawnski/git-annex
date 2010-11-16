@@ -1,9 +1,0 @@
-git-annex is not yet formally released. If you [[download]] it from git,
-everything described on this web site should already work, and I hope work
-well, with these exceptions:
-
-* The SHA1 backend is incomplete.
-
-I reserve the right to change its data formats before the first release,
-though I already have enough drives using it that I'd probably have to
-write a transition tool anyway! --[[Joey]]
