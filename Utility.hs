@@ -39,8 +39,7 @@ parentDir dir =
 	then slash ++ (join s $ take ((length dirs) - 1) dirs)
 	else ""
 		where
-			dirs = filter (\x -> length x > 0) $ 
-				split s dir
+			dirs = filter (\x -> not $ null x) $ split s dir
 			slash = if (not $ isAbsolute dir) then "" else s
 			s = [pathSeparator]
 
