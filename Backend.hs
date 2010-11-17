@@ -79,17 +79,15 @@ maybeLookupBackendName bs s =
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Maybe Backend -> Annex (Maybe (Key, Backend))
 storeFileKey file trybackend = do
-	g <- Annex.gitRepo
-	let relfile = Git.relative g file
 	bs <- list
 	let bs' = case trybackend of
 		Nothing -> bs
 		Just backend -> backend:bs
-	storeFileKey' bs' file relfile
-storeFileKey' :: [Backend] -> FilePath -> FilePath -> Annex (Maybe (Key, Backend))
-storeFileKey' [] _ _ = return Nothing
-storeFileKey' (b:bs) file relfile = do
-	result <- (Internals.getKey b) relfile
+	storeFileKey' bs' file
+storeFileKey' :: [Backend] -> FilePath -> Annex (Maybe (Key, Backend))
+storeFileKey' [] _ = return Nothing
+storeFileKey' (b:bs) file = do
+	result <- (Internals.getKey b) file
 	case result of
 		Nothing -> nextbackend
 		Just key -> do
@@ -98,7 +96,7 @@ storeFileKey' (b:bs) file relfile = do
 				then nextbackend
 				else return $ Just (key, b)
 	where
-		nextbackend = storeFileKey' bs file relfile
+		nextbackend = storeFileKey' bs file
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
