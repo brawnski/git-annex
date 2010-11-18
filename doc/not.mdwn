@@ -11,6 +11,10 @@
   too slow, or its strict mirroring of everything to both places too
   limiting, then git-annex could be a useful alternative.
 
+* git-annex is more than just a workaround for git limitations that might
+  eventually be fixed by efforts like
+  [git-bigfiles](http://caca.zoy.org/wiki/git-bigfiles).
+
 * git-annex is not some flaky script that was quickly thrown together.
   I wrote it in Haskell because I wanted it to be solid and to compile
   down to a binary.
