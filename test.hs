@@ -1,5 +1,3 @@
--- TODO find a test harness that is actually in Debian and use it.
-
 import Test.HUnit
 import Test.HUnit.Tools
 
