@@ -20,6 +20,8 @@ tests = [
 	  TestDesc "cp -a" "cp_a" $ testCp "-a"
 	, TestDesc "cp -p" "cp_p" $ testCp "-p"
 	, TestDesc "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
+	, TestDesc "uuid" "uuid" $ requireCommand "uuid" "uuid"
+	, TestDesc "xargs -0" "xargs_0" $ requireCommand "xargs -0" "xargs -0 </dev/null"
 	]
 
 tmpDir :: String
@@ -29,7 +31,16 @@ testFile :: String
 testFile = tmpDir ++ "/testfile"
 
 quiet :: String -> String
-quiet s = s ++ " 2>/dev/null"
+quiet s = s ++ " >/dev/null 2>&1"
+
+requireCommand :: String -> String -> Test
+requireCommand command cmdline = do
+	ret <- testCmd $ quiet cmdline
+	if (ret)
+		then return True
+		else do
+			testEnd False
+			error $ "** the " ++ command ++ " command is required to use git-annex"
 
 testCp :: String -> Test
 testCp option = testCmd $ quiet $ "cp " ++ option ++ " " ++ testFile ++ 
