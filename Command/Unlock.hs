@@ -8,7 +8,7 @@
 module Command.Unlock where
 
 import Control.Monad.State (liftIO)
-import System.Directory
+import System.Directory hiding (copyFile)
 
 import Command
 import qualified Annex
@@ -17,6 +17,7 @@ import Messages
 import Locations
 import Utility
 import Core
+import CopyFile
 
 seek :: [SubCmdSeek]
 seek = [withFilesInGit start]
@@ -34,9 +35,9 @@ perform dest key = do
 	let src = annexLocation g key
 	liftIO $ removeFile dest
 	showNote "copying..."
-	ok <- liftIO $ boolSystem "cp" ["-p", src, dest]
+	ok <- liftIO $ copyFile src dest
         if ok
                 then do
 			liftIO $ allowWrite dest
 			return $ Just $ return True
-                else error "cp failed!"
+                else error "copy failed!"

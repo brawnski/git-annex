@@ -23,7 +23,7 @@ import Control.Monad.State (liftIO)
 import Control.Monad (filterM)
 import qualified Data.Map as Map
 import Data.String.Utils
-import System.Directory
+import System.Directory hiding (copyFile)
 import System.Posix.Directory
 import List
 import Monad (when, unless)
@@ -37,6 +37,7 @@ import UUID
 import Utility
 import qualified Core
 import Messages
+import CopyFile
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -204,7 +205,7 @@ copyFromRemote r key file = do
 			then getssh
 			else error "copying from non-ssh repo not supported"
 	where
-		getlocal = liftIO $ boolSystem "cp" ["-a", keyloc, file]
+		getlocal = liftIO $ copyFile keyloc file
 		getssh = scp r [sshLocation r keyloc, file]
 		keyloc = annexLocation r key
 
@@ -219,7 +220,7 @@ copyToRemote r key file = do
 			then putssh keyloc
 			else error "copying to non-ssh repo not supported"
 	where
-		putlocal src = liftIO $ boolSystem "cp" ["-a", src, file]
+		putlocal src = liftIO $ copyFile src file
 		putssh src = scp r [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath

@@ -2,7 +2,7 @@ all: git-annex docs
 
 ghcmake=ghc -Wall -odir build -hidir build -O2 --make 
 
-SysConfig.hs:
+SysConfig.hs: configure.hs
 	$(ghcmake) configure
 	./configure
 
