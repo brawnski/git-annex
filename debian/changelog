@@ -1,6 +1,9 @@
 git-annex (0.08) UNRELEASED; urgency=low
 
   * Fix `git annex add ../foo` (when ran in a subdir of the repo).
+  * Add configure step to build process.
+  * configure: Check to see if cp -a can be used.
+  * configure: Check to see if cp --reflink=auto can be used.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 17 Nov 2010 13:54:49 -0400
 

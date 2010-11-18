@@ -1,5 +1,7 @@
 build/*
 test
+configure
+SysConfig.hs
 git-annex
 git-annex.1
 doc/.ikiwiki

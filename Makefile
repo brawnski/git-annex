@@ -2,7 +2,11 @@ all: git-annex docs
 
 ghcmake=ghc -Wall -odir build -hidir build -O2 --make 
 
-git-annex:
+SysConfig.hs:
+	$(ghcmake) configure
+	./configure
+
+git-annex: SysConfig.hs
 	$(ghcmake) git-annex
 
 install:
@@ -29,7 +33,7 @@ docs:
 		--disable-plugin=smiley
 
 clean:
-	rm -rf build git-annex git-annex.1 test
+	rm -rf build git-annex git-annex.1 test configure SysConfig.hs
 	rm -rf doc/.ikiwiki html
 
 .PHONY: git-annex test install
