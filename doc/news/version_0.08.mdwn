@@ -1,0 +1,8 @@
+git-annex 0.08 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Fix `git annex add ../foo` (when ran in a subdir of the repo).
+   * Add configure step to build process.
+   * Only use cp -a if it is supported, falling back to cp -p or plain cp
+     as needed for portability.
+   * cp --reflink=auto is used if supported, and will make git annex unlock
+     much faster on filesystems like btrfs that support copy on write."""]]
