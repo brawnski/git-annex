@@ -45,21 +45,21 @@ import Messages
 list :: Annex [Backend]
 list = do
 	l <- Annex.backends -- list is cached here
-	if (not $ null l)
+	if not $ null l
 		then return l
 		else do
 			bs <- Annex.supportedBackends
 			g <- Annex.gitRepo
 			let defaults = parseBackendList bs $ Git.configGet g "annex.backends" ""
 			backendflag <- Annex.flagGet "backend"
-			let l' = if (not $ null backendflag)
+			let l' = if not $ null backendflag
 				then (lookupBackendName bs backendflag):defaults
 				else defaults
 			Annex.backendsChange l'
 			return l'
 	where
 		parseBackendList bs s = 
-			if (null s)
+			if null s
 				then bs
 				else map (lookupBackendName bs) $ words s
 
@@ -71,7 +71,7 @@ lookupBackendName bs s =
 		Nothing -> error $ "unknown backend " ++ s
 maybeLookupBackendName :: [Backend] -> String -> Maybe Backend
 maybeLookupBackendName bs s =
-	if ((length matches) /= 1)
+	if 1 /= length matches
 		then Nothing
 		else Just $ head matches
 	where matches = filter (\b -> s == Internals.name b) bs

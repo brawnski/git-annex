@@ -37,17 +37,14 @@ showProgress :: Annex ()
 showProgress = verbose $ liftIO $ putStr "\n"
 
 showLongNote :: String -> Annex ()
-showLongNote s = verbose $ do
-	liftIO $ putStr $ "\n" ++ indented
+showLongNote s = verbose $ liftIO $ putStr $ "\n" ++ indented
 	where
 		indented = join "\n" $ map (\l -> "  " ++ l) $ lines s 
 showEndOk :: Annex ()
-showEndOk = verbose $ do
-	liftIO $ putStrLn "ok"
+showEndOk = verbose $ liftIO $ putStrLn "ok"
 
 showEndFail :: Annex ()
-showEndFail = verbose $ do
-	liftIO $ putStrLn "\nfailed"
+showEndFail = verbose $ liftIO $ putStrLn "\nfailed"
 
 {- Exception pretty-printing. -}
 showErr :: (Show a) => a -> Annex ()

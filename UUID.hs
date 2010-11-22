@@ -20,8 +20,8 @@ module UUID (
 ) where
 
 import Control.Monad.State
-import Maybe
-import List
+import Data.Maybe
+import Data.List
 import System.Cmd.Utils
 import System.IO
 import System.Directory
@@ -57,7 +57,7 @@ getUUID r = do
 	let c = cached g
 	let u = uncached
 	
-	if (c /= u && u /= "")
+	if c /= u && u /= ""
 		then do
 			updatecache g u
 			return u
@@ -66,7 +66,7 @@ getUUID r = do
 		uncached = Git.configGet r "annex.uuid" ""
 		cached g = Git.configGet g cachekey ""
 		updatecache g u = when (g /= r) $ Annex.setConfig cachekey u
-		cachekey = "remote." ++ (Git.repoRemoteName r) ++ ".annex-uuid"
+		cachekey = "remote." ++ Git.repoRemoteName r ++ ".annex-uuid"
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
@@ -79,8 +79,7 @@ prepUUID = do
 
 {- Filters a list of repos to ones that have listed UUIDs. -}
 reposByUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
-reposByUUID repos uuids = do
-	filterM match repos
+reposByUUID repos uuids = filterM match repos
 	where
 		match r = do
 			u <- getUUID r
@@ -90,11 +89,11 @@ reposByUUID repos uuids = do
 prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
 	m <- uuidMap
-	return $ unwords $ map (\u -> "\t"++(prettify m u)++"\n") uuids
+	return $ unwords $ map (\u -> "\t" ++ prettify m u ++ "\n") uuids
 	where
 		prettify m u =
-			if (not $ null $ findlog m u)
-				then u ++ "  -- " ++ (findlog m u)
+			if not $ null $ findlog m u
+				then u ++ "  -- " ++ findlog m u
 				else u
 		findlog m u = M.findWithDefault "" u m
 
@@ -117,11 +116,11 @@ uuidMap :: Annex (M.Map UUID String)
 uuidMap = do
 	logfile <- uuidLog
 	s <- liftIO $ catch (readFile logfile) ignoreerror
-	return $ M.fromList $ map (\l -> pair l) $ lines s
+	return $ M.fromList $ map pair $ lines s
 	where
 		pair l =
-			if (1 < (length $ words l))
-				then ((words l) !! 0, unwords $ drop 1 $ words l)
+			if 1 < length (words l)
+				then (head $ words l, unwords $ drop 1 $ words l)
 				else ("", "")
 		ignoreerror _ = return ""
 
@@ -129,4 +128,4 @@ uuidMap = do
 uuidLog :: Annex String
 uuidLog = do
 	g <- Annex.gitRepo
-	return $ (gitStateDir g) ++ "uuid.log"
+	return $ gitStateDir g ++ "uuid.log"

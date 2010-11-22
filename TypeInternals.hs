@@ -51,10 +51,10 @@ instance Show Key where
 	show (Key (b, k)) = b ++ ":" ++ k
 
 instance Read Key where
-	readsPrec _ s = [((Key (b,k)) ,"")]
+	readsPrec _ s = [(Key (b,k), "")]
 		where
 			l = split ":" s
-			b = l !! 0
+			b = head l
 			k = join ":" $ drop 1 l
 
 backendName :: Key -> BackendName
@@ -81,4 +81,4 @@ data Backend = Backend {
 }
 
 instance Show Backend where
-	show backend = "Backend { name =\"" ++ (name backend) ++ "\" }"
+	show backend = "Backend { name =\"" ++ name backend ++ "\" }"

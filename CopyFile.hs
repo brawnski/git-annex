@@ -15,10 +15,10 @@ import qualified SysConfig
 copyFile :: FilePath -> FilePath -> IO Bool
 copyFile src dest = boolSystem "cp" opts
 	where
-		opts = if (SysConfig.cp_reflink_auto)
+		opts = if SysConfig.cp_reflink_auto
 			then ["--reflink=auto", src, dest]
-			else if (SysConfig.cp_a)
+			else if SysConfig.cp_a
 				then ["-a", src, dest]
-				else if (SysConfig.cp_p)
+				else if SysConfig.cp_p
 					then ["-p", src, dest]
 					else [src, dest]

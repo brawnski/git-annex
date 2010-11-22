@@ -36,7 +36,7 @@ tryRun state actions = tryRun' state 0 actions
 tryRun' :: AnnexState -> Integer -> [Annex Bool] -> IO ()
 tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
-	case (result) of
+	case result of
 		Left err -> do
 			Annex.eval state $ showErr err
 			tryRun' state (errnum + 1) as
@@ -64,7 +64,7 @@ shutdown = do
 	g <- Annex.gitRepo
 	let tmp = annexTmpLocation g
 	exists <- liftIO $ doesDirectoryExist tmp
-	when (exists) $ liftIO $ removeDirectoryRecursive tmp
+	when exists $ liftIO $ removeDirectoryRecursive tmp
 	liftIO $ createDirectoryIfMissing True tmp
 
 	return True
@@ -81,7 +81,7 @@ calcGitLink :: FilePath -> Key -> Annex FilePath
 calcGitLink file key = do
 	g <- Annex.gitRepo
 	cwd <- liftIO $ getCurrentDirectory
-	let absfile = case (absNormPath cwd file) of
+	let absfile = case absNormPath cwd file of
 		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
 	return $ relPathDirToDir (parentDir absfile) (Git.workTree g) ++
@@ -104,7 +104,7 @@ getViaTmp key action = do
 	let tmp = annexTmpLocation g ++ keyFile key
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	success <- action tmp
-	if (success)
+	if success
 		then do
 			moveAnnex key tmp
 			logStatus key ValuePresent
@@ -125,7 +125,7 @@ preventWrite f = unsetFileMode f writebits
 allowWrite :: FilePath -> IO ()
 allowWrite f = do
 	s <- getFileStatus f
-	setFileMode f $ (fileMode s) `unionFileModes` ownerWriteMode
+	setFileMode f $ fileMode s `unionFileModes` ownerWriteMode
 
 {- Moves a file into .git/annex/objects/ -}
 moveAnnex :: Key -> FilePath -> Annex ()
@@ -188,7 +188,7 @@ getKeysPresent' dir = do
 	where
 		present d = do
 			s <- getFileStatus $ dir ++ "/" ++ d ++ "/" 
-				++ (takeFileName d)
+				++ takeFileName d
 			return $ isRegularFile s
 
 {- List of keys referenced by symlinks in the git repo. -}

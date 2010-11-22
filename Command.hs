@@ -64,17 +64,17 @@ prepSubCmd SubCommand { subcmdseek = seek } state params = do
 doSubCmd :: SubCmdStart -> SubCmdCleanup
 doSubCmd start = do
 	s <- start
-	case (s) of
+	case s of
 		Nothing -> return True
 		Just perform -> do
 			p <- perform
-			case (p) of
+			case p of
 				Nothing -> do
 					showEndFail
 					return False
 				Just cleanup -> do
 					c <- cleanup
-					if (c)
+					if c
 						then do
 							showEndOk
 							return True
@@ -85,14 +85,14 @@ doSubCmd start = do
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
 notAnnexed file a = do
 	r <- Backend.lookupFile file
-	case (r) of
+	case r of
 		Just _ -> return Nothing
 		Nothing -> a
 
 isAnnexed :: FilePath -> ((Key, Backend) -> Annex (Maybe a)) -> Annex (Maybe a)
 isAnnexed file a = do
 	r <- Backend.lookupFile file
-	case (r) of
+	case r of
 		Just v -> a v
 		Nothing -> return Nothing
 
@@ -153,19 +153,15 @@ withNothing _ _ = return []
 {- Default to acting on all files matching the seek action if
  - none are specified. -}
 withAll :: SubCmdSeekStrings -> SubCmdSeekStrings
-withAll w a params = do
-	if null params
-		then do
-			g <- Annex.gitRepo
-			w a [Git.workTree g]
-		else w a params
+withAll w a [] = do
+	g <- Annex.gitRepo
+	w a [Git.workTree g]
+withAll w a p = w a p
 
 {- Provides a default parameter to act on if none is specified. -}
 withDefault :: String-> SubCmdSeekStrings -> SubCmdSeekStrings
-withDefault d w a params = do
-	if null params
-		then w a [d]
-		else w a params
+withDefault d w a [] = w a [d]
+withDefault _ w a p = w a p
 
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool

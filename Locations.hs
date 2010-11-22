@@ -31,12 +31,12 @@ import qualified GitRepo as Git
 stateLoc :: String
 stateLoc = ".git-annex/"
 gitStateDir :: Git.Repo -> FilePath
-gitStateDir repo = (Git.workTree repo) ++ "/" ++ stateLoc
+gitStateDir repo = Git.workTree repo ++ "/" ++ stateLoc
 
 {- Annexed file's absolute location. -}
 annexLocation :: Git.Repo -> Key -> FilePath
 annexLocation r key = 
-	(Git.workTree r) ++ "/" ++ (annexLocationRelative key)
+	Git.workTree r ++ "/" ++ annexLocationRelative key
 
 {- Annexed file's location relative to git's working tree. 
  -
@@ -90,5 +90,5 @@ fileKey file = read $
 
 {- for quickcheck -}
 prop_idempotent_fileKey :: String -> Bool
-prop_idempotent_fileKey s = k == (fileKey $ keyFile k)
+prop_idempotent_fileKey s = k == fileKey (keyFile k)
 	where k = read $ "test:" ++ s

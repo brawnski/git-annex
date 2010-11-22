@@ -66,8 +66,8 @@ instance Read LogLine where
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
-		if (length w == 3)
-			then case (pdate) of
+		if length w == 3
+			then case pdate of
 				Just v -> good v
 				Nothing -> bad
 			else bad
@@ -75,15 +75,16 @@ instance Read LogLine where
 			w = words string
 			s = read $ w !! 1
 			u = w !! 2
-			pdate = (parseTime defaultTimeLocale "%s%Qs" $ w !! 0) :: Maybe UTCTime
+			pdate :: Maybe UTCTime
+			pdate = parseTime defaultTimeLocale "%s%Qs" $ head w
 
 			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) s u
-			bad = ret $ LogLine (0) Undefined ""
+			bad = ret $ LogLine 0 Undefined ""
 			ret v = [(v, "")]
 
 {- Log a change in the presence of a key's value in a repository,
  - and returns the filename of the logfile. -}
-logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO (FilePath)
+logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO FilePath
 logChange repo key u s = do
 	line <- logNow s u
 	ls <- readLog logfile
@@ -101,10 +102,9 @@ readLog file = do
 		then do
 			s <- readFile file
 			-- filter out any unparsable lines
-			return $ filter (\l -> (status l) /= Undefined )
+			return $ filter (\l -> status l /= Undefined )
 				$ map read $ lines s
-		else do
-			return []
+		else return []
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()
@@ -124,7 +124,7 @@ logNow s u = do
 {- Returns the filename of the log file for a given key. -}
 logFile :: Git.Repo -> Key -> String
 logFile repo key = 
-	(gitStateDir repo) ++ (Git.relative repo (keyFile key)) ++ ".log"
+	gitStateDir repo ++ Git.relative repo (keyFile key) ++ ".log"
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
@@ -152,7 +152,7 @@ compactLog' m (l:ls) = compactLog' (mapLog m l) ls
  - information about a repo than the other logs in the map -}
 mapLog :: LogMap -> LogLine -> LogMap
 mapLog m l = 
-	if (better)
+	if better
 		then Map.insert u l m
 		else m
 	where

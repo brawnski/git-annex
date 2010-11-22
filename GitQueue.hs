@@ -45,7 +45,7 @@ add queue subcommand params file = M.insertWith (++) action [file] queue
 {- Runs a queue on a git repository. -}
 run :: Git.Repo -> Queue -> IO ()
 run repo queue = do
-	_ <- mapM (\(k, v) -> runAction repo k v) $ M.toList queue
+	_ <- mapM (uncurry $ runAction repo) $ M.toList queue
 	return ()
 
 {- Runs an Action on a list of files in a git repository.
@@ -56,6 +56,6 @@ runAction repo action files = do
 	unless (null files) runxargs
 	where
 		runxargs = pOpen WriteToPipe "xargs" ("-0":gitcmd) feedxargs
-		gitcmd = ["git"] ++ Git.gitCommandLine repo
+		gitcmd = "git" : Git.gitCommandLine repo
 			(getSubcommand action:getParams action)
 		feedxargs h = hPutStr h $ join "\0" files

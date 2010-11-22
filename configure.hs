@@ -10,7 +10,7 @@ data TestDesc = TestDesc String String Test
 data Config = Config String Bool
 
 instance Show Config where
-        show (Config key value) = unlines $ [
+        show (Config key value) = unlines [
 			  key ++ " :: Bool"
 			, key ++ " = " ++ show value
 		]
@@ -36,7 +36,7 @@ quiet s = s ++ " >/dev/null 2>&1"
 requireCommand :: String -> String -> Test
 requireCommand command cmdline = do
 	ret <- testCmd $ quiet cmdline
-	if (ret)
+	if ret
 		then return True
 		else do
 			testEnd False
@@ -57,7 +57,7 @@ testStart s = do
 	hFlush stdout
 
 testEnd :: Bool -> IO ()
-testEnd r = putStrLn $ " " ++ (show r)
+testEnd r = putStrLn $ " " ++ show r
 
 writeSysConfig :: [Config] -> IO ()
 writeSysConfig config = writeFile "SysConfig.hs" body

@@ -127,19 +127,19 @@ repoIsSsh _ = False
 
 assertLocal :: Repo -> a -> a
 assertLocal repo action = 
-	if (not $ repoIsUrl repo)
+	if not $ repoIsUrl repo
 		then action
 		else error $ "acting on URL git repo " ++  repoDescribe repo ++ 
 				" not supported"
 assertUrl :: Repo -> a -> a
 assertUrl repo action = 
-	if (repoIsUrl repo)
+	if repoIsUrl repo
 		then action
 		else error $ "acting on local git repo " ++  repoDescribe repo ++ 
 				" not supported"
 assertSsh :: Repo -> a -> a
 assertSsh repo action =
-	if (repoIsSsh repo)
+	if repoIsSsh repo
 		then action
 		else error $ "unsupported url in repo " ++ repoDescribe repo
 bare :: Repo -> Bool
@@ -199,14 +199,14 @@ urlPath repo = assertUrl repo $ error "internal"
 gitCommandLine :: Repo -> [String] -> [String]
 gitCommandLine repo@(Repo { location = Dir d} ) params =
 	-- force use of specified repo via --git-dir and --work-tree
-	["--git-dir="++d++"/"++(gitDir repo), "--work-tree="++d] ++ params
+	["--git-dir=" ++ d ++ "/" ++ gitDir repo, "--work-tree=" ++ d] ++ params
 gitCommandLine repo _ = assertLocal repo $ error "internal"
 
 {- Runs git in the specified repo, throwing an error if it fails. -}
 run :: Repo -> [String] -> IO ()
 run repo params = assertLocal repo $ do
 	ok <- boolSystem "git" (gitCommandLine repo params)
-	unless (ok) $ error $ "git " ++ show params ++ " failed"
+	unless ok $ error $ "git " ++ show params ++ " failed"
 
 {- Runs a git subcommand and returns its output. -}
 pipeRead :: Repo -> [String] -> IO String
@@ -290,7 +290,7 @@ configRead repo sshopts = assertSsh repo $ do
 		params = case sshopts of
 				Nothing -> [urlHost repo, command]
 				Just l -> l ++ [urlHost repo, command]
-		command = "cd " ++ (shellEscape $ urlPath repo) ++
+		command = "cd " ++ shellEscape (urlPath repo) ++
 				" && git config --list"
 hConfigRead :: Repo -> Handle -> IO Repo
 hConfigRead repo h = do
@@ -308,8 +308,8 @@ configRemotes repo = map construct remotepairs
 	where
 		remotepairs = Map.toList $ filterremotes $ config repo
 		filterremotes = Map.filterWithKey (\k _ -> isremote k)
-		isremote k = (startswith "remote." k) && (endswith ".url" k)
-		remotename k = (split "." k) !! 1
+		isremote k = startswith "remote." k && endswith ".url" k
+		remotename k = split "." k !! 1
 		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
 		gen v	| isURI v = repoFromUrl v
 			| otherwise = repoFromPath v
@@ -319,7 +319,7 @@ configParse :: String -> Map.Map String String
 configParse s = Map.fromList $ map pair $ lines s
 	where
 		pair l = (key l, val l)
-		key l = (keyval l) !! 0
+		key l = head $ keyval l
 		val l = join sep $ drop 1 $ keyval l
 		keyval l = split sep l :: [String]
 		sep = "="
@@ -377,7 +377,7 @@ decodeGitFile f@(c:s)
 					alloctal = isOctDigit n1 &&
 						isOctDigit n2 &&
 						isOctDigit n3
-					fromoctal = [chr $ readoctal (n1:n2:n3:[])]
+					fromoctal = [chr $ readoctal [n1, n2, n3]]
 					readoctal o = read $ "0o" ++ o :: Int
 		-- \C is used for a few special characters
 		decode (x:nc:rest)
@@ -395,9 +395,9 @@ decodeGitFile f@(c:s)
 
 {- Should not need to use this, except for testing decodeGitFile. -}
 encodeGitFile :: FilePath -> String
-encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
+encodeGitFile s = foldl (++) "\"" (map echar s) ++ "\""
 	where
-		e c = "\\" ++ [c]
+		e c = '\\' : [c]
 		echar '\a' = e 'a'
 		echar '\b' = e 'b'
 		echar '\f' = e 'f'
@@ -413,7 +413,7 @@ encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
 			| ord x > 0x7E = e_num x -- high ascii
 			| otherwise = [x]        -- printable ascii
 			where 
-				showoctal i = "\\" ++ (printf "%03o" i)
+				showoctal i = '\\' : printf "%03o" i
 				e_num c = showoctal $ ord c
 				-- unicode character is decomposed to
 				-- Word8s and each is shown in octal
@@ -423,7 +423,7 @@ encodeGitFile s = (foldl (++) "\"" (map echar s)) ++ "\""
 
 {- for quickcheck -}
 prop_idempotent_deencode :: String -> Bool
-prop_idempotent_deencode s = s == (decodeGitFile $ encodeGitFile s)
+prop_idempotent_deencode s = s == decodeGitFile (encodeGitFile s)
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo
