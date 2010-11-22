@@ -17,16 +17,14 @@ module Remotes (
 	runCmd
 ) where
 
-import IO (bracket_)
-import Control.Exception.Extensible hiding (bracket_)
+import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
-import Control.Monad (filterM)
 import qualified Data.Map as Map
 import Data.String.Utils
 import System.Directory hiding (copyFile)
 import System.Posix.Directory
-import List
-import Monad (when, unless)
+import Data.List
+import Control.Monad (when, unless, filterM)
 
 import Types
 import qualified GitRepo as Git
@@ -55,7 +53,7 @@ keyPossibilities key = do
 	-- But, reading the config of remotes can be expensive, so make
 	-- sure we only do it once per git-annex run.
 	remotesread <- Annex.flagIsSet "remotesread"
-	if (remotesread)
+	if remotesread
 		then reposByUUID allremotes uuids
 		else do
 			-- We assume that it's cheap to read the config
@@ -65,11 +63,11 @@ keyPossibilities key = do
 			let cheap = filter (not . Git.repoIsUrl) allremotes
 			let expensive = filter Git.repoIsUrl allremotes
 			doexpensive <- filterM cachedUUID expensive
-			unless (null doexpensive) $ do
+			unless (null doexpensive) $
 				showNote $ "getting UUID for " ++
-					(list doexpensive) ++ "..."
+					list doexpensive ++ "..."
 			let todo = cheap ++ doexpensive
-			if (not $ null todo)
+			if not $ null todo
 				then do
 					_ <- mapM tryGitConfigRead todo
 					Annex.flagChange "remotesread" $ FlagBool True
@@ -84,10 +82,9 @@ keyPossibilities key = do
  - If the remote cannot be accessed, returns a Left error.
  -}
 inAnnex :: Git.Repo -> Key -> Annex (Either IOException Bool)
-inAnnex r key = do
-	if (not $ Git.repoIsUrl r)
-		then liftIO $ ((try checklocal)::IO (Either IOException Bool))
-		else checkremote
+inAnnex r key = if Git.repoIsUrl r
+		then checkremote
+		else liftIO (try checklocal ::IO (Either IOException Bool))
 	where
 		checklocal = do
 			-- run a local check by making an Annex monad
@@ -112,12 +109,12 @@ reposByCost :: [Git.Repo] -> Annex [Git.Repo]
 reposByCost l = do
 	notignored <- filterM repoNotIgnored l
 	costpairs <- mapM costpair notignored
-	return $ fst $ unzip $ sortBy bycost $ costpairs
+	return $ fst $ unzip $ sortBy cmpcost costpairs
 	where
 		costpair r = do
 			cost <- repoCost r
 			return (r, cost)
-		bycost (_, c1) (_, c2) = compare c1 c2
+		cmpcost (_, c1) (_, c2) = compare c1 c2
 
 {- Calculates cost for a repo.
  -
@@ -127,9 +124,9 @@ reposByCost l = do
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
 	cost <- repoConfig r "cost" ""
-	if (not $ null cost)
+	if not $ null cost
 		then return $ read cost
-		else if (Git.repoIsUrl r)
+		else if Git.repoIsUrl r
 			then return 200
 			else return 100
 
@@ -141,13 +138,12 @@ repoNotIgnored r = do
 	ignored <- repoConfig r "ignore" "false"
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
-	let name = if (not $ null fromName) then fromName else toName
-	if (not $ null name)
+	let name = if null fromName then toName else fromName
+	if not $ null name
 		then return $ match name
-		else return $ not $ isIgnored ignored
+		else return $ not $ Git.configTrue ignored
 	where
 		match name = name == Git.repoRemoteName r
-		isIgnored ignored = Git.configTrue ignored
 
 {- Checks if two repos are the same, by comparing their remote names. -}
 same :: Git.Repo -> Git.Repo -> Bool
@@ -158,14 +154,14 @@ commandLineRemote :: Annex Git.Repo
 commandLineRemote = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
-	let name = if (not $ null fromName) then fromName else toName
+	let name = if null fromName then toName else fromName
 	when (null name) $ error "no remote specified"
 	g <- Annex.gitRepo
 	let match = filter (\r -> name == Git.repoRemoteName r) $
 		Git.remotes g
 	when (null match) $ error $
 		"there is no git remote named \"" ++ name ++ "\""
-	return $ match !! 0
+	return $ head match
 
 {- The git configs for the git repo's remotes is not read on startup
  - because reading it may be expensive. This function tries to read the
@@ -174,12 +170,12 @@ commandLineRemote = do
 tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
 tryGitConfigRead r = do
 	sshoptions <- repoConfig r "ssh-options" ""
-	if (Map.null $ Git.configMap r)
+	if Map.null $ Git.configMap r
 		then do
 			-- configRead can fail due to IO error or
 			-- for other reasons; catch all possible exceptions
-			result <- liftIO $ (try (Git.configRead r $ Just $ words sshoptions)::IO (Either SomeException (Git.Repo)))
-			case (result) of
+			result <- liftIO (try (Git.configRead r $ Just $ words sshoptions)::IO (Either SomeException Git.Repo))
+			case result of
 				Left _ -> return $ Left r
 				Right r' -> do
 					g <- Annex.gitRepo
@@ -192,18 +188,16 @@ tryGitConfigRead r = do
 	where 
 		exchange [] _ = []
 		exchange (old:ls) new =
-			if (Git.repoRemoteName old == Git.repoRemoteName new)
-				then new:(exchange ls new)
-				else old:(exchange ls new)
+			if Git.repoRemoteName old == Git.repoRemoteName new
+				then new : exchange ls new
+				else old : exchange ls new
 
 {- Tries to copy a key's content from a remote to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
-copyFromRemote r key file = do
-	if (not $ Git.repoIsUrl r)
-		then getlocal
-		else if (Git.repoIsSsh r)
-			then getssh
-			else error "copying from non-ssh repo not supported"
+copyFromRemote r key file
+	| not $ Git.repoIsUrl r = getlocal
+	| Git.repoIsSsh r = getssh
+	| otherwise = error "copying from non-ssh repo not supported"
 	where
 		getlocal = liftIO $ copyFile keyloc file
 		getssh = scp r [sshLocation r keyloc, file]
@@ -214,9 +208,9 @@ copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyToRemote r key file = do
 	g <- Annex.gitRepo
 	let keyloc = annexLocation g key
-	if (not $ Git.repoIsUrl r)
+	if not $ Git.repoIsUrl r
 		then putlocal keyloc
-		else if (Git.repoIsSsh r)
+		else if Git.repoIsSsh r
 			then putssh keyloc
 			else error "copying to non-ssh repo not supported"
 	where
@@ -224,7 +218,7 @@ copyToRemote r key file = do
 		putssh src = scp r [src, sshLocation r file]
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
-sshLocation r file = (Git.urlHost r) ++ ":" ++ shellEscape file
+sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
 
 {- Runs scp against a specified remote. (Honors annex-scp-options.) -}
 scp :: Git.Repo -> [String] -> Annex Bool
@@ -238,21 +232,21 @@ scp r params = do
 runCmd :: Git.Repo -> String -> [String] -> Annex Bool
 runCmd r command params = do
 	sshoptions <- repoConfig r "ssh-options" ""
-	if (not $ Git.repoIsUrl r)
+	if not $ Git.repoIsUrl r
 		then do
-			cwd <- liftIO $ getCurrentDirectory
-			liftIO $ bracket_ (changeWorkingDirectory (Git.workTree r))
-				(\_ -> changeWorkingDirectory cwd) $
-					boolSystem command params
-		else if (Git.repoIsSsh r)
-			then do
-				liftIO $ boolSystem "ssh" $
-					(words sshoptions) ++ 
-					[Git.urlHost r, "cd " ++ 
-					(shellEscape $ Git.workTree r) ++
-					" && " ++ (shellEscape command) ++ " " ++
-					(unwords $ map shellEscape params)]
+			cwd <- liftIO getCurrentDirectory
+			liftIO $ bracket_
+				(changeWorkingDirectory (Git.workTree r))
+				(changeWorkingDirectory cwd)
+				(boolSystem command params)
+		else if Git.repoIsSsh r
+			then liftIO $ boolSystem "ssh" $
+				words sshoptions ++ [Git.urlHost r, sshcmd]
 			else error "running command in non-ssh repo not supported"
+	where 
+		sshcmd = "cd " ++ shellEscape (Git.workTree r) ++
+			" && " ++ shellEscape command ++ " " ++
+			unwords (map shellEscape params)
 
 {- Looks up a per-remote config option in git config.
  - Failing that, tries looking for a global config option. -}
@@ -262,5 +256,5 @@ repoConfig r key def = do
 	let def' = Git.configGet g global def
 	return $ Git.configGet g local def'
 	where
-		local = "remote." ++ (Git.repoRemoteName r) ++ ".annex-" ++ key
+		local = "remote." ++ Git.repoRemoteName r ++ ".annex-" ++ key
 		global = "annex." ++ key

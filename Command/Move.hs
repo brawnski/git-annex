@@ -7,8 +7,7 @@
 
 module Command.Move where
 
-import Control.Monad.State (liftIO)
-import Monad (when)
+import Control.Monad.State (liftIO, when)
 
 import Command
 import qualified Command.Drop
@@ -53,7 +52,7 @@ start file = do
 moveToStart :: SubCmdStartString
 moveToStart file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
-	if (not ishere)
+	if not ishere
 		then return Nothing -- not here, so nothing to do
 		else do
 			showStart "move" file
@@ -68,10 +67,10 @@ moveToPerform key = do
 			showNote $ show err
 			return Nothing
 		Right False -> do
-			showNote $ "moving to " ++ (Git.repoDescribe remote) ++ "..."
-			let tmpfile = (annexTmpLocation remote) ++ (keyFile key)
+			showNote $ "moving to " ++ Git.repoDescribe remote ++ "..."
+			let tmpfile = annexTmpLocation remote ++ keyFile key
 			ok <- Remotes.copyToRemote remote key tmpfile
-			if (ok)
+			if ok
 				then return $ Just $ moveToCleanup remote key tmpfile
 				else return Nothing -- failed
 		Right True -> return $ Just $ Command.Drop.cleanup key
@@ -79,7 +78,7 @@ moveToCleanup :: Git.Repo -> Key -> FilePath -> SubCmdCleanup
 moveToCleanup remote key tmpfile = do
 	-- Tell remote to use the transferred content.
 	ok <- Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
-		"--backend=" ++ (backendName key),
+		"--backend=" ++ backendName key,
 		"--key=" ++ keyName key,
 		tmpfile]
 	if ok
@@ -104,7 +103,7 @@ moveFromStart :: SubCmdStartString
 moveFromStart file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	l <- Remotes.keyPossibilities key
-	if (null $ filter (\r -> Remotes.same r remote) l)
+	if null $ filter (\r -> Remotes.same r remote) l
 		then return Nothing
 		else do
 			showStart "move" file
@@ -113,18 +112,18 @@ moveFromPerform :: Key -> SubCmdPerform
 moveFromPerform key = do
 	remote <- Remotes.commandLineRemote
 	ishere <- inAnnex key
-	if (ishere)
+	if ishere
 		then return $ Just $ moveFromCleanup remote key
 		else do
-			showNote $ "moving from " ++ (Git.repoDescribe remote) ++ "..."
-			ok <- getViaTmp key (Remotes.copyFromRemote remote key)
-			if (ok)
+			showNote $ "moving from " ++ Git.repoDescribe remote ++ "..."
+			ok <- getViaTmp key $ Remotes.copyFromRemote remote key
+			if ok
 				then return $ Just $ moveFromCleanup remote key
 				else return Nothing -- fail
 moveFromCleanup :: Git.Repo -> Key -> SubCmdCleanup
 moveFromCleanup remote key = do
 	ok <- Remotes.runCmd remote "git-annex" ["dropkey", "--quiet", "--force",
-		"--backend=" ++ (backendName key),
+		"--backend=" ++ backendName key,
 		keyName key]
 	when ok $ do
 		-- Record locally that the key is not on the remote.

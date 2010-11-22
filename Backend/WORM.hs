@@ -37,11 +37,11 @@ backend = Backend.File.backend {
 keyValue :: FilePath -> Annex (Maybe Key)
 keyValue file = do
 	stat <- liftIO $ getFileStatus file
-	return $ Just $ Key ((name backend), key stat)
+	return $ Just $ Key (name backend, key stat)
 	where
  		key stat = uniqueid stat ++ sep ++ base
-		uniqueid stat = (show $ modificationTime stat) ++ sep ++
-			(show $ fileSize stat)
+		uniqueid stat = show (modificationTime stat) ++ sep ++
+			show (fileSize stat)
 		base = takeFileName file
 		sep = ":"
 
@@ -58,11 +58,11 @@ checkKeySize key = do
 	g <- Annex.gitRepo
 	let file = annexLocation g key
 	present <- liftIO $ doesFileExist file
-	if (not present)
+	if not present
 		then return True
 		else do
 			s <- liftIO $ getFileStatus file
-			if (fileSize s == keySize key)
+			if fileSize s == keySize key
 				then return True
 				else do
 					dest <- moveBad key

@@ -28,7 +28,7 @@ start file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
-	let key = genKey (backends !! 0) keyname
+	let key = genKey (head backends) keyname
 	showStart "setkey" file
 	return $ Just $ perform file key
 perform :: FilePath -> Key -> SubCmdPerform

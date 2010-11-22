@@ -20,5 +20,5 @@ seek = [withDefault "." withFilesInGit start]
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, _) -> do
 	exists <- inAnnex key
-	when (exists) $ liftIO $ putStrLn file
+	when exists $ liftIO $ putStrLn file
 	return Nothing

@@ -35,7 +35,7 @@ checkUnused :: Annex Bool
 checkUnused = do
 	showNote "checking for unused data..."
 	unused <- unusedKeys
-	if (null unused)
+	if null unused
 		then return True
 		else do
 			let list = number 1 unused
@@ -48,9 +48,10 @@ checkUnused = do
 		w u = unlines $
 			["Some annexed data is no longer pointed to by any files in the repository:",
 			 "  NUMBER  KEY"]
-			++ (map (\(n, k) -> "  " ++ (pad 6 $ show n) ++ "  " ++ show k) u) ++
+			++ map cols u ++
 			["(To see where data was previously used, try: git log --stat -S'KEY')",
 			 "(To remove unwanted data: git-annex dropunused NUMBER)"]
+		cols (n,k) = "  " ++ pad 6 (show n) ++ "  " ++ show k
 		pad n s = s ++ replicate (n - length s) ' '
 
 number :: Integer -> [a] -> [(Integer, a)]
@@ -71,8 +72,7 @@ unusedKeys = do
 	let unused_m = remove referenced present_m
 	return $ M.keys unused_m
 	where
-		remove [] m = m
-		remove (x:xs) m = remove xs $ M.delete x m
+		remove a b = foldl (flip M.delete) b a
 
 existsMap :: Ord k => [k] -> M.Map k Int
 existsMap l = M.fromList $ map (\k -> (k, 1)) l

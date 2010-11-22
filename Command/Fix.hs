@@ -25,7 +25,7 @@ start :: SubCmdStartString
 start file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
-	if (link == l)
+	if link == l
 		then return Nothing
 		else do
 			showStart "fix" file

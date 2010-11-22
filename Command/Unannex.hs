@@ -34,7 +34,7 @@ perform file key backend = do
 	-- force backend to always remove
 	Annex.flagChange "force" $ FlagBool True
 	ok <- Backend.removeKey backend key
-	if (ok)
+	if ok
 		then return $ Just $ cleanup file key
 		else return Nothing
 

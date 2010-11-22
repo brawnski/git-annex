@@ -30,7 +30,7 @@ module Backend (
 ) where
 
 import Control.Monad.State
-import IO (try)
+import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files
 

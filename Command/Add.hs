@@ -28,7 +28,7 @@ seek = [withFilesNotInGit start, withFilesUnlocked start]
 start :: SubCmdStartBackendFile
 start pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
-	if ((isSymbolicLink s) || (not $ isRegularFile s))
+	if (isSymbolicLink s) || (not $ isRegularFile s)
 		then return Nothing
 		else do
 			showStart "add" file
@@ -37,7 +37,7 @@ start pair@(file, _) = notAnnexed file $ do
 perform :: (FilePath, Maybe Backend) -> SubCmdPerform
 perform (file, backend) = do
 	stored <- Backend.storeFileKey file backend
-	case (stored) of
+	case stored of
 		Nothing -> return Nothing
 		Just (key, _) -> return $ Just $ cleanup file key
 

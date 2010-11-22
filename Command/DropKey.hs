@@ -22,12 +22,12 @@ seek = [withKeys start]
 start :: SubCmdStartString
 start keyname = do
 	backends <- Backend.list
-	let key = genKey (backends !! 0) keyname
+	let key = genKey (head backends) keyname
 	present <- inAnnex key
 	force <- Annex.flagIsSet "force"
-	if (not present)
+	if not present
 		then return Nothing
-		else if (not force)
+		else if not force
 			then error "dropkey is can cause data loss; use --force if you're sure you want to do this"
 			else do
 				showStart "dropkey" keyname

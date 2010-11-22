@@ -35,12 +35,12 @@ hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
 {- Returns the parent directory of a path. Parent of / is "" -}
 parentDir :: String -> String
 parentDir dir =
-	if (not $ null dirs)
-	then slash ++ (join s $ take ((length dirs) - 1) dirs)
+	if not $ null dirs
+	then slash ++ join s (take (length dirs - 1) dirs)
 	else ""
 		where
-			dirs = filter (\x -> not $ null x) $ split s dir
-			slash = if (not $ isAbsolute dir) then "" else s
+			dirs = filter (not . null) $ split s dir
+			slash = if isAbsolute dir then s else ""
 			s = [pathSeparator]
 
 {- Constructs a relative path from the CWD to a directory.
@@ -58,7 +58,7 @@ relPathCwdToDir dir = do
 	where
 		-- absolute, normalized form of the directory
 		absnorm cwd = 
-			case (absNormPath cwd dir) of
+			case absNormPath cwd dir of
 				Just d -> d
 				Nothing -> error $ "unable to normalize " ++ dir
 
@@ -70,7 +70,7 @@ relPathCwdToDir dir = do
  -}
 relPathDirToDir :: FilePath -> FilePath -> FilePath
 relPathDirToDir from to = 
-	if (not $ null path)
+	if not $ null path
 		then addTrailingPathSeparator path
 		else ""
 	where
@@ -80,8 +80,8 @@ relPathDirToDir from to =
 		common = map fst $ filter same $ zip pfrom pto
 		same (c,d) = c == d
 		uncommon = drop numcommon pto
-		dotdots = take ((length pfrom) - numcommon) $ repeat ".."
-		numcommon = length $ common
+		dotdots = replicate (length pfrom - numcommon) ".."
+		numcommon = length common
 		path = join s $ dotdots ++ uncommon
 
 {- Run a system command, and returns True or False
@@ -124,4 +124,4 @@ shellEscape f = "'" ++ escaped ++ "'"
 unsetFileMode :: FilePath -> FileMode -> IO ()
 unsetFileMode f m = do
 	s <- getFileStatus f
-	setFileMode f $ (fileMode s) `intersectFileModes` (complement m)
+	setFileMode f $ fileMode s `intersectFileModes` complement m

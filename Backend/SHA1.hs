@@ -33,15 +33,15 @@ sha1 file = do
 	liftIO $ pOpen ReadFromPipe "sha1sum" [file] $ \h -> do
 		line <- hGetLine h
 		let bits = split " " line
-		if (null bits)
+		if null bits
 			then error "sha1sum parse error"
-			else return $ bits !! 0
+			else return $ head bits
 
 -- A key is a sha1 of its contents.
 keyValue :: FilePath -> Annex (Maybe Key)
 keyValue file = do
 	s <- sha1 file	
-	return $ Just  $ Key ((name backend), s)
+	return $ Just  $ Key (name backend, s)
 
 -- A key's sha1 is checked during fsck.
 checkKeySHA1 :: Key -> Annex Bool
@@ -49,11 +49,11 @@ checkKeySHA1 key = do
 	g <- Annex.gitRepo
 	let file = annexLocation g key
 	present <- liftIO $ doesFileExist file
-	if (not present)
+	if not present
 		then return True
 		else do
 			s <- sha1 file
-			if (s == keyName key)
+			if s == keyName key
 				then return True
 				else do
 					dest <- moveBad key

@@ -20,7 +20,7 @@ seek = [withFilesInGit start]
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
-	if (inannex)
+	if inannex
 		then return Nothing
 		else do
 			showStart "get" file
@@ -29,7 +29,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 perform :: Key -> Backend -> SubCmdPerform
 perform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
-	if (ok)
+	if ok
 		then return $ Just $ return True -- no cleanup needed
 		else return Nothing
 

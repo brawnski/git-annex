@@ -29,10 +29,10 @@ start file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
 	backends <- Backend.list
-	let key = genKey (backends !! 0) keyname
+	let key = genKey (head backends) keyname
 
 	inbackend <- Backend.hasKey key
-	unless (inbackend) $ error $
+	unless inbackend $ error $
 		"key ("++keyname++") is not present in backend"
 	showStart "fromkey" file
 	return $ Just $ perform file key

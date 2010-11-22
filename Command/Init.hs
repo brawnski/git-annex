@@ -25,8 +25,8 @@ seek = [withString start]
 {- Stores description for the repository etc. -}
 start :: SubCmdStartString
 start description = do
-	when (null description) $ error $
-		"please specify a description of this repository\n"
+	when (null description) $
+		error "please specify a description of this repository\n"
 	showStart "init" description
 	return $ Just $ perform description
 
@@ -38,7 +38,7 @@ perform description = do
 	setVersion
 	liftIO $ gitAttributes g
 	liftIO $ gitPreCommitHook g
-	return $ Just $ cleanup
+	return $ Just cleanup
 
 cleanup :: SubCmdCleanup
 cleanup = do
@@ -53,7 +53,7 @@ cleanup = do
 gitAttributes :: Git.Repo -> IO ()
 gitAttributes repo = do
 	exists <- doesFileExist attributes
-	if (not exists)
+	if not exists
 		then do
 			writeFile attributes $ attrLine ++ "\n"
 			commit
@@ -76,7 +76,7 @@ gitPreCommitHook repo = do
 	let hook = Git.workTree repo ++ "/" ++ Git.gitDir repo ++
 		"/hooks/pre-commit"
 	exists <- doesFileExist hook
-	if (exists)
+	if exists
 		then putStrLn $ "pre-commit hook (" ++ hook ++ ") already exists, not configuring"
 		else do
 			writeFile hook $ "#!/bin/sh\n" ++

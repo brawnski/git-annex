@@ -24,7 +24,7 @@ seek = [withFilesInGit start]
 start :: SubCmdStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
-	if (not inbackend)
+	if not inbackend
 		then return Nothing
 		else do
 			showStart "drop" file
@@ -33,13 +33,13 @@ start file = isAnnexed file $ \(key, backend) -> do
 perform :: Key -> Backend -> SubCmdPerform
 perform key backend = do
 	success <- Backend.removeKey backend key
-	if (success)
+	if success
 		then return $ Just $ cleanup key
 		else return Nothing
 
 cleanup :: Key -> SubCmdCleanup
 cleanup key = do
 	inannex <- inAnnex key
-	when (inannex) $ removeAnnex key
+	when inannex $ removeAnnex key
 	logStatus key ValueMissing
 	return True

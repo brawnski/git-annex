@@ -28,7 +28,7 @@ start file = return $ Just $ perform file
 perform :: FilePath -> SubCmdPerform
 perform file = do
 	pairs <- Backend.chooseBackends [file]
-	ok <- doSubCmd $ Command.Add.start $ pairs !! 0
+	ok <- doSubCmd $ Command.Add.start $ head pairs
 	if ok
 		then return $ Just $ cleanup file
 		else error $ "failed to add " ++ file ++ "; canceling commit"

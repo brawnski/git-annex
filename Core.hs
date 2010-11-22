@@ -7,7 +7,7 @@
 
 module Core where
 
-import IO (try)
+import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path

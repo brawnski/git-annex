@@ -24,6 +24,6 @@ start file = isAnnexed file $ \(key, backend) -> do
 perform :: Key -> Backend -> SubCmdPerform
 perform key backend = do
 	success <- Backend.fsckKey backend key
-	if (success)
+	if success
 		then return $ Just $ return True
 		else return Nothing
