@@ -1,0 +1,4 @@
+git-annex 0.09 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Add copy subcommand.
+   * Fix bug in setkey subcommand triggered by move --to."""]]
