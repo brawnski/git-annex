@@ -35,7 +35,10 @@ perform :: FilePath -> Key -> SubCmdPerform
 perform file key = do
 	-- the file might be on a different filesystem, so mv is used
 	-- rather than simply calling moveToObjectDir key file
-	ok <- getViaTmp key $ \dest -> liftIO $ boolSystem "mv" [file, dest]
+	ok <- getViaTmp key $ \dest -> do
+		if dest /= file
+			then liftIO $ boolSystem "mv" [file, dest]
+			else return True
 	if ok
 		then return $ Just $ cleanup key
 		else error "mv failed!"

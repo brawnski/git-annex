@@ -1,6 +1,7 @@
 git-annex (0.09) UNRELEASED; urgency=low
 
   * Add copy subcommand.
+  * Fix bug in setkey subcommand triggered by move --to.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 27 Nov 2010 16:58:33 -0400
 
