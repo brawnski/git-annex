@@ -6,7 +6,7 @@ import System.Exit
 import System.Directory
 
 type Test = IO Bool
-data TestDesc = TestDesc String String Test
+data TestCase = TestCase String String Test
 data Config = Config String Bool
 
 instance Show Config where
@@ -15,13 +15,13 @@ instance Show Config where
 			, key ++ " = " ++ show value
 		]
 
-tests :: [TestDesc]
+tests :: [TestCase]
 tests = [
-	  TestDesc "cp -a" "cp_a" $ testCp "-a"
-	, TestDesc "cp -p" "cp_p" $ testCp "-p"
-	, TestDesc "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
-	, TestDesc "uuid" "uuid" $ requireCommand "uuid" "uuid"
-	, TestDesc "xargs -0" "xargs_0" $ requireCommand "xargs -0" "xargs -0 </dev/null"
+	  TestCase "cp -a" "cp_a" $ testCp "-a"
+	, TestCase "cp -p" "cp_p" $ testCp "-p"
+	, TestCase "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
+	, TestCase "uuid" "uuid" $ requireCommand "uuid" "uuid"
+	, TestCase "xargs -0" "xargs_0" $ requireCommand "xargs -0" "xargs -0 </dev/null"
 	]
 
 tmpDir :: String
@@ -70,9 +70,9 @@ writeSysConfig config = writeFile "SysConfig.hs" body
 			]
 		footer = []
 
-runTests :: [TestDesc] -> IO [Config]
+runTests :: [TestCase] -> IO [Config]
 runTests [] = return []
-runTests ((TestDesc tname key t):ts) = do
+runTests ((TestCase tname key t):ts) = do
 	testStart tname
 	val <- t
 	testEnd val
