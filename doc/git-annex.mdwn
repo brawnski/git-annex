@@ -102,6 +102,14 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   When used with the --from option, moves the content of annexed files
   from the specified repository to the current one.
 
+* copy [path ...]
+
+  When used with the --to option, copies the content of annexed files from
+  the current repository to the specified one.
+
+  When used with the --from option, copies the content of annexed files
+  from the specified repository to the current one.
+
 * init description
 
   Initializes git-annex with a description of the git repository,

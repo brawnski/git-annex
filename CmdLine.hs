@@ -18,6 +18,7 @@ import qualified Command.Add
 import qualified Command.Unannex
 import qualified Command.Drop
 import qualified Command.Move
+import qualified Command.Copy
 import qualified Command.Get
 import qualified Command.FromKey
 import qualified Command.DropKey
@@ -41,7 +42,9 @@ subCmds =
 	, SubCommand "drop" path	Command.Drop.seek
 		"indicate content of files not currently wanted"
 	, SubCommand "move" path	Command.Move.seek
-		"transfer content of files to/from another repository"
+		"move content of files to/from another repository"
+	, SubCommand "copy" path	Command.Copy.seek
+		"copy content of files to/from another repository"
 	, SubCommand "unlock" path	Command.Unlock.seek
 		"unlock files for modification"
 	, SubCommand "edit" path	Command.Unlock.seek
