@@ -1,6 +1,6 @@
 git-annex (0.10) UNRELEASED; urgency=low
 
-  * In .gitattributes, the git-annex-numcopies attribute can be used
+  * In .gitattributes, the annex.numcopies attribute can be used
     to control the number of copies to retain of different types of files.
   * Bugfix: Always correctly handle gitattributes when in a subdirectory of
     the repository. (Had worked ok for ones like "*.mp3", but failed for

@@ -14,7 +14,7 @@ import Messages
 import Utility
 
 seek :: [SubCmdSeek]
-seek = [withAll (withAttrFilesInGit "git-annex-numcopies") start]
+seek = [withAll (withAttrFilesInGit "annex.numcopies") start]
 
 {- Checks a file's backend data for problems. -}
 start :: SubCmdStartAttrFile
