@@ -15,7 +15,6 @@ import qualified Annex
 import Types
 import Messages
 import Locations
-import Utility
 import Core
 import CopyFile
 

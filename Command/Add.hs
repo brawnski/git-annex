@@ -34,7 +34,7 @@ start pair@(file, _) = notAnnexed file $ do
 			showStart "add" file
 			return $ Just $ perform pair
 
-perform :: (FilePath, Maybe Backend) -> SubCmdPerform
+perform :: BackendFile -> SubCmdPerform
 perform (file, backend) = do
 	stored <- Backend.storeFileKey file backend
 	case stored of

@@ -1,3 +1,9 @@
+git-annex (0.10) UNRELEASED; urgency=low
+
+  * precommit: Optimise to avoid calling git-check-attr more than once.
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 28 Nov 2010 14:19:15 -0400
+
 git-annex (0.09) unstable; urgency=low
 
   * Add copy subcommand.

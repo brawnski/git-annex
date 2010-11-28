@@ -11,7 +11,6 @@ import Control.Monad.State (liftIO)
 
 import Command
 import qualified Annex
-import qualified Backend
 import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
@@ -20,15 +19,14 @@ import qualified Command.Fix
  - And, it needs to inject unlocked files into the annex. -}
 seek :: [SubCmdSeek]
 seek = [withFilesToBeCommitted Command.Fix.start,
-	withUnlockedFilesToBeCommitted start]
+	withFilesUnlockedToBeCommitted start]
 
-start :: SubCmdStartString
-start file = return $ Just $ perform file
+start :: SubCmdStartBackendFile
+start pair = return $ Just $ perform pair
 
-perform :: FilePath -> SubCmdPerform
-perform file = do
-	pairs <- Backend.chooseBackends [file]
-	ok <- doSubCmd $ Command.Add.start $ head pairs
+perform :: BackendFile -> SubCmdPerform
+perform pair@(file, _) = do
+	ok <- doSubCmd $ Command.Add.start pair
 	if ok
 		then return $ Just $ cleanup file
 		else error $ "failed to add " ++ file ++ "; canceling commit"
