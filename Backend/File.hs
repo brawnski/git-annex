@@ -172,7 +172,7 @@ checkKeyNumCopies key numcopies = do
 			return False
 		else return True
 	where
-		note 0 _ = "** No known copies of the file exist!"
+		note 0 _ = "** No known copies of "++show key++" exist!"
 		note present needed = 
 			"Only " ++ show present ++ " of " ++ show needed ++ 
 			" copies of "++show key++" exist. " ++
