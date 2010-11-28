@@ -7,7 +7,7 @@ to keep N copies of a file's content available across all repositories.
 
 By default, N is 1; it is configured by annex.numcopies. This default
 can be overridden on a per-file-type basis by the git-annex-numcopies
-setting in the `.gitattributes` file.
+setting in `.gitattributes` files.
 
 `git annex drop` attempts to check with other git remotes, to check that N
 copies of the file exist. If enough repositories cannot be verified to have

@@ -238,7 +238,7 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 # CONFIGURATION
 
-Like other git commands, git-annex is configured via `git-config`.
+Like other git commands, git-annex is configured via `.git/config`.
 Here are all the supported configuration settings.
 
 * `annex.uuid` -- a unique UUID for this repository (automatically set)
@@ -267,7 +267,7 @@ Here are all the supported configuration settings.
   between versions.
 
 The backend used when adding a new file to the annex can be configured
-on a per-file-type basis via the `.gitattributes` file. In the file,
+on a per-file-type basis via `.gitattributes` files. In the file,
 the `git-annex-backend` attribute can be set to the name of the backend to
 use. For example, this here's how to use the WORM backend by default,
 but the SHA1 backend for ogg files:
@@ -276,14 +276,14 @@ but the SHA1 backend for ogg files:
 	*.ogg git-annex-backend=SHA1
 
 The numcopies setting can also be configured on a per-file-type basis via
-the `git-annex-numcopies` attribute. For example, this makes two copies
-be needed for ogg files:
+the `git-annex-numcopies` attribute in `.gitattributes` files.
+For example, this makes two copies be needed for wav files:
 
-	*.ogg git-annex-numcopies=2
+	*.wav git-annex-numcopies=2
 
 # FILES
 
-These files are used, in your git repository:
+These files are used by git-annex, in your git repository:
 
 `.git/annex/objects/` contains the annexed file contents that are currently
 available. Annexed files in your git repository symlink to that content.
