@@ -30,4 +30,6 @@ to both USB and Server.
 
 Note that different repositories can be configured with different values of
 N. So just because Laptop has N=2, this does not prevent the number of
-copies falling to 1, when USB and Server have N=1.
+copies falling to 1, when USB and Server have N=1. To avoid this,
+configure it in `.gitattributes`, which is shared between repositories
+using git.
