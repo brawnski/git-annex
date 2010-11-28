@@ -163,9 +163,9 @@ checkKey a key numcopies = do
 checkKeyNumCopies :: Key -> Maybe Int -> Annex Bool
 checkKeyNumCopies key numcopies = do
 	needed <- getNumCopies numcopies
-	remotes <- Remotes.keyPossibilities key
-	inannex <- inAnnex key
-	let present = length remotes + if inannex then 1 else 0
+	g <- Annex.gitRepo
+	locations <- liftIO $ keyLocations g key
+	let present = length locations
 	if present < needed
 		then do
 			warning $ note present needed
