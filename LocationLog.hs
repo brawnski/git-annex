@@ -124,7 +124,7 @@ logNow s u = do
 {- Returns the filename of the log file for a given key. -}
 logFile :: Git.Repo -> Key -> String
 logFile repo key = 
-	gitStateDir repo ++ Git.relative repo (keyFile key) ++ ".log"
+	gitStateDir repo ++ keyFile key ++ ".log"
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
