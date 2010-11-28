@@ -44,6 +44,9 @@ type SubCmdStartString = String -> SubCmdStart
 type BackendFile = (FilePath, Maybe Backend)
 type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
 type SubCmdStartBackendFile = BackendFile -> SubCmdStart
+type AttrFile = (FilePath, String)
+type SubCmdSeekAttrFiles = SubCmdStartAttrFile -> SubCmdSeek
+type SubCmdStartAttrFile = AttrFile -> SubCmdStart
 type SubCmdSeekNothing = SubCmdStart -> SubCmdSeek
 type SubCmdStartNothing = SubCmdStart
 
@@ -104,6 +107,13 @@ withFilesInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.inRepo repo) params
 	return $ map a $ filter notState $ foldl (++) [] files
+withAttrFilesInGit :: String -> SubCmdSeekAttrFiles
+withAttrFilesInGit attr a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ mapM (Git.inRepo repo) params
+	pairs <- liftIO $ Git.checkAttr repo attr $
+		filter notState $ foldl (++) [] files
+	return $ map a pairs
 withFilesMissing :: SubCmdSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
@@ -152,21 +162,21 @@ backendPairs a files = do
 
 {- Default to acting on all files matching the seek action if
  - none are specified. -}
-withAll :: SubCmdSeekStrings -> SubCmdSeekStrings
+withAll :: (a -> SubCmdSeek) -> a -> SubCmdSeek
 withAll w a [] = do
 	g <- Annex.gitRepo
 	w a [Git.workTree g]
 withAll w a p = w a p
 
 {- Provides a default parameter to act on if none is specified. -}
-withDefault :: String-> SubCmdSeekStrings -> SubCmdSeekStrings
+withDefault :: String-> (a -> SubCmdSeek) -> (a -> SubCmdSeek)
 withDefault d w a [] = w a [d]
 withDefault _ w a p = w a p
 
 {- filter out files from the state directory -}
 notState :: FilePath -> Bool
 notState f = stateLoc /= take (length stateLoc) f
-	
+
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
 notSymlink f = do

@@ -275,6 +275,12 @@ but the SHA1 backend for ogg files:
 	* git-annex-backend=WORM
 	*.ogg git-annex-backend=SHA1
 
+The numcopies setting can also be configured on a per-file-type basis via
+the `git-annex-numcopies` attribute. For example, this makes two copies
+be needed for ogg files:
+
+	*.ogg git-annex-numcopies=2
+
 # FILES
 
 These files are used, in your git repository:

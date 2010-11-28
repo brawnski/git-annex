@@ -12,7 +12,8 @@ module Utility (
 	relPathDirToDir,
 	boolSystem,
 	shellEscape,
-	unsetFileMode
+	unsetFileMode,
+	readMaybe
 ) where
 
 import System.IO
@@ -125,3 +126,9 @@ unsetFileMode :: FilePath -> FileMode -> IO ()
 unsetFileMode f m = do
 	s <- getFileStatus f
 	setFileMode f $ fileMode s `intersectFileModes` complement m
+
+{- Attempts to read a value from a String. -}
+readMaybe :: (Read a) => String -> Maybe a
+readMaybe s = case reads s of
+	((x,_):_) -> Just x
+	_ -> Nothing

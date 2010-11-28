@@ -32,8 +32,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 perform :: FilePath -> Key -> Backend -> SubCmdPerform
 perform file key backend = do
 	-- force backend to always remove
-	Annex.flagChange "force" $ FlagBool True
-	ok <- Backend.removeKey backend key
+	ok <- Backend.removeKey backend key (Just 0)
 	if ok
 		then return $ Just $ cleanup file key
 		else return Nothing

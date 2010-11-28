@@ -22,11 +22,11 @@ backend = Backend {
 	retrieveKeyFile = downloadUrl,
 	-- allow keys to be removed; presumably they can always be
 	-- downloaded again
-	removeKey = dummyOk,
+	removeKey = dummyRemove,
 	-- similarly, keys are always assumed to be out there on the web
 	hasKey = dummyOk,
 	-- and nothing needed to fsck
-	fsckKey = dummyOk
+	fsckKey = dummyFsck
 }
 
 -- cannot generate url from filename
@@ -36,6 +36,12 @@ keyValue _ = return Nothing
 -- cannot change url contents
 dummyStore :: FilePath -> Key -> Annex Bool
 dummyStore _ _ = return False
+
+dummyRemove :: Key -> Maybe a -> Annex Bool
+dummyRemove _ _ = return False
+
+dummyFsck :: Key -> Maybe a -> Annex Bool
+dummyFsck _ _ = return True
 
 dummyOk :: Key -> Annex Bool
 dummyOk _ = return True

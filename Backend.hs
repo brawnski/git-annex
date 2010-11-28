@@ -104,8 +104,8 @@ retrieveKeyFile :: Backend -> Key -> FilePath -> Annex Bool
 retrieveKeyFile backend key dest = (Internals.retrieveKeyFile backend) key dest
 
 {- Removes a key from a backend. -}
-removeKey :: Backend -> Key -> Annex Bool
-removeKey backend key = (Internals.removeKey backend) key
+removeKey :: Backend -> Key -> Maybe Int -> Annex Bool
+removeKey backend key numcopies = (Internals.removeKey backend) key numcopies
 
 {- Checks if a key is present in its backend. -}
 hasKey :: Key -> Annex Bool
@@ -114,8 +114,8 @@ hasKey key = do
 	(Internals.hasKey backend) key
 
 {- Checks a key's backend for problems. -}
-fsckKey :: Backend -> Key -> Annex Bool
-fsckKey backend key = (Internals.fsckKey backend) key
+fsckKey :: Backend -> Key -> Maybe Int -> Annex Bool
+fsckKey backend key numcopies = (Internals.fsckKey backend) key numcopies
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

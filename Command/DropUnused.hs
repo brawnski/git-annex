@@ -30,9 +30,7 @@ start s = do
 		Just key -> do
 			showStart "dropunused" s
 			backend <- keyBackend key
-			-- force drop, even if this is the only copy
-			Annex.flagChange "force" $ FlagBool True
-			return $ Just $ Command.Drop.perform key backend
+			return $ Just $ Command.Drop.perform key backend (Just 0)
 
 readUnusedLog :: Annex (M.Map String Key)
 readUnusedLog = do

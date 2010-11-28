@@ -1,6 +1,8 @@
 git-annex (0.10) UNRELEASED; urgency=low
 
   * precommit: Optimise to avoid calling git-check-attr more than once.
+  * In .gitattributes, the git-annex-numcopies attribute can be used
+    to control the number of copies to retain of different types of files.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 28 Nov 2010 14:19:15 -0400
 

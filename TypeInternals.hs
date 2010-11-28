@@ -72,12 +72,15 @@ data Backend = Backend {
 	storeFileKey :: FilePath -> Key -> Annex Bool,
 	-- retrieves a key's contents to a file
 	retrieveKeyFile :: Key -> FilePath -> Annex Bool,
-	-- removes a key
-	removeKey :: Key -> Annex Bool,
+	-- removes a key, optionally checking that enough copies are stored
+	-- elsewhere
+	removeKey :: Key -> Maybe Int -> Annex Bool,
 	-- checks if a backend is storing the content of a key
 	hasKey :: Key -> Annex Bool,
 	-- called during fsck to check a key
-	fsckKey :: Key -> Annex Bool
+	-- (second parameter may be the number of copies that there should
+	-- be of the key)
+	fsckKey :: Key -> Maybe Int -> Annex Bool
 }
 
 instance Show Backend where

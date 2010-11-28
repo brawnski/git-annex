@@ -86,14 +86,14 @@ copyKeyFile key file = do
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
  - error if not. -}
-checkRemoveKey :: Key -> Annex Bool
-checkRemoveKey key = do
+checkRemoveKey :: Key -> Maybe Int -> Annex Bool
+checkRemoveKey key numcopiesM = do
 	force <- Annex.flagIsSet "force"
-	if force
+	if force || numcopiesM == Just 0
 		then return True
 		else do
 			remotes <- Remotes.keyPossibilities key
-			numcopies <- getNumCopies
+			numcopies <- getNumCopies numcopiesM
 			if numcopies > length remotes
 				then notEnoughCopies numcopies (length remotes) []
 				else findcopies numcopies 0 remotes []
@@ -139,8 +139,9 @@ showTriedRemotes remotes =
 	showLongNote $ "I was unable to access these remotes: " ++
 		Remotes.list remotes
 
-getNumCopies :: Annex Int
-getNumCopies = do
+getNumCopies :: Maybe Int -> Annex Int
+getNumCopies (Just n) = return n
+getNumCopies Nothing = do
 	g <- Annex.gitRepo
 	return $ read $ Git.configGet g config "1"
 	where
@@ -153,15 +154,15 @@ getNumCopies = do
  - The passed action is first run to allow backends deriving this one
  - to do their own checks.
  -}
-checkKey :: (Key -> Annex Bool) -> Key -> Annex Bool
-checkKey a key = do
+checkKey :: (Key -> Annex Bool) -> Key -> Maybe Int -> Annex Bool
+checkKey a key numcopies = do
 	a_ok <- a key
-	copies_ok <- checkKeyNumCopies key
+	copies_ok <- checkKeyNumCopies key numcopies
 	return $ a_ok && copies_ok
 
-checkKeyNumCopies :: Key -> Annex Bool
-checkKeyNumCopies key = do
-	needed <- getNumCopies
+checkKeyNumCopies :: Key -> Maybe Int -> Annex Bool
+checkKeyNumCopies key numcopies = do
+	needed <- getNumCopies numcopies
 	remotes <- Remotes.keyPossibilities key
 	inannex <- inAnnex key
 	let present = length remotes + if inannex then 1 else 0
