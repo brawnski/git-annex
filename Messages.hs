@@ -53,4 +53,4 @@ showErr e = warning $ show e
 warning :: String -> Annex ()
 warning s = do
 	verbose $ liftIO $ putStr "\n"
-	liftIO $ hPutStr stderr $ "git-annex: " ++ s ++ " "
+	liftIO $ hPutStrLn stderr $ "git-annex: " ++ s ++ " "
