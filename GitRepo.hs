@@ -171,15 +171,17 @@ workTree (Repo { location = Dir d }) = d
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
  - This is the same form displayed and used by git. -}
-relative :: Repo -> String -> String
-relative repo@(Repo { location = Dir d }) file = drop (length absrepo) absfile
+relative :: Repo -> FilePath -> IO FilePath
+relative repo@(Repo { location = Dir d }) file = do
+	cwd <- getCurrentDirectory
+	return $ drop (length absrepo) (absfile cwd)
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
 		absrepo = case (absNormPath "/" d) of
 			Just f -> f ++ "/"
 			Nothing -> error $ "bad repo" ++ repoDescribe repo
-		absfile = case (secureAbsNormPath absrepo file) of
+		absfile c = case (secureAbsNormPath c file) of
 			Just f -> f
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 relative repo _ = assertLocal repo $ error "internal"
@@ -333,18 +335,26 @@ configGet repo key defaultValue =
 configMap :: Repo -> Map.Map String String
 configMap repo = config repo
 
-{- Looks up a gitattributes value for each file in a list. -}
+{- Efficiently looks up a gitattributes value for each file in a list. -}
 checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
 checkAttr repo attr files = do
-	(_, s) <- pipeBoth "git" params files0
-	return $ map topair $ lines s
+	-- git check-attr wants files that are absolute (or relative to the
+	-- top of the repo). But we're passed files relative to the current
+	-- directory. Convert to absolute, and then convert the filenames
+	-- in its output back to relative.
+	absfiles <- mapM absPath files
+	(_, s) <- pipeBoth "git" params $ join "\0" absfiles
+	cwd <- getCurrentDirectory
+	return $ map (topair $ cwd++"/") $ lines s
 	-- XXX handle is left open, this is ok for git-annex, but may need
 	-- to be cleaned up for other uses.
 	where
 		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
-		files0 = join "\0" files
-		topair l = (file, value)
+		topair cwd l = (relfile, value)
 			where 
+				relfile 
+					| startswith cwd file = drop (length cwd) file
+					| otherwise = file
 				file = decodeGitFile $ join sep $ take end bits
 				value = bits !! end
 				end = length bits - 1

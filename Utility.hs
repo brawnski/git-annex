@@ -8,6 +8,7 @@
 module Utility (
 	hGetContentsStrict,
 	parentDir,
+	absPath,
 	relPathCwdToDir,
 	relPathDirToDir,
 	boolSystem,
@@ -44,24 +45,25 @@ parentDir dir =
 			slash = if isAbsolute dir then s else ""
 			s = [pathSeparator]
 
+{- Converts a filename into a normalized, absolute path. -}
+absPath :: FilePath -> IO FilePath
+absPath file = do
+	cwd <- getCurrentDirectory
+	case absNormPath cwd file of
+		Just f -> return f
+		Nothing -> error $ "unable to normalize " ++ file
+
 {- Constructs a relative path from the CWD to a directory.
  -
  - For example, assuming CWD is /tmp/foo/bar:
  -    relPathCwdToDir "/tmp/foo" == "../"
  -    relPathCwdToDir "/tmp/foo/bar" == "" 
- -    relPathCwdToDir "/tmp/foo/bar" == "" 
  -}
 relPathCwdToDir :: FilePath -> IO FilePath
 relPathCwdToDir dir = do
 	cwd <- getCurrentDirectory
-	let absdir = absnorm cwd
-	return $ relPathDirToDir cwd absdir
-	where
-		-- absolute, normalized form of the directory
-		absnorm cwd = 
-			case absNormPath cwd dir of
-				Just d -> d
-				Nothing -> error $ "unable to normalize " ++ dir
+	a <- absPath dir
+	return $ relPathDirToDir cwd a
 
 {- Constructs a relative path from one directory to another.
  -
