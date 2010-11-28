@@ -8,6 +8,7 @@ git-annex (0.10) UNRELEASED; urgency=low
   * fsck: Fix warning about not enough copies of a file, when locations
     are known, but are not available in currently configured remotes.
   * precommit: Optimise to avoid calling git-check-attr more than once.
+  * The git-annex-backend attribute has been renamed to annex.backend.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 28 Nov 2010 14:19:15 -0400
 

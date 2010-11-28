@@ -151,7 +151,7 @@ chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe Backend)]
 chooseBackends fs = do
 	g <- Annex.gitRepo
 	bs <- Annex.supportedBackends
-	pairs <- liftIO $ Git.checkAttr g "git-annex-backend" fs
+	pairs <- liftIO $ Git.checkAttr g "annex.backend" fs
 	return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
 
 {- Returns the backend to use for a key. -}

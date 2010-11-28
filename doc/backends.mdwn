@@ -26,12 +26,12 @@ git-annex should use. The first one listed will be used by default when
 new files are added.
 
 For finer control of what backend is used when adding different types of
-files, the `.gitattributes` file can be used. The `git-annex-backend`
+files, the `.gitattributes` file can be used. The `annex.backend`
 attribute can be set to the name of the backend to use for matching files.
 
 For example, to use the SHA1 backend for sound files, which tend to be
 smallish and might be modified over time, you could set in
 `.gitattributes`:
 
-	*.mp3 git-annex-backend=SHA1
-	*.ogg git-annex-backend=SHA1
+	*.mp3 annex.backend=SHA1
+	*.ogg annex.backend=SHA1

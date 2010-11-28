@@ -268,12 +268,12 @@ Here are all the supported configuration settings.
 
 The backend used when adding a new file to the annex can be configured
 on a per-file-type basis via `.gitattributes` files. In the file,
-the `git-annex-backend` attribute can be set to the name of the backend to
+the `annex.backend` attribute can be set to the name of the backend to
 use. For example, this here's how to use the WORM backend by default,
 but the SHA1 backend for ogg files:
 
-	* git-annex-backend=WORM
-	*.ogg git-annex-backend=SHA1
+	* annex.backend=WORM
+	*.ogg annex.backend=SHA1
 
 The numcopies setting can also be configured on a per-file-type basis via
 the `annex.numcopies` attribute in `.gitattributes` files.
