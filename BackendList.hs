@@ -11,7 +11,7 @@ module BackendList (allBackends) where
 import qualified Backend.WORM
 import qualified Backend.SHA1
 import qualified Backend.URL
-import TypeInternals
+import Types
 
 allBackends :: [Backend]
 allBackends = 
