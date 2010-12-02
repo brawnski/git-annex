@@ -58,7 +58,6 @@ copyKeyFile key file = do
 		else trycopy remotes remotes
 	where
 		trycopy full [] = do
-			showNote "not available"
 			showTriedRemotes full
 			showLocations key
 			return False
