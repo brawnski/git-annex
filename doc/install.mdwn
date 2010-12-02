@@ -5,7 +5,7 @@ To build and use git-annex, you will need:
 * MissingH: <http://github.com/jgoerzen/missingh/wiki>
 * `uuid`: <http://www.ossp.org/pkg/lib/uuid/>
 * `xargs`: <http://savannah.gnu.org/projects/findutils/>
-* `rsync` (optional but recommended)
+* `rsync`: <http://rsync.samba.org/> (optional but recommended)
 * Then just [[download]] git-annex and run: `make; make install`
 
 ([Ikiwiki](http://ikiwiki.info) is needed to build the documentation,
