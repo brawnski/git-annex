@@ -202,11 +202,7 @@ copyFromRemote r key file
 	where
 		keyloc = annexLocation r key
 		getlocal = liftIO $ copyFile keyloc file
-		getssh = do
-			exists <- liftIO $ doesFileExist file
-			if exists && SysConfig.rsync
-				then rsync r [sshLocation r keyloc, file]
-				else scp r [sshLocation r keyloc, file]
+		getssh = remoteCopyFile r (sshLocation r keyloc) file
 
 {- Tries to copy a key's content to a file on a remote. -}
 copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
@@ -220,26 +216,35 @@ copyToRemote r key file = do
 			else error "copying to non-ssh repo not supported"
 	where
 		putlocal src = liftIO $ copyFile src file
-		putssh src = scp r [src, sshLocation r file]
+		putssh src = remoteCopyFile r src (sshLocation r file)
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
 sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
 
-{- Runs scp against a specified remote. (Honors annex-scp-options.) -}
-scp :: Git.Repo -> [String] -> Annex Bool
-scp r params = do
-	scpoptions <- repoConfig r "scp-options" ""
+{- Copys a file from or to a remote, using rsync (when available) or scp. -}
+remoteCopyFile :: Git.Repo -> String -> String -> Annex Bool
+remoteCopyFile r src dest = do
 	showProgress -- make way for progress bar
-	liftIO $ boolSystem "scp" $ "-p":(words scpoptions) ++ params
-
-{- Runs rsync against a specified remote, resuming any interrupted file
- - transfer. (Honors annex-rsync-options.) -}
-rsync :: Git.Repo -> [String] -> Annex Bool
-rsync r params = do
-	rsyncoptions <- repoConfig r "rsync-options" ""
-	showProgress -- make way for progress bar
-	liftIO $ boolSystem "rsync" $ ["--progress", "-a", "--inplace"] ++
-		words rsyncoptions ++ params
+	o <- repoConfig r configopt ""
+	res <- liftIO $ boolSystem cmd $ options ++ words o ++ [src, dest]
+	if res
+		then return res
+		else do
+			when rsync $
+				showLongNote "run git annex again to resume file transfer"
+			return res
+	where
+		cmd
+			| rsync = "rsync"
+			| otherwise = "scp"
+		configopt
+			| rsync = "rsync-options"
+			| otherwise = "scp-options"
+		options
+			-- inplace makes rsync resume partial files
+			| rsync = ["-p", "--progress", "--inplace"]
+			| otherwise = ["-p"]
+		rsync = SysConfig.rsync
 
 {- Runs a command in a remote, using ssh if necessary.
  - (Honors annex-ssh-options.) -}

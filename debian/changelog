@@ -1,7 +1,8 @@
 git-annex (0.11) UNRELEASED; urgency=low
 
-  * Rsync will now be used to resume interrupted/failed partial file
-    transfers from a remote.
+  * If available, rsync will be used for file transfers from remote
+    repositories. This allows resuming interrupted transfers.
+  * Added remote.annex-rsync-options.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 02 Dec 2010 16:54:12 -0400
 

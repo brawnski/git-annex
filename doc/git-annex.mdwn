@@ -258,11 +258,15 @@ Here are all the supported configuration settings.
   here.
 * `remote.<name>.annex-scp-options` -- Options to use when using scp
   to or from this repository. For example, to force ipv6, and limit
-  the bandwidth to 100Kbit/s, set it to "-6 -l 100"
+  the bandwidth to 1000Kbit/s, set it to "-6 -l 1000"
 * `remote.<name>.annex-ssh-options` -- Options to use when using ssh
   to talk to this repository.
-* `annex.scp-options` and `annex.ssh-options` -- Default scp and ssh
-  options to use if a remote does not have specific options.
+* `remote.<name>.annex-rsync-options` -- Options to use when using rsync
+  to or from this repository. For example, to force ipv6, and limit
+  the bandwidth to 100Kbyte/s, set it to "-6 --bwlimit 100"
+* `annex.scp-options`, `annex.ssh-options`, `annex.rsync-options` --
+  Default scp, ssh, and rsync options to use if a remote does not have
+  specific options.
 * `annex.version` -- Automatically maintained, and used to automate upgrades
   between versions.
 
