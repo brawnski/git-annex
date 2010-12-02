@@ -36,6 +36,7 @@ import Utility
 import qualified Core
 import Messages
 import CopyFile
+import qualified SysConfig
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -199,9 +200,13 @@ copyFromRemote r key file
 	| Git.repoIsSsh r = getssh
 	| otherwise = error "copying from non-ssh repo not supported"
 	where
-		getlocal = liftIO $ copyFile keyloc file
-		getssh = scp r [sshLocation r keyloc, file]
 		keyloc = annexLocation r key
+		getlocal = liftIO $ copyFile keyloc file
+		getssh = do
+			exists <- liftIO $ doesFileExist file
+			if exists && SysConfig.rsync
+				then rsync r [sshLocation r keyloc, file]
+				else scp r [sshLocation r keyloc, file]
 
 {- Tries to copy a key's content to a file on a remote. -}
 copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
@@ -224,8 +229,17 @@ sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
 scp :: Git.Repo -> [String] -> Annex Bool
 scp r params = do
 	scpoptions <- repoConfig r "scp-options" ""
-	showProgress -- make way for scp progress bar
+	showProgress -- make way for progress bar
 	liftIO $ boolSystem "scp" $ "-p":(words scpoptions) ++ params
+
+{- Runs rsync against a specified remote, resuming any interrupted file
+ - transfer. (Honors annex-rsync-options.) -}
+rsync :: Git.Repo -> [String] -> Annex Bool
+rsync r params = do
+	rsyncoptions <- repoConfig r "rsync-options" ""
+	showProgress -- make way for progress bar
+	liftIO $ boolSystem "rsync" $ ["--progress", "-a", "--inplace"] ++
+		words rsyncoptions ++ params
 
 {- Runs a command in a remote, using ssh if necessary.
  - (Honors annex-ssh-options.) -}

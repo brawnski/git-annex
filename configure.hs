@@ -20,8 +20,9 @@ tests = [
 	  TestCase "cp -a" "cp_a" $ testCp "-a"
 	, TestCase "cp -p" "cp_p" $ testCp "-p"
 	, TestCase "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
-	, TestCase "uuid" "uuid" $ requireCommand "uuid" "uuid"
-	, TestCase "xargs -0" "xargs_0" $ requireCommand "xargs -0" "xargs -0 </dev/null"
+	, TestCase "uuid" "uuid" $ requireCmd "uuid" "uuid"
+	, TestCase "xargs -0" "xargs_0" $ requireCmd "xargs -0" "xargs -0 </dev/null"
+	, TestCase "rsync" "rsync" $ testCmd "rsync --version >/dev/null"
 	]
 
 tmpDir :: String
@@ -33,14 +34,14 @@ testFile = tmpDir ++ "/testfile"
 quiet :: String -> String
 quiet s = s ++ " >/dev/null 2>&1"
 
-requireCommand :: String -> String -> Test
-requireCommand command cmdline = do
+requireCmd :: String -> String -> Test
+requireCmd c cmdline = do
 	ret <- testCmd $ quiet cmdline
 	if ret
 		then return True
 		else do
 			testEnd False
-			error $ "** the " ++ command ++ " command is required to use git-annex"
+			error $ "** the " ++ c ++ " command is required to use git-annex"
 
 testCp :: String -> Test
 testCp option = testCmd $ quiet $ "cp " ++ option ++ " " ++ testFile ++ 
