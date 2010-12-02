@@ -231,7 +231,7 @@ remoteCopyFile r src dest = do
 		then return res
 		else do
 			when rsync $
-				showLongNote "run git annex again to resume file transfer"
+				showLongNote "rsync failed -- run git annex again to resume file transfer"
 			return res
 	where
 		cmd
