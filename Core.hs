@@ -29,7 +29,7 @@ import Messages
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).
- - Propigates an overall error status at the end.
+ - Runs shutdown and propigates an overall error status at the end.
  -}
 tryRun :: AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
@@ -42,7 +42,8 @@ tryRun' state errnum (a:as) = do
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' _ errnum [] =
+tryRun' state errnum [] = do
+	_ <- try $ Annex.run state $ shutdown errnum
 	when (errnum > 0) $ error $ show errnum ++ " failed"
 			
 {- Actions to perform each time ran. -}
@@ -52,20 +53,22 @@ startup = do
 	return True
 
 {- When git-annex is done, it runs this. -}
-shutdown :: Annex Bool
-shutdown = do
+shutdown :: Integer -> Annex Bool
+shutdown errnum = do
 	q <- Annex.queueGet
 	unless (q == GitQueue.empty) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun
 
-	-- clean up any files left in the temp directory, but leave
-	-- the tmp directory itself
-	g <- Annex.gitRepo
-	let tmp = annexTmpLocation g
-	exists <- liftIO $ doesDirectoryExist tmp
-	when exists $ liftIO $ removeDirectoryRecursive tmp
-	liftIO $ createDirectoryIfMissing True tmp
+	-- If nothing failed, clean up any files left in the temp directory,
+	-- but leave the directory itself. If something failed, temp files
+	-- are left behind to allow resuming on re-run.
+	when (errnum == 0) $ do
+		g <- Annex.gitRepo
+		let tmp = annexTmpLocation g
+		exists <- liftIO $ doesDirectoryExist tmp
+		when exists $ liftIO $ removeDirectoryRecursive tmp
+		liftIO $ createDirectoryIfMissing True tmp
 
 	return True
 
