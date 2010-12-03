@@ -32,6 +32,7 @@ import qualified Command.Unlock
 import qualified Command.Lock
 import qualified Command.PreCommit
 import qualified Command.Find
+import qualified Command.Uninit
 
 subCmds :: [SubCommand]
 subCmds =
@@ -55,6 +56,8 @@ subCmds =
 		"initialize git-annex with repository description"
 	, SubCommand "unannex" path	Command.Unannex.seek
 		"undo accidential add command"
+	, SubCommand "uninit" path	Command.Uninit.seek
+		"de-initialize git-annex and clean out repository"
 	, SubCommand "pre-commit" path	Command.PreCommit.seek
 		"run by git pre-commit hook"
 	, SubCommand "fromkey" key	Command.FromKey.seek

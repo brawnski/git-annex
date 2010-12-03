@@ -7,6 +7,7 @@
 
 module Utility (
 	hGetContentsStrict,
+	readFileStrict,
 	parentDir,
 	absPath,
 	relPathCwdToDir,
@@ -33,6 +34,10 @@ import Foreign (complement)
  - all read before it gets closed. -}
 hGetContentsStrict :: Handle -> IO String
 hGetContentsStrict h  = hGetContents h >>= \s -> length s `seq` return s
+
+{- A version of readFile that is not lazy. -}
+readFileStrict :: FilePath -> IO String
+readFileStrict f = readFile f >>= \s -> length s `seq` return s
 
 {- Returns the parent directory of a path. Parent of / is "" -}
 parentDir :: String -> String

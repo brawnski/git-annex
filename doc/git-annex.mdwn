@@ -151,6 +151,12 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   any more. In that case you should use `git annex drop` instead, and you
   can also `git rm` the file.
 
+* uninit
+
+  Use this to stop using git annex. It will unannex every file in the
+  repository, and remove all of git-annex's other data, leaving you with a
+  git repository plus the previously annexed files.
+
 * fix [path ...]
 
   Fixes up symlinks that have become broken to again point to annexed content.
