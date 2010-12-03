@@ -30,7 +30,8 @@ docs:
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
 		--no-usedirs --disable-plugin=openid --plugin=sidebar \
 		--underlaydir=/dev/null --disable-plugin=shortcut \
-		--disable-plugin=smiley
+		--disable-plugin=smiley \
+		--exclude='news/.*'
 
 clean:
 	rm -rf build git-annex git-annex.1 test configure SysConfig.hs
