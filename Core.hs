@@ -190,9 +190,11 @@ getKeysPresent' dir = do
 	return $ map fileKey files
 	where
 		present d = do
-			s <- getFileStatus $ dir ++ "/" ++ d ++ "/" 
-				++ takeFileName d
-			return $ isRegularFile s
+			result <- try $
+				getFileStatus $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
+			case result of
+				Right s -> return $ isRegularFile s
+				Left _ -> return False
 
 {- List of keys referenced by symlinks in the git repo. -}
 getKeysReferenced :: Annex [Key]
