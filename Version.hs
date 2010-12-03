@@ -29,9 +29,11 @@ getVersion = do
 		then return $ Just v
 		else do
 			-- version 0 was not recorded in .git/config;
-			-- such a repo should have an annexDir
+			-- such a repo should have an annexDir but no
+			-- annexObjectDir
 			d <- liftIO $ doesDirectoryExist $ annexDir g
-			if d
+			o <- liftIO $ doesDirectoryExist $ annexObjectDir g
+			if d && not o
 				then return $ Just "0"
 				else return Nothing -- no version yet
 
