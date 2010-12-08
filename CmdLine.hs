@@ -9,6 +9,7 @@ module CmdLine (parseCmd) where
 
 import System.Console.GetOpt
 import Control.Monad (when)
+import Control.Monad.State (liftIO)
 
 import qualified Annex
 import Types
@@ -103,6 +104,8 @@ options = [
 		"specify to where to transfer content"
 	  , Option ['f'] ["from"] (ReqArg (storestring "fromrepository") "REPOSITORY")
 		"specify from where to transfer content"
+	  , Option ['x'] ["exclude"] (ReqArg (storestring "exclude") "GLOB")
+		"skip files matching the glob pattern"
 	  ]
 	where
 		storebool n b = Annex.flagChange n $ FlagBool b
@@ -125,22 +128,17 @@ usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
 
-{- Parses command line and returns two lists of actions to be 
- - run in the Annex monad. The first actions configure it
- - according to command line options, while the second actions
- - handle subcommands. -}
-parseCmd :: [String] -> AnnexState -> IO ([Annex Bool], [Annex Bool])
-parseCmd argv state = do
-	(flags, params) <- getopt
+{- Parses command line, stores configure flags, and returns a 
+ - list of actions to be run in the Annex monad. -}
+parseCmd :: [String] -> Annex [Annex Bool]
+parseCmd argv = do
+	(flags, params) <- liftIO $ getopt
 	when (null params) $ error usage
 	case lookupCmd (head params) of
 		[] -> error usage
 		[subcommand] -> do
-			actions <- prepSubCmd subcommand state (drop 1 params)
-			let configactions = map (\flag -> do
-				flag
-				return True) flags
-			return (configactions, actions)
+			_ <- sequence flags
+			prepSubCmd subcommand (drop 1 params)
 		_ -> error "internal error: multiple matching subcommands"
 	where
 		getopt = case getOpt Permute options argv of

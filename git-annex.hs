@@ -19,5 +19,5 @@ main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
 	state <- Annex.new gitrepo allBackends
-	(configure, actions) <- parseCmd args state
-	tryRun state $ [startup, upgrade] ++ configure ++ actions
+	(actions, state') <- Annex.run state $ parseCmd args
+	tryRun state' $ [startup, upgrade] ++ actions

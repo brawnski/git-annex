@@ -11,6 +11,8 @@ import Control.Monad.State (liftIO)
 import System.Directory
 import System.Posix.Files
 import Control.Monad (filterM)
+import System.Path.WildMatch
+import Text.Regex
 
 import Types
 import qualified Backend
@@ -59,9 +61,9 @@ data SubCommand = SubCommand {
 
 {- Prepares a list of actions to run to perform a subcommand, based on
  - the parameters passed to it. -}
-prepSubCmd :: SubCommand -> AnnexState -> [String] -> IO [Annex Bool]
-prepSubCmd SubCommand { subcmdseek = seek } state params = do
-	lists <- Annex.eval state $ mapM (\s -> s params) seek
+prepSubCmd :: SubCommand -> [String] -> Annex [Annex Bool]
+prepSubCmd SubCommand { subcmdseek = seek } params = do
+	lists <- mapM (\s -> s params) seek
 	return $ map doSubCmd $ foldl (++) [] lists
 
 {- Runs a subcommand through the start, perform and cleanup stages -}
@@ -106,18 +108,20 @@ withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.inRepo repo) params
-	return $ map a $ filter notState $ foldl (++) [] files
+	files' <- filterFiles $ foldl (++) [] files
+	return $ map a files'
 withAttrFilesInGit :: String -> SubCmdSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ mapM (Git.inRepo repo) params
-	pairs <- liftIO $ Git.checkAttr repo attr $
-		filter notState $ foldl (++) [] files
+	files' <- filterFiles $ foldl (++) [] files
+	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
 withFilesMissing :: SubCmdSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
-	return $ map a $ filter notState files
+	files' <- filterFiles files
+	return $ map a files'
 	where
 		missing f = do
 			e <- doesFileExist f
@@ -126,7 +130,8 @@ withFilesNotInGit :: SubCmdSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
-	backendPairs a $ filter notState $ foldl (++) [] newfiles
+	newfiles' <- filterFiles $ foldl (++) [] newfiles
+	backendPairs a newfiles'
 withString :: SubCmdSeekStrings
 withString a params = return [a $ unwords params]
 withStrings :: SubCmdSeekStrings
@@ -135,7 +140,8 @@ withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
 	tocommit <- liftIO $ mapM (Git.stagedFiles repo) params
-	return $ map a $ filter notState $ foldl (++) [] tocommit
+	tocommit' <- filterFiles $ foldl (++) [] tocommit
+	return $ map a tocommit'
 withFilesUnlocked :: SubCmdSeekBackendFiles
 withFilesUnlocked = withFilesUnlocked' Git.typeChangedFiles
 withFilesUnlockedToBeCommitted :: SubCmdSeekBackendFiles
@@ -146,7 +152,8 @@ withFilesUnlocked' typechanged a params = do
 	repo <- Annex.gitRepo
 	typechangedfiles <- liftIO $ mapM (typechanged repo) params
 	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
-	backendPairs a $ filter notState unlockedfiles
+	unlockedfiles' <- filterFiles unlockedfiles
+	backendPairs a unlockedfiles'
 withKeys :: SubCmdSeekStrings
 withKeys a params = return $ map a params
 withTempFile :: SubCmdSeekStrings
@@ -173,9 +180,23 @@ withDefault :: String-> (a -> SubCmdSeek) -> (a -> SubCmdSeek)
 withDefault d w a [] = w a [d]
 withDefault _ w a p = w a p
 
-{- filter out files from the state directory -}
-notState :: FilePath -> Bool
-notState f = stateLoc /= take (length stateLoc) f
+{- Filter out files from the state directory, and those matching the
+ - exclude glob pattern, if it was specified. -}
+filterFiles :: [FilePath] -> Annex [FilePath]
+filterFiles l = do
+	let l' = filter notState l
+	exclude <- Annex.flagGet "exclude"
+	if null exclude
+		then return l'
+		else do
+			let regexp = mkRegex $ "^" ++ wildToRegex exclude
+			return $ filter (notExcluded regexp) l'
+	where
+		notState f = stateLoc /= take stateLocLen f
+		stateLocLen = length stateLoc
+		notExcluded r f = case matchRegex r f of
+			Nothing -> True
+			Just _ -> False
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool

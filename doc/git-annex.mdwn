@@ -234,6 +234,11 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   Specifies a git repository that content will be sent to. 
   It should be specified using the name of a configured git remote.
 
+* --exclude=glob
+
+  Skips files matching the glob pattern. The glob is matched relative to
+  the current directory.
+
 * --backend=name
 
   Specifies which key-value backend to use.
