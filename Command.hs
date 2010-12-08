@@ -12,7 +12,7 @@ import System.Directory
 import System.Posix.Files
 import Control.Monad (filterM)
 import System.Path.WildMatch
-import Text.Regex
+import Text.Regex.PCRE.Light.Char8
 
 import Types
 import qualified Backend
@@ -189,12 +189,12 @@ filterFiles l = do
 	if null exclude
 		then return l'
 		else do
-			let regexp = mkRegex $ "^" ++ wildToRegex exclude
+			let regexp = compile ("^" ++ wildToRegex exclude) []
 			return $ filter (notExcluded regexp) l'
 	where
 		notState f = stateLoc /= take stateLocLen f
 		stateLocLen = length stateLoc
-		notExcluded r f = case matchRegex r f of
+		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False
 
