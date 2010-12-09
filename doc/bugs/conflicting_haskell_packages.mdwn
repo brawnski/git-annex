@@ -1,3 +1,8 @@
 The compilation command should states which packages are used and avoid the default mechnasim that automatically search for them.
 
 This can be done by the flags -hide-packages and then -package foo
+
+> My ghc does not have a `--hide-packages` option.
+> 
+> Could you just show the build problem that you are suggesting I work
+> around? --[[Joey]]
