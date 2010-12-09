@@ -1,0 +1,3 @@
+The compilation command should states which packages are used and avoid the default mechnasim that automatically search for them.
+
+This can be done by the flags -hide-packages and then -package foo
