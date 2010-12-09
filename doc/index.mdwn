@@ -18,11 +18,14 @@ To get a feel for it, see the [[walkthrough]].
 
 * **[[download]]**
 * [[install]]
-* [[news]]
 * [[bugs]]
 * [[todo]]
 * [[forum]]
 * [[contact]]
+
+[[News]]:
+
+[[!inlines pages="news/* and !*/discussion" archive=yes show=3]]
 
 <a href="http://flattr.com/thing/84843/git-annex">
 <img src="http://api.flattr.com/button/button-compact-static-100x17.png"
