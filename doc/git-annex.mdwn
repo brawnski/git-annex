@@ -252,34 +252,63 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 Like other git commands, git-annex is configured via `.git/config`.
 Here are all the supported configuration settings.
 
-* `annex.uuid` -- a unique UUID for this repository (automatically set)
-* `annex.numcopies` -- number of copies of files to keep across all
-  repositories (default: 1)
-* `annex.backends` -- space-separated list of names of 
-  the key-value backends to use. The first listed is used to store
-  new files by default. (default: "WORM SHA1 URL")
-* `remote.<name>.annex-cost` -- When determining which repository to
+* `annex.uuid`
+
+  A unique UUID for this repository (automatically set).
+
+* `annex.numcopies`
+
+  Number of copies of files to keep across all repositories. (default: 1)
+
+* `annex.backends`
+
+  Space-separated list of names of the key-value backends to use. 
+  The first listed is used to store new files by default. 
+  (default: "WORM SHA1 URL")
+
+* `remote.<name>.annex-cost`
+
+  When determining which repository to
   transfer annexed files from or to, ones with lower costs are preferred.
   The default cost is 100 for local repositories, and 200 for remote
   repositories.
-* `remote.<name>.annex-ignore` -- If set to `true`, prevents git-annex
+
+* `remote.<name>.annex-ignore`
+
+  If set to `true`, prevents git-annex
   from ever using this remote. This is, for example, useful if the
   remote is a bare repository, which git-annex does not currently support.
-* `remote.<name>.annex-uuid` -- git-annex caches UUIDs of repositories
-  here.
-* `remote.<name>.annex-scp-options` -- Options to use when using scp
+
+* `remote.<name>.annex-uuid`
+
+  git-annex caches UUIDs of repositories here.
+
+* `remote.<name>.annex-scp-options`
+
+  Options to use when using scp
   to or from this repository. For example, to force ipv6, and limit
   the bandwidth to 1000Kbit/s, set it to "-6 -l 1000"
-* `remote.<name>.annex-ssh-options` -- Options to use when using ssh
-  to talk to this repository.
-* `remote.<name>.annex-rsync-options` -- Options to use when using rsync
+
+* `remote.<name>.annex-ssh-options`
+
+  Options to use when using ssh to talk to this repository.
+
+* `remote.<name>.annex-rsync-options`
+
+  Options to use when using rsync
   to or from this repository. For example, to force ipv6, and limit
   the bandwidth to 100Kbyte/s, set it to "-6 --bwlimit 100"
-* `annex.scp-options`, `annex.ssh-options`, `annex.rsync-options` --
+
+* `annex.scp-options`, `annex.ssh-options`, `annex.rsync-options`
+
   Default scp, ssh, and rsync options to use if a remote does not have
   specific options.
-* `annex.version` -- Automatically maintained, and used to automate upgrades
-  between versions.
+
+* `annex.version`
+
+  Automatically maintained, and used to automate upgrades between versions.
+
+# CONFIGURATION VIA .gitattributes
 
 The backend used when adding a new file to the annex can be configured
 on a per-file-type basis via `.gitattributes` files. In the file,
