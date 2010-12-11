@@ -1,11 +1,11 @@
-git-annex (0.12) UNRELEASED; urgency=low
+git-annex (0.12) unstable; urgency=low
 
   * Add --exclude option to exclude files from processing.
   * mwdn2man: Fix a bug in newline supression. Closes: #606578
   * Bugfix to git annex add of an unlocked file in a subdir. Closes: #606579
   * Makefile: Add PREFIX variable.
 
- -- Joey Hess <joeyh@debian.org>  Wed, 08 Dec 2010 14:06:47 -0400
+ -- Joey Hess <joeyh@debian.org>  Sat, 11 Dec 2010 17:32:00 -0400
 
 git-annex (0.11) unstable; urgency=low
 

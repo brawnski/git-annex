@@ -14,6 +14,10 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install git-annex $(DESTDIR)$(PREFIX)/bin
 
+test:
+	$(GHCMAKE) test
+	./test
+
 # If ikiwiki is available, build static html docs suitable for being
 # shipped in the software package.
 ifeq ($(shell which ikiwiki),)
@@ -21,10 +25,6 @@ IKIWIKI=@echo "** ikiwiki not found, skipping building docs" >&2; true
 else
 IKIWIKI=ikiwiki
 endif
-
-test:
-	$(GHCMAKE) test
-	./test
 
 docs:
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
