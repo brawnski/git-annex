@@ -151,7 +151,9 @@ withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file
 	repo <- Annex.gitRepo
 	typechangedfiles <- liftIO $ mapM (typechanged repo) params
-	unlockedfiles <- liftIO $ filterM notSymlink $ foldl (++) [] typechangedfiles
+	unlockedfiles <- liftIO $ filterM notSymlink $
+		map (\f -> Git.workTree repo ++ "/" ++ f) $
+		foldl (++) [] typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
 withKeys :: SubCmdSeekStrings

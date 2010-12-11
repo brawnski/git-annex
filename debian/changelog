@@ -2,6 +2,7 @@ git-annex (0.12) UNRELEASED; urgency=low
 
   * Add --exclude option to exclude files from processing.
   * mwdn2man: Fix a bug in newline supression. Closes: #606578
+  * Bugfix to git annex add of an unlocked file in a subdir. Closes: #606579
 
  -- Joey Hess <joeyh@debian.org>  Wed, 08 Dec 2010 14:06:47 -0400
 
