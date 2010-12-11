@@ -1,0 +1,6 @@
+git-annex 0.12 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Add --exclude option to exclude files from processing.
+   * mwdn2man: Fix a bug in newline supression. Closes: #[606578](http://bugs.debian.org/606578)
+   * Bugfix to git annex add of an unlocked file in a subdir. Closes: #[606579](http://bugs.debian.org/606579)
+   * Makefile: Add PREFIX variable."""]]
