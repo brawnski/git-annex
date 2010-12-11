@@ -1,17 +1,18 @@
+PREFIX=/usr
+GHCMAKE=ghc -Wall -odir build -hidir build -O2 --make 
+
 all: git-annex docs
 
-ghcmake=ghc -Wall -odir build -hidir build -O2 --make 
-
 SysConfig.hs: configure.hs
-	$(ghcmake) configure
+	$(GHCMAKE) configure
 	./configure
 
 git-annex: SysConfig.hs
-	$(ghcmake) git-annex
+	$(GHCMAKE) git-annex
 
 install:
-	install -d $(DESTDIR)/usr/bin
-	install git-annex $(DESTDIR)/usr/bin
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install git-annex $(DESTDIR)$(PREFIX)/bin
 
 # If ikiwiki is available, build static html docs suitable for being
 # shipped in the software package.
@@ -22,7 +23,7 @@ IKIWIKI=ikiwiki
 endif
 
 test:
-	$(ghcmake) test
+	$(GHCMAKE) test
 	./test
 
 docs:
