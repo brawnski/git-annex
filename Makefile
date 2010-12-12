@@ -1,18 +1,27 @@
 PREFIX=/usr
 GHCMAKE=ghc -Wall -odir build -hidir build -O2 --make 
 
-all: git-annex docs
+all: git-annex git-annex.1 docs
 
 SysConfig.hs: configure.hs
 	$(GHCMAKE) configure
 	./configure
 
+git-annex.1:
+	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
+
 git-annex: SysConfig.hs
 	$(GHCMAKE) git-annex
 
-install:
+install: all
 	install -d $(DESTDIR)$(PREFIX)/bin
 	install git-annex $(DESTDIR)$(PREFIX)/bin
+	install -d $(DESTDIR)$(PREFIX)/share/man/man1
+	install -m 0644 git-annex.1 $(DESTDIR)$(PREFIX)/share/man/man1
+	install -d $(DESTDIR)$(PREFIX)/share/doc/git-annex
+	if [ -d html ]; then \
+		rsync -a --delete html/ $(DESTDIR)$(PREFIX)/share/doc/git-annex/html/; \
+	fi
 
 test:
 	$(GHCMAKE) test
@@ -26,8 +35,7 @@ else
 IKIWIKI=ikiwiki
 endif
 
-docs:
-	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
+docs: git-annex.1
 	$(IKIWIKI) doc html -v --wikiname git-annex --plugin=goodstuff \
 		--no-usedirs --disable-plugin=openid --plugin=sidebar \
 		--underlaydir=/dev/null --disable-plugin=shortcut \

@@ -1,3 +1,9 @@
+git-annex (0.13) UNRELEASED; urgency=low
+
+  * Makefile: Install man page and html (when built).
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 12 Dec 2010 13:14:58 -0400
+
 git-annex (0.12) unstable; urgency=low
 
   * Add --exclude option to exclude files from processing.
