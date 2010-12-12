@@ -1,5 +1,6 @@
 PREFIX=/usr
-GHCMAKE=ghc -Wall -odir build -hidir build -O2 --make 
+GHCOPTS=-O2 -Wall
+GHCMAKE=ghc -odir build -hidir build $(GHCOPTS) --make
 
 all: git-annex git-annex.1 docs
 
