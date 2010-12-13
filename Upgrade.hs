@@ -7,9 +7,12 @@
 
 module Upgrade where
 
+import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
+import Control.Monad (filterM)
 import System.Posix.Files
+import System.FilePath
 
 import Core
 import Types
@@ -37,7 +40,7 @@ upgradeFrom0 = do
 
 	-- do the reorganisation of the files
 	let olddir = annexDir g
-	keys <- getKeysPresent' olddir
+	keys <- getKeysPresent0' olddir
 	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
 
 	-- update the symlinks to the files
@@ -61,3 +64,16 @@ upgradeFrom0 = do
 					liftIO $ createSymbolicLink link f
 					Annex.queue "add" ["--"] f
 			fixlinks fs
+
+getKeysPresent0' :: FilePath -> Annex [Key]
+getKeysPresent0' dir = do
+	contents <- liftIO $ getDirectoryContents dir
+	files <- liftIO $ filterM present contents
+	return $ map fileKey files
+	where
+		present d = do
+			result <- try $
+				getFileStatus $ dir ++ "/" ++ takeFileName d
+			case result of
+				Right s -> return $ isRegularFile s
+				Left _ -> return False

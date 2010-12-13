@@ -2,6 +2,7 @@ git-annex (0.13) UNRELEASED; urgency=low
 
   * Makefile: Install man page and html (when built).
   * Makefile: Add GHCFLAGS variable.
+  * Fix upgrade from 0.03.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 12 Dec 2010 13:14:58 -0400
 
