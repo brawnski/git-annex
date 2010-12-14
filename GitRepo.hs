@@ -122,7 +122,9 @@ repoIsUrl _ = False
 repoIsSsh :: Repo -> Bool
 repoIsSsh Repo { location = Url url } 
 	| uriScheme url == "ssh:" = True
+	-- git treats these the same as ssh
 	| uriScheme url == "git+ssh:" = True
+	| uriScheme url == "ssh+git:" = True
 	| otherwise = False
 repoIsSsh _ = False
 
