@@ -1,3 +1,9 @@
+git-annex (0.14) UNRELEASED; urgency=low
+
+  * Bugfix to git annex unused in a repository with nothing yet annexed.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 20 Dec 2010 14:54:49 -0400
+
 git-annex (0.13) unstable; urgency=low
 
   * Makefile: Install man page and html (when built).
