@@ -67,9 +67,13 @@ upgradeFrom0 = do
 
 getKeysPresent0' :: FilePath -> Annex [Key]
 getKeysPresent0' dir = do
-	contents <- liftIO $ getDirectoryContents dir
-	files <- liftIO $ filterM present contents
-	return $ map fileKey files
+	exists <- liftIO $ doesDirectoryExist dir
+	if (not exists)
+		then return []
+		else do
+			contents <- liftIO $ getDirectoryContents dir
+			files <- liftIO $ filterM present contents
+			return $ map fileKey files
 	where
 		present d = do
 			result <- try $
