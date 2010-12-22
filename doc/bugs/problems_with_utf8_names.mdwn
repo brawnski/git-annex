@@ -1,0 +1,20 @@
+There are problems with displaying filenames in UTF8 encoding, as shown here:
+
+    $ echo $LANG
+    en_GB.UTF-8
+    $ git init
+    $ git annex init test
+    [...]
+    $ touch "Umlaut Ü.txt"
+    $ git annex add Uml*
+    add Umlaut Ã.txt ok
+    (Recording state in git...)
+    $ find -name U\* | hexdump -C
+    00000000  2e 2f 55 6d 6c 61 75 74  20 c3 9c 2e 74 78 74 0a  |./Umlaut ...txt.|
+    00000010
+    $ git annex find | hexdump -C
+    00000000  55 6d 6c 61 75 74 20 c3  83 c2 9c 2e 74 78 74 0a  |Umlaut .....txt.|
+    00000010
+    $
+
+It looks like the common latin1-to-UTF8 encoding. Functionality other than otuput seems not to be affected.
