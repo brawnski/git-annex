@@ -44,7 +44,7 @@ upgradeFrom0 = do
 	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
 
 	-- update the symlinks to the files
-	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	files <- liftIO $ Git.inRepo g [Git.workTree g]
 	fixlinks files
 	Annex.queueRun
 

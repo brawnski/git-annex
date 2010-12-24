@@ -107,14 +107,14 @@ isAnnexed file a = do
 withFilesInGit :: SubCmdSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.inRepo repo) params
-	files' <- filterFiles $ foldl (++) [] files
+	files <- liftIO $ Git.inRepo repo params
+	files' <- filterFiles files
 	return $ map a files'
 withAttrFilesInGit :: String -> SubCmdSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ mapM (Git.inRepo repo) params
-	files' <- filterFiles $ foldl (++) [] files
+	files <- liftIO $ Git.inRepo repo params
+	files' <- filterFiles files
 	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
 withFilesMissing :: SubCmdSeekStrings
@@ -129,8 +129,8 @@ withFilesMissing a params = do
 withFilesNotInGit :: SubCmdSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
-	newfiles <- liftIO $ mapM (Git.notInRepo repo) params
-	newfiles' <- filterFiles $ foldl (++) [] newfiles
+	newfiles <- liftIO $ Git.notInRepo repo params
+	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
 withString :: SubCmdSeekStrings
 withString a params = return [a $ unwords params]
@@ -139,21 +139,20 @@ withStrings a params = return $ map a params
 withFilesToBeCommitted :: SubCmdSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	tocommit <- liftIO $ mapM (Git.stagedFiles repo) params
-	tocommit' <- filterFiles $ foldl (++) [] tocommit
+	tocommit <- liftIO $ Git.stagedFiles repo params
+	tocommit' <- filterFiles tocommit
 	return $ map a tocommit'
 withFilesUnlocked :: SubCmdSeekBackendFiles
 withFilesUnlocked = withFilesUnlocked' Git.typeChangedFiles
 withFilesUnlockedToBeCommitted :: SubCmdSeekBackendFiles
 withFilesUnlockedToBeCommitted = withFilesUnlocked' Git.typeChangedStagedFiles
-withFilesUnlocked' :: (Git.Repo -> FilePath -> IO [FilePath]) -> SubCmdSeekBackendFiles
+withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> SubCmdSeekBackendFiles
 withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file
 	repo <- Annex.gitRepo
-	typechangedfiles <- liftIO $ mapM (typechanged repo) params
+	typechangedfiles <- liftIO $ typechanged repo params
 	unlockedfiles <- liftIO $ filterM notSymlink $
-		map (\f -> Git.workTree repo ++ "/" ++ f) $
-		foldl (++) [] typechangedfiles
+		map (\f -> Git.workTree repo ++ "/" ++ f) typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
 withKeys :: SubCmdSeekStrings

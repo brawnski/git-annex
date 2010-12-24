@@ -230,41 +230,39 @@ hPipeRead :: Repo -> [String] -> IO (PipeHandle, String)
 hPipeRead repo params = assertLocal repo $ do
 	pipeFrom "git" (gitCommandLine repo params)
 
-{- Passed a location, recursively scans for all files that
- - are checked into git at that location. -}
-inRepo :: Repo -> FilePath -> IO [FilePath]
-inRepo repo l = pipeNullSplit repo
-	["ls-files", "--cached", "--exclude-standard", "-z", "--", l]
+{- Scans for files that are checked into git at the specified locations. -}
+inRepo :: Repo -> [FilePath] -> IO [FilePath]
+inRepo repo l = pipeNullSplit repo $
+	["ls-files", "--cached", "--exclude-standard", "-z", "--"] ++ l
 
-{- Passed a location, recursively scans for all files that are not checked
- - into git, and not gitignored. -}
-notInRepo :: Repo -> FilePath -> IO [FilePath]
-notInRepo repo l = pipeNullSplit repo
-	["ls-files", "--others", "--exclude-standard", "-z", "--", l]
+{- Scans for files at the specified locations that are not checked into git,
+ - and not gitignored. -}
+notInRepo :: Repo -> [FilePath] -> IO [FilePath]
+notInRepo repo l = pipeNullSplit repo $
+	["ls-files", "--others", "--exclude-standard", "-z", "--"] ++ l
 
-{- Passed a location, returns a list of the files, staged for
- - commit, that are being added, moved, or changed (but not deleted). -}
-stagedFiles :: Repo -> FilePath -> IO [FilePath]
-stagedFiles repo l = pipeNullSplit repo
+{- Returns a list of the files, staged for commit, that are being added,
+ - moved, or changed (but not deleted), from the specified locations. -}
+stagedFiles :: Repo -> [FilePath] -> IO [FilePath]
+stagedFiles repo l = pipeNullSplit repo $
 	["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z", 
-		"--", l]
+		"--"] ++ l
 
-{- Passed a location, returns a list of the files, staged for
- - commit, whose type has changed. -}
-typeChangedStagedFiles :: Repo -> FilePath -> IO [FilePath]
+{- Returns a list of the files in the specified locations that are staged
+ - for commit, and whose type has changed. -}
+typeChangedStagedFiles :: Repo -> [FilePath] -> IO [FilePath]
 typeChangedStagedFiles repo l = typeChangedFiles' repo l ["--cached"]
 
-{- Passed a location, returns a list of the files whose type has changed. 
- - Files only staged for commit will not be included. -}
-typeChangedFiles :: Repo -> FilePath -> IO [FilePath]
+{- Returns a list of the files in the specified locations whose type has
+ - changed.  Files only staged for commit will not be included. -}
+typeChangedFiles :: Repo -> [FilePath] -> IO [FilePath]
 typeChangedFiles repo l = typeChangedFiles' repo l []
 
-typeChangedFiles' :: Repo -> FilePath -> [String] -> IO [FilePath]
+typeChangedFiles' :: Repo -> [FilePath] -> [String] -> IO [FilePath]
 typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = ["diff", "--name-only", "--diff-filter=T", "-z"]
-		end = ["--", l]
-	
+		end = ["--"] ++ l
 
 {- Reads null terminated output of a git command (as enabled by the -z 
  - parameter), and splits it into a list of files. -}

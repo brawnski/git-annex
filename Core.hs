@@ -204,6 +204,6 @@ getKeysPresent' dir = do
 getKeysReferenced :: Annex [Key]
 getKeysReferenced = do
 	g <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo g $ Git.workTree g
+	files <- liftIO $ Git.inRepo g [Git.workTree g]
 	keypairs <- mapM Backend.lookupFile files
 	return $ map fst $ catMaybes keypairs
