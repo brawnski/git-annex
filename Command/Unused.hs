@@ -50,7 +50,8 @@ checkUnused = do
 			 "  NUMBER  KEY"]
 			++ map cols u ++
 			["(To see where data was previously used, try: git log --stat -S'KEY')",
-			 "(To remove unwanted data: git-annex dropunused NUMBER)"]
+			 "(To remove unwanted data: git-annex dropunused NUMBER)",
+			 ""]
 		cols (n,k) = "  " ++ pad 6 (show n) ++ "  " ++ show k
 		pad n s = s ++ replicate (n - length s) ' '
 
