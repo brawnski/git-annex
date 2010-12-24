@@ -175,4 +175,4 @@ checkKeyNumCopies key numcopies = do
 		note present needed = 
 			"Only " ++ show present ++ " of " ++ show needed ++ 
 			" copies of "++show key++" exist. " ++
-			"Run git annex get somewhere else to back it up."
+			"Back it up with git-annex copy."
