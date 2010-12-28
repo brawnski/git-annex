@@ -95,13 +95,13 @@ checkRemoveKey key numcopiesM = do
 			g <- Annex.gitRepo
 			locations <- liftIO $ keyLocations g key
 			trusted <- getTrusted
-			let trustedlocations = intersect locations trusted
+			let trustedcopies = length $ intersect locations trusted
 			remotes <- Remotes.keyPossibilities key
 			untrustedremotes <- reposWithoutUUID remotes trusted
 			numcopies <- getNumCopies numcopiesM
 			if numcopies > length untrustedremotes
 				then notEnoughCopies numcopies (length untrustedremotes) []
-				else findcopies numcopies (length trustedlocations) untrustedremotes []
+				else findcopies numcopies trustedcopies untrustedremotes []
 	where
 		findcopies need have [] bad
 			| have >= need = return True
