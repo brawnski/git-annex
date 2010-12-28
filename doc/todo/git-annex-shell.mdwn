@@ -40,3 +40,9 @@ Need at least `--quiet`, `--backend`, `--key`, `--force`
 * `setkey repopath tmpfile`
 
   Same as `git annex setkey`, and taking the same dashed options.
+
+### TODO
+
+* To be usable as a locked down shell, needs a way to launch the
+  rsync server, for file receiving. Safely?
+* Also needs a way to support receiving files by scp.
