@@ -60,6 +60,7 @@ import Data.Char
 import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
+import Data.List (isInfixOf)
 
 import Utility
 
@@ -314,8 +315,20 @@ configRemotes repo = map construct remotepairs
 		isremote k = startswith "remote." k && endswith ".url" k
 		remotename k = split "." k !! 1
 		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
-		gen v	| isURI v = repoFromUrl v
+		gen v	| scpstyle v = repoFromUrl $ scptourl v
+			| isURI v = repoFromUrl v
 			| otherwise = repoFromPath v
+		-- git remotes can be written scp style -- [user@]host:dir
+		-- where dir is relative to the user's home directory.
+		scpstyle v = isInfixOf ":" v && (not $ isInfixOf "//" v)
+		scptourl v = "ssh://" ++ host ++ slash dir
+			where
+				bits = split ":" v
+				host = bits !! 0
+				dir = join ":" $ drop 1 bits
+				slash d	| d == "" = "/~/" ++ dir
+					| d !! 0 == '/' = dir
+					| otherwise = "/~/" ++ dir
 
 {- Parses git config --list output into a config map. -}
 configParse :: String -> Map.Map String String

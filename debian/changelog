@@ -1,3 +1,9 @@
+git-annex (0.15) UNRELEASED; urgency=low
+
+  * Support scp-style urls for remotes (host:path).
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 28 Dec 2010 13:13:20 -0400
+
 git-annex (0.14) unstable; urgency=low
 
   * Bugfix to git annex unused in a repository with nothing yet annexed.
