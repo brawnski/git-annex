@@ -171,6 +171,15 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
   This is meant to be called from git's pre-commit hook. `git annex init`
   automatically creates a pre-commit hook using this.
 
+* trust [repository ...]
+
+  Records that a repository is [[trusted]] to not unexpectedly lose content.
+  Use with care.
+
+* untrust [repository ...]
+
+  Undoes a trust command.
+
 * fromkey file
 
   This can be used to maually set up a file to link to a specified key
@@ -333,7 +342,9 @@ These files are used by git-annex, in your git repository:
 available. Annexed files in your git repository symlink to that content.
 
 `.git-annex/uuid.log` is used to map between repository UUID and
-decscriptions. You may edit it.
+decscriptions.
+
+`.git-annex/trust.log` is used to list the UUIDs of trusted repositories.
 
 `.git-annex/*.log` is where git-annex records its content tracking
 information. These files should be committed to git.

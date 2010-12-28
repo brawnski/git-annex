@@ -15,7 +15,8 @@ module Utility (
 	boolSystem,
 	shellEscape,
 	unsetFileMode,
-	readMaybe
+	readMaybe,
+	safeWriteFile
 ) where
 
 import System.IO
@@ -139,3 +140,12 @@ readMaybe :: (Read a) => String -> Maybe a
 readMaybe s = case reads s of
 	((x,_):_) -> Just x
 	_ -> Nothing
+
+{- Writes a file using a temp file that is renamed atomically into place. -}
+safeWriteFile :: FilePath -> String -> IO ()
+safeWriteFile file content = do
+	pid <- getProcessID
+        let tmpfile = file ++ ".tmp" ++ show pid
+	createDirectoryIfMissing True (parentDir file)
+	writeFile tmpfile content
+	renameFile tmpfile file

@@ -11,7 +11,8 @@ setting in `.gitattributes` files.
 
 `git annex drop` attempts to check with other git remotes, to check that N
 copies of the file exist. If enough repositories cannot be verified to have
-it, it will retain the file content to avoid data loss.
+it, it will retain the file content to avoid data loss. Note that
+[[trusted_remotes|trust]] are not explicitly checked.
 
 For example, consider three repositories: Server, Laptop, and USB. Both Server
 and USB have a copy of a file, and N=1. If on Laptop, you `git annex get

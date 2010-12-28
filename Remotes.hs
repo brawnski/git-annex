@@ -12,6 +12,7 @@ module Remotes (
 	inAnnex,
 	same,
 	commandLineRemote,
+	byName,
 	copyFromRemote,
 	copyToRemote,
 	runCmd
@@ -156,6 +157,11 @@ commandLineRemote = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
 	let name = if null fromName then toName else fromName
+	byName name
+
+{- Looks up a remote by name. -}
+byName :: String -> Annex Git.Repo
+byName name = do
 	when (null name) $ error "no remote specified"
 	g <- Annex.gitRepo
 	let match = filter (\r -> name == Git.repoRemoteName r) $

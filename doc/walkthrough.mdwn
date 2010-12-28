@@ -134,7 +134,7 @@ you'll see something like this.
 	  (Use --force to override this check, or adjust annex.numcopies.)
 	failed
 
-Here you might --force it to drop `important_file` if you trust your backup.
+Here you might --force it to drop `important_file` if you [[trust]] your backup.
 But `other.iso` looks to have never been copied to anywhere else, so if
 it's something you want to hold onto, you'd need to transfer it to
 some other repository before dropping it.

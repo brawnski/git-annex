@@ -34,6 +34,8 @@ import qualified Command.Lock
 import qualified Command.PreCommit
 import qualified Command.Find
 import qualified Command.Uninit
+import qualified Command.Trust
+import qualified Command.Untrust
 
 subCmds :: [SubCommand]
 subCmds =
@@ -61,6 +63,10 @@ subCmds =
 		"de-initialize git-annex and clean out repository"
 	, SubCommand "pre-commit" path	Command.PreCommit.seek
 		"run by git pre-commit hook"
+	, SubCommand "trust" remote	Command.Trust.seek
+		"trust a repository"
+	, SubCommand "untrust" remote	Command.Untrust.seek
+		"do not trust a repository"
 	, SubCommand "fromkey" key	Command.FromKey.seek
 		"adds a file using a specific key"
 	, SubCommand "dropkey"	key	Command.DropKey.seek
@@ -84,6 +90,7 @@ subCmds =
 		key = "KEY ..."
 		desc = "DESCRIPTION"
 		number = "NUMBER ..."
+		remote = "REMOTE ..."
 		nothing = ""
 
 -- Each dashed command-line option results in generation of an action

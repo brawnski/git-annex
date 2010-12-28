@@ -1,0 +1,20 @@
+Normally, git-annex does not fully trust its stored [[location_tracking]]
+information. When removing content, it will directly check
+that other repositories have [[copies]].
+
+Generally that explicit checking is a good idea. Consider that the current
+[[location_tracking]] information for a remote may not yet have propigated
+out. Or, a remote may have suffered a catastrophic loss of data, or itself
+been lost.
+
+Sometimes though, you may have reasons to trust the location tracking
+information for a remote repository. For example, it may be an offline
+archival drive, from which you rarely or never remove content. Deciding
+when it makes sense to trust the tracking info is up to you.
+
+One way to handle this is just to use `--force` when a command cannot
+access a remote you trust.
+
+Another option is to configure which remotes you trust with the 
+`git annex trust` command, or by manually adding the UUIDs of trusted remotes
+to `.git-annex/trust.log`.

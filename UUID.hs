@@ -14,9 +14,13 @@ module UUID (
 	prepUUID,
 	genUUID,
 	reposByUUID,
+	reposWithoutUUID,
 	prettyPrintUUIDs,
 	describeUUID,
-	uuidLog
+	uuidLog,
+	trustLog,
+	getTrusted,
+	setTrusted
 ) where
 
 import Control.Monad.State
@@ -24,9 +28,7 @@ import Data.Maybe
 import Data.List
 import System.Cmd.Utils
 import System.IO
-import System.Directory
 import qualified Data.Map as M
-import System.Posix.Process
 
 import qualified GitRepo as Git
 import Types
@@ -85,6 +87,14 @@ reposByUUID repos uuids = filterM match repos
 			u <- getUUID r
 			return $ isJust $ elemIndex u uuids
 
+{- Filters a list of repos to ones that do not have the listed UUIDs. -}
+reposWithoutUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
+reposWithoutUUID repos uuids = filterM unmatch repos
+	where
+		unmatch r = do
+			u <- getUUID r
+			return $ not $ isJust $ elemIndex u uuids
+
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
@@ -103,11 +113,7 @@ describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
 	logfile <- uuidLog
-	pid <- liftIO $ getProcessID
-        let tmplogfile = logfile ++ ".tmp" ++ show pid
-	liftIO $ createDirectoryIfMissing True (parentDir logfile)
-	liftIO $ writeFile tmplogfile $ serialize m'
-	liftIO $ renameFile tmplogfile logfile
+	liftIO $ safeWriteFile logfile (serialize m')
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
 
@@ -125,7 +131,28 @@ uuidMap = do
 		ignoreerror _ = return ""
 
 {- Filename of uuid.log. -}
-uuidLog :: Annex String
+uuidLog :: Annex FilePath
 uuidLog = do
 	g <- Annex.gitRepo
 	return $ gitStateDir g ++ "uuid.log"
+
+{- Filename of trust.log. -}
+trustLog :: Annex FilePath
+trustLog = do
+	g <- Annex.gitRepo
+	return $ gitStateDir g ++ "trust.log"
+
+{- List of trusted UUIDs. -}
+getTrusted :: Annex [UUID]
+getTrusted = do
+	logfile <- trustLog
+	s <- liftIO $ catch (readFile logfile) ignoreerror
+	return $ map (\l -> head $ words l) $ lines s
+	where
+		ignoreerror _ = return ""
+
+{- Changes the list of trusted UUIDs. -}
+setTrusted :: [UUID] -> Annex ()
+setTrusted u = do
+	logfile <- trustLog
+	liftIO $ safeWriteFile logfile $ unlines u

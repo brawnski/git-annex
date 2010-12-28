@@ -16,6 +16,7 @@ module Backend.File (backend, checkKey) where
 
 import Control.Monad.State
 import System.Directory
+import Data.List (intersect)
 
 import TypeInternals
 import LocationLog
@@ -91,11 +92,16 @@ checkRemoveKey key numcopiesM = do
 	if force || numcopiesM == Just 0
 		then return True
 		else do
+			g <- Annex.gitRepo
+			locations <- liftIO $ keyLocations g key
+			trusted <- getTrusted
+			let trustedlocations = intersect locations trusted
 			remotes <- Remotes.keyPossibilities key
+			untrustedremotes <- reposWithoutUUID remotes trusted
 			numcopies <- getNumCopies numcopiesM
-			if numcopies > length remotes
-				then notEnoughCopies numcopies (length remotes) []
-				else findcopies numcopies 0 remotes []
+			if numcopies > length untrustedremotes
+				then notEnoughCopies numcopies (length untrustedremotes) []
+				else findcopies numcopies (length trustedlocations) untrustedremotes []
 	where
 		findcopies need have [] bad
 			| have >= need = return True
