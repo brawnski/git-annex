@@ -1,6 +1,8 @@
 git-annex (0.15) UNRELEASED; urgency=low
 
-  * Support scp-style urls for remotes (host:path).
+  * Support scp-style urls for remotes (host:path). Note that
+    paths relative to the user's home directory, or containing "~" are
+    not yet supported.
   * Add trust and untrust subcommands, to allow configuring remotes
     that are trusted to retain files without explicit checking.
 
