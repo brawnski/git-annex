@@ -16,5 +16,5 @@ Specifically, if I have ~/bar set up on host foo:
 > are somewhat tricky to support as they require running
 > code on the remote to lookup homedirs. If git-annex grows a
 > `git annex shell` that is run on the remote side
-> (something I am considering for other reasons), it
+> (something I am [[considering|todo/git-annex-shell]] for other reasons), it
 > could handle the expansions there. --[[Joey]] 

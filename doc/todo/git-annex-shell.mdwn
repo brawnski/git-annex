@@ -1,0 +1,42 @@
+I've been considering adding a `git-annex-shell` command. This would
+be similar to `git-shell` (and in fact would pass unknown commands off to
+`git-shell`).
+
+## Reasons
+
+* Allows locking down an account to only be able to use git-annex (and
+  git).
+* Avoids needing to construct complex shell commands to run on the remote
+  system. (Mostly already avoided by the plumbing level commands.)
+* Could possibly allow multiple things to be done with one ssh connection
+  in future.
+* Allows expanding `~` and `~user` in repopath on the remote system.
+
+## Design
+
+`git-annex-shell -c <command> <repopath> <arguments>`
+
+### options
+
+Need at least `--quiet`, `--backend`, `--key`, `--force`
+
+### commands
+
+* `configlist repopath`
+
+  Returns `git config --list`, for use by `tryGitConfigRead`.
+  
+  May filter the listed config to only the options git-annex really needs,
+  to prevent info disclosure.
+
+* `inannex repopath key ...`
+
+  Checks if the keys are in the annex; shell exits zero if so.
+
+* `dropkey repopath key ... `
+
+  Same as `git annex dropkey`, and taking the same dashed options.
+
+* `setkey repopath tmpfile`
+
+  Same as `git annex setkey`, and taking the same dashed options.
