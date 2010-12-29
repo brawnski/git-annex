@@ -88,12 +88,14 @@ keyPossibilities key = do
 		partition remotes = do
 			g <- Annex.gitRepo
 			u <- getUUID g
-			validuuids <- liftIO $ keyLocations g key
 			trusted <- getTrusted
+			-- get uuids of other repositories that are
+			-- believed to have the key
+			uuids <- liftIO $ keyLocations g key
+			let validuuids = filter (/= u) uuids
 			-- get uuids trusted to have the key
 			-- note that validuuids is assumed to not have dups
-			let validtrusteduuids = filter (/= u) $ 
-				intersect validuuids trusted
+			let validtrusteduuids = intersect validuuids trusted
 			-- remotes that match uuids that have the key
 			validremotes <- reposByUUID remotes validuuids
 			-- partition out the trusted and untrusted remotes
