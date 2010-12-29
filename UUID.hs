@@ -24,8 +24,6 @@ module UUID (
 ) where
 
 import Control.Monad.State
-import Data.Maybe
-import Data.List
 import System.Cmd.Utils
 import System.IO
 import qualified Data.Map as M
@@ -85,7 +83,7 @@ reposByUUID repos uuids = filterM match repos
 	where
 		match r = do
 			u <- getUUID r
-			return $ isJust $ elemIndex u uuids
+			return $ elem u uuids
 
 {- Filters a list of repos to ones that do not have the listed UUIDs. -}
 reposWithoutUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
@@ -93,7 +91,7 @@ reposWithoutUUID repos uuids = filterM unmatch repos
 	where
 		unmatch r = do
 			u <- getUUID r
-			return $ not $ isJust $ elemIndex u uuids
+			return $ not $ elem u uuids
 
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
