@@ -1,6 +1,6 @@
 Normally, git-annex does not fully trust its stored [[location_tracking]]
 information. When removing content, it will directly check
-that other repositories have [[copies]].
+that other repositories have enough [[copies]].
 
 Generally that explicit checking is a good idea. Consider that the current
 [[location_tracking]] information for a remote may not yet have propigated
