@@ -49,7 +49,7 @@ dummyStore _ _ = return True
  - and copy it over to this one. -}
 copyKeyFile :: Key -> FilePath -> Annex Bool
 copyKeyFile key file = do
-	(trusted, untrusted) <- Remotes.keyPossibilities key
+	(trusted, untrusted, _) <- Remotes.keyPossibilities key
 	let remotes = trusted ++ untrusted
 	if null remotes
 		then do
@@ -92,10 +92,9 @@ checkRemoveKey key numcopiesM = do
 	if force || numcopiesM == Just 0
 		then return True
 		else do
-			(trusted, untrusted) <- Remotes.keyPossibilities key
+			(_, untrusted, have) <- Remotes.keyPossibilities key
 			numcopies <- getNumCopies numcopiesM
-			trusteduuids <- mapM getUUID trusted
-			findcopies numcopies trusteduuids untrusted []
+			findcopies numcopies have untrusted []
 	where
 		findcopies need have [] bad
 			| length have >= need = return True

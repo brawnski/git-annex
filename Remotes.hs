@@ -44,9 +44,15 @@ list :: [Git.Repo] -> String
 list remotes = join ", " $ map Git.repoDescribe remotes 
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
- - The first list is of remotes that are trusted to have the key; the 
- - second is of untrusted remotes that may have the key. -}
-keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo])
+ -
+ - The first list is of remotes that are trusted to have the key.
+ -
+ - The second is of untrusted remotes that may have the key.
+ -
+ - Also returns a list of all UUIDs that are trusted to have the key
+ - (some may not have configured remotes).
+ -}
+keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo], [UUID])
 keyPossibilities key = do
 	allremotes <- remotesByCost
 	-- To determine if a remote has a key, its UUID needs to be known.
@@ -79,19 +85,19 @@ keyPossibilities key = do
 		cachedUUID r = do
 			u <- getUUID r
 			return $ null u
-		partition allremotes = do
+		partition remotes = do
 			g <- Annex.gitRepo
 			validuuids <- liftIO $ keyLocations g key
-			alltrusted <- getTrusted
+			trusted <- getTrusted
 			-- get uuids trusted to have the key
 			-- note that validuuids is assumed to not have dups
-			let validtrusted = intersect validuuids alltrusted
+			let validtrusteduuids = intersect validuuids trusted
 			-- remotes that match uuids that have the key
-			validremotes <- reposByUUID allremotes validuuids
+			validremotes <- reposByUUID remotes validuuids
 			-- partition out the trusted and untrusted remotes
-			trustedremotes <- reposByUUID validremotes validtrusted
-			untrustedremotes <- reposWithoutUUID validremotes alltrusted
-			return (trustedremotes, untrustedremotes)
+			trustedremotes <- reposByUUID validremotes validtrusteduuids
+			untrustedremotes <- reposWithoutUUID validremotes trusted
+			return (trustedremotes, untrustedremotes, validtrusteduuids)
 
 {- Checks if a given remote has the content for a key inAnnex.
  - If the remote cannot be accessed, returns a Left error.

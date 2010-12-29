@@ -110,7 +110,7 @@ toCleanup move remote key tmpfile = do
 fromStart :: Bool -> SubCmdStartString
 fromStart move file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
-	(trusted, untrusted) <- Remotes.keyPossibilities key
+	(trusted, untrusted, _) <- Remotes.keyPossibilities key
 	if null $ filter (\r -> Remotes.same r remote) (trusted ++ untrusted)
 		then return Nothing
 		else do
