@@ -54,13 +54,13 @@ copyKeyFile key file = do
 	if null remotes
 		then do
 			showNote "not available"
-			showLocations key
+			showLocations key []
 			return False
 		else trycopy remotes remotes
 	where
 		trycopy full [] = do
 			showTriedRemotes full
-			showLocations key
+			showLocations key []
 			return False
 		trycopy full (r:rs) = do
 			probablythere <- probablyPresent r
@@ -95,44 +95,40 @@ checkRemoveKey key numcopiesM = do
 			(trusted, untrusted) <- Remotes.keyPossibilities key
 			numcopies <- getNumCopies numcopiesM
 			trusteduuids <- mapM getUUID trusted
-			if numcopies > length untrusted
-				then notEnoughCopies numcopies (length untrusted) []
-				else findcopies numcopies trusteduuids untrusted []
+			findcopies numcopies trusteduuids untrusted []
 	where
 		findcopies need have [] bad
 			| length have >= need = return True
-			| otherwise = notEnoughCopies need (length have) bad
+			| otherwise = notEnoughCopies need have bad
 		findcopies need have (r:rs) bad
 			| length have >= need = return True
 			| otherwise = do
 				u <- getUUID r
-				if not $ elem u have
-					then do
-						haskey <- Remotes.inAnnex r key
-						case haskey of
-							Right True	-> findcopies need (u:have) rs bad
-							Right False	-> findcopies need have rs bad
-							Left _		-> findcopies need have rs (r:bad)
-					else findcopies need have rs bad
-		notEnoughCopies need numhave bad = do
+				let dup = elem u have
+				haskey <- Remotes.inAnnex r key
+				case (dup, haskey) of
+					(False, Right True)	-> findcopies need (u:have) rs bad
+					(False, Left _)		-> findcopies need have rs (r:bad)
+					_			-> findcopies need have rs bad
+		notEnoughCopies need have bad = do
 			unsafe
 			showLongNote $
 				"Could only verify the existence of " ++
-				show numhave ++ " out of " ++ show need ++ 
+				show (length have) ++ " out of " ++ show need ++ 
 				" necessary copies"
 			showTriedRemotes bad
-			showLocations key
+			showLocations key have
 			hint
 			return False
 		unsafe = showNote "unsafe"
 		hint = showLongNote "(Use --force to override this check, or adjust annex.numcopies.)"
 
-showLocations :: Key -> Annex ()
-showLocations key = do
+showLocations :: Key -> [UUID] -> Annex ()
+showLocations key exclude = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	uuids <- liftIO $ keyLocations g key
-	let uuidsf = filter (/= u) uuids
+	let uuidsf = filter (\l -> l /= u && (not $ elem l exclude)) uuids
 	ppuuids <- prettyPrintUUIDs uuidsf
 	if null uuidsf
 		then showLongNote $ "No other repository is known to contain the file."
