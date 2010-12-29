@@ -16,7 +16,6 @@ module Backend.File (backend, checkKey) where
 
 import Control.Monad.State
 import System.Directory
-import Data.List (intersect)
 
 import TypeInternals
 import LocationLog
@@ -50,7 +49,8 @@ dummyStore _ _ = return True
  - and copy it over to this one. -}
 copyKeyFile :: Key -> FilePath -> Annex Bool
 copyKeyFile key file = do
-	remotes <- Remotes.keyPossibilities key
+	(trusted, untrusted) <- Remotes.keyPossibilities key
+	let remotes = trusted ++ untrusted
 	if null remotes
 		then do
 			showNote "not available"
@@ -92,16 +92,11 @@ checkRemoveKey key numcopiesM = do
 	if force || numcopiesM == Just 0
 		then return True
 		else do
-			g <- Annex.gitRepo
-			locations <- liftIO $ keyLocations g key
-			trusted <- getTrusted
-			let trustedcopies = length $ intersect locations trusted
-			remotes <- Remotes.keyPossibilities key
-			untrustedremotes <- reposWithoutUUID remotes trusted
+			(trusted, untrusted) <- Remotes.keyPossibilities key
 			numcopies <- getNumCopies numcopiesM
-			if numcopies > length untrustedremotes
-				then notEnoughCopies numcopies (length untrustedremotes) []
-				else findcopies numcopies trustedcopies untrustedremotes []
+			if numcopies > length untrusted
+				then notEnoughCopies numcopies (length untrusted) []
+				else findcopies numcopies (length trusted) untrusted []
 	where
 		findcopies need have [] bad
 			| have >= need = return True
