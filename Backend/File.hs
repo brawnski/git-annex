@@ -94,26 +94,31 @@ checkRemoveKey key numcopiesM = do
 		else do
 			(trusted, untrusted) <- Remotes.keyPossibilities key
 			numcopies <- getNumCopies numcopiesM
+			trusteduuids <- mapM getUUID trusted
 			if numcopies > length untrusted
 				then notEnoughCopies numcopies (length untrusted) []
-				else findcopies numcopies (length trusted) untrusted []
+				else findcopies numcopies trusteduuids untrusted []
 	where
 		findcopies need have [] bad
-			| have >= need = return True
-			| otherwise = notEnoughCopies need have bad
+			| length have >= need = return True
+			| otherwise = notEnoughCopies need (length have) bad
 		findcopies need have (r:rs) bad
-			| have >= need = return True
-			| otherwise = do 
-				haskey <- Remotes.inAnnex r key
-				case haskey of
-					Right True	-> findcopies need (have+1) rs bad
-					Right False	-> findcopies need have rs bad
-					Left _		-> findcopies need have rs (r:bad)
-		notEnoughCopies need have bad = do
+			| length have >= need = return True
+			| otherwise = do
+				u <- getUUID r
+				if not $ elem u have
+					then do
+						haskey <- Remotes.inAnnex r key
+						case haskey of
+							Right True	-> findcopies need (u:have) rs bad
+							Right False	-> findcopies need have rs bad
+							Left _		-> findcopies need have rs (r:bad)
+					else findcopies need have rs bad
+		notEnoughCopies need numhave bad = do
 			unsafe
 			showLongNote $
 				"Could only verify the existence of " ++
-				show have ++ " out of " ++ show need ++ 
+				show numhave ++ " out of " ++ show need ++ 
 				" necessary copies"
 			showTriedRemotes bad
 			showLocations key
