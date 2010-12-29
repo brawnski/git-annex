@@ -49,7 +49,7 @@ list remotes = join ", " $ map Git.repoDescribe remotes
  -
  - The second is of untrusted remotes that may have the key.
  -
- - Also returns a list of all UUIDs that are trusted to have the key
+ - Also returns a list of UUIDs that are trusted to have the key
  - (some may not have configured remotes).
  -}
 keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo], [UUID])
@@ -87,11 +87,13 @@ keyPossibilities key = do
 			return $ null u
 		partition remotes = do
 			g <- Annex.gitRepo
+			u <- getUUID g
 			validuuids <- liftIO $ keyLocations g key
 			trusted <- getTrusted
 			-- get uuids trusted to have the key
 			-- note that validuuids is assumed to not have dups
-			let validtrusteduuids = intersect validuuids trusted
+			let validtrusteduuids = filter (/= u) $ 
+				intersect validuuids trusted
 			-- remotes that match uuids that have the key
 			validremotes <- reposByUUID remotes validuuids
 			-- partition out the trusted and untrusted remotes
