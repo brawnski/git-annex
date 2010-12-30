@@ -275,7 +275,11 @@ files when they're added to the annex, and this can slow things down
 significantly for really big files. To make SHA1 the detault, just
 add something like this to `.gitattributes`:
 
-	* annex.backend=SHA1
+> annex.backends=SHA1
+
+or run:
+
+> $ git config annex.backends SHA1
 
 ## unused data
 
