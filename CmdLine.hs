@@ -57,9 +57,12 @@ usage header cmds options =
 		cmddescs = unlines $ map (indent . showcmd) cmds
 		showcmd c =
 			cmdname c ++
-			pad 11 (cmdname c) ++
+			pad (commandlen + 1) (cmdname c) ++
 			cmdparams c ++
-			pad 13 (cmdparams c) ++
+			pad (commandparamlen + 2) (cmdparams c) ++
 			cmddesc c
 		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
+		longest l = foldl max 0 $ map length l
+		commandlen = longest $ map cmdname cmds
+		commandparamlen = longest $ map cmdparams cmds
