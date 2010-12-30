@@ -3,6 +3,8 @@ test
 configure
 SysConfig.hs
 git-annex
+git-annex-shell
 git-annex.1
+git-annex-shell.1
 doc/.ikiwiki
 html

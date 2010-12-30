@@ -4,7 +4,7 @@ git-annex - manage files with git, without checking their contents in
 
 # SYNOPSIS
 
-git annex subcommand [params ...]
+git annex command [params ...]
 
 # DESCRIPTION
 
@@ -55,13 +55,13 @@ content from the key-value store.
 	# git annex move iso --to=usbdrive
 	move iso/Debian_5.0.iso (moving to usbdrive...) ok
 
-# SUBCOMMANDS
+# COMMANDS
 
 Like many git commands, git-annex can be passed a path that 
 is either a file or a directory. In the latter case it acts on all relevant
 files in the directory.
 
-Many git-annex subcommands will stage changes for later `git commit` by you.
+Many git-annex commands will stage changes for later `git commit` by you.
 
 * add [path ...]
 
@@ -91,7 +91,7 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * edit [path ...]
 
-  This is an alias for the unlock subcommand. May be easier to remember,
+  This is an alias for the unlock command. May be easier to remember,
   if you think of this as allowing you to edit an annexed file.
 
 * move [path ...]
@@ -122,7 +122,7 @@ Many git-annex subcommands will stage changes for later `git commit` by you.
 
 * fsck [path ...]
 
-  With no parameters, this subcommand checks the whole annex for consistency,
+  With no parameters, this command checks the whole annex for consistency,
   and warns about any problems found.
 
   With parameters, only the specified files are checked.

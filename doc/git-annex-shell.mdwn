@@ -1,0 +1,63 @@
+# NAME
+
+git-annex-shell - Restricted login shell for git-annex only SSH access
+
+# SYNOPSIS
+
+git-annex-shell -c command [params ...]
+
+# DESCRIPTION
+
+git-annex-shell is a restricted shell, similar to git-shell, which 
+can be used as a login shell for SSH accounts you want to restrict.
+
+# COMMANDS
+
+* git-annex fromkey file
+
+  This can be used to maually set up a file to link to a specified key
+  in the key-value backend. How you determine an existing key in the backend
+  varies. For the URL backend, the key is just a URL to the content.
+
+  Example:
+
+	git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+
+* git-annex dropkey [key ...]
+
+  This drops the annexed data for the specified
+  keys from this repository.
+
+  This can be used to drop content for arbitrary keys, which do not need
+  to have a file in the git repository pointing at them.
+
+  A backend will typically need to be specified with --backend. If none
+  is specified, the first configured backend is used.
+
+* git-annex setkey file
+
+  This sets the annxed data for a key to the content of
+  the specified file, and then removes the file.
+
+  A backend will typically need to be specified with --backend. If none
+  is specified, the first configured backend is used.
+
+Any other command is passed through to git-shell.
+
+# OPTIONS
+
+Same as git-annex or git-shell, depending on the command being run.
+
+# SEE ALSO
+
+[[git-annex]](1)
+
+git-shell(1)
+
+# AUTHOR
+
+Joey Hess <joey@kitenet.net>
+
+<http://git-annex.branchable.com/>
+
+Warning: this page is automatically made into a man page via [mdwn2man](http://git.ikiwiki.info/?p=ikiwiki;a=blob;f=mdwn2man;hb=HEAD).  Edit with care
