@@ -1,0 +1,4 @@
+Would help alot when having to add large(ish) amounts of remotes.
+
+Maybe detect this kind of commit message and ask user whether to automatically add them? See [[auto_remotes]]:
+> Question: When should git-annex update the remote.log? (If not just on init.) Whenever it reads in a repo's remotes?
