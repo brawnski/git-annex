@@ -17,21 +17,21 @@ import qualified Command.Fix
 
 {- The pre-commit hook needs to fix symlinks to all files being committed.
  - And, it needs to inject unlocked files into the annex. -}
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesToBeCommitted Command.Fix.start,
 	withFilesUnlockedToBeCommitted start]
 
-start :: SubCmdStartBackendFile
+start :: CommandStartBackendFile
 start pair = return $ Just $ perform pair
 
-perform :: BackendFile -> SubCmdPerform
+perform :: BackendFile -> CommandPerform
 perform pair@(file, _) = do
-	ok <- doSubCmd $ Command.Add.start pair
+	ok <- doCommand $ Command.Add.start pair
 	if ok
 		then return $ Just $ cleanup file
 		else error $ "failed to add " ++ file ++ "; canceling commit"
 
-cleanup :: FilePath -> SubCmdCleanup
+cleanup :: FilePath -> CommandCleanup
 cleanup file = do
 	-- git commit will have staged the file's content;
 	-- drop that and run command queued by Add.state to

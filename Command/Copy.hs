@@ -11,5 +11,5 @@ import Command
 import qualified Command.Move
 
 -- A copy is just a move that does not delete the source file.
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit $ Command.Move.start False]

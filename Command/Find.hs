@@ -13,11 +13,11 @@ import Control.Monad.State (liftIO)
 import Command
 import Core
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withDefault "." withFilesInGit start]
 
 {- Output a list of files. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	exists <- inAnnex key
 	when exists $ liftIO $ putStrLn file

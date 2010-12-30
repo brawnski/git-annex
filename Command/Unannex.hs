@@ -20,16 +20,16 @@ import Core
 import qualified GitRepo as Git
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit start]
 
 {- The unannex subcommand undoes an add. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	showStart "unannex" file
 	return $ Just $ perform file key backend
 
-perform :: FilePath -> Key -> Backend -> SubCmdPerform
+perform :: FilePath -> Key -> Backend -> CommandPerform
 perform file key backend = do
 	-- force backend to always remove
 	ok <- Backend.removeKey backend key (Just 0)
@@ -37,7 +37,7 @@ perform file key backend = do
 		then return $ Just $ cleanup file key
 		else return Nothing
 
-cleanup :: FilePath -> Key -> SubCmdCleanup
+cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do
 	g <- Annex.gitRepo
 

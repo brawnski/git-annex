@@ -15,11 +15,11 @@ import Types
 import Core
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withKeys start]
 
 {- Drops cached content for a key. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start keyname = do
 	backends <- Backend.list
 	let key = genKey (head backends) keyname
@@ -33,12 +33,12 @@ start keyname = do
 				showStart "dropkey" keyname
 				return $ Just $ perform key
 
-perform :: Key -> SubCmdPerform
+perform :: Key -> CommandPerform
 perform key = do
 	removeAnnex key
 	return $ Just $ cleanup key
 
-cleanup :: Key -> SubCmdCleanup
+cleanup :: Key -> CommandCleanup
 cleanup key = do
 	logStatus key ValueMissing
 	return True

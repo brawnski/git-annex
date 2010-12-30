@@ -20,11 +20,11 @@ import Types
 import Core
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesMissing start]
 
 {- Adds a file pointing at a manually-specified key -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
@@ -36,13 +36,13 @@ start file = do
 		"key ("++keyname++") is not present in backend"
 	showStart "fromkey" file
 	return $ Just $ perform file key
-perform :: FilePath -> Key -> SubCmdPerform
+perform :: FilePath -> Key -> CommandPerform
 perform file key = do
 	link <- calcGitLink file key
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ createSymbolicLink link file
 	return $ Just $ cleanup file
-cleanup :: FilePath -> SubCmdCleanup
+cleanup :: FilePath -> CommandCleanup
 cleanup file = do
 	Annex.queue "add" ["--"] file
 	return True

@@ -21,54 +21,54 @@ import qualified Annex
 import qualified GitRepo as Git
 import Locations
 
-{- A subcommand runs in four stages.
+{- A command runs in four stages.
  -
- - 0. The seek stage takes the parameters passed to the subcommand,
+ - 0. The seek stage takes the parameters passed to the command,
  -    looks through the repo to find the ones that are relevant
- -    to that subcommand (ie, new files to add), and generates
+ -    to that command (ie, new files to add), and generates
  -    a list of start stage actions. -}
-type SubCmdSeek = [String] -> Annex [SubCmdStart]
+type CommandSeek = [String] -> Annex [CommandStart]
 {- 1. The start stage is run before anything is printed about the
-  -   subcommand, is passed some input, and can early abort it
+  -   command, is passed some input, and can early abort it
   -   if the input does not make sense. It should run quickly and
   -   should not modify Annex state. -}
-type SubCmdStart = Annex (Maybe SubCmdPerform)
-{- 2. The perform stage is run after a message is printed about the subcommand
+type CommandStart = Annex (Maybe CommandPerform)
+{- 2. The perform stage is run after a message is printed about the command
  -    being run, and it should be where the bulk of the work happens. -}
-type SubCmdPerform = Annex (Maybe SubCmdCleanup)
+type CommandPerform = Annex (Maybe CommandCleanup)
 {- 3. The cleanup stage is run only if the perform stage succeeds, and it
- -    returns the overall success/fail of the subcommand. -}
-type SubCmdCleanup = Annex Bool
-{- Some helper functions are used to build up SubCmdSeek and SubCmdStart
+ -    returns the overall success/fail of the command. -}
+type CommandCleanup = Annex Bool
+{- Some helper functions are used to build up CommandSeek and CommandStart
  - functions. -}
-type SubCmdSeekStrings = SubCmdStartString -> SubCmdSeek
-type SubCmdStartString = String -> SubCmdStart
+type CommandSeekStrings = CommandStartString -> CommandSeek
+type CommandStartString = String -> CommandStart
 type BackendFile = (FilePath, Maybe Backend)
-type SubCmdSeekBackendFiles = SubCmdStartBackendFile -> SubCmdSeek
-type SubCmdStartBackendFile = BackendFile -> SubCmdStart
+type CommandSeekBackendFiles = CommandStartBackendFile -> CommandSeek
+type CommandStartBackendFile = BackendFile -> CommandStart
 type AttrFile = (FilePath, String)
-type SubCmdSeekAttrFiles = SubCmdStartAttrFile -> SubCmdSeek
-type SubCmdStartAttrFile = AttrFile -> SubCmdStart
-type SubCmdSeekNothing = SubCmdStart -> SubCmdSeek
-type SubCmdStartNothing = SubCmdStart
+type CommandSeekAttrFiles = CommandStartAttrFile -> CommandSeek
+type CommandStartAttrFile = AttrFile -> CommandStart
+type CommandSeekNothing = CommandStart -> CommandSeek
+type CommandStartNothing = CommandStart
 
-data SubCommand = SubCommand {
-	subcmdname :: String,
-	subcmdparams :: String,
-	subcmdseek :: [SubCmdSeek],
-	subcmddesc :: String
+data Command = Command {
+	cmdname :: String,
+	cmdparams :: String,
+	cmdseek :: [CommandSeek],
+	cmddesc :: String
 }
 
-{- Prepares a list of actions to run to perform a subcommand, based on
+{- Prepares a list of actions to run to perform a command, based on
  - the parameters passed to it. -}
-prepSubCmd :: SubCommand -> [String] -> Annex [Annex Bool]
-prepSubCmd SubCommand { subcmdseek = seek } params = do
+prepCmd :: Command -> [String] -> Annex [Annex Bool]
+prepCmd Command { cmdseek = seek } params = do
 	lists <- mapM (\s -> s params) seek
-	return $ map doSubCmd $ foldl (++) [] lists
+	return $ map doCommand $ foldl (++) [] lists
 
-{- Runs a subcommand through the start, perform and cleanup stages -}
-doSubCmd :: SubCmdStart -> SubCmdCleanup
-doSubCmd start = do
+{- Runs a command through the start, perform and cleanup stages -}
+doCommand :: CommandStart -> CommandCleanup
+doCommand start = do
 	s <- start
 	case s of
 		Nothing -> return True
@@ -104,20 +104,20 @@ isAnnexed file a = do
 
 {- These functions find appropriate files or other things based on a
    user's parameters, and run a specified action on them. -}
-withFilesInGit :: SubCmdSeekStrings
+withFilesInGit :: CommandSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ Git.inRepo repo params
 	files' <- filterFiles files
 	return $ map a files'
-withAttrFilesInGit :: String -> SubCmdSeekAttrFiles
+withAttrFilesInGit :: String -> CommandSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ Git.inRepo repo params
 	files' <- filterFiles files
 	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
-withFilesMissing :: SubCmdSeekStrings
+withFilesMissing :: CommandSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
 	files' <- filterFiles files
@@ -126,27 +126,27 @@ withFilesMissing a params = do
 		missing f = do
 			e <- doesFileExist f
 			return $ not e
-withFilesNotInGit :: SubCmdSeekBackendFiles
+withFilesNotInGit :: CommandSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	newfiles <- liftIO $ Git.notInRepo repo params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
-withString :: SubCmdSeekStrings
+withString :: CommandSeekStrings
 withString a params = return [a $ unwords params]
-withStrings :: SubCmdSeekStrings
+withStrings :: CommandSeekStrings
 withStrings a params = return $ map a params
-withFilesToBeCommitted :: SubCmdSeekStrings
+withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
 	tocommit <- liftIO $ Git.stagedFiles repo params
 	tocommit' <- filterFiles tocommit
 	return $ map a tocommit'
-withFilesUnlocked :: SubCmdSeekBackendFiles
+withFilesUnlocked :: CommandSeekBackendFiles
 withFilesUnlocked = withFilesUnlocked' Git.typeChangedFiles
-withFilesUnlockedToBeCommitted :: SubCmdSeekBackendFiles
+withFilesUnlockedToBeCommitted :: CommandSeekBackendFiles
 withFilesUnlockedToBeCommitted = withFilesUnlocked' Git.typeChangedStagedFiles
-withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> SubCmdSeekBackendFiles
+withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> CommandSeekBackendFiles
 withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file
 	repo <- Annex.gitRepo
@@ -155,29 +155,29 @@ withFilesUnlocked' typechanged a params = do
 		map (\f -> Git.workTree repo ++ "/" ++ f) typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
-withKeys :: SubCmdSeekStrings
+withKeys :: CommandSeekStrings
 withKeys a params = return $ map a params
-withTempFile :: SubCmdSeekStrings
+withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
-withNothing :: SubCmdSeekNothing
+withNothing :: CommandSeekNothing
 withNothing a [] = return [a]
 withNothing _ _ = return []
 
-backendPairs :: SubCmdSeekBackendFiles
+backendPairs :: CommandSeekBackendFiles
 backendPairs a files = do
 	pairs <- Backend.chooseBackends files
 	return $ map a pairs
 
 {- Default to acting on all files matching the seek action if
  - none are specified. -}
-withAll :: (a -> SubCmdSeek) -> a -> SubCmdSeek
+withAll :: (a -> CommandSeek) -> a -> CommandSeek
 withAll w a [] = do
 	g <- Annex.gitRepo
 	w a [Git.workTree g]
 withAll w a p = w a p
 
 {- Provides a default parameter to act on if none is specified. -}
-withDefault :: String-> (a -> SubCmdSeek) -> (a -> SubCmdSeek)
+withDefault :: String-> (a -> CommandSeek) -> (a -> CommandSeek)
 withDefault d w a [] = w a [d]
 withDefault _ w a p = w a p
 
@@ -204,3 +204,19 @@ notSymlink :: FilePath -> IO Bool
 notSymlink f = do
 	s <- liftIO $ getSymbolicLinkStatus f
 	return $ not $ isSymbolicLink s
+
+{- descriptions of params used in usage message -}
+paramPath :: String
+paramPath = "PATH ..."
+paramMaybePath :: String
+paramMaybePath = "[PATH ...]"
+paramKey :: String
+paramKey = "KEY ..."
+paramDesc :: String
+paramDesc = "DESCRIPTION"
+paramNumber :: String
+paramNumber = "NUMBER ..."
+paramRemote :: String
+paramRemote = "REMOTE ..."
+paramNothing :: String
+paramNothing = ""

@@ -18,17 +18,17 @@ import Locations
 import Core
 import CopyFile
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit start]
 
 {- The unlock subcommand replaces the symlink with a copy of the file's
  - content. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	showStart "unlock" file
 	return $ Just $ perform file key
 
-perform :: FilePath -> Key -> SubCmdPerform
+perform :: FilePath -> Key -> CommandPerform
 perform dest key = do
 	g <- Annex.gitRepo
 	let src = annexLocation g key

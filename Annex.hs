@@ -110,10 +110,10 @@ flagGet name = do
 
 {- Adds a git command to the queue. -}
 queue :: String -> [String] -> FilePath -> Annex ()
-queue subcommand params file = do
+queue command params file = do
 	state <- get
 	let q = Internals.repoqueue state
-	put state { Internals.repoqueue = GitQueue.add q subcommand params file }
+	put state { Internals.repoqueue = GitQueue.add q command params file }
 
 {- Returns the queue. -}
 queueGet :: Annex GitQueue.Queue

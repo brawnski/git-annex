@@ -37,51 +37,50 @@ import qualified Command.Uninit
 import qualified Command.Trust
 import qualified Command.Untrust
 
-subCmds :: [SubCommand]
-subCmds =
-	[ SubCommand "add" path		Command.Add.seek
-		"add files to annex"
-	, SubCommand "get" path		Command.Get.seek
+cmds :: [Command]
+cmds =
+	[ Command.Add.command
+	, Command "get" path		Command.Get.seek
 		"make content of annexed files available"
-	, SubCommand "drop" path	Command.Drop.seek
+	, Command "drop" path	Command.Drop.seek
 		"indicate content of files not currently wanted"
-	, SubCommand "move" path	Command.Move.seek
+	, Command "move" path	Command.Move.seek
 		"move content of files to/from another repository"
-	, SubCommand "copy" path	Command.Copy.seek
+	, Command "copy" path	Command.Copy.seek
 		"copy content of files to/from another repository"
-	, SubCommand "unlock" path	Command.Unlock.seek
+	, Command "unlock" path	Command.Unlock.seek
 		"unlock files for modification"
-	, SubCommand "edit" path	Command.Unlock.seek
+	, Command "edit" path	Command.Unlock.seek
 		"same as unlock"
-	, SubCommand "lock" path	Command.Lock.seek
+	, Command "lock" path	Command.Lock.seek
 		"undo unlock command"
-	, SubCommand "init" desc	Command.Init.seek
+	, Command "init" desc	Command.Init.seek
 		"initialize git-annex with repository description"
-	, SubCommand "unannex" path	Command.Unannex.seek
+	, Command "unannex" path	Command.Unannex.seek
 		"undo accidential add command"
-	, SubCommand "uninit" path	Command.Uninit.seek
+	, Command "uninit" path	Command.Uninit.seek
 		"de-initialize git-annex and clean out repository"
-	, SubCommand "pre-commit" path	Command.PreCommit.seek
+	, Command "pre-commit" path	Command.PreCommit.seek
 		"run by git pre-commit hook"
-	, SubCommand "trust" remote	Command.Trust.seek
+	, Command "trust" remote	Command.Trust.seek
 		"trust a repository"
-	, SubCommand "untrust" remote	Command.Untrust.seek
+	, Command "untrust" remote	Command.Untrust.seek
 		"do not trust a repository"
-	, SubCommand "fromkey" key	Command.FromKey.seek
+	, Command "fromkey" key	Command.FromKey.seek
 		"adds a file using a specific key"
-	, SubCommand "dropkey"	key	Command.DropKey.seek
+	, Command "dropkey"	key	Command.DropKey.seek
 		"drops annexed content for specified keys"
-	, SubCommand "setkey" key	Command.SetKey.seek
+	, Command "setkey" key	Command.SetKey.seek
 		"sets annexed content for a key using a temp file"
-	, SubCommand "fix" path		Command.Fix.seek
+	, Command "fix" path		Command.Fix.seek
 		"fix up symlinks to point to annexed content"
-	, SubCommand "fsck" maybepath	Command.Fsck.seek
+	, Command "fsck" maybepath	Command.Fsck.seek
 		"check for problems"
-	, SubCommand "unused" nothing	Command.Unused.seek
+	, Command "unused" nothing	Command.Unused.seek
 		"look for unused file content"
-	, SubCommand "dropunused" number Command.DropUnused.seek
+	, Command "dropunused" number Command.DropUnused.seek
 		"drop unused file content"
-	, SubCommand "find" maybepath	Command.Find.seek
+	, Command "find" maybepath	Command.Find.seek
 		"lists available files"
 	]
 	where
@@ -125,13 +124,13 @@ header = "Usage: git-annex subcommand [option ..]"
 usage :: String
 usage = usageInfo header options ++ "\nSubcommands:\n" ++ cmddescs
 	where
-		cmddescs = unlines $ map (indent . showcmd) subCmds
+		cmddescs = unlines $ map (indent . showcmd) cmds
 		showcmd c =
-			subcmdname c ++
-			pad 11 (subcmdname c) ++
-			subcmdparams c ++
-			pad 13 (subcmdparams c) ++
-			subcmddesc c
+			cmdname c ++
+			pad 11 (cmdname c) ++
+			cmdparams c ++
+			pad 13 (cmdparams c) ++
+			cmddesc c
 		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
 
@@ -143,12 +142,12 @@ parseCmd argv = do
 	when (null params) $ error usage
 	case lookupCmd (head params) of
 		[] -> error usage
-		[subcommand] -> do
+		[command] -> do
 			_ <- sequence flags
-			prepSubCmd subcommand (drop 1 params)
-		_ -> error "internal error: multiple matching subcommands"
+			prepCmd command (drop 1 params)
+		_ -> error "internal error: multiple matching commands"
 	where
 		getopt = case getOpt Permute options argv of
 			(flags, params, []) -> return (flags, params)
 			(_, _, errs) -> ioError (userError (concat errs ++ usage))
-		lookupCmd cmd = filter (\c -> cmd  == subcmdname c) subCmds
+		lookupCmd cmd = filter (\c -> cmd  == cmdname c) cmds

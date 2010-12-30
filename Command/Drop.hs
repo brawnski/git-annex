@@ -17,12 +17,12 @@ import Core
 import Messages
 import Utility
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withAttrFilesInGit "annex.numcopies" start]
 
 {- Indicates a file's content is not wanted anymore, and should be removed
  - if it's safe to do so. -}
-start :: SubCmdStartAttrFile
+start :: CommandStartAttrFile
 start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
 	if not inbackend
@@ -33,14 +33,14 @@ start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
-perform :: Key -> Backend -> Maybe Int -> SubCmdPerform
+perform :: Key -> Backend -> Maybe Int -> CommandPerform
 perform key backend numcopies = do
 	success <- Backend.removeKey backend key numcopies
 	if success
 		then return $ Just $ cleanup key
 		else return Nothing
 
-cleanup :: Key -> SubCmdCleanup
+cleanup :: Key -> CommandCleanup
 cleanup key = do
 	inannex <- inAnnex key
 	when inannex $ removeAnnex key

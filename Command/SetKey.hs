@@ -19,11 +19,11 @@ import Types
 import Core
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withTempFile start]
 
 {- Sets cached content for a key. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = do
 	keyname <- Annex.flagGet "key"
 	when (null keyname) $ error "please specify the key with --key"
@@ -31,7 +31,7 @@ start file = do
 	let key = genKey (head backends) keyname
 	showStart "setkey" file
 	return $ Just $ perform file key
-perform :: FilePath -> Key -> SubCmdPerform
+perform :: FilePath -> Key -> CommandPerform
 perform file key = do
 	-- the file might be on a different filesystem, so mv is used
 	-- rather than simply calling moveToObjectDir key file
@@ -43,7 +43,7 @@ perform file key = do
 		then return $ Just $ cleanup key
 		else error "mv failed!"
 
-cleanup :: Key -> SubCmdCleanup
+cleanup :: Key -> CommandCleanup
 cleanup key = do
 	logStatus key ValuePresent
 	return True

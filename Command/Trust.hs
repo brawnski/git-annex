@@ -17,17 +17,17 @@ import qualified Remotes
 import UUID
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withString start]
 
 {- Marks a remote as trusted. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start name = do
 	r <- Remotes.byName name
 	showStart "trust" name
 	return $ Just $ perform r
 
-perform :: Git.Repo -> SubCmdPerform
+perform :: Git.Repo -> CommandPerform
 perform repo = do
 	uuid <- getUUID repo
 	trusted <- getTrusted

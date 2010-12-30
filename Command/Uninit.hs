@@ -20,15 +20,15 @@ import qualified Annex
 import qualified Command.Unannex
 import qualified Command.Init
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withAll withFilesInGit Command.Unannex.start, withNothing start]
 
-start :: SubCmdStartNothing
+start :: CommandStartNothing
 start = do
 	showStart "uninit" ""
 	return $ Just $ perform
 
-perform :: SubCmdPerform
+perform :: CommandPerform
 perform = do
 	g <- Annex.gitRepo
 

@@ -15,16 +15,16 @@ import Messages
 import qualified Annex
 import qualified GitRepo as Git
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesUnlocked start]
 
 {- Undo unlock -}
-start :: SubCmdStartBackendFile
+start :: CommandStartBackendFile
 start (file, _) = do
 	showStart "lock" file
 	return $ Just $ perform file
 
-perform :: FilePath -> SubCmdPerform
+perform :: FilePath -> CommandPerform
 perform file = do
 	liftIO $ removeFile file
 	g <- Annex.gitRepo

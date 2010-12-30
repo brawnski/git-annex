@@ -20,18 +20,18 @@ import Messages
 import Locations
 import Types
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withString start]
 
 {- Stores description for the repository etc. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start description = do
 	when (null description) $
 		error "please specify a description of this repository\n"
 	showStart "init" description
 	return $ Just $ perform description
 
-perform :: String -> SubCmdPerform
+perform :: String -> CommandPerform
 perform description = do
 	g <- Annex.gitRepo
 	u <- getUUID g
@@ -41,7 +41,7 @@ perform description = do
 	gitPreCommitHookWrite g
 	return $ Just cleanup
 
-cleanup :: SubCmdCleanup
+cleanup :: CommandCleanup
 cleanup = do
 	g <- Annex.gitRepo
 	logfile <- uuidLog

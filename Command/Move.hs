@@ -21,14 +21,14 @@ import qualified Remotes
 import UUID
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit $ start True]
 
 {- Move (or copy) a file either --to or --from a repository.
  -
  - This only operates on the cached file content; it does not involve
  - moving data in the key-value backend. -}
-start :: Bool -> SubCmdStartString
+start :: Bool -> CommandStartString
 start move file = do
 	fromName <- Annex.flagGet "fromrepository"
 	toName <- Annex.flagGet "torepository"
@@ -61,7 +61,7 @@ remoteHasKey remote key present	= do
  - A file's content can be moved even if there are insufficient copies to
  - allow it to be dropped.
  -}
-toStart :: Bool -> SubCmdStartString
+toStart :: Bool -> CommandStartString
 toStart move file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if not ishere
@@ -69,7 +69,7 @@ toStart move file = isAnnexed file $ \(key, _) -> do
 		else do
 			showAction move file
 			return $ Just $ toPerform move key
-toPerform :: Bool -> Key -> SubCmdPerform
+toPerform :: Bool -> Key -> CommandPerform
 toPerform move key = do
 	-- checking the remote is expensive, so not done in the start step
 	remote <- Remotes.commandLineRemote
@@ -86,7 +86,7 @@ toPerform move key = do
 				then return $ Just $ toCleanup move remote key tmpfile
 				else return Nothing -- failed
 		Right True -> return $ Just $ Command.Drop.cleanup key
-toCleanup :: Bool -> Git.Repo -> Key -> FilePath -> SubCmdCleanup
+toCleanup :: Bool -> Git.Repo -> Key -> FilePath -> CommandCleanup
 toCleanup move remote key tmpfile = do
 	-- Tell remote to use the transferred content.
 	ok <- Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
@@ -107,7 +107,7 @@ toCleanup move remote key tmpfile = do
  - If the current repository already has the content, it is still removed
  - from the other repository when moving.
  -}
-fromStart :: Bool -> SubCmdStartString
+fromStart :: Bool -> CommandStartString
 fromStart move file = isAnnexed file $ \(key, _) -> do
 	remote <- Remotes.commandLineRemote
 	(trusted, untrusted, _) <- Remotes.keyPossibilities key
@@ -116,7 +116,7 @@ fromStart move file = isAnnexed file $ \(key, _) -> do
 		else do
 			showAction move file
 			return $ Just $ fromPerform move key
-fromPerform :: Bool -> Key -> SubCmdPerform
+fromPerform :: Bool -> Key -> CommandPerform
 fromPerform move key = do
 	remote <- Remotes.commandLineRemote
 	ishere <- inAnnex key
@@ -128,7 +128,7 @@ fromPerform move key = do
 			if ok
 				then return $ Just $ fromCleanup move remote key
 				else return Nothing -- fail
-fromCleanup :: Bool -> Git.Repo -> Key -> SubCmdCleanup
+fromCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
 fromCleanup True remote key = do
 	ok <- Remotes.runCmd remote "git-annex" 
 		["dropkey", "--quiet", "--force",

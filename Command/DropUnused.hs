@@ -18,11 +18,11 @@ import qualified Annex
 import qualified Command.Drop
 import Backend
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withStrings start]
 
 {- Drops unused content by number. -} 
-start :: SubCmdStartString
+start :: CommandStartString
 start s = do
 	m <- readUnusedLog
 	case M.lookup s m of

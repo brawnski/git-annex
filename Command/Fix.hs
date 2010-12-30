@@ -17,11 +17,11 @@ import Utility
 import Core
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit start]
 
 {- Fixes the symlink to an annexed file. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
@@ -31,14 +31,14 @@ start file = isAnnexed file $ \(key, _) -> do
 			showStart "fix" file
 			return $ Just $ perform file link
 
-perform :: FilePath -> FilePath -> SubCmdPerform
+perform :: FilePath -> FilePath -> CommandPerform
 perform file link = do
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ removeFile file
 	liftIO $ createSymbolicLink link file
 	return $ Just $ cleanup file
 
-cleanup :: FilePath -> SubCmdCleanup
+cleanup :: FilePath -> CommandCleanup
 cleanup file = do
 	Annex.queue "add" ["--"] file
 	return True

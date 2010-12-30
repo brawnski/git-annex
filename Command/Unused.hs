@@ -17,16 +17,16 @@ import Messages
 import Locations
 import qualified Annex
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withNothing start]
 
 {- Finds unused content in the annex. -} 
-start :: SubCmdStartNothing
+start :: CommandStartNothing
 start = do
 	showStart "unused" ""
 	return $ Just perform
 
-perform :: SubCmdPerform
+perform :: CommandPerform
 perform = do
 	_ <- checkUnused
 	return $ Just $ return True

@@ -13,11 +13,11 @@ import Types
 import Core
 import Messages
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesInGit start]
 
 {- Gets an annexed file from one of the backends. -}
-start :: SubCmdStartString
+start :: CommandStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if inannex
@@ -26,7 +26,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 			showStart "get" file
 			return $ Just $ perform key backend
 
-perform :: Key -> Backend -> SubCmdPerform
+perform :: Key -> Backend -> CommandPerform
 perform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
 	if ok

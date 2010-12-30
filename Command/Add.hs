@@ -18,14 +18,17 @@ import Types
 import Core
 import Messages
 
+command :: Command
+command = Command "add" paramPath seek "add files to annex"
+
 {- Add acts on both files not checked into git yet, and unlocked files. -}
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withFilesNotInGit start, withFilesUnlocked start]
 
 {- The add subcommand annexes a file, storing it in a backend, and then
  - moving it into the annex directory and setting up the symlink pointing
  - to its content. -}
-start :: SubCmdStartBackendFile
+start :: CommandStartBackendFile
 start pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if (isSymbolicLink s) || (not $ isRegularFile s)
@@ -34,14 +37,14 @@ start pair@(file, _) = notAnnexed file $ do
 			showStart "add" file
 			return $ Just $ perform pair
 
-perform :: BackendFile -> SubCmdPerform
+perform :: BackendFile -> CommandPerform
 perform (file, backend) = do
 	stored <- Backend.storeFileKey file backend
 	case stored of
 		Nothing -> return Nothing
 		Just (key, _) -> return $ Just $ cleanup file key
 
-cleanup :: FilePath -> Key -> SubCmdCleanup
+cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do
 	moveAnnex key file
 	logStatus key ValuePresent

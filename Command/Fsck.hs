@@ -13,18 +13,18 @@ import Types
 import Messages
 import Utility
 
-seek :: [SubCmdSeek]
+seek :: [CommandSeek]
 seek = [withAll (withAttrFilesInGit "annex.numcopies") start]
 
 {- Checks a file's backend data for problems. -}
-start :: SubCmdStartAttrFile
+start :: CommandStartAttrFile
 start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	showStart "fsck" file
 	return $ Just $ perform key backend numcopies
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
-perform :: Key -> Backend -> Maybe Int -> SubCmdPerform
+perform :: Key -> Backend -> Maybe Int -> CommandPerform
 perform key backend numcopies = do
 	success <- Backend.fsckKey backend key numcopies
 	if success
