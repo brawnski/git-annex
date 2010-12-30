@@ -19,6 +19,10 @@ import Version
 import Messages
 import Locations
 import Types
+	
+command :: [Command]
+command = [Command "init" paramDesc seek
+		"initialize git-annex with repository description"]
 
 seek :: [CommandSeek]
 seek = [withString start]

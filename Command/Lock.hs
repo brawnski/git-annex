@@ -14,6 +14,9 @@ import Command
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
+	
+command :: [Command]
+command = [Command "lock" paramPath seek "undo unlock command"]
 
 seek :: [CommandSeek]
 seek = [withFilesUnlocked start]

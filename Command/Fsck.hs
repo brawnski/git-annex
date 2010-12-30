@@ -13,6 +13,10 @@ import Types
 import Messages
 import Utility
 
+command :: [Command]
+command = [Command "fsck" (paramOptional $ paramRepeating paramPath) seek
+	"check for problems"]
+
 seek :: [CommandSeek]
 seek = [withAll (withAttrFilesInGit "annex.numcopies") start]
 

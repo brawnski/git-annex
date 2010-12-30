@@ -20,6 +20,10 @@ import qualified GitRepo as Git
 import qualified Remotes
 import UUID
 import Messages
+	
+command :: [Command]
+command = [Command "move" paramPath seek
+	"move content of files to/from another repository"]
 
 seek :: [CommandSeek]
 seek = [withFilesInGit $ start True]

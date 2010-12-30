@@ -18,8 +18,8 @@ import Types
 import Core
 import Messages
 
-command :: Command
-command = Command "add" paramPath seek "add files to annex"
+command :: [Command]
+command = [Command "add" paramPath seek "add files to annex"]
 
 {- Add acts on both files not checked into git yet, and unlocked files. -}
 seek :: [CommandSeek]

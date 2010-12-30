@@ -17,6 +17,10 @@ import Utility
 import Core
 import Messages
 
+command :: [Command]
+command = [Command "fix" paramPath seek
+	"fix up symlinks to point to annexed content"]
+
 seek :: [CommandSeek]
 seek = [withFilesInGit start]
 

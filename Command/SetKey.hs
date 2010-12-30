@@ -19,6 +19,10 @@ import Types
 import Core
 import Messages
 
+command :: [Command]
+command = [Command "setkey" (paramRepeating paramKey) seek
+	"sets annexed content for a key using a temp file"]
+
 seek :: [CommandSeek]
 seek = [withTempFile start]
 

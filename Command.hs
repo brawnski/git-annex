@@ -205,18 +205,24 @@ notSymlink f = do
 	s <- liftIO $ getSymbolicLinkStatus f
 	return $ not $ isSymbolicLink s
 
-{- descriptions of params used in usage message -}
+{- Descriptions of params used in usage messages. -}
+paramRepeating :: String -> String
+paramRepeating s = s ++ " ..."
+paramOptional :: String -> String
+paramOptional s = "[" ++ s ++ "]"
 paramPath :: String
-paramPath = "PATH ..."
-paramMaybePath :: String
-paramMaybePath = "[PATH ...]"
+paramPath = "PATH"
 paramKey :: String
-paramKey = "KEY ..."
+paramKey = "KEY"
 paramDesc :: String
 paramDesc = "DESCRIPTION"
 paramNumber :: String
-paramNumber = "NUMBER ..."
+paramNumber = "NUMBER"
 paramRemote :: String
-paramRemote = "REMOTE ..."
+paramRemote = "REMOTE"
+paramGlob :: String
+paramGlob = "GLOB"
+paramName :: String
+paramName = "NAME"
 paramNothing :: String
 paramNothing = ""

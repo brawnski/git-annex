@@ -13,6 +13,10 @@ import Control.Monad.State (liftIO)
 import Command
 import Core
 
+command :: [Command]
+command = [Command "find" (paramOptional $ paramRepeating paramPath) seek
+	"lists available files"]
+
 seek :: [CommandSeek]
 seek = [withDefault "." withFilesInGit start]
 

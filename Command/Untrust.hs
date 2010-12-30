@@ -17,6 +17,10 @@ import qualified Remotes
 import UUID
 import Messages
 
+command :: [Command]
+command = [Command "untrust" (paramRepeating paramRemote) seek
+	"do not trust a repository"]
+
 seek :: [CommandSeek]
 seek = [withString start]
 

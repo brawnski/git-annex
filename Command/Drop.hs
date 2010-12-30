@@ -17,6 +17,10 @@ import Core
 import Messages
 import Utility
 
+command :: [Command]
+command = [Command "drop" paramPath seek
+	"indicate content of files not currently wanted"]
+
 seek :: [CommandSeek]
 seek = [withAttrFilesInGit "annex.numcopies" start]
 

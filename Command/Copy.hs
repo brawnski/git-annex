@@ -10,6 +10,10 @@ module Command.Copy where
 import Command
 import qualified Command.Move
 
+command :: [Command]
+command = [Command "copy" paramPath seek
+	"copy content of files to/from another repository"]
+
 -- A copy is just a move that does not delete the source file.
 seek :: [CommandSeek]
 seek = [withFilesInGit $ Command.Move.start False]

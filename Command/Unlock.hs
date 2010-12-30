@@ -18,6 +18,12 @@ import Locations
 import Core
 import CopyFile
 
+command :: [Command]
+command =
+	[ Command "unlock" paramPath seek "unlock files for modification"
+	, Command "edit" paramPath seek "same as unlock"
+	]
+
 seek :: [CommandSeek]
 seek = [withFilesInGit start]
 

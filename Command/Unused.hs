@@ -17,6 +17,9 @@ import Messages
 import Locations
 import qualified Annex
 
+command :: [Command]
+command = [Command "unused" paramNothing seek "look for unused file content"]
+
 seek :: [CommandSeek]
 seek = [withNothing start]
 

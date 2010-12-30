@@ -13,6 +13,10 @@ import Types
 import Core
 import Messages
 
+command :: [Command]
+command = [Command "get" paramPath seek
+		"make content of annexed files available"]
+
 seek :: [CommandSeek]
 seek = [withFilesInGit start]
 

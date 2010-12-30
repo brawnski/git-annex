@@ -15,6 +15,10 @@ import Types
 import Core
 import Messages
 
+command :: [Command]
+command = [Command "dropkey" (paramRepeating paramKey) seek
+	"drops annexed content for specified keys"] 
+
 seek :: [CommandSeek]
 seek = [withKeys start]
 

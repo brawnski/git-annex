@@ -18,6 +18,10 @@ import qualified Annex
 import qualified Command.Drop
 import Backend
 
+command :: [Command]
+command = [Command "dropunused" (paramRepeating paramNumber) seek
+	"drop unused file content"]
+
 seek :: [CommandSeek]
 seek = [withStrings start]
 

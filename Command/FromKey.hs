@@ -20,6 +20,10 @@ import Types
 import Core
 import Messages
 
+command :: [Command]
+command = [Command "fromkey" (paramRepeating paramKey) seek
+	"adds a file using a specific key"]
+
 seek :: [CommandSeek]
 seek = [withFilesMissing start]
 
