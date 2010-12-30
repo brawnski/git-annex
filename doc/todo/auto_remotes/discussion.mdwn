@@ -1,0 +1,2 @@
+Remotes log should probably be stored in ".git/annex/remote.log"
+instead of ".git-annex/remote.log" to prevent leaking credentials.
