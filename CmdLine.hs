@@ -6,19 +6,25 @@
  -}
 
 module CmdLine (
+	cmdLine,
 	parseCmd,
 	Option,
 	storeOptBool,
 	storeOptString,
 ) where
 
+import System.Environment
 import System.Console.GetOpt
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import qualified Annex
+import qualified GitRepo as Git
 import Types
 import Command
+import BackendList
+import Core
+import Upgrade
 
 {- Each dashed command-line option results in generation of an action
  - in the Annex monad that performs the necessary setting.
@@ -29,6 +35,15 @@ storeOptBool :: FlagName -> Bool -> Annex ()
 storeOptBool name val = Annex.flagChange name $ FlagBool val
 storeOptString :: FlagName -> String -> Annex ()
 storeOptString name val = Annex.flagChange name $ FlagString val
+
+{- It all starts here. -}
+cmdLine :: [Command] -> [Option] -> String -> IO ()
+cmdLine cmds options header = do
+	args <- getArgs
+	gitrepo <- Git.repoFromCwd
+	state <- Annex.new gitrepo allBackends
+	(actions, state') <- Annex.run state $ parseCmd args header cmds options
+	tryRun state' $ [startup, upgrade] ++ actions
 
 {- Parses command line, stores configure flags, and returns a 
  - list of actions to be run in the Annex monad. -}

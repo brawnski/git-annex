@@ -45,7 +45,7 @@ tryRun' state errnum (a:as) = do
 tryRun' state errnum [] = do
 	_ <- try $ Annex.run state $ shutdown errnum
 	when (errnum > 0) $ error $ show errnum ++ " failed"
-			
+
 {- Actions to perform each time ran. -}
 startup :: Annex Bool
 startup = do

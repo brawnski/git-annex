@@ -5,17 +5,11 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-import System.Environment
 import System.Console.GetOpt
 
-import qualified Annex
-import Core
-import Upgrade
 import CmdLine
-import qualified GitRepo as Git
-import BackendList
-
 import Command
+
 import qualified Command.Add
 import qualified Command.Unannex
 import qualified Command.Drop
@@ -83,13 +77,5 @@ options = [
 		"skip files matching the glob pattern"
 	  ]
 
-header :: String
-header = "Usage: git-annex subcommand [option ..]"
-
 main :: IO ()
-main = do
-	args <- getArgs
-	gitrepo <- Git.repoFromCwd
-	state <- Annex.new gitrepo allBackends
-	(actions, state') <- Annex.run state $ parseCmd args header cmds options
-	tryRun state' $ [startup, upgrade] ++ actions
+main = cmdLine cmds options "Usage: git-annex subcommand [option ..]"
