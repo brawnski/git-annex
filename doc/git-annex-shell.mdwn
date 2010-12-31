@@ -4,43 +4,37 @@ git-annex-shell - Restricted login shell for git-annex only SSH access
 
 # SYNOPSIS
 
-git-annex-shell -c command [params ...]
+git-annex-shell [-c] command [params ...]
 
 # DESCRIPTION
 
-git-annex-shell is a restricted shell, similar to git-shell, which 
-can be used as a login shell for SSH accounts you want to restrict.
+git-annex-shell is a restricted shell, similar to git-shell, which
+can be used as a login shell for SSH accounts.
 
 # COMMANDS
 
-* git-annex fromkey file
+* configlist directory
 
-  This can be used to maually set up a file to link to a specified key
-  in the key-value backend. How you determine an existing key in the backend
-  varies. For the URL backend, the key is just a URL to the content.
+  This outputs the git configuration, in the same form as
+  `git config --list`
 
-  Example:
+* inannex directory [key ...]
 
-	git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+  This checks if all specified keys are present in the annex, 
+  and exits zero if so.
 
-* git-annex dropkey [key ...]
+* dropkey directory [key ...]
 
-  This drops the annexed data for the specified
-  keys from this repository.
+  This drops the annexed data for the specified keys.
 
-  This can be used to drop content for arbitrary keys, which do not need
-  to have a file in the git repository pointing at them.
+* recvkey directory key
 
-  A backend will typically need to be specified with --backend. If none
-  is specified, the first configured backend is used.
+  This runs rsync in server mode to receive the content of a key,
+  and stores the content in the annex.
 
-* git-annex setkey file
+* sendkey directory key
 
-  This sets the annxed data for a key to the content of
-  the specified file, and then removes the file.
-
-  A backend will typically need to be specified with --backend. If none
-  is specified, the first configured backend is used.
+  This runs rsync in server mode to transfer out the content of a key.
 
 Any other command is passed through to git-shell.
 

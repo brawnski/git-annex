@@ -7,6 +7,7 @@
 
 import System.Environment
 
+import qualified GitRepo as Git
 import CmdLine
 import Command
 import Options
@@ -58,7 +59,11 @@ cmds = concat
 	, Command.Find.command
 	]
 
+header :: String
+header = "Usage: git-annex command [option ..]"
+
 main :: IO ()
 main = do
 	args <- getArgs
-	dispatch args cmds commonOptions "Usage: git-annex command [option ..]"
+	gitrepo <- Git.repoFromCwd
+	dispatch gitrepo args cmds commonOptions header

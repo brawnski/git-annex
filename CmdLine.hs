@@ -8,9 +8,7 @@
 module CmdLine (
 	dispatch,
 	parseCmd,
-	Option,
-	storeOptBool,
-	storeOptString,
+	usage,
 ) where
 
 import System.Console.GetOpt
@@ -27,9 +25,8 @@ import Upgrade
 import Options
 
 {- Runs the passed command line. -}
-dispatch :: [String] -> [Command] -> [Option] -> String -> IO ()
-dispatch args cmds options header = do
-	gitrepo <- Git.repoFromCwd
+dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
+dispatch gitrepo args cmds options header = do
 	state <- Annex.new gitrepo allBackends
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options
 	tryRun state' $ [startup, upgrade] ++ actions
