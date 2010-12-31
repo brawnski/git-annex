@@ -292,12 +292,6 @@ Here are all the supported configuration settings.
 
   git-annex caches UUIDs of repositories here.
 
-* `remote.<name>.annex-scp-options`
-
-  Options to use when using scp
-  to or from this repository. For example, to force ipv6, and limit
-  the bandwidth to 1000Kbit/s, set it to "-6 -l 1000"
-
 * `remote.<name>.annex-ssh-options`
 
   Options to use when using ssh to talk to this repository.
@@ -308,9 +302,9 @@ Here are all the supported configuration settings.
   to or from this repository. For example, to force ipv6, and limit
   the bandwidth to 100Kbyte/s, set it to "-6 --bwlimit 100"
 
-* `annex.scp-options`, `annex.ssh-options`, `annex.rsync-options`
+* `annex.ssh-options`, `annex.rsync-options`
 
-  Default scp, ssh, and rsync options to use if a remote does not have
+  Default ssh and rsync options to use if a remote does not have
   specific options.
 
 * `annex.version`

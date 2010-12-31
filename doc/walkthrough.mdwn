@@ -198,7 +198,7 @@ to clone the laptop's annex to it:
 	# cd ~/annex
 	# git annex init "my desktop"
 
-Now you can get files and they will be transferred (using `rsync` or `scp`):
+Now you can get files and they will be transferred (using `rsync`):
 
 	# git annex get my_cool_big_file
 	get my_cool_big_file (getting UUID for origin...) (copying from origin...)
