@@ -15,7 +15,8 @@ module Remotes (
 	byName,
 	copyFromRemote,
 	copyToRemote,
-	runCmd
+	runCmd,
+	onRemote
 ) where
 
 import Control.Exception.Extensible
@@ -37,7 +38,6 @@ import Utility
 import qualified Core
 import Messages
 import CopyFile
-import qualified SysConfig
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -118,7 +118,8 @@ inAnnex r key = if Git.repoIsUrl r
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			inannex <- runCmd r "test" ["-e", annexLocation r key]
+			inannex <- onRemote r "inannex" 
+				["--backend=" ++ backendName key, keyName key]
 			-- XXX Note that ssh failing and the file not existing
 			-- are not currently differentiated.
 			return $ Right inannex
@@ -231,7 +232,7 @@ copyFromRemote r key file
 	where
 		keyloc = annexLocation r key
 		getlocal = liftIO $ copyFile keyloc file
-		getssh = remoteCopyFile r (sshLocation r keyloc) file
+		getssh = remoteCopyFile True r (sshLocation r keyloc) file
 
 {- Tries to copy a key's content to a file on a remote. -}
 copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
@@ -245,35 +246,32 @@ copyToRemote r key file = do
 			else error "copying to non-ssh repo not supported"
 	where
 		putlocal src = liftIO $ copyFile src file
-		putssh src = remoteCopyFile r src (sshLocation r file)
+		putssh src = remoteCopyFile False r src (sshLocation r file)
 
 sshLocation :: Git.Repo -> FilePath -> FilePath
 sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
 
-{- Copys a file from or to a remote, using rsync (when available) or scp. -}
-remoteCopyFile :: Git.Repo -> String -> String -> Annex Bool
-remoteCopyFile r src dest = do
+{- Copies a file from or to a remote, using rsync (when available) or scp. -}
+remoteCopyFile :: Bool -> Git.Repo -> String -> String -> Annex Bool
+remoteCopyFile recv r src dest = do
 	showProgress -- make way for progress bar
 	o <- repoConfig r configopt ""
 	res <- liftIO $ boolSystem cmd $ options ++ words o ++ [src, dest]
 	if res
 		then return res
 		else do
-			when rsync $
-				showLongNote "rsync failed -- run git annex again to resume file transfer"
+			showLongNote "rsync failed -- run git annex again to resume file transfer"
 			return res
 	where
-		cmd
-			| rsync = "rsync"
-			| otherwise = "scp"
-		configopt
-			| rsync = "rsync-options"
-			| otherwise = "scp-options"
-		options
-			-- inplace makes rsync resume partial files
-			| rsync = ["-p", "--progress", "--inplace"]
-			| otherwise = ["-p"]
-		rsync = SysConfig.rsync
+		cmd = "rsync"
+		configopt= "rsync-options"
+		-- inplace makes rsync resume partial files
+		options = ["-p", "--progress", "--inplace"]
+
+onRemote :: Git.Repo -> String -> [String] -> Annex Bool
+onRemote r command params = runCmd r "git-annex-shell" (command:dir:params)
+	where
+		dir = Git.workTree r
 
 {- Runs a command in a remote, using ssh if necessary.
  - (Honors annex-ssh-options.) -}

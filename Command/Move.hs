@@ -134,8 +134,8 @@ fromPerform move key = do
 				else return Nothing -- fail
 fromCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
 fromCleanup True remote key = do
-	ok <- Remotes.runCmd remote "git-annex" 
-		["dropkey", "--quiet", "--force",
+	ok <- Remotes.onRemote remote "dropkey" 
+		["--quiet", "--force",
 		"--backend=" ++ backendName key,
 		keyName key]
 	remoteHasKey remote key False

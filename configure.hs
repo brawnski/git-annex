@@ -22,7 +22,7 @@ tests = [
 	, TestCase "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
 	, TestCase "uuid" "uuid" $ requireCmd "uuid" "uuid"
 	, TestCase "xargs -0" "xargs_0" $ requireCmd "xargs -0" "xargs -0 </dev/null"
-	, TestCase "rsync" "rsync" $ testCmd "rsync --version >/dev/null"
+	, TestCase "rsync" "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
 	]
 
 tmpDir :: String
