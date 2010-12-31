@@ -17,16 +17,16 @@ import Options
 import qualified Command.ConfigList
 import qualified Command.InAnnex
 import qualified Command.DropKey
---import qualified Command.RecvKey
---import qualified Command.SendKey
+import qualified Command.RecvKey
+import qualified Command.SendKey
 
 cmds :: [Command]
 cmds = map adddirparam $ concat
 	[ Command.ConfigList.command
 	, Command.InAnnex.command
 	, Command.DropKey.command
---	, Command.RecvKey.command
---	, Command.SendKey.command
+	, Command.RecvKey.command
+	, Command.SendKey.command
 	]
 	where
 		adddirparam c = c { cmdparams = "DIRECTORY " ++ cmdparams c }

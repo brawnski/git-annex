@@ -6,6 +6,7 @@
  -}
 
 import System.Environment
+import System.Console.GetOpt
 
 import qualified GitRepo as Git
 import CmdLine
@@ -59,6 +60,18 @@ cmds = concat
 	, Command.Find.command
 	]
 
+options :: [Option]
+options = commonOptions ++
+	[ Option ['k'] ["key"] (ReqArg (storeOptString "key") paramKey)
+		"specify a key to use"
+	, Option ['t'] ["to"] (ReqArg (storeOptString "torepository") paramRemote)
+		"specify to where to transfer content"
+	, Option ['f'] ["from"] (ReqArg (storeOptString "fromrepository") paramRemote)
+		"specify from where to transfer content"
+	, Option ['x'] ["exclude"] (ReqArg (storeOptString "exclude") paramGlob)
+		"skip files matching the glob pattern"
+	]
+
 header :: String
 header = "Usage: git-annex command [option ..]"
 
@@ -66,4 +79,4 @@ main :: IO ()
 main = do
 	args <- getArgs
 	gitrepo <- Git.repoFromCwd
-	dispatch gitrepo args cmds commonOptions header
+	dispatch gitrepo args cmds options header

@@ -251,7 +251,7 @@ copyToRemote r key file = do
 sshLocation :: Git.Repo -> FilePath -> FilePath
 sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
 
-{- Copies a file from or to a remote, using rsync (when available) or scp. -}
+{- Copies a file from or to a remote, using rsync. -}
 remoteCopyFile :: Bool -> Git.Repo -> String -> String -> Annex Bool
 remoteCopyFile recv r src dest = do
 	showProgress -- make way for progress bar
