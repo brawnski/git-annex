@@ -119,7 +119,7 @@ inAnnex r key = if Git.repoIsUrl r
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			inannex <- onRemote r boolSystem False "inannex" 
+			inannex <- onRemote r (boolSystem, False) "inannex" 
 				["--backend=" ++ backendName key, keyName key]
 			return $ Right inannex
 
@@ -200,7 +200,7 @@ byName name = do
 tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
 tryGitConfigRead r 
 	| not $ Map.null $ Git.configMap r = return $ Right r -- already read
-	| Git.repoIsSsh r = store $ onRemote r pipedconfig r "configlist" []
+	| Git.repoIsSsh r = store $ onRemote r (pipedconfig, r) "configlist" []
 	| Git.repoIsUrl r = return $ Left r
 	| otherwise = store $ safely $ Git.configRead r
 	where
@@ -275,12 +275,11 @@ remoteCopyFile recv r src dest = do
 {- Uses a supplied function to run a git-annex-shell command on a remote. -}
 onRemote 
 	:: Git.Repo
-	-> (String -> [String] -> IO a)
-	-> a
+	-> ((String -> [String] -> IO a), a)
 	-> String
 	-> [String]
 	-> Annex a
-onRemote r with errorval command params
+onRemote r (with, errorval) command params
 	| not $ Git.repoIsUrl r = liftIO $ with shellcmd shellopts
 	| Git.repoIsSsh r = do
 		sshoptions <- repoConfig r "ssh-options" ""
