@@ -34,5 +34,9 @@ start keyname = do
 	
 	ok <- getViaTmp key (liftIO . rsyncServerReceive)
 	if ok
-		then return Nothing
+		then do
+			-- forcibly quit after receiving one key,
+			-- and shutdown cleanly so queued git commands run
+			_ <- shutdown 0
+			liftIO exitSuccess
 		else liftIO exitFailure

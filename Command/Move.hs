@@ -7,13 +7,11 @@
 
 module Command.Move where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import Command
 import qualified Command.Drop
 import qualified Annex
-import Locations
 import LocationLog
 import Types
 import Core
@@ -86,26 +84,17 @@ toPerform move key = do
 			return Nothing
 		Right False -> do
 			showNote $ "to " ++ Git.repoDescribe remote ++ "..."
-			let tmpfile = annexTmpLocation remote ++ keyFile key
-			ok <- Remotes.copyToRemote remote key tmpfile
+			ok <- Remotes.copyToRemote remote key
 			if ok
-				then return $ Just $ toCleanup move remote key tmpfile
+				then return $ Just $ toCleanup move remote key
 				else return Nothing -- failed
 		Right True -> return $ Just $ Command.Drop.cleanup key
-toCleanup :: Bool -> Git.Repo -> Key -> FilePath -> CommandCleanup
-toCleanup move remote key tmpfile = do
-	-- Tell remote to use the transferred content.
-	ok <- Remotes.runCmd remote "git-annex" ["setkey", "--quiet",
-		"--backend=" ++ backendName key,
-		"--key=" ++ keyName key,
-		tmpfile]
-	if ok
-		then do
-			remoteHasKey remote key True
-			if move
-				then Command.Drop.cleanup key
-				else return True
-		else return False
+toCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
+toCleanup move remote key = do
+	remoteHasKey remote key True
+	if move
+		then Command.Drop.cleanup key
+		else return True
 
 {- Moves (or copies) the content of an annexed file from another repository
  - to the current repository and updates locationlog information on both.
@@ -140,7 +129,9 @@ fromCleanup True remote key = do
 		["--quiet", "--force",
 		"--backend=" ++ backendName key,
 		keyName key]
-	when ok $
-		remoteHasKey remote key False
+	-- better safe than sorry: assume the remote dropped the key
+	-- even if it seemed to fail; the failure could have occurred
+	-- after it really dropped it
+	remoteHasKey remote key False
 	return ok
 fromCleanup False _ _ = return True

@@ -7,8 +7,20 @@
 
 module RsyncFile where
 
-import Utility
 import System.Posix.Process
+import Data.String.Utils
+
+import Utility
+
+{- Generates parameters to make rsync use a specified command as its remote
+ - shell. -}
+rsyncShell :: [String] -> [String]
+rsyncShell command = ["-e", unwords $ map escape command]
+	where
+		{- rsync requires some weird, non-shell like quoting in
+                 - here. A doubled single quote inside the single quoted
+                 - string is a single quote. -}
+		escape s = "'" ++  (join "''" $ split "'" s) ++ "'"
 
 {- Runs rsync in server mode to send a file, and exits. -}
 rsyncServerSend :: FilePath -> IO ()

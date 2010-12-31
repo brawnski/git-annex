@@ -15,7 +15,6 @@ module Remotes (
 	byName,
 	copyFromRemote,
 	copyToRemote,
-	runCmd,
 	onRemote
 ) where
 
@@ -23,11 +22,10 @@ import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
 import Data.String.Utils
-import System.Directory hiding (copyFile)
-import System.Posix.Directory
 import System.Cmd.Utils
 import Data.List (intersect, sortBy)
 import Control.Monad (when, unless, filterM)
+import Data.Maybe
 
 import Types
 import qualified GitRepo as Git
@@ -39,6 +37,7 @@ import Utility
 import qualified Core
 import Messages
 import CopyFile
+import RsyncFile
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -227,91 +226,94 @@ tryGitConfigRead r
 				then new : exchange ls new
 				else old : exchange ls new
 
-{- Tries to copy a key's content from a remote to a file. -}
+{- Tries to copy a key's content from a remote's annex to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyFromRemote r key file
-	| not $ Git.repoIsUrl r = getlocal
-	| Git.repoIsSsh r = getssh
+	| not $ Git.repoIsUrl r = liftIO $ copyFile (annexLocation r key) file
+	| Git.repoIsSsh r = rsynchelper r True key file
 	| otherwise = error "copying from non-ssh repo not supported"
-	where
-		keyloc = annexLocation r key
-		getlocal = liftIO $ copyFile keyloc file
-		getssh = remoteCopyFile True r (sshLocation r keyloc) file
 
-{- Tries to copy a key's content to a file on a remote. -}
-copyToRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
-copyToRemote r key file = do
-	g <- Annex.gitRepo
-	let keyloc = annexLocation g key
-	if not $ Git.repoIsUrl r
-		then putlocal keyloc
-		else if Git.repoIsSsh r
-			then putssh keyloc
-			else error "copying to non-ssh repo not supported"
-	where
-		putlocal src = liftIO $ copyFile src file
-		putssh src = remoteCopyFile False r src (sshLocation r file)
+{- Tries to copy a key's content to a remote's annex. -}
+copyToRemote :: Git.Repo -> Key -> Annex Bool
+copyToRemote r key
+	| not $ Git.repoIsUrl r = do
+		g <- Annex.gitRepo
+		let keysrc = annexLocation g key
+		let keydest = annexLocation r key
+		liftIO $ copyFile keysrc keydest
+	| Git.repoIsSsh r = do
+		g <- Annex.gitRepo
+		let keysrc = annexLocation g key
+		rsynchelper r False key keysrc
+	| otherwise = error "copying to non-ssh repo not supported"
 
-sshLocation :: Git.Repo -> FilePath -> FilePath
-sshLocation r file = Git.urlHost r ++ ":" ++ shellEscape file
-
-{- Copies a file from or to a remote, using rsync. -}
-remoteCopyFile :: Bool -> Git.Repo -> String -> String -> Annex Bool
-remoteCopyFile recv r src dest = do
+rsynchelper :: Git.Repo -> Bool -> Key -> FilePath -> Annex (Bool)
+rsynchelper r sending key file = do
 	showProgress -- make way for progress bar
-	o <- repoConfig r configopt ""
-	res <- liftIO $ boolSystem cmd $ options ++ words o ++ [src, dest]
+	p <- rsyncParams r sending key file
+	liftIO $ putStrLn $ unwords p
+	res <- liftIO $ boolSystem "rsync" p
 	if res
 		then return res
 		else do
 			showLongNote "rsync failed -- run git annex again to resume file transfer"
 			return res
+
+{- Generates rsync parameters that ssh to the remote and asks it
+ - to either receive or send the key's content. -}
+rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [String]
+rsyncParams r sending key file = do
+	-- Note that the command is terminated with "--", because
+	-- rsync will tack on its own options to this command,
+	-- and they need to be ignored.
+	shellcmd <- git_annex_shell r
+		(if sending then "sendkey" else "recvkey")
+		["--backend=" ++ backendName key, keyName key, "--"]
+	-- Convert the ssh command into rsync command line.
+	let eparam = rsyncShell $ fromJust shellcmd
+	o <- repoConfig r "rsync-options" ""
+	let base = options ++ words o ++ eparam
+	if sending
+		then return $ base ++ [dummy, file]
+		else return $ base ++ [file, dummy]
 	where
-		cmd = "rsync"
-		configopt= "rsync-options"
 		-- inplace makes rsync resume partial files
 		options = ["-p", "--progress", "--inplace"]
+		-- the rsync shell parameter controls where rsync
+		-- does, so the source/dest parameter can be a dummy value,
+		-- that just enables remote rsync mode.
+		dummy = ":"
 
-{- Uses a supplied function to run a git-annex-shell command on a remote. -}
+{- Uses a supplied function to run a git-annex-shell command on a remote.
+ -
+ - Or, if the remote does not support running remote commands, returns
+ - a specified error value. -}
 onRemote 
 	:: Git.Repo
-	-> ((String -> [String] -> IO a), a)
+	-> (String -> [String] -> IO a, a)
 	-> String
 	-> [String]
 	-> Annex a
-onRemote r (with, errorval) command params
-	| not $ Git.repoIsUrl r = liftIO $ with shellcmd shellopts
+onRemote r (with, errorval) command params = do
+	s <- git_annex_shell r command params
+	case s of
+		Just shellcmd -> liftIO $ with (shellcmd !! 0) (tail shellcmd)
+		Nothing -> return errorval
+
+{- Generates parameters to run a git-annex-shell command on a remote. -}
+git_annex_shell :: Git.Repo -> String -> [String] -> Annex (Maybe [String])
+git_annex_shell r command params
+	| not $ Git.repoIsUrl r = return $ Just (shellcmd:shellopts)
 	| Git.repoIsSsh r = do
 		sshoptions <- repoConfig r "ssh-options" ""
-		liftIO $ with "ssh" $
-			words sshoptions ++ [Git.urlHost r, sshcmd]
-	| otherwise = return errorval
+		return $ Just $ ["ssh"] ++ words sshoptions ++ 
+			[Git.urlHost r, sshcmd]
+	| otherwise = return Nothing
 	where
 		dir = Git.workTree r
 		shellcmd = "git-annex-shell"
 		shellopts = command:dir:params
 		sshcmd = shellcmd ++ " " ++ unwords (map shellEscape shellopts)
-
-{- Runs a command in a remote, using ssh if necessary.
- - (Honors annex-ssh-options.) -}
-runCmd :: Git.Repo -> String -> [String] -> Annex Bool
-runCmd r command params = do
-	sshoptions <- repoConfig r "ssh-options" ""
-	if not $ Git.repoIsUrl r
-		then do
-			cwd <- liftIO getCurrentDirectory
-			liftIO $ bracket_
-				(changeWorkingDirectory (Git.workTree r))
-				(changeWorkingDirectory cwd)
-				(boolSystem command params)
-		else if Git.repoIsSsh r
-			then liftIO $ boolSystem "ssh" $
-				words sshoptions ++ [Git.urlHost r, sshcmd]
-			else error "running command in non-ssh repo not supported"
-	where 
-		sshcmd = "cd " ++ shellEscape (Git.workTree r) ++
-			" && " ++ shellEscape command ++ " " ++
-			unwords (map shellEscape params)
 
 {- Looks up a per-remote config option in git config.
  - Failing that, tries looking for a global config option. -}

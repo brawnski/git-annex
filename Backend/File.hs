@@ -65,12 +65,7 @@ copyKeyFile key file = do
 		trycopy full (r:rs) = do
 			probablythere <- probablyPresent r
 			if probablythere
-				then do
-					showNote $ "copying from " ++ Git.repoDescribe r ++ "..."
-					copied <- Remotes.copyFromRemote r key file
-					if copied
-						then return True
-						else trycopy full rs
+				then docopy r (trycopy full rs)
 				else trycopy full rs
 		-- This check is to avoid an ugly message if a remote is a
 		-- drive that is not mounted. Avoid checking inAnnex for ssh
@@ -82,6 +77,12 @@ copyKeyFile key file = do
 			if not $ Git.repoIsUrl r
 				then liftIO $ doesFileExist $ annexLocation r key
 				else return True
+		docopy r continue = do
+			showNote $ "copying from " ++ Git.repoDescribe r ++ "..."
+			copied <- Remotes.copyFromRemote r key file
+			if copied
+				then return True
+				else continue
 
 {- Checks remotes to verify that enough copies of a key exist to allow
  - for a key to be safely removed (with no data loss), and fails with an
