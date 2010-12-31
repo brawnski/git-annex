@@ -25,6 +25,7 @@ import qualified Data.Map as Map
 import Data.String.Utils
 import System.Directory hiding (copyFile)
 import System.Posix.Directory
+import System.Cmd.Utils
 import Data.List (intersect, sortBy)
 import Control.Monad (when, unless, filterM)
 
@@ -112,16 +113,14 @@ inAnnex r key = if Git.repoIsUrl r
 		else liftIO (try checklocal ::IO (Either IOException Bool))
 	where
 		checklocal = do
-			-- run a local check by making an Annex monad
-			-- using the remote
+			-- run a local check inexpensively,
+			-- by making an Annex monad using the remote
 			a <- Annex.new r []
 			Annex.eval a (Core.inAnnex key)
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
-			inannex <- onRemote r "inannex" 
+			inannex <- onRemote r boolSystem False "inannex" 
 				["--backend=" ++ backendName key, keyName key]
-			-- XXX Note that ssh failing and the file not existing
-			-- are not currently differentiated.
 			return $ Right inannex
 
 {- Cost Ordered list of remotes. -}
@@ -199,24 +198,29 @@ byName name = do
  - config for a specified remote, and updates state. If successful, it
  - returns the updated git repo. -}
 tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
-tryGitConfigRead r = do
-	sshoptions <- repoConfig r "ssh-options" ""
-	if Map.null $ Git.configMap r
-		then do
-			-- configRead can fail due to IO error or
-			-- for other reasons; catch all possible exceptions
-			result <- liftIO (try (Git.configRead r $ Just $ words sshoptions)::IO (Either SomeException Git.Repo))
+tryGitConfigRead r 
+	| not $ Map.null $ Git.configMap r = return $ Right r -- already read
+	| Git.repoIsSsh r = store $ onRemote r pipedconfig r "configlist" []
+	| Git.repoIsUrl r = return $ Left r
+	| otherwise = store $ safely $ Git.configRead r
+	where
+		-- Reading config can fail due to IO error or
+		-- for other reasons; catch all possible exceptions.
+		safely a = do
+			result <- liftIO (try (a)::IO (Either SomeException Git.Repo))
 			case result of
-				Left _ -> return $ Left r
-				Right r' -> do
-					g <- Annex.gitRepo
-					let l = Git.remotes g
-					let g' = Git.remotesAdd g $
-						exchange l r'
-					Annex.gitRepoChange g'
-					return $ Right r'
-		else return $ Right r -- config already read
-	where 
+				Left _ -> return r
+				Right r' -> return r'
+		pipedconfig cmd params = safely $
+			pOpen ReadFromPipe cmd params $
+				Git.hConfigRead r
+		store a = do
+			r' <- a
+			g <- Annex.gitRepo
+			let l = Git.remotes g
+			let g' = Git.remotesAdd g $ exchange l r'
+			Annex.gitRepoChange g'
+			return $ Right r'
 		exchange [] _ = []
 		exchange (old:ls) new =
 			if Git.repoRemoteName old == Git.repoRemoteName new
@@ -268,10 +272,26 @@ remoteCopyFile recv r src dest = do
 		-- inplace makes rsync resume partial files
 		options = ["-p", "--progress", "--inplace"]
 
-onRemote :: Git.Repo -> String -> [String] -> Annex Bool
-onRemote r command params = runCmd r "git-annex-shell" (command:dir:params)
+{- Uses a supplied function to run a git-annex-shell command on a remote. -}
+onRemote 
+	:: Git.Repo
+	-> (String -> [String] -> IO a)
+	-> a
+	-> String
+	-> [String]
+	-> Annex a
+onRemote r with errorval command params
+	| not $ Git.repoIsUrl r = liftIO $ with shellcmd shellopts
+	| Git.repoIsSsh r = do
+		sshoptions <- repoConfig r "ssh-options" ""
+		liftIO $ with "ssh" $
+			words sshoptions ++ [Git.urlHost r, sshcmd]
+	| otherwise = return errorval
 	where
 		dir = Git.workTree r
+		shellcmd = "git-annex-shell"
+		shellopts = command:dir:params
+		sshcmd = shellcmd ++ " " ++ unwords (map shellEscape shellopts)
 
 {- Runs a command in a remote, using ssh if necessary.
  - (Honors annex-ssh-options.) -}

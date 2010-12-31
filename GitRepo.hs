@@ -24,6 +24,8 @@ module GitRepo (
 	configGet,
 	configMap,
 	configRead,
+	hConfigRead,
+	configStore,
 	configTrue,
 	gitCommandLine,
 	run,
@@ -141,11 +143,7 @@ assertUrl repo action =
 		then action
 		else error $ "acting on local git repo " ++  repoDescribe repo ++ 
 				" not supported"
-assertSsh :: Repo -> a -> a
-assertSsh repo action =
-	if repoIsSsh repo
-		then action
-		else error $ "unsupported url in repo " ++ repoDescribe repo
+
 bare :: Repo -> Bool
 bare repo = case Map.lookup "core.bare" $ config repo of
 	Just v -> configTrue v
@@ -276,11 +274,9 @@ pipeNullSplit repo params = do
 	where
 		split0 s = filter (not . null) $ split "\0" s
 
-{- Runs git config and populates a repo with its config. 
- -
- - For a ssh repository, a list of ssh options may optionally be specified. -}
-configRead :: Repo -> Maybe [String] -> IO Repo
-configRead repo@(Repo { location = Dir d }) _ = do
+{- Runs git config and populates a repo with its config. -}
+configRead :: Repo -> IO Repo
+configRead repo@(Repo { location = Dir d }) = do
 	{- Cannot use pipeRead because it relies on the config having
 	   been already read. Instead, chdir to the repo. -}
 	cwd <- getCurrentDirectory
@@ -288,19 +284,18 @@ configRead repo@(Repo { location = Dir d }) _ = do
 		(\_ -> changeWorkingDirectory cwd) $
 			pOpen ReadFromPipe "git" ["config", "--list"] $
 				hConfigRead repo
-configRead repo sshopts = assertSsh repo $ do
-	pOpen ReadFromPipe "ssh" params $ hConfigRead repo
-	where
-		params = case sshopts of
-				Nothing -> [urlHost repo, command]
-				Just l -> l ++ [urlHost repo, command]
-		command = "cd " ++ shellEscape (urlPath repo) ++
-				" && git config --list"
+configRead r = assertLocal r $ error "internal"
+
+{- Reads git config from a handle and populates a repo with it. -}
 hConfigRead :: Repo -> Handle -> IO Repo
 hConfigRead repo h = do
 	val <- hGetContentsStrict h
-	let r = repo { config = configParse val }
-	return r { remotes = configRemotes r }	
+	return $ configStore repo val
+
+{- Parses a git config and returns a version of the repo using it. -}
+configStore :: Repo -> String -> Repo
+configStore repo s = r { remotes = configRemotes r }
+	where r = repo { config = configParse s }
 
 {- Checks if a string fron git config is a true value. -}
 configTrue :: String -> Bool

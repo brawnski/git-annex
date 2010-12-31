@@ -47,7 +47,7 @@ new gitrepo allbackends = do
 	where
 		prep = do
 			-- read git config and update state
-			gitrepo' <- liftIO $ Git.configRead gitrepo Nothing
+			gitrepo' <- liftIO $ Git.configRead gitrepo
 			Annex.gitRepoChange gitrepo'
 
 {- performs an action in the Annex monad -}
@@ -136,5 +136,5 @@ setConfig key value = do
 	g <- Annex.gitRepo
 	liftIO $ Git.run g ["config", key, value]
 	-- re-read git config and update the repo's state
-	g' <- liftIO $ Git.configRead g Nothing
+	g' <- liftIO $ Git.configRead g
 	Annex.gitRepoChange g'

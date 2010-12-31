@@ -7,6 +7,7 @@
 
 module Command.Move where
 
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import Command
@@ -20,6 +21,7 @@ import qualified GitRepo as Git
 import qualified Remotes
 import UUID
 import Messages
+import Utility
 	
 command :: [Command]
 command = [Command "move" paramPath seek
@@ -134,10 +136,11 @@ fromPerform move key = do
 				else return Nothing -- fail
 fromCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
 fromCleanup True remote key = do
-	ok <- Remotes.onRemote remote "dropkey" 
+	ok <- Remotes.onRemote remote boolSystem False "dropkey" 
 		["--quiet", "--force",
 		"--backend=" ++ backendName key,
 		keyName key]
-	remoteHasKey remote key False
+	when ok $
+		remoteHasKey remote key False
 	return ok
 fromCleanup False _ _ = return True
