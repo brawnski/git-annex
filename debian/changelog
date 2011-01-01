@@ -1,4 +1,4 @@
-git-annex (0.15) UNRELEASED; urgency=low
+git-annex (0.15) unstable; urgency=low
 
   * Support scp-style urls for remotes (host:path).
   * Support ssh urls containing "~".
@@ -12,9 +12,9 @@ git-annex (0.15) UNRELEASED; urgency=low
     a ssh remote, so all of your remotes need to be upgraded to this
     version of git-annex at the same time.
   * Now rsync is exclusively used for copying files to and from remotes.
-    scp is not longer supported. 
+    scp is not longer supported.
 
- -- Joey Hess <joeyh@debian.org>  Tue, 28 Dec 2010 13:13:20 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 31 Dec 2010 22:00:52 -0400
 
 git-annex (0.14) unstable; urgency=low
 
