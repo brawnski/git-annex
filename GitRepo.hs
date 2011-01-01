@@ -43,6 +43,7 @@ module GitRepo (
 	encodeGitFile,
 	typeChangedFiles,
 	typeChangedStagedFiles,
+	absDir,
 
 	prop_idempotent_deencode
 ) where
@@ -50,6 +51,7 @@ module GitRepo (
 import Control.Monad (unless)
 import System.Directory
 import System.Posix.Directory
+import System.Posix.User
 import System.Path
 import System.Cmd.Utils
 import IO (bracket_)
@@ -62,7 +64,7 @@ import Data.Char
 import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
-import Data.List (isInfixOf)
+import Data.List (isInfixOf, isPrefixOf)
 
 import Utility
 
@@ -443,6 +445,38 @@ encodeGitFile s = foldl (++) "\"" (map echar s) ++ "\""
 {- for quickcheck -}
 prop_idempotent_deencode :: String -> Bool
 prop_idempotent_deencode s = s == decodeGitFile (encodeGitFile s)
+
+{- Git ssh remotes can have a directory that is specified relative
+ - to a home directory. This converts such a directory to an absolute path.
+ - Note that it has to run on the remote system.
+ -}
+absDir :: String -> IO String
+absDir d
+	| isPrefixOf "/" d = expandt d
+	| otherwise = do
+		h <- myhomedir
+		return $ h ++ d
+	where
+		homedir u = (homeDirectory u) ++ "/"
+		myhomedir = do
+			uid <- getEffectiveUserID
+			u <- getUserEntryForID uid
+			return $ homedir u
+		expandt [] = return ""
+		expandt ('/':'~':'/':cs) = do
+			h <- myhomedir
+			return $ h ++ cs
+		expandt ('/':'~':cs) = do
+			let (name, rest) = findname "" cs
+			u <- getUserEntryForName name
+			return $ homedir u ++ rest
+		expandt (c:cs) = do
+			v <- expandt cs
+			return (c:v)
+		findname n [] = (n, "")
+		findname n (c:cs)
+			| c == '/' = (n, cs)
+			| otherwise = findname (n++[c]) cs
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo

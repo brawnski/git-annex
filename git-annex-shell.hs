@@ -60,7 +60,8 @@ builtins = map cmdname cmds
 
 builtin :: String -> String -> [String] -> IO ()
 builtin cmd dir params = do
-	let gitrepo = Git.repoFromPath dir
+	dir' <- Git.absDir dir
+	let gitrepo = Git.repoFromPath dir'
 	dispatch gitrepo (cmd:(filterparams params)) cmds commonOptions header
 
 external :: [String] -> IO ()
