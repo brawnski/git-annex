@@ -14,9 +14,13 @@ module Utility (
 	relPathDirToDir,
 	boolSystem,
 	shellEscape,
+	shellUnEscape,
 	unsetFileMode,
 	readMaybe,
-	safeWriteFile
+	safeWriteFile,
+	
+	prop_idempotent_shellescape,
+	prop_idempotent_shellescape_multiword
 ) where
 
 import System.IO
@@ -127,6 +131,29 @@ shellEscape f = "'" ++ escaped ++ "'"
 	where
 		-- replace ' with '"'"'
 		escaped = join "'\"'\"'" $ split "'" f
+
+{- Unescapes a set of shellEscaped words or filenames. -}
+shellUnEscape :: String -> [String]
+shellUnEscape [] = []
+shellUnEscape s = word:(shellUnEscape rest)
+	where
+		(word, rest) = findword "" s
+		findword w [] = (w, "")
+		findword w (c:cs)
+			| c == ' ' = (w, cs)
+			| c == '\'' = inquote c w cs
+			| c == '"' = inquote c w cs
+			| otherwise = findword (w++[c]) cs
+		inquote _ w [] = (w, "")
+		inquote q w (c:cs)
+			| c == q = findword w cs
+			| otherwise = inquote q (w++[c]) cs
+
+{- For quickcheck. -}
+prop_idempotent_shellescape :: String -> Bool
+prop_idempotent_shellescape s = [s] == (shellUnEscape $ shellEscape s)
+prop_idempotent_shellescape_multiword :: [String] -> Bool
+prop_idempotent_shellescape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
 
 {- Removes a FileMode from a file.
  - For example, call with otherWriteMode to chmod o-w -}

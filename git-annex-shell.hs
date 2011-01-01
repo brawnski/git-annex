@@ -7,6 +7,7 @@
 
 import System.Environment
 import Control.Monad (when)
+import Data.List
 
 import qualified GitRepo as Git
 import CmdLine
@@ -43,14 +44,14 @@ main' :: [String] -> IO ()
 main' [] = failure
 -- skip leading -c options, passed by eg, ssh
 main' ("-c":p) = main' p
--- Since git-annex explicitly runs git-annex-shell, we will be passed 
--- a redundant "git-annex-shell" parameter when we're the user's login shell.
-main' ("git-annex-shell":p) = main' p
 -- a command can be either a builtin or something to pass to git-shell
 main' c@(cmd:dir:params)
 	| elem cmd builtins = builtin cmd dir params
 	| otherwise = external c
 main' c@(cmd:_)
+	-- Handle the case of being the user's login shell. It will be passed
+	-- a single string containing all the real parameters.
+	| isPrefixOf "git-annex-shell " cmd = main' $ drop 1 $ shellUnEscape cmd
 	| elem cmd builtins = failure
 	| otherwise = external c
 
@@ -60,13 +61,20 @@ builtins = map cmdname cmds
 builtin :: String -> String -> [String] -> IO ()
 builtin cmd dir params = do
 	let gitrepo = Git.repoFromPath dir
-	dispatch gitrepo (cmd:params) cmds commonOptions header
+	dispatch gitrepo (cmd:(filterparams params)) cmds commonOptions header
 
 external :: [String] -> IO ()
-external l = do
-	ret <- boolSystem "git-shell" ("-c":l)
+external params = do
+	ret <- boolSystem "git-shell" ("-c":(filterparams params))
 	when (not ret) $
 		error "git-shell failed"
+
+-- Drop all args after "--".
+-- These tend to be passed by rsync and not useful.
+filterparams :: [String] -> [String]
+filterparams [] = []
+filterparams ("--":_) = []
+filterparams (a:as) = a:filterparams as
 
 failure :: IO ()
 failure = error $ "bad parameters\n\n" ++ usage header cmds commonOptions
