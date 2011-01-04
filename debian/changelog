@@ -1,3 +1,10 @@
+git-annex (0.16) UNRELEASED; urgency=low
+
+  * git-annex-shell: Avoid exposing any git repo config except for the
+    annex.uuid when doing configlist.
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 04 Jan 2011 17:33:42 -0400
+
 git-annex (0.15) unstable; urgency=low
 
   * Support scp-style urls for remotes (host:path).
