@@ -75,6 +75,7 @@ toStart move file = isAnnexed file $ \(key, _) -> do
 			return $ Just $ toPerform move key
 toPerform :: Bool -> Key -> CommandPerform
 toPerform move key = do
+	Remotes.readConfigs
 	-- checking the remote is expensive, so not done in the start step
 	remote <- Remotes.commandLineRemote
 	isthere <- Remotes.inAnnex remote key

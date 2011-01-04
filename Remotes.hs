@@ -7,8 +7,8 @@
 
 module Remotes (
 	list,
+	readConfigs,
 	keyPossibilities,
-	tryGitConfigRead,
 	inAnnex,
 	same,
 	commandLineRemote,
