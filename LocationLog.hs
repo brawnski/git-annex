@@ -32,6 +32,7 @@ import System.Locale
 import qualified Data.Map as Map
 import System.Directory
 import System.Posix.Process
+import Control.Monad (when)
 
 import qualified GitRepo as Git
 import Utility
@@ -86,6 +87,8 @@ instance Read LogLine where
  - and returns the filename of the logfile. -}
 logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO FilePath
 logChange repo key u s = do
+	when (null u) $
+		error $ "bug detected: unknown UUID for " ++ Git.repoDescribe repo
 	line <- logNow s u
 	ls <- readLog logfile
 	writeLog logfile (compactLog $ line:ls)
