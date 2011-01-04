@@ -43,7 +43,42 @@ import RsyncFile
 list :: [Git.Repo] -> String
 list remotes = join ", " $ map Git.repoDescribe remotes 
 
-{- Reads the configs of remotes.
+{- The git configs for the git repo's remotes is not read on startup
+ - because reading it may be expensive. This function tries to read the
+ - config for a specified remote, and updates state. If successful, it
+ - returns the updated git repo. -}
+tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
+tryGitConfigRead r 
+	| not $ Map.null $ Git.configMap r = return $ Right r -- already read
+	| Git.repoIsSsh r = store $ onRemote r (pipedconfig, r) "configlist" []
+	| Git.repoIsUrl r = return $ Left r
+	| otherwise = store $ safely $ Git.configRead r
+	where
+		-- Reading config can fail due to IO error or
+		-- for other reasons; catch all possible exceptions.
+		safely a = do
+			result <- liftIO (try (a)::IO (Either SomeException Git.Repo))
+			case result of
+				Left _ -> return r
+				Right r' -> return r'
+		pipedconfig cmd params = safely $
+			pOpen ReadFromPipe cmd params $
+				Git.hConfigRead r
+		store a = do
+			r' <- a
+			g <- Annex.gitRepo
+			let l = Git.remotes g
+			let g' = Git.remotesAdd g $ exchange l r'
+			Annex.gitRepoChange g'
+			return $ Right r'
+		exchange [] _ = []
+		exchange (old:ls) new =
+			if Git.repoRemoteName old == Git.repoRemoteName new
+				then new : exchange ls new
+				else old : exchange ls new
+
+
+{- Reads the configs of all remotes.
  -
  - This has to be called before things that rely on eg, the UUID of
  - remotes. Most such things will take care of running this themselves.
@@ -55,8 +90,8 @@ list remotes = join ", " $ map Git.repoDescribe remotes
  - the config of an URL remote is only read when there is no
  - cached UUID value.
  - -}
-readconfigs :: Annex ()
-readconfigs = do
+readConfigs :: Annex ()
+readConfigs = do
 	g <- Annex.gitRepo
 	remotesread <- Annex.flagIsSet "remotesread"
 	unless remotesread $ do
@@ -87,7 +122,7 @@ readconfigs = do
  -}
 keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo], [UUID])
 keyPossibilities key = do
-	readconfigs
+	readConfigs
 
 	allremotes <- remotesByCost
 	g <- Annex.gitRepo
@@ -200,40 +235,6 @@ byName name = do
 	when (null match) $ error $
 		"there is no git remote named \"" ++ name ++ "\""
 	return $ head match
-
-{- The git configs for the git repo's remotes is not read on startup
- - because reading it may be expensive. This function tries to read the
- - config for a specified remote, and updates state. If successful, it
- - returns the updated git repo. -}
-tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
-tryGitConfigRead r 
-	| not $ Map.null $ Git.configMap r = return $ Right r -- already read
-	| Git.repoIsSsh r = store $ onRemote r (pipedconfig, r) "configlist" []
-	| Git.repoIsUrl r = return $ Left r
-	| otherwise = store $ safely $ Git.configRead r
-	where
-		-- Reading config can fail due to IO error or
-		-- for other reasons; catch all possible exceptions.
-		safely a = do
-			result <- liftIO (try (a)::IO (Either SomeException Git.Repo))
-			case result of
-				Left _ -> return r
-				Right r' -> return r'
-		pipedconfig cmd params = safely $
-			pOpen ReadFromPipe cmd params $
-				Git.hConfigRead r
-		store a = do
-			r' <- a
-			g <- Annex.gitRepo
-			let l = Git.remotes g
-			let g' = Git.remotesAdd g $ exchange l r'
-			Annex.gitRepoChange g'
-			return $ Right r'
-		exchange [] _ = []
-		exchange (old:ls) new =
-			if Git.repoRemoteName old == Git.repoRemoteName new
-				then new : exchange ls new
-				else old : exchange ls new
 
 {- Tries to copy a key's content from a remote's annex to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
