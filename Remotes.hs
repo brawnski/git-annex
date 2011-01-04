@@ -43,6 +43,39 @@ import RsyncFile
 list :: [Git.Repo] -> String
 list remotes = join ", " $ map Git.repoDescribe remotes 
 
+{- Reads the configs of remotes.
+ -
+ - This has to be called before things that rely on eg, the UUID of
+ - remotes. Most such things will take care of running this themselves.
+ -
+ - As reading the config of remotes can be expensive, this
+ - function will only read configs once per git-annex run. It's
+ - assumed to be cheap to read the config of non-URL remotes,
+ - so this is done each time git-annex is run. Conversely,
+ - the config of an URL remote is only read when there is no
+ - cached UUID value.
+ - -}
+readconfigs :: Annex ()
+readconfigs = do
+	g <- Annex.gitRepo
+	remotesread <- Annex.flagIsSet "remotesread"
+	unless remotesread $ do
+		let allremotes = Git.remotes g
+		let cheap = filter (not . Git.repoIsUrl) allremotes
+		let expensive = filter Git.repoIsUrl allremotes
+		doexpensive <- filterM cachedUUID expensive
+		unless (null doexpensive) $
+			showNote $ "getting UUID for " ++
+				list doexpensive ++ "..."
+		let todo = cheap ++ doexpensive
+		unless (null todo) $ do
+			_ <- mapM tryGitConfigRead todo
+			Annex.flagChange "remotesread" $ FlagBool True
+	where
+		cachedUUID r = do
+			u <- getUUID r
+			return $ null u
+
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
  -
  - The first list is of remotes that are trusted to have the key.
@@ -54,54 +87,30 @@ list remotes = join ", " $ map Git.repoDescribe remotes
  -}
 keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo], [UUID])
 keyPossibilities key = do
+	readconfigs
+
 	allremotes <- remotesByCost
-	-- To determine if a remote has a key, its UUID needs to be known.
-	-- The locally cached UUIDs of remotes can fall out of date if
-	-- eg, a different drive is mounted at the same location.
-	-- But, reading the config of remotes can be expensive, so make
-	-- sure we only do it once per git-annex run.
-	remotesread <- Annex.flagIsSet "remotesread"
-	if remotesread
-		then partition allremotes
-		else do
-			-- We assume that it's cheap to read the config
-			-- of non-URL remotes, so that is done each time.
-			-- But reading the config of an URL remote is
-			-- only done when there is no cached UUID value.
-			let cheap = filter (not . Git.repoIsUrl) allremotes
-			let expensive = filter Git.repoIsUrl allremotes
-			doexpensive <- filterM cachedUUID expensive
-			unless (null doexpensive) $
-				showNote $ "getting UUID for " ++
-					list doexpensive ++ "..."
-			let todo = cheap ++ doexpensive
-			if not $ null todo
-				then do
-					_ <- mapM tryGitConfigRead todo
-					Annex.flagChange "remotesread" $ FlagBool True
-					keyPossibilities key
-				else partition allremotes
-	where
-		cachedUUID r = do
-			u <- getUUID r
-			return $ null u
-		partition remotes = do
-			g <- Annex.gitRepo
-			u <- getUUID g
-			trusted <- getTrusted
-			-- get uuids of other repositories that are
-			-- believed to have the key
-			uuids <- liftIO $ keyLocations g key
-			let validuuids = filter (/= u) uuids
-			-- get uuids trusted to have the key
-			-- note that validuuids is assumed to not have dups
-			let validtrusteduuids = intersect validuuids trusted
-			-- remotes that match uuids that have the key
-			validremotes <- reposByUUID remotes validuuids
-			-- partition out the trusted and untrusted remotes
-			trustedremotes <- reposByUUID validremotes validtrusteduuids
-			untrustedremotes <- reposWithoutUUID validremotes trusted
-			return (trustedremotes, untrustedremotes, validtrusteduuids)
+	g <- Annex.gitRepo
+	u <- getUUID g
+	trusted <- getTrusted
+
+	-- get uuids of other repositories that are
+	-- believed to have the key
+	uuids <- liftIO $ keyLocations g key
+	let validuuids = filter (/= u) uuids
+
+	-- get uuids trusted to have the key
+	-- note that validuuids is assumed to not have dups
+	let validtrusteduuids = intersect validuuids trusted
+
+	-- remotes that match uuids that have the key
+	validremotes <- reposByUUID allremotes validuuids
+
+	-- partition out the trusted and untrusted remotes
+	trustedremotes <- reposByUUID validremotes validtrusteduuids
+	untrustedremotes <- reposWithoutUUID validremotes trusted
+
+	return (trustedremotes, untrustedremotes, validtrusteduuids)
 
 {- Checks if a given remote has the content for a key inAnnex.
  - If the remote cannot be accessed, returns a Left error.
