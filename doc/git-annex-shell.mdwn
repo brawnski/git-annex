@@ -36,6 +36,10 @@ can be used as a login shell for SSH accounts.
 
   This runs rsync in server mode to transfer out the content of a key.
 
+Note that the directory parameter should be an absolute path, otherwise
+it is assumed to be relative to the user's home directory. Also the
+first "/~/" or "/~user/" is expanded to the specified home directory.
+
 Any other command is passed through to git-shell.
 
 # OPTIONS
