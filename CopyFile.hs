@@ -7,13 +7,20 @@
 
 module CopyFile (copyFile) where
 
+import Control.Monad (when)
+import System.Directory (doesFileExist, removeFile)
+
 import Utility
 import qualified SysConfig
 
 {- The cp command is used, because I hate reinventing the wheel,
  - and because this allows easy access to features like cp --reflink. -}
 copyFile :: FilePath -> FilePath -> IO Bool
-copyFile src dest = boolSystem "cp" opts
+copyFile src dest = do
+	e <- doesFileExist dest
+	when e $
+		removeFile dest
+	boolSystem "cp" opts
 	where
 		opts = if SysConfig.cp_reflink_auto
 			then ["--reflink=auto", src, dest]
