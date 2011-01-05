@@ -33,6 +33,13 @@ test:
 	$(GHCMAKE) test
 	./test
 
+testcoverage:
+	rm -f test.tix test
+	ghc -odir build/test -hidir build/test $(GHCFLAGS) --make -fhpc test
+	./test
+	hpc report test --exclude=Main --exclude=QC
+	hpc markup test --exclude=Main --exclude=QC --destdir=.hpc
+
 # If ikiwiki is available, build static html docs suitable for being
 # shipped in the software package.
 ifeq ($(shell which ikiwiki),)
@@ -49,7 +56,7 @@ docs: $(mans)
 		--exclude='news/.*'
 
 clean:
-	rm -rf build $(bins) $(mans) test configure SysConfig.hs
+	rm -rf build $(bins) $(mans) test configure SysConfig.hs *.tix .hpc
 	rm -rf doc/.ikiwiki html
 
 .PHONY: $(bins) test install

@@ -8,3 +8,5 @@ git-annex.1
 git-annex-shell.1
 doc/.ikiwiki
 html
+*.tix
+.hpc

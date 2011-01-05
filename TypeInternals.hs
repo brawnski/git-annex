@@ -12,6 +12,7 @@ module TypeInternals where
 import Control.Monad.State (StateT)
 import Data.String.Utils
 import qualified Data.Map as M
+import Test.QuickCheck
 
 import qualified GitRepo as Git
 import qualified GitQueue
@@ -56,6 +57,23 @@ instance Read Key where
 			l = split ":" s
 			b = head l
 			k = join ":" $ drop 1 l
+
+-- for quickcheck
+instance Arbitrary Key where
+	arbitrary = do
+		backendname <- arbitrary
+		keyname <- arbitrary
+		return $ Key (backendname, keyname)
+
+prop_idempotent_key_read_show :: Key -> Bool
+prop_idempotent_key_read_show k
+	-- filter out empty key or backend names
+	-- also backend names will not contain colons
+	| null kname || null bname || elem ':' bname = True
+	| otherwise = k == (read $ show k)
+	where
+		bname = backendName k
+		kname = keyName k
 
 backendName :: Key -> BackendName
 backendName (Key (b,_)) = b
