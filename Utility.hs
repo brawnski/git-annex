@@ -19,8 +19,10 @@ module Utility (
 	readMaybe,
 	safeWriteFile,
 	
-	prop_idempotent_shellescape,
-	prop_idempotent_shellescape_multiword
+	prop_idempotent_shellEscape,
+	prop_idempotent_shellEscape_multiword,
+	prop_parentDir_basics,
+	prop_relPathDirToDir_basics
 ) where
 
 import System.IO
@@ -45,7 +47,7 @@ readFileStrict :: FilePath -> IO String
 readFileStrict f = readFile f >>= \s -> length s `seq` return s
 
 {- Returns the parent directory of a path. Parent of / is "" -}
-parentDir :: String -> String
+parentDir :: FilePath -> FilePath
 parentDir dir =
 	if not $ null dirs
 	then slash ++ join s (take (length dirs - 1) dirs)
@@ -54,6 +56,14 @@ parentDir dir =
 			dirs = filter (not . null) $ split s dir
 			slash = if isAbsolute dir then s else ""
 			s = [pathSeparator]
+
+prop_parentDir_basics :: FilePath -> Bool
+prop_parentDir_basics dir
+	| null dir = True
+	| dir == "/" = parentDir dir == ""
+	| otherwise = p /= dir
+	where
+		p = parentDir dir
 
 {- Converts a filename into a normalized, absolute path. -}
 absPath :: FilePath -> IO FilePath
@@ -96,6 +106,13 @@ relPathDirToDir from to =
 		dotdots = replicate (length pfrom - numcommon) ".."
 		numcommon = length common
 		path = join s $ dotdots ++ uncommon
+
+prop_relPathDirToDir_basics :: FilePath -> FilePath -> Bool
+prop_relPathDirToDir_basics from to
+	| from == to = null r
+	| otherwise = not (null r) && (last r == '/')
+	where
+		r = relPathDirToDir from to 
 
 {- Run a system command, and returns True or False
  - if it succeeded or failed.
@@ -150,10 +167,10 @@ shellUnEscape s = word:(shellUnEscape rest)
 			| otherwise = inquote q (w++[c]) cs
 
 {- For quickcheck. -}
-prop_idempotent_shellescape :: String -> Bool
-prop_idempotent_shellescape s = [s] == (shellUnEscape $ shellEscape s)
-prop_idempotent_shellescape_multiword :: [String] -> Bool
-prop_idempotent_shellescape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
+prop_idempotent_shellEscape :: String -> Bool
+prop_idempotent_shellEscape s = [s] == (shellUnEscape $ shellEscape s)
+prop_idempotent_shellEscape_multiword :: [String] -> Bool
+prop_idempotent_shellEscape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
 
 {- Removes a FileMode from a file.
  - For example, call with otherWriteMode to chmod o-w -}
