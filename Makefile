@@ -37,8 +37,8 @@ testcoverage:
 	rm -f test.tix test
 	ghc -odir build/test -hidir build/test $(GHCFLAGS) --make -fhpc test
 	./test
-	hpc report test --exclude=Main --exclude=QC
-	hpc markup test --exclude=Main --exclude=QC --destdir=.hpc
+	@hpc report test --exclude=Main --exclude=QC
+	@hpc markup test --exclude=Main --exclude=QC --destdir=.hpc >/dev/null
 
 # If ikiwiki is available, build static html docs suitable for being
 # shipped in the software package.
