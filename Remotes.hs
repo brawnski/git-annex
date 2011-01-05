@@ -95,7 +95,7 @@ readConfigs = do
 	g <- Annex.gitRepo
 	remotesread <- Annex.flagIsSet "remotesread"
 	unless remotesread $ do
-		let allremotes = Git.remotes g
+		allremotes <- filterM repoNotIgnored $ Git.remotes g
 		let cheap = filter (not . Git.repoIsUrl) allremotes
 		let expensive = filter Git.repoIsUrl allremotes
 		doexpensive <- filterM cachedUUID expensive
