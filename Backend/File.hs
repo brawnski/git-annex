@@ -137,7 +137,7 @@ showLocations key exclude = do
 showTriedRemotes :: [Git.Repo] -> Annex ()
 showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
-	showLongNote $ "I was unable to access these remotes: " ++
+	showLongNote $ "Unable to access these remotes: " ++
 		Remotes.list remotes
 
 getNumCopies :: Maybe Int -> Annex Int
