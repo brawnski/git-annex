@@ -92,7 +92,7 @@ it:
 
 	# git annex get video/hackity_hack_and_kaxxt.mov
 	get video/_why_hackity_hack_and_kaxxt.mov (not available)
-	  I was unable to access these remotes: usbdrive, server
+	  Unable to access these remotes: usbdrive, server
 	  Try making some of these repositories available:
 	  	5863d8c0-d9a9-11df-adb2-af51e6559a49  -- my home file server
 	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
@@ -122,7 +122,7 @@ you'll see something like this.
 	# git annex drop important_file other.iso
 	drop important_file (unsafe)
 	  Could only verify the existence of 0 out of 1 necessary copies
-	  I was unable to access these remotes: usbdrive
+	  Unable to access these remotes: usbdrive
 	  Try making some of these repositories available:
 	   	58d84e8a-d9ae-11df-a1aa-ab9aa8c00826  -- portable USB drive
 	   	ca20064c-dbb5-11df-b2fe-002170d25c55  -- backup SATA drive
