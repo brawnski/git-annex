@@ -50,7 +50,7 @@ cleanup = do
 	g <- Annex.gitRepo
 	logfile <- uuidLog
 	liftIO $ Git.run g ["add", logfile]
-	liftIO $ Git.run g ["commit", "-m", "git annex init", logfile]
+	liftIO $ Git.run g ["commit", "-q", "-m", "git annex init", logfile]
 	return True
 
 {- configure git to use union merge driver on state files, if it is not
@@ -71,7 +71,7 @@ gitAttributesWrite repo = do
 		attributes = Git.attributes repo
 		commit = do
 			Git.run repo ["add", attributes]
-			Git.run repo ["commit", "-m", "git-annex setup", 
+			Git.run repo ["commit", "-q", "-m", "git-annex setup", 
 					attributes]
 
 attrLine :: String		
