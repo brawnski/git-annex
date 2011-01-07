@@ -47,6 +47,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_add
 	, test_unannex
 	, test_drop
+	, test_get
 	]
 
 test_init :: Test
@@ -64,48 +65,43 @@ test_init = TestLabel "git-annex init" $ TestCase $ innewrepo $ do
 
 test_add :: Test
 test_add = TestLabel "git-annex add" $ TestCase $ inoldrepo $ do
-	writeFile file content
-	git_annex "add" ["-q", "foo"] @? "add failed"
-	s <- getSymbolicLinkStatus file
-        unless (isSymbolicLink s) $
-		assertFailure "git-annex add did not create symlink"
-	c <- readFile file
-	unless (c == content) $
-		assertFailure "file content changed during git-annex add"
-	r <- try $ writeFile file $ content++"bar"
-	case r of
-		Left _ -> return () -- expected permission error
-		Right _ -> assertFailure "was able to modify annexed file content"
-	where
-		file = "foo"
-		content = "foo file content"
+	writeFile foofile foocontent
+	git_annex "add" ["-q", foofile] @? "add failed"
+	checklink foofile
+	checkcontent foofile foocontent
+	checkunwritable foofile
+	ok <- Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "added foo"]
+	unless ok $
+		assertFailure "git commit failed"
 
 test_unannex :: Test
 test_unannex = TestLabel "git-annex unannex" $ TestCase $ intmpcopyrepo $ do
-	git_annex "unannex" ["-q", "foo"] @? "unannex failed"
-	s <- getSymbolicLinkStatus "foo"
+	git_annex "unannex" ["-q", foofile] @? "unannex failed"
+	s <- getSymbolicLinkStatus foofile
 	when (isSymbolicLink s) $
 		assertFailure "git-annex unannex left symlink"
 
 test_drop :: Test
 test_drop = TestLabel "git-annex drop" $ TestCase $ intmpcopyrepo $ do
-	r <- git_annex "drop" ["-q", "foo"]
+	r <- git_annex "drop" ["-q", foofile]
 	(not r) @? "drop wrongly succeeded with no known copy of file"
-	checklink
-	git_annex "drop" ["-q", "--force", "foo"] @? "drop --force failed"
-	checklink
-	r' <- try $ readFile "foo"
-	case r' of
-		Left _ -> return () -- expected; dangling link
-		Right _ -> assertFailure "drop did not remove file content"
-	where
-		checklink = do
-			s <- getSymbolicLinkStatus "foo"
-			unless (isSymbolicLink s) $
-				assertFailure "git-annex drop killed symlink"
+	checklink foofile
+	checkcontent foofile foocontent
+	git_annex "drop" ["-q", "--force", foofile] @? "drop --force failed"
+	checklink foofile
+	checkdangling foofile
+	git_annex "drop" ["-q", foofile] @? "drop of dropped file failed"
 
-
-
+test_get :: Test
+test_get = TestLabel "git-annex get" $ TestCase $ intmpclonerepo $ do
+	git_annex "get" ["-q", foofile] @? "get of file failed"
+	checklink foofile
+	checkcontent foofile foocontent
+	checkunwritable foofile
+	git_annex "get" ["-q", foofile] @? "get of file already here failed"
+	checklink foofile
+	checkcontent foofile foocontent
+	checkunwritable foofile
 
 git_annex :: String -> [String] -> IO Bool
 git_annex command params = do
@@ -136,8 +132,14 @@ inoldrepo = indir repodir
 intmpcopyrepo :: Assertion -> Assertion
 intmpcopyrepo a = withtmpcopyrepo $ \r -> indir r a
 
+intmpclonerepo :: Assertion -> Assertion
+intmpclonerepo a = withtmpclonerepo $ \r -> indir r a
+
 withtmpcopyrepo :: (FilePath -> Assertion) -> Assertion
 withtmpcopyrepo = bracket (copyrepo repodir tmprepodir) cleanup
+
+withtmpclonerepo :: (FilePath -> Assertion) -> Assertion
+withtmpclonerepo = bracket (clonerepo repodir tmprepodir) cleanup
 
 withgitrepo :: (FilePath -> Assertion) -> Assertion
 withgitrepo = bracket (setuprepo repodir) return
@@ -166,6 +168,16 @@ copyrepo old new = do
 	unless ok $
 		assertFailure "cp -pr failed"
 	return new
+
+-- clones are always done as local clones; we cannot test ssh clones
+clonerepo :: FilePath -> FilePath -> IO FilePath
+clonerepo old new = do
+	cleanup new
+	ensuretmpdir
+	ok <- Utility.boolSystem "git" ["clone", "-q", old, new]
+	unless ok $
+		assertFailure "git clone failed"
+	return new
 	
 ensuretmpdir :: IO ()
 ensuretmpdir = do
@@ -181,6 +193,32 @@ cleanup dir = do
 		-- removed via permissions bits; undo
 		_ <- Utility.boolSystem "chmod" ["+rw", "-R", dir]
 		removeDirectoryRecursive dir
+	
+checklink :: FilePath -> Assertion
+checklink f = do
+	s <- getSymbolicLinkStatus f
+	unless (isSymbolicLink s) $
+		assertFailure $ f ++ " is not a symlink"
+
+checkcontent :: FilePath -> String -> Assertion
+checkcontent f c = do
+	c' <- readFile f
+	unless (c' == c) $
+		assertFailure $ f ++ " content unexpected"
+
+checkunwritable :: FilePath -> Assertion
+checkunwritable f = do
+	r <- try $ writeFile f $ "dummy"
+	case r of
+		Left _ -> return () -- expected permission error
+		Right _ -> assertFailure $ "was able to modify annexed file's " ++ f ++ " content"
+
+checkdangling :: FilePath -> Assertion
+checkdangling f = do
+	r <- try $ readFile f
+	case r of
+		Left _ -> return () -- expected; dangling link
+		Right _ -> assertFailure $ f ++ " was not a dangling link as expected"
 
 tmpdir :: String	
 tmpdir = ".t"
@@ -190,3 +228,9 @@ repodir = tmpdir ++ "/repo"
 
 tmprepodir :: String
 tmprepodir = tmpdir ++ "/tmprepo"
+	
+foofile :: String
+foofile = "foo"
+
+foocontent :: String
+foocontent = "foo file content"
