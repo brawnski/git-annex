@@ -137,6 +137,12 @@ test_move = "git-annex move" ~: intmpclonerepo $ do
 	checklink annexedfile
 	checkdangling annexedfile
 	checkunwritable annexedfile
+	git_annex "move" ["-q", "--to", "origin", ingitfile] @? "move of ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
+	git_annex "move" ["-q", "--from", "origin", ingitfile] @? "move of ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
 
 test_copy :: Test
 test_copy = "git-annex copy" ~: intmpclonerepo $ do
@@ -156,6 +162,12 @@ test_copy = "git-annex copy" ~: intmpclonerepo $ do
 	checklink annexedfile
 	checkdangling annexedfile
 	checkunwritable annexedfile
+	git_annex "copy" ["-q", "--to", "origin", ingitfile] @? "copy of ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
+	git_annex "copy" ["-q", "--from", "origin", ingitfile] @? "copy of ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
 
 
 git_annex :: String -> [String] -> IO Bool
