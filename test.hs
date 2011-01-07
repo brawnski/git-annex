@@ -10,35 +10,30 @@ import Test.HUnit.Tools
 import System.Directory
 import System.Posix.Directory (changeWorkingDirectory)
 import System.Posix.Files
-import System.Posix.Env
 import IO (bracket_, bracket)
 import Control.Monad (unless, when)
 import Data.List
 import System.IO.Error
 
 import qualified GitRepo as Git
-import Locations
-import Utility
-import TypeInternals
+import qualified Locations
+import qualified Utility
+import qualified TypeInternals
+import qualified GitAnnex
+import qualified CmdLine
 
 main :: IO (Counts, Int)
-main = do
-	-- Add current directory to the from of PATH, so git-annex etc will
-	-- be used, no matter where it is run from.
-	cwd <- getCurrentDirectory
-	p <- getEnvDefault "PATH" ""
-	setEnv "PATH" (cwd++":"++p) True
-	runVerboseTests $ TestList [quickchecks, toplevels]
+main = runVerboseTests $ TestList [quickchecks, toplevels]
 
 quickchecks :: Test
 quickchecks = TestLabel "quickchecks" $ TestList
 	[ qctest "prop_idempotent_deencode" Git.prop_idempotent_deencode
-	, qctest "prop_idempotent_fileKey" prop_idempotent_fileKey
-	, qctest "prop_idempotent_key_read_show" prop_idempotent_key_read_show
-	, qctest "prop_idempotent_shellEscape" prop_idempotent_shellEscape
-	, qctest "prop_idempotent_shellEscape_multiword" prop_idempotent_shellEscape_multiword
-	, qctest "prop_parentDir_basics" prop_parentDir_basics
-	, qctest "prop_relPathDirToDir_basics" prop_relPathDirToDir_basics
+	, qctest "prop_idempotent_fileKey" Locations.prop_idempotent_fileKey
+	, qctest "prop_idempotent_key_read_show" TypeInternals.prop_idempotent_key_read_show
+	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
+	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
+	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
+	, qctest "prop_relPathDirToDir_basics" Utility.prop_relPathDirToDir_basics
 	]
 
 toplevels :: Test
@@ -79,7 +74,14 @@ test_add = TestLabel "git-annex add" $ TestCase $ inannex $ do
 		content = "foo file content"
 
 git_annex :: String -> [String] -> IO Bool
-git_annex command params = boolSystem "git-annex" (command:params)
+git_annex command params = do
+	gitrepo <- Git.repoFromCwd
+	r <- try $
+		CmdLine.dispatch gitrepo (command:params)
+			GitAnnex.cmds GitAnnex.options GitAnnex.header
+	case r of
+		Right _ -> return True
+		Left _ -> return False
 
 inannex :: Assertion -> Assertion
 inannex a = ingitrepo $ do
@@ -103,7 +105,7 @@ withgitrepo = bracket setup cleanup
 		setup = do
 			cleanup True
 			createDirectory tmpdir
-			ok <- boolSystem "git" ["init", "-q", repodir]
+			ok <- Utility.boolSystem "git" ["init", "-q", repodir]
 			unless ok $
 				assertFailure "git init failed"
 			return $ Git.repoFromPath repodir
@@ -113,5 +115,5 @@ withgitrepo = bracket setup cleanup
 				-- git-annex prevents annexed file content
 				-- from being removed with permissions
 				-- bits; undo
-				_ <- boolSystem "chmod" ["+rw", "-R", tmpdir]
+				_ <- Utility.boolSystem "chmod" ["+rw", "-R", tmpdir]
 				removeDirectoryRecursive tmpdir
