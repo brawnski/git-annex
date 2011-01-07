@@ -10,7 +10,7 @@ git-annex (0.16) UNRELEASED; urgency=low
     about repositories with missing UUIDs.
   * bugfix: Running `move --to` with a non-ssh remote failed.
   * bugfix: Running `copy --to` with a non-ssh remote actually did a move.
-  * Test suite improvements. Current top-level test coverage: 62%
+  * Test suite improvements. Current top-level test coverage: 65%
 
  -- Joey Hess <joeyh@debian.org>  Tue, 04 Jan 2011 17:33:42 -0400
 
