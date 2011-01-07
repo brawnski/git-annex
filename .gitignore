@@ -1,4 +1,5 @@
-build/*
+*.hi
+*.o
 test
 configure
 SysConfig.hs

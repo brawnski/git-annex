@@ -1,4 +1,4 @@
-{- git-annex main program
+{- git-annex main program stub
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
@@ -7,12 +7,8 @@
 
 import System.Environment
 
-import qualified GitRepo as Git
-import CmdLine
 import GitAnnex
-
 main :: IO ()
 main = do
 	args <- getArgs
-	gitrepo <- Git.repoFromCwd
-	dispatch gitrepo args cmds options header
+	run args

@@ -1,6 +1,6 @@
 PREFIX=/usr
 GHCFLAGS=-O2 -Wall
-GHCMAKE=ghc -odir build -hidir build $(GHCFLAGS) --make
+GHCMAKE=ghc $(GHCFLAGS) --make
 
 bins=git-annex git-annex-shell
 mans=git-annex.1 git-annex-shell.1
@@ -29,11 +29,11 @@ install: all
 		rsync -a --delete html/ $(DESTDIR)$(PREFIX)/share/doc/git-annex/html/; \
 	fi
 
-test:
+test: $(bins)
 	$(GHCMAKE) test
 	./test
 
-testcoverage:
+testcoverage: $(bins)
 	rm -f test.tix test
 	ghc -odir build/test -hidir build/test $(GHCFLAGS) --make -fhpc test
 	./test
@@ -59,5 +59,6 @@ docs: $(mans)
 clean:
 	rm -rf build $(bins) $(mans) test configure SysConfig.hs *.tix .hpc
 	rm -rf doc/.ikiwiki html
+	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 
 .PHONY: $(bins) test install
