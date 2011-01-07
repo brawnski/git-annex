@@ -48,60 +48,89 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_unannex
 	, test_drop
 	, test_get
+	, test_move
 	]
 
 test_init :: Test
-test_init = TestLabel "git-annex init" $ TestCase $ innewrepo $ do
+test_init = "git-annex init" ~: innewrepo $ do
 	git_annex "init" ["-q", reponame] @? "init failed"
 	e <- doesFileExist annexlog
-	unless e $
-		assertFailure $ annexlog ++ " not created"
+	e @? (annexlog ++ " not created")
 	c <- readFile annexlog
-	unless (isInfixOf reponame c) $
-		assertFailure $ annexlog ++ " does not contain repo name"
+	isInfixOf reponame c @? annexlog ++ " does not contain repo name"
 	where
 		annexlog = ".git-annex/uuid.log"
 		reponame = "test repo"
 
 test_add :: Test
-test_add = TestLabel "git-annex add" $ TestCase $ inoldrepo $ do
-	writeFile foofile foocontent
-	git_annex "add" ["-q", foofile] @? "add failed"
-	checklink foofile
-	checkcontent foofile foocontent
-	checkunwritable foofile
-	ok <- Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "added foo"]
-	unless ok $
-		assertFailure "git commit failed"
+test_add = "git-annex add" ~: inoldrepo $ do
+	writeFile annexedfile $ content annexedfile
+	git_annex "add" ["-q", annexedfile] @? "add failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	writeFile ingitfile $ content ingitfile
+	Utility.boolSystem "git" ["add", ingitfile] @? "git add failed"
+	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
+	git_annex "add" ["-q", ingitfile] @? "add ingitfile should be no-op"
+	checkregularfile ingitfile
 
 test_unannex :: Test
-test_unannex = TestLabel "git-annex unannex" $ TestCase $ intmpcopyrepo $ do
-	git_annex "unannex" ["-q", foofile] @? "unannex failed"
-	s <- getSymbolicLinkStatus foofile
-	when (isSymbolicLink s) $
-		assertFailure "git-annex unannex left symlink"
+test_unannex = "git-annex unannex" ~: intmpcopyrepo $ do
+	git_annex "unannex" ["-q", annexedfile] @? "unannex failed"
+	checkregularfile annexedfile
+	git_annex "unannex" ["-q", annexedfile] @? "unannex failed on non-annexed file"
+	checkregularfile annexedfile
+	git_annex "unannex" ["-q", ingitfile] @? "unannex ingitfile should be no-op"
 
 test_drop :: Test
-test_drop = TestLabel "git-annex drop" $ TestCase $ intmpcopyrepo $ do
-	r <- git_annex "drop" ["-q", foofile]
+test_drop = "git-annex drop" ~: intmpcopyrepo $ do
+	r <- git_annex "drop" ["-q", annexedfile]
 	(not r) @? "drop wrongly succeeded with no known copy of file"
-	checklink foofile
-	checkcontent foofile foocontent
-	git_annex "drop" ["-q", "--force", foofile] @? "drop --force failed"
-	checklink foofile
-	checkdangling foofile
-	git_annex "drop" ["-q", foofile] @? "drop of dropped file failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	git_annex "drop" ["-q", "--force", annexedfile] @? "drop --force failed"
+	checklink annexedfile
+	checkdangling annexedfile
+	checkunwritable annexedfile
+	git_annex "drop" ["-q", annexedfile] @? "drop of dropped file failed"
+	git_annex "drop" ["-q", ingitfile] @? "drop ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
 
 test_get :: Test
-test_get = TestLabel "git-annex get" $ TestCase $ intmpclonerepo $ do
-	git_annex "get" ["-q", foofile] @? "get of file failed"
-	checklink foofile
-	checkcontent foofile foocontent
-	checkunwritable foofile
-	git_annex "get" ["-q", foofile] @? "get of file already here failed"
-	checklink foofile
-	checkcontent foofile foocontent
-	checkunwritable foofile
+test_get = "git-annex get" ~: intmpclonerepo $ do
+	git_annex "get" ["-q", annexedfile] @? "get of file failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "get" ["-q", annexedfile] @? "get of file already here failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "get" ["-q", ingitfile] @? "get ingitfile should be no-op"
+	checkregularfile ingitfile
+	checkcontent ingitfile
+
+test_move :: Test
+test_move = "git-annex move" ~: intmpclonerepo $ do
+	git_annex "move" ["-q", "--from", "origin", annexedfile] @? "move --from of file failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "move" ["-q", "--from", "origin", annexedfile] @? "move --from of file already here failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "move" ["-q", "--to", "origin", annexedfile] @? "move --to of file failed"
+	checklink annexedfile
+	checkdangling annexedfile
+	checkunwritable annexedfile
+	git_annex "move" ["-q", "--to", "origin", annexedfile] @? "move --to of file already here failed"
+	checklink annexedfile
+	checkdangling annexedfile
+	checkunwritable annexedfile
+
 
 git_annex :: String -> [String] -> IO Bool
 git_annex command params = do
@@ -116,24 +145,17 @@ git_annex command params = do
 			CmdLine.dispatch gitrepo (command:params)
 				GitAnnex.cmds GitAnnex.options GitAnnex.header
 
-innewannex :: Assertion -> Assertion
-innewannex a = innewrepo $ do
-	git_annex "init" ["-q", reponame] @? "init failed"
-	a
-	where
-		reponame = "test repo"
+innewrepo :: Assertion -> Test
+innewrepo a = TestCase $ withgitrepo $ \r -> indir r a
 
-innewrepo :: Assertion -> Assertion
-innewrepo a = withgitrepo $ \r -> indir r a
+inoldrepo :: Assertion -> Test
+inoldrepo a = TestCase $ indir repodir a
 
-inoldrepo :: Assertion -> Assertion
-inoldrepo = indir repodir
+intmpcopyrepo :: Assertion -> Test
+intmpcopyrepo a = TestCase $ withtmpcopyrepo $ \r -> indir r a
 
-intmpcopyrepo :: Assertion -> Assertion
-intmpcopyrepo a = withtmpcopyrepo $ \r -> indir r a
-
-intmpclonerepo :: Assertion -> Assertion
-intmpclonerepo a = withtmpclonerepo $ \r -> indir r a
+intmpclonerepo :: Assertion -> Test
+intmpclonerepo a = TestCase $ withtmpclonerepo $ \r -> indir r a
 
 withtmpcopyrepo :: (FilePath -> Assertion) -> Assertion
 withtmpcopyrepo = bracket (copyrepo repodir tmprepodir) cleanup
@@ -155,18 +177,14 @@ setuprepo :: FilePath -> IO FilePath
 setuprepo dir = do
 	cleanup dir
 	ensuretmpdir
-	ok <- Utility.boolSystem "git" ["init", "-q", dir]
-	unless ok $
-		assertFailure "git init failed"
+	Utility.boolSystem "git" ["init", "-q", dir] @? "git init failed"
 	return dir
 
 copyrepo :: FilePath -> FilePath -> IO FilePath
 copyrepo old new = do
 	cleanup new
 	ensuretmpdir
-	ok <- Utility.boolSystem "cp" ["-pr", old, new]
-	unless ok $
-		assertFailure "cp -pr failed"
+	Utility.boolSystem "cp" ["-pr", old, new] @? "cp -pr failed"
 	return new
 
 -- clones are always done as local clones; we cannot test ssh clones
@@ -174,9 +192,7 @@ clonerepo :: FilePath -> FilePath -> IO FilePath
 clonerepo old new = do
 	cleanup new
 	ensuretmpdir
-	ok <- Utility.boolSystem "git" ["clone", "-q", old, new]
-	unless ok $
-		assertFailure "git clone failed"
+	Utility.boolSystem "git" ["clone", "-q", old, new] @? "git clone failed"
 	return new
 	
 ensuretmpdir :: IO ()
@@ -197,14 +213,18 @@ cleanup dir = do
 checklink :: FilePath -> Assertion
 checklink f = do
 	s <- getSymbolicLinkStatus f
-	unless (isSymbolicLink s) $
-		assertFailure $ f ++ " is not a symlink"
+	isSymbolicLink s @? f ++ " is not a symlink"
 
-checkcontent :: FilePath -> String -> Assertion
-checkcontent f c = do
-	c' <- readFile f
-	unless (c' == c) $
-		assertFailure $ f ++ " content unexpected"
+checkregularfile :: FilePath -> Assertion
+checkregularfile f = do
+	s <- getSymbolicLinkStatus f
+	isRegularFile s @? f ++ " is not a normal file"
+	return ()
+
+checkcontent :: FilePath -> Assertion
+checkcontent f = do
+	c <- readFile f
+	assertEqual ("checkcontent " ++ f) c (content f)
 
 checkunwritable :: FilePath -> Assertion
 checkunwritable f = do
@@ -229,8 +249,14 @@ repodir = tmpdir ++ "/repo"
 tmprepodir :: String
 tmprepodir = tmpdir ++ "/tmprepo"
 	
-foofile :: String
-foofile = "foo"
+annexedfile :: String
+annexedfile = "foo"
 
-foocontent :: String
-foocontent = "foo file content"
+ingitfile :: String
+ingitfile = "bar"
+
+content :: FilePath -> String		
+content f
+	| f == annexedfile = "annexed file content"
+	| f == ingitfile = "normal file content"
+	| otherwise = "unknown file " ++ f
