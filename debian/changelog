@@ -9,7 +9,9 @@ git-annex (0.16) UNRELEASED; urgency=low
   * Also, add a general guard to detect attempts to record information
     about repositories with missing UUIDs.
   * bugfix: Running `move --to` with a non-ssh remote failed.
-  * Test suite improvements. Current top-level test coverage: 57%
+  * bugfix: Running `copy --to` when both local and remote had the key
+    dropped it from local.
+  * Test suite improvements. Current top-level test coverage: 62%
 
  -- Joey Hess <joeyh@debian.org>  Tue, 04 Jan 2011 17:33:42 -0400
 

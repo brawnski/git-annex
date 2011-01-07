@@ -89,7 +89,7 @@ toPerform move key = do
 			if ok
 				then return $ Just $ toCleanup move remote key
 				else return Nothing -- failed
-		Right True -> return $ Just $ Command.Drop.cleanup key
+		Right True -> return $ Just $ toCleanup move remote key
 toCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
 toCleanup move remote key = do
 	remoteHasKey remote key True
