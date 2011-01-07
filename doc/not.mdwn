@@ -17,4 +17,6 @@
 
 * git-annex is not some flaky script that was quickly thrown together.
   I wrote it in Haskell because I wanted it to be solid and to compile
-  down to a binary.
+  down to a binary. And it has a fairly extensive test suite. (Don't be
+  fooled by "make test" only showing a few dozen test cases; each test
+  involves checking dozens to hundreds of assertions.)
