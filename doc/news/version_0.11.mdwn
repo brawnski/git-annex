@@ -1,8 +1,0 @@
-git-annex 0.11 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * If available, rsync will be used for file transfers from remote
-     repositories. This allows resuming interrupted transfers.
-   * Added remote.annex-rsync-options.
-   * Avoid deleting temp files when rsync fails.
-   * Improve detection of version 0 repos.
-   * Add uninit subcommand. Closes: #[605749](http://bugs.debian.org/605749)"""]]

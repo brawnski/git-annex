@@ -266,7 +266,7 @@ withgitrepo = bracket (setuprepo mainrepodir) return
 indir :: FilePath -> Assertion -> Assertion
 indir dir a = do
 	cwd <- getCurrentDirectory
-	bracket_ (changeToTmpDir $ dir)
+	bracket_ (changeToTmpDir dir)
 		(\_ -> changeWorkingDirectory cwd)
 		a
 

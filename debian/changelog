@@ -1,4 +1,4 @@
-git-annex (0.16) UNRELEASED; urgency=low
+git-annex (0.16) unstable; urgency=low
 
   * git-annex-shell: Avoid exposing any git repo config except for the
     annex.uuid when doing configlist.
@@ -10,9 +10,9 @@ git-annex (0.16) UNRELEASED; urgency=low
     about repositories with missing UUIDs.
   * bugfix: Running `move --to` with a non-ssh remote failed.
   * bugfix: Running `copy --to` with a non-ssh remote actually did a move.
-  * Test suite improvements. Current top-level test coverage: 65%
+  * Many test suite improvements. Current top-level test coverage: 65%
 
- -- Joey Hess <joeyh@debian.org>  Tue, 04 Jan 2011 17:33:42 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 07 Jan 2011 14:33:13 -0400
 
 git-annex (0.15) unstable; urgency=low
 
