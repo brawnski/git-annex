@@ -14,6 +14,7 @@ import IO (bracket_, bracket)
 import Control.Monad (unless, when)
 import Data.List
 import System.IO.Error
+import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 
 import qualified GitRepo as Git
@@ -21,13 +22,18 @@ import qualified Locations
 import qualified Utility
 import qualified TypeInternals
 import qualified GitAnnex
-import qualified CmdLine
 
-main :: IO (Counts, Int)
+main :: IO ()
 main = do
+	tweakpath
 	r <- runVerboseTests $ TestList [quickchecks, toplevels]
 	cleanup tmpdir
-	return r
+	propigate r
+
+propigate :: (Counts, Int) -> IO ()
+propigate (Counts { errors = e }, _)
+	| e > 0 = error "failed"
+	| otherwise = return ()
 
 quickchecks :: Test
 quickchecks = TestLabel "quickchecks" $ TestList
@@ -49,6 +55,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_drop
 	, test_get
 	, test_move
+	, test_copy
 	]
 
 test_init :: Test
@@ -126,7 +133,26 @@ test_move = "git-annex move" ~: intmpclonerepo $ do
 	checklink annexedfile
 	checkdangling annexedfile
 	checkunwritable annexedfile
-	git_annex "move" ["-q", "--to", "origin", annexedfile] @? "move --to of file already here failed"
+	git_annex "move" ["-q", "--to", "origin", annexedfile] @? "move --to of file already there failed"
+	checklink annexedfile
+	checkdangling annexedfile
+	checkunwritable annexedfile
+
+test_copy :: Test
+test_copy = "git-annex copy" ~: intmpclonerepo $ do
+	git_annex "copy" ["-q", "--from", "origin", annexedfile] @? "copy --from of file failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "copy" ["-q", "--from", "origin", annexedfile] @? "copy --from of file already here failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "copy" ["-q", "--to", "origin", annexedfile] @? "copy --to of file already there failed"
+	checklink annexedfile
+	checkcontent annexedfile
+	checkunwritable annexedfile
+	git_annex "move" ["-q", "--to", "origin", annexedfile] @? "move --to of file already there failed"
 	checklink annexedfile
 	checkdangling annexedfile
 	checkunwritable annexedfile
@@ -140,10 +166,7 @@ git_annex command params = do
 		Right _ -> return True
 		Left _ -> return False
 	where
-		run = do
-			gitrepo <- Git.repoFromCwd
-			CmdLine.dispatch gitrepo (command:params)
-				GitAnnex.cmds GitAnnex.options GitAnnex.header
+		run = GitAnnex.run (command:params)
 
 innewrepo :: Assertion -> Test
 innewrepo a = TestCase $ withgitrepo $ \r -> indir r a
@@ -172,6 +195,14 @@ indir dir a = do
 	bracket_ (changeWorkingDirectory $ dir)
 		(\_ -> changeWorkingDirectory cwd)
 		a
+
+-- While PATH is mostly avoided, the commit hook does run it. Make
+-- sure that the just-built git annex is used.
+tweakpath :: IO ()
+tweakpath = do
+	cwd <- getCurrentDirectory
+	p <- getEnvDefault  "PATH" ""
+	setEnv "PATH" (cwd ++ ":" ++ p) True
 
 setuprepo :: FilePath -> IO FilePath
 setuprepo dir = do
