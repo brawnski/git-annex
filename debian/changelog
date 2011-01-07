@@ -8,7 +8,7 @@ git-annex (0.16) UNRELEASED; urgency=low
     significant problem, since the remote *did* record that it had the file.
   * Also, add a general guard to detect attempts to record information
     about repositories with missing UUIDs.
-  * Test suite improvements. Current top-level test coverage: 43%
+  * Test suite improvements. Current top-level test coverage: 53%
 
  -- Joey Hess <joeyh@debian.org>  Tue, 04 Jan 2011 17:33:42 -0400
 

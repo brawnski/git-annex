@@ -37,6 +37,7 @@ testcoverage:
 	rm -f test.tix test
 	ghc -odir build/test -hidir build/test $(GHCFLAGS) --make -fhpc test
 	./test
+	@echo ""
 	@hpc report test --exclude=Main --exclude=QC
 	@hpc markup test --exclude=Main --exclude=QC --destdir=.hpc >/dev/null
 
