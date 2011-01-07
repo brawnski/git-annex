@@ -214,12 +214,17 @@ test_edit = "git-annex edit/commit" ~: intmpclonerepo $ do
 
 test_fix :: Test
 test_fix = "git-annex fix" ~: intmpclonerepo $ do
+	annexed_notpresent annexedfile
+	git_annex "fix" ["-q", annexedfile] @? "fix of not present failed"
+	annexed_notpresent annexedfile
 	git_annex "get" ["-q", annexedfile] @? "get of file failed"
+	annexed_present annexedfile
+	git_annex "fix" ["-q", annexedfile] @? "fix of present file failed"
 	annexed_present annexedfile
 	createDirectory subdir
 	Utility.boolSystem "git" ["mv", annexedfile, subdir]
 		@? "git mv failed"
-	git_annex "fix" ["-q", newfile] @? "fix failed"
+	git_annex "fix" ["-q", newfile] @? "fix of moved file failed"
 	runchecks [checklink, checkunwritable] newfile
 	c <- readFile newfile
 	assertEqual ("content of moved file") c (content annexedfile)
