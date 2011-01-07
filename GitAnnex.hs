@@ -9,6 +9,8 @@ module GitAnnex where
 
 import System.Console.GetOpt
 
+import qualified GitRepo as Git
+import CmdLine
 import Command
 import Options
 
@@ -73,3 +75,8 @@ options = commonOptions ++
 
 header :: String
 header = "Usage: git-annex command [option ..]"
+
+run :: [String] -> IO ()
+run args = do
+	gitrepo <- Git.repoFromCwd
+	dispatch gitrepo args cmds options header
