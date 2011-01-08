@@ -277,6 +277,19 @@ add something like this to `.gitattributes`:
 
 	* annex.backend=SHA1
 
+## migrating between backends
+
+Perhaps you had been using the WORM backend, but now have configured
+git-annex to use SHA1 for new files. Your old files are still in WORM. How
+to migrate that content? A quick and dirty way is to use the unannex
+subcommand, which removes a file from git-annex's control, followed by
+a re-add of the file, to put it in the new backend.
+
+	# git annex unannex my_cool_big_file
+	unannex my_cool_big_file ok
+	# git annex add my_cool_big_file
+	add my_cool_big_file (checksum ...) ok
+
 ## unused data
 
 It's possible for data to accumulate in the annex that no files point to

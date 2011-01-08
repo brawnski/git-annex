@@ -16,6 +16,7 @@ import Data.List
 import System.IO.Error
 import System.Posix.Env
 import qualified Control.Exception.Extensible as E
+import Control.Exception (throw)
 
 import qualified GitRepo as Git
 import qualified Locations
@@ -87,10 +88,11 @@ test_unannex :: Test
 test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 	where
 		nocopy = "no content" ~: intmpclonerepo $ do
-			r <- git_annex "unannex" ["-q", annexedfile] 
-			not r @? "unannex incorrectly succeeded with no copy"
-			unannexed annexedfile
+			annexed_notpresent annexedfile
+			git_annex "unannex" ["-q", annexedfile] @? "unannex failed with no copy"
+			annexed_notpresent annexedfile
 		withcopy = "with content" ~: intmpcopyrepo $ do
+			annexed_present annexedfile
 			git_annex "unannex" ["-q", annexedfile] @? "unannex failed"
 			unannexed annexedfile
 			git_annex "unannex" ["-q", annexedfile] @? "unannex failed on non-annexed file"
@@ -280,7 +282,7 @@ indir dir a = do
 		(E.try (a)::IO (Either E.SomeException ()))
 	case r of
 		Right () -> return ()
-		Left e -> error $ show e
+		Left e -> throw e
 
 setuprepo :: FilePath -> IO FilePath
 setuprepo dir = do

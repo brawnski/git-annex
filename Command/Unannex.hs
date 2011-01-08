@@ -29,8 +29,12 @@ seek = [withFilesInGit start]
 {- The unannex subcommand undoes an add. -}
 start :: CommandStartString
 start file = isAnnexed file $ \(key, backend) -> do
-	showStart "unannex" file
-	return $ Just $ perform file key backend
+	ishere <- inAnnex key
+	if ishere
+		then do
+			showStart "unannex" file
+			return $ Just $ perform file key backend
+		else return Nothing
 
 perform :: FilePath -> Key -> Backend -> CommandPerform
 perform file key backend = do
