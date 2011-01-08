@@ -42,11 +42,12 @@ perform (file, backend) = do
 	stored <- Backend.storeFileKey file backend
 	case stored of
 		Nothing -> return Nothing
-		Just (key, _) -> return $ Just $ cleanup file key
+		Just (key, _) -> do
+			moveAnnex key file
+			return $ Just $ cleanup file key
 
 cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do
-	moveAnnex key file
 	logStatus key ValuePresent
 
 	link <- calcGitLink file key

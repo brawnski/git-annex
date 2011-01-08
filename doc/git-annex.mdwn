@@ -144,6 +144,14 @@ Many git-annex commands will stage changes for later `git commit` by you.
   With no parameters, defaults to finding all files in the current directory
   and its subdirectories.
 
+* migrate [path ...]
+
+  Changes the specified annexed files to store their content in the
+  default backend (or the one specified with --backend).
+
+  Note that the content is not removed from the backend it was previously in.
+  Use `git annex unused` to find and remove such content. 
+
 * unannex [path ...]
 
   Use this to undo an accidental add command. This is not the command you

@@ -117,6 +117,12 @@ withAttrFilesInGit attr a params = do
 	files' <- filterFiles files
 	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
+withBackendFilesInGit :: CommandSeekBackendFiles
+withBackendFilesInGit a params = do
+	repo <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo repo params
+	files' <- filterFiles files
+	backendPairs a files'
 withFilesMissing :: CommandSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params

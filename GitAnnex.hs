@@ -32,6 +32,7 @@ import qualified Command.Unlock
 import qualified Command.Lock
 import qualified Command.PreCommit
 import qualified Command.Find
+import qualified Command.Migrate
 import qualified Command.Uninit
 import qualified Command.Trust
 import qualified Command.Untrust
@@ -59,6 +60,7 @@ cmds = concat
 	, Command.Unused.command
 	, Command.DropUnused.command
 	, Command.Find.command
+	, Command.Migrate.command
 	]
 
 options :: [Option]

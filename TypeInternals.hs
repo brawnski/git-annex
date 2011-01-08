@@ -103,3 +103,6 @@ data Backend = Backend {
 
 instance Show Backend where
 	show backend = "Backend { name =\"" ++ name backend ++ "\" }"
+
+instance Eq Backend where
+	a == b = name a == name b

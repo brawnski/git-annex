@@ -277,25 +277,32 @@ add something like this to `.gitattributes`:
 
 	* annex.backend=SHA1
 
-## migrating between backends
+## migrating data to a new backend
 
-Perhaps you had been using the WORM backend, but now have configured
-git-annex to use SHA1 for new files. Your old files are still in WORM. How
-to migrate that content? A quick and dirty way is to use the unannex
-subcommand, which removes a file from git-annex's control, followed by
-a re-add of the file, to put it in the new backend.
+Maybe you started out using the WORM backend, and have now configured
+git-annex to use SHA1. But files you added to the annex before still
+use the WORM backend. There is a simple command that can migrate that
+data:
 
-	# git annex unannex my_cool_big_file
-	unannex my_cool_big_file ok
-	# git annex add my_cool_big_file
-	add my_cool_big_file (checksum ...) ok
+	# git annex migrate my_cool_big_file
+	migrate my_cool_big_file (checksum...) ok
+
+You can only migrate files whose content is currently available. Other
+files will be skipped.
+
+After migrating a file to a new backend, the old content in the old backend
+will still be present. That is necessary because multiple files
+can point to the same content. The `git annex unused` sucommand can be
+used to clear up that detritus later. Note that hard links are used,
+to avoid wasting disk space.
 
 ## unused data
 
 It's possible for data to accumulate in the annex that no files point to
-nymore. One way it can happen is if you `git rm` a file without 
+anymore. One way it can happen is if you `git rm` a file without 
 first calling `git annex drop`. And, when you modify an annexed file, the old
-content of the file remains in the annex. 
+content of the file remains in the annex. Another way is when migrating
+between backends.
 
 This might be historical data you want to preserve, so git-annex defaults to
 preserving it. So from time to time, you may want to check for such data and
@@ -317,6 +324,10 @@ data anymore, you can easily remove it:
 
 	# git annex dropunused 1
 	dropunused 1 ok
+
+Hint: To drop a lot of unused data, use a command like this:
+
+	# git annex dropunused `seq 1 1000`
 
 ## fsck: verifying your data
 
