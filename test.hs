@@ -84,18 +84,24 @@ test_add = "git-annex add" ~: TestCase $ inmainrepo $ do
 	unannexed ingitfile
 
 test_unannex :: Test
-test_unannex = "git-annex unannex" ~: TestCase $ intmpcopyrepo $ do
-	git_annex "unannex" ["-q", annexedfile] @? "unannex failed"
-	unannexed annexedfile
-	git_annex "unannex" ["-q", annexedfile] @? "unannex failed on non-annexed file"
-	unannexed annexedfile
-	git_annex "unannex" ["-q", ingitfile] @? "unannex ingitfile should be no-op"
-	unannexed ingitfile
+test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
+	where
+		nocopy = "no content" ~: intmpclonerepo $ do
+			r <- git_annex "unannex" ["-q", annexedfile] 
+			not r @? "unannex incorrectly succeeded with no copy"
+			unannexed annexedfile
+		withcopy = "with content" ~: intmpcopyrepo $ do
+			git_annex "unannex" ["-q", annexedfile] @? "unannex failed"
+			unannexed annexedfile
+			git_annex "unannex" ["-q", annexedfile] @? "unannex failed on non-annexed file"
+			unannexed annexedfile
+			git_annex "unannex" ["-q", ingitfile] @? "unannex ingitfile should be no-op"
+			unannexed ingitfile
 
 test_drop :: Test
-test_drop = "git-annex drop" ~: TestList [nocopy, withcopy]
+test_drop = "git-annex drop" ~: TestList [noremote, withremote]
 	where
-		nocopy = "no remotes" ~: TestCase $ intmpcopyrepo $ do
+		noremote = "no remotes" ~: TestCase $ intmpcopyrepo $ do
 			r <- git_annex "drop" ["-q", annexedfile]
 			(not r) @? "drop wrongly succeeded with no known copy of file"
 			annexed_present annexedfile
@@ -104,7 +110,7 @@ test_drop = "git-annex drop" ~: TestList [nocopy, withcopy]
 			git_annex "drop" ["-q", annexedfile] @? "drop of dropped file failed"
 			git_annex "drop" ["-q", ingitfile] @? "drop ingitfile should be no-op"
 			unannexed ingitfile
-		withcopy = "with remote" ~: TestCase $ intmpclonerepo $ do
+		withremote = "with remote" ~: TestCase $ intmpclonerepo $ do
 			git_annex "drop" ["-q", annexedfile] @? "drop failed though origin has copy"
 			annexed_notpresent annexedfile
 			inmainrepo $ annexed_present annexedfile
@@ -266,9 +272,15 @@ withgitrepo = bracket (setuprepo mainrepodir) return
 indir :: FilePath -> Assertion -> Assertion
 indir dir a = do
 	cwd <- getCurrentDirectory
-	bracket_ (changeToTmpDir dir)
+	-- Assertion failures throw non-IO errors; catch
+	-- any type of error and change back to cwd before
+	-- rethrowing.
+	r <- bracket_ (changeToTmpDir dir)
 		(\_ -> changeWorkingDirectory cwd)
-		a
+		(E.try (a)::IO (Either E.SomeException ()))
+	case r of
+		Right () -> return ()
+		Left e -> error $ show e
 
 setuprepo :: FilePath -> IO FilePath
 setuprepo dir = do
@@ -279,8 +291,6 @@ setuprepo dir = do
 
 copyrepo :: FilePath -> FilePath -> IO FilePath
 copyrepo old new = do
-	_ <- clonerepo old new
-	indir new $ Utility.boolSystem "git" ["remote", "rm", "origin"] @? "git remote failed"
 	cleanup new
 	ensuretmpdir
 	Utility.boolSystem "cp" ["-pr", old, new] @? "cp -pr failed"
