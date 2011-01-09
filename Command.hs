@@ -64,7 +64,7 @@ data Command = Command {
 prepCmd :: Command -> [String] -> Annex [Annex Bool]
 prepCmd Command { cmdseek = seek } params = do
 	lists <- mapM (\s -> s params) seek
-	return $ map doCommand $ foldl (++) [] lists
+	return $ map doCommand $ concat lists
 
 {- Runs a command through the start, perform and cleanup stages -}
 doCommand :: CommandStart -> CommandCleanup
