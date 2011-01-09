@@ -130,7 +130,8 @@ lookupFile file = do
 		getsymlink = do
 			l <- readSymbolicLink file
 			return $ takeFileName l
-		makekey bs l =
+		makekey _ [] = return Nothing
+		makekey bs l = do
 			case maybeLookupBackendName bs bname of
 				Nothing -> do
 					unless (null kname || null bname) $
