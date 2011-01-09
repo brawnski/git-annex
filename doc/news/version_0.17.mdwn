@@ -1,0 +1,7 @@
+git-annex 0.17 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * unannex: Now skips files whose content is not present, rather than
+     it being an error.
+   * New migrate subcommand can be used to switch files to using a different
+     backend, safely and with no duplication of content.
+   * bugfix: Fix crash caused by empty key name. (Thanks Henrik for reporting.)"""]]
