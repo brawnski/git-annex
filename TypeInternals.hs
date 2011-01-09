@@ -55,7 +55,7 @@ instance Read Key where
 	readsPrec _ s = [(Key (b,k), "")]
 		where
 			l = split ":" s
-			b = head l
+			b = if null l then "" else head l
 			k = join ":" $ drop 1 l
 
 -- for quickcheck
@@ -67,13 +67,9 @@ instance Arbitrary Key where
 
 prop_idempotent_key_read_show :: Key -> Bool
 prop_idempotent_key_read_show k
-	-- filter out empty key or backend names
-	-- also backend names will not contain colons
-	| null kname || null bname || elem ':' bname = True
+	-- backend names will never contain colons
+	| elem ':' (backendName k) = True
 	| otherwise = k == (read $ show k)
-	where
-		bname = backendName k
-		kname = keyName k
 
 backendName :: Key -> BackendName
 backendName (Key (b,_)) = b

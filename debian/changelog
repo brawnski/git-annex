@@ -4,8 +4,7 @@ git-annex (0.17) unstable; urgency=low
     it being an error.
   * New migrate subcommand can be used to switch files to using a different
     backend, safely and with no duplication of content.
-  * bugfix: Fix crash caused by a symlink in the repo with link text ending in
-    a "/". (Thanks Henrik for reporting.)
+  * bugfix: Fix crash caused by empty key name. (Thanks Henrik for reporting.)
 
  -- Joey Hess <joeyh@debian.org>  Sun, 09 Jan 2011 10:04:11 -0400
 
