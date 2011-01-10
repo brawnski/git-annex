@@ -414,3 +414,5 @@ recentchangesnum: 100
 # extra underlay directories to add
 #add_underlays:
 #  - /home/b-git-annex/wiki.underlay
+ENV:
+ TMPDIR: /home/b-git-annex/tmp
