@@ -30,6 +30,7 @@ import qualified GitAnnex
 import qualified LocationLog
 import qualified UUID
 import qualified Remotes
+import qualified Core
 
 main :: IO ()
 main = do
@@ -68,6 +69,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_edit
 	, test_fix
 	, test_trust
+	, test_fsck
 	]
 
 test_init :: Test
@@ -267,6 +269,20 @@ test_trust = "git-annex trust/untrust" ~: intmpclonerepo $ do
 				u <- UUID.getUUID r
 				return $ elem u uuids
 			assertEqual "trust value" expected istrusted
+
+test_fsck :: Test
+test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
+	git_annex "fsck" ["-q"] @? "fsck failed"
+	Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
+	r <- git_annex "fsck" ["-q"]
+	not r @? "fsck failed to fail with numcopies unsatisfied"
+	Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
+
+	git_annex "get" ["-q", annexedfile] @? "get of file failed"
+	Core.allowWrite annexedfile
+	writeFile annexedfile (changedcontent annexedfile)
+	r <- git_annex "fsck" ["-q"]
+	not r @? "fsck failed to fail with corrupted file content"
 
 -- This is equivilant to running git-annex, but it's all run in-process
 -- so test coverage collection works.
