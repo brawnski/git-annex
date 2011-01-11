@@ -145,8 +145,12 @@ getTrusted :: Annex [UUID]
 getTrusted = do
 	logfile <- trustLog
 	s <- liftIO $ catch (readFile logfile) ignoreerror
-	return $ map (\l -> head $ words l) $ lines s
+	return $ parse s
 	where
+		parse [] = []
+		parse s = map firstword $ lines s
+		firstword [] = ""
+		firstword l = head $ words l
 		ignoreerror _ = return ""
 
 {- Changes the list of trusted UUIDs. -}
