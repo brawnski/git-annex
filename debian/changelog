@@ -3,6 +3,7 @@ git-annex (0.18) UNRELEASED; urgency=low
   * Bugfix: `copy --to` and `move --to` forgot to stage location log changes
     after transferring the file to the remote repository.
     (Did not affect ssh remotes.)
+  * fsck: Fix bug in moving of corrupted files to .git/annex/bad/
 
  -- Joey Hess <joeyh@debian.org>  Tue, 11 Jan 2011 16:05:25 -0400
 

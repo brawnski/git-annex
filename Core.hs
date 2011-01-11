@@ -173,7 +173,8 @@ moveBad key = do
 	g <- Annex.gitRepo
 	let src = annexLocation g key
 	let dest = annexBadLocation g ++ takeFileName src
-	liftIO $ createDirectoryIfMissing True dest
+	liftIO $ createDirectoryIfMissing True (parentDir dest)
+	liftIO $ allowWrite (parentDir src)
 	liftIO $ renameFile src dest
 	liftIO $ removeDirectory (parentDir src)
 	return dest
