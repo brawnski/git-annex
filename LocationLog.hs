@@ -23,6 +23,7 @@
 module LocationLog (
 	LogStatus(..),
 	logChange,
+	logFile,
 	keyLocations
 ) where
 

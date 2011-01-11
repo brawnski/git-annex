@@ -375,6 +375,18 @@ checklocationlog f expected = do
 			uuids <- LocationLog.keyLocations g' k
 			assertEqual ("location log for " ++ f ++ " " ++ (show k) ++ " " ++ thisuuid)
 				expected (elem thisuuid uuids)
+
+			-- Location log files should always be checked
+			-- into git, and any modifications staged for
+			-- commit. This is a regression test, as some
+			-- commands forgot to.
+			let lf = LocationLog.logFile g' k
+			fs <- Git.inRepo g' [lf]
+			when (null fs) $
+				assertFailure $ f ++ " logfile not added to git repo"
+			ufs <- Git.changedUnstagedFiles g' [lf]
+			when (not $ null ufs) $
+				assertFailure $ f ++ " logfile changes not staged"
 		_ -> assertFailure $ f ++ " failed to look up key"
 
 inlocationlog :: FilePath -> Assertion
