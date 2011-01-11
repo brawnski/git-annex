@@ -40,5 +40,5 @@ perform repo = do
 		g <- Annex.gitRepo
 		logfile <- trustLog
 		liftIO $ Git.run g ["add", logfile]
-		liftIO $ Git.run g ["commit", "-m", "git annex untrust", logfile]
+		liftIO $ Git.run g ["commit", "-q", "-m", "git annex untrust", logfile]
 	return $ Just $ return True
