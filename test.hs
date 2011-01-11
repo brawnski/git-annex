@@ -18,11 +18,15 @@ import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
 
+import qualified Annex
+import qualified BackendList
+import qualified Backend
 import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
 import qualified TypeInternals
 import qualified GitAnnex
+import qualified LocationLog
 
 main :: IO ()
 main = do
@@ -359,6 +363,26 @@ checkdangling f = do
 		Left _ -> return () -- expected; dangling link
 		Right _ -> assertFailure $ f ++ " was not a dangling link as expected"
 
+checklocationlog :: FilePath -> Bool -> Assertion
+checklocationlog f expected = do
+	g <- Git.repoFromCwd
+	g' <- Git.configRead g
+	let thisuuid = Git.configGet g' "annex.uuid" ""
+	s <- Annex.new g BackendList.allBackends
+	r <- Annex.eval s $ Backend.lookupFile f
+	case r of
+		Just (k, _) -> do
+			uuids <- LocationLog.keyLocations g' k
+			assertEqual ("location log for " ++ f ++ " " ++ (show k) ++ " " ++ thisuuid)
+				expected (elem thisuuid uuids)
+		_ -> assertFailure $ f ++ " failed to look up key"
+
+inlocationlog :: FilePath -> Assertion
+inlocationlog f = checklocationlog f True
+
+notinlocationlog :: FilePath -> Assertion
+notinlocationlog f = checklocationlog f False
+
 runchecks :: [FilePath -> Assertion] -> FilePath -> Assertion
 runchecks [] _ = return ()
 runchecks (a:as) f = do
@@ -366,10 +390,12 @@ runchecks (a:as) f = do
 	runchecks as f
 
 annexed_notpresent :: FilePath -> Assertion
-annexed_notpresent = runchecks [checklink, checkdangling, checkunwritable]
+annexed_notpresent = runchecks
+	[checklink, checkdangling, checkunwritable, notinlocationlog]
 
 annexed_present :: FilePath -> Assertion
-annexed_present = runchecks [checklink, checkcontent, checkunwritable]
+annexed_present = runchecks
+	[checklink, checkcontent, checkunwritable, inlocationlog]
 
 unannexed :: FilePath -> Assertion
 unannexed = runchecks [checkregularfile, checkcontent, checkwritable]
