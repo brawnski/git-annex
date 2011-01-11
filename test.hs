@@ -18,6 +18,7 @@ import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
 import Control.Monad.State (liftIO)
+import Maybe
 
 import qualified Annex
 import qualified BackendList
@@ -31,6 +32,7 @@ import qualified LocationLog
 import qualified UUID
 import qualified Remotes
 import qualified Core
+import qualified Backend.SHA1
 
 main :: IO ()
 main = do
@@ -60,6 +62,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	-- test order matters, later tests may rely on state from earlier
 	[ test_init
 	, test_add
+	, test_setkey
 	, test_unannex
 	, test_drop
 	, test_get
@@ -93,6 +96,17 @@ test_add = "git-annex add" ~: TestCase $ inmainrepo $ do
 	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
 	git_annex "add" ["-q", ingitfile] @? "add ingitfile should be no-op"
 	unannexed ingitfile
+
+test_setkey :: Test
+test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
+	writeFile tmp $ content sha1annexedfile
+	r <- annexeval $ TypeInternals.getKey Backend.SHA1.backend tmp
+	let sha1 = TypeInternals.keyName $ fromJust r
+	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
+	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
+	annexed_present sha1annexedfile
+	where
+		tmp = "tmpfile"
 
 test_unannex :: Test
 test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
@@ -281,8 +295,8 @@ test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
 	git_annex "get" ["-q", annexedfile] @? "get of file failed"
 	Core.allowWrite annexedfile
 	writeFile annexedfile (changedcontent annexedfile)
-	r <- git_annex "fsck" ["-q"]
-	not r @? "fsck failed to fail with corrupted file content"
+	r' <- git_annex "fsck" ["-q"]
+	not r' @? "fsck failed to fail with corrupted file content"
 
 -- This is equivilant to running git-annex, but it's all run in-process
 -- so test coverage collection works.
@@ -494,6 +508,9 @@ tmprepodir = tmpdir ++ "/tmprepo"
 annexedfile :: String
 annexedfile = "foo"
 
+sha1annexedfile :: String
+sha1annexedfile = "sha1foo"
+
 ingitfile :: String
 ingitfile = "bar"
 
@@ -501,6 +518,7 @@ content :: FilePath -> String
 content f
 	| f == annexedfile = "annexed file content"
 	| f == ingitfile = "normal file content"
+	| f == sha1annexedfile ="sha1 annexed file content"
 	| otherwise = "unknown file " ++ f
 
 changecontent :: FilePath -> IO ()
