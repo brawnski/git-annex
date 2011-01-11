@@ -1,3 +1,11 @@
+git-annex (0.18) UNRELEASED; urgency=low
+
+  * Bugfix: `copy --to` and `move --to` forgot to stage location log changes
+    after transferring the file to the remote repository.
+    (Did not affect ssh remotes.)
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 11 Jan 2011 16:05:25 -0400
+
 git-annex (0.17) unstable; urgency=low
 
   * unannex: Now skips files whose content is not present, rather than

@@ -252,8 +252,11 @@ copyToRemote r key
 		-- run copy from perspective of remote
 		liftIO $ do
 			a <- Annex.new r []
-			Annex.eval a $ Core.getViaTmp key $ \f ->
-				liftIO $ copyFile keysrc f
+			Annex.eval a $ do
+				ok <- Core.getViaTmp key $
+					\f -> liftIO $ copyFile keysrc f
+				Annex.queueRun
+				return ok
 	| Git.repoIsSsh r = do
 		g <- Annex.gitRepo
 		let keysrc = annexLocation g key
