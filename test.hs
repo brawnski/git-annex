@@ -17,6 +17,7 @@ import System.IO.Error
 import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
+import Control.Monad.State (liftIO)
 
 import qualified Annex
 import qualified BackendList
@@ -27,6 +28,8 @@ import qualified Utility
 import qualified TypeInternals
 import qualified GitAnnex
 import qualified LocationLog
+import qualified UUID
+import qualified Remotes
 
 main :: IO ()
 main = do
@@ -64,6 +67,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_lock
 	, test_edit
 	, test_fix
+	, test_trust
 	]
 
 test_init :: Test
@@ -244,6 +248,28 @@ test_fix = "git-annex fix" ~: intmpclonerepo $ do
 		subdir = "s"
 		newfile = subdir ++ "/" ++ annexedfile
 
+test_trust :: Test
+test_trust = "git-annex trust/untrust" ~: intmpclonerepo $ do
+	trust False
+	git_annex "trust" ["-q", "origin"] @? "trust failed"
+	trust True
+	git_annex "trust" ["-q", "origin"] @? "trust of trusted failed"
+	trust True
+	git_annex "untrust" ["-q", "origin"] @? "untrust failed"
+	trust False
+	git_annex "untrust" ["-q", "origin"] @? "untrust of untrusted failed"
+	trust False
+	where
+		trust expected = do
+			istrusted <- annexeval $ do
+				uuids <- UUID.getTrusted
+				r <- Remotes.byName "origin"
+				u <- UUID.getUUID r
+				return $ elem u uuids
+			assertEqual "trust value" expected istrusted
+
+-- This is equivilant to running git-annex, but it's all run in-process
+-- so test coverage collection works.
 git_annex :: String -> [String] -> IO Bool
 git_annex command params = do
 	-- catch all errors, including normally fatal errors
@@ -253,6 +279,15 @@ git_annex command params = do
 		Left _ -> return False
 	where
 		run = GitAnnex.run (command:params)
+
+-- Runs an action in the current annex. Note that shutdown actions
+-- are not run; this should only be used for actions that query state.
+annexeval :: TypeInternals.Annex a -> IO a
+annexeval a = do
+	g <- Git.repoFromCwd
+	g' <- Git.configRead g
+	s <- Annex.new g' BackendList.allBackends
+	Annex.eval s a
 
 innewrepo :: Assertion -> Assertion
 innewrepo a = withgitrepo $ \r -> indir r a
@@ -365,26 +400,30 @@ checkdangling f = do
 
 checklocationlog :: FilePath -> Bool -> Assertion
 checklocationlog f expected = do
-	g <- Git.repoFromCwd
-	g' <- Git.configRead g
-	let thisuuid = Git.configGet g' "annex.uuid" ""
-	s <- Annex.new g BackendList.allBackends
-	r <- Annex.eval s $ Backend.lookupFile f
+	thisuuid <- annexeval $ do
+		g <- Annex.gitRepo
+		UUID.getUUID g
+	r <- annexeval $ Backend.lookupFile f
 	case r of
 		Just (k, _) -> do
-			uuids <- LocationLog.keyLocations g' k
-			assertEqual ("location log for " ++ f ++ " " ++ (show k) ++ " " ++ thisuuid)
+			uuids <- annexeval $ do
+				g <- Annex.gitRepo
+				liftIO $ LocationLog.keyLocations g k
+			assertEqual ("bad content in location log for " ++ f ++ " key " ++ (show k) ++ " uuid " ++ thisuuid)
 				expected (elem thisuuid uuids)
 
 			-- Location log files should always be checked
 			-- into git, and any modifications staged for
 			-- commit. This is a regression test, as some
 			-- commands forgot to.
-			let lf = LocationLog.logFile g' k
-			fs <- Git.inRepo g' [lf]
+			(fs, ufs) <- annexeval $ do
+				g <- Annex.gitRepo
+				let lf = LocationLog.logFile g k
+				fs <- liftIO $ Git.inRepo g [lf]
+				ufs <- liftIO $ Git.changedUnstagedFiles g [lf]
+				return (fs, ufs)
 			when (null fs) $
 				assertFailure $ f ++ " logfile not added to git repo"
-			ufs <- Git.changedUnstagedFiles g' [lf]
 			when (not $ null ufs) $
 				assertFailure $ f ++ " logfile changes not staged"
 		_ -> assertFailure $ f ++ " failed to look up key"
