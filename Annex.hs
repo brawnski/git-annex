@@ -51,9 +51,9 @@ new gitrepo allbackends = do
 			Annex.gitRepoChange gitrepo'
 
 {- performs an action in the Annex monad -}
-run :: AnnexState -> StateT AnnexState IO a -> IO (a, AnnexState)
+run :: AnnexState -> Annex a -> IO (a, AnnexState)
 run state action = runStateT action state
-eval :: AnnexState -> StateT AnnexState IO a -> IO a
+eval :: AnnexState -> Annex a -> IO a
 eval state action = evalStateT action state
 
 {- Returns the git repository being acted on -}
