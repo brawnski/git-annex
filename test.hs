@@ -104,6 +104,7 @@ test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	let sha1 = TypeInternals.keyName $ fromJust r
 	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
+	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
 	annexed_present sha1annexedfile
 	where
 		tmp = "tmpfile"
@@ -291,12 +292,16 @@ test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
 	r <- git_annex "fsck" ["-q"]
 	not r @? "fsck failed to fail with numcopies unsatisfied"
 	Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
-
-	git_annex "get" ["-q", annexedfile] @? "get of file failed"
-	Core.allowWrite annexedfile
-	writeFile annexedfile (changedcontent annexedfile)
-	r' <- git_annex "fsck" ["-q"]
-	not r' @? "fsck failed to fail with corrupted file content"
+	corrupt annexedfile
+	corrupt sha1annexedfile
+	where
+		corrupt f = do
+			git_annex "get" ["-q", f] @? "get of file failed"
+			Core.allowWrite f
+			writeFile f (changedcontent f)
+			r <- git_annex "fsck" ["-q"]
+			not r @? "fsck failed to fail with corrupted file content"
+			git_annex "fsck" ["-q"] @? "fsck unexpectedly failed again; previous one did not fix problem"
 
 -- This is equivilant to running git-annex, but it's all run in-process
 -- so test coverage collection works.
