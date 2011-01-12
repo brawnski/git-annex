@@ -9,6 +9,7 @@ module Command.DropUnused where
 
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
+import System.Directory
 
 import Command
 import Types
@@ -39,8 +40,13 @@ start s = do
 readUnusedLog :: Annex (M.Map String Key)
 readUnusedLog = do
 	g <- Annex.gitRepo
-	l <- liftIO $ readFile (annexUnusedLog g)
-	return $ M.fromList $ map parse $ lines l
+	let f = annexUnusedLog g
+	e <- liftIO $ doesFileExist f
+	if e
+		then do
+			l <- liftIO $ readFile f
+			return $ M.fromList $ map parse $ lines l
+		else return $ M.empty
 	where
 		parse line = (head ws, tokey $ unwords $ tail ws)
 			where
