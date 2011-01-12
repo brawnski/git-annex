@@ -38,13 +38,13 @@ checkUnused :: Annex Bool
 checkUnused = do
 	showNote "checking for unused data..."
 	unused <- unusedKeys
+	let list = number 1 unused
+	g <- Annex.gitRepo
+	liftIO $ writeFile (annexUnusedLog g) $ unlines $ 
+		map (\(n, k) -> show n ++ " " ++ show k) list
 	if null unused
 		then return True
 		else do
-			let list = number 1 unused
-			g <- Annex.gitRepo
-			liftIO $ writeFile (annexUnusedLog g) $ unlines $ 
-				map (\(n, k) -> show n ++ " " ++ show k) list
 			showLongNote $ w list
 			return False
 	where
