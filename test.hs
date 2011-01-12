@@ -231,19 +231,29 @@ test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
 	(not r) @? "drop wrongly succeeded with no known copy of modified file"
 
 test_edit :: Test
-test_edit = "git-annex edit/commit" ~: intmpclonerepo $ do
-	git_annex "get" ["-q", annexedfile] @? "get of file failed"
-	annexed_present annexedfile
-	git_annex "edit" ["-q", annexedfile] @? "edit failed"
-	unannexed annexedfile
-	changecontent annexedfile
-	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "content changed"]
-		@? "git commit of edited file failed"
-	runchecks [checklink, checkunwritable] annexedfile
-	c <- readFile annexedfile
-	assertEqual ("content of modified file") c (changedcontent annexedfile)
-	r <- git_annex "drop" ["-q", annexedfile]
-	(not r) @? "drop wrongly succeeded with no known copy of modified file"
+test_edit = "git-annex edit/commit" ~: TestList [t False, t True]
+	where t precommit = TestCase $ intmpclonerepo $ do
+		git_annex "get" ["-q", annexedfile] @? "get of file failed"
+		annexed_present annexedfile
+		git_annex "edit" ["-q", annexedfile] @? "edit failed"
+		unannexed annexedfile
+		changecontent annexedfile
+		if precommit
+			then do
+				-- pre-commit depends on the file being
+				-- staged, normally git commit does this
+				Utility.boolSystem "git" ["add", annexedfile]
+					@? "git add of edited file failed"
+				git_annex "pre-commit" ["-q"]
+					@? "pre-commit failed"
+			else do
+				Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "content changed"]
+					@? "git commit of edited file failed"
+		runchecks [checklink, checkunwritable] annexedfile
+		c <- readFile annexedfile
+		assertEqual ("content of modified file") c (changedcontent annexedfile)
+		r <- git_annex "drop" ["-q", annexedfile]
+		(not r) @? "drop wrongly succeeded with no known copy of modified file"
 
 test_fix :: Test
 test_fix = "git-annex fix" ~: intmpclonerepo $ do
