@@ -19,6 +19,7 @@ import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
 import Control.Monad.State (liftIO)
 import Maybe
+import qualified Data.Map as M
 
 import qualified Annex
 import qualified BackendList
@@ -34,6 +35,7 @@ import qualified Remotes
 import qualified Core
 import qualified Backend.SHA1
 import qualified Backend.WORM
+import qualified Command.DropUnused
 
 main :: IO ()
 main = do
@@ -75,6 +77,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_trust
 	, test_fsck
 	, test_migrate
+	, test_unused
 	]
 
 test_init :: Test
@@ -359,6 +362,39 @@ test_migrate = "git-annex migrate" ~: TestList [t False, t True]
 				r <- annexeval $ Backend.lookupFile file
 				let b = snd $ fromJust r
 				assertEqual ("backend for " ++ file) expected b
+
+test_unused :: Test
+test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
+	-- keys have to be looked up before files are removed
+	annexedfilekey <- annexeval $ findkey annexedfile
+	sha1annexedfilekey <- annexeval $ findkey sha1annexedfile
+	git_annex "get" ["-q", annexedfile] @? "get of file failed"
+	git_annex "get" ["-q", sha1annexedfile] @? "get of file failed"
+	checkunused []
+	Utility.boolSystem "git" ["rm", "-q", annexedfile] @? "git rm failed"
+	checkunused [annexedfilekey]
+	Utility.boolSystem "git" ["rm", "-q", sha1annexedfile] @? "git rm failed"
+	checkunused [annexedfilekey, sha1annexedfilekey]
+
+	-- good opportunity to test dropkey also
+	git_annex "dropkey" ["-q", "--force", TypeInternals.keyName annexedfilekey]
+		@? "dropkey failed"
+	checkunused [sha1annexedfilekey]
+
+	git_annex "dropunused" ["-q", "1", "2"] @? "dropunused failed"
+	checkunused []
+	git_annex "dropunused" ["-q", "10", "501"] @? "dropunused failed on bogus numbers"
+
+	where
+		checkunused expectedkeys = do
+			git_annex "unused" ["-q"] @? "unused failed"
+			unusedmap <- annexeval $ Command.DropUnused.readUnusedLog
+			let unusedkeys = M.elems unusedmap
+			assertEqual "unused keys differ"
+				(sort expectedkeys) (sort unusedkeys)
+		findkey f = do
+			r <- Backend.lookupFile f
+			return $ fst $ fromJust r
 
 -- This is equivilant to running git-annex, but it's all run in-process
 -- so test coverage collection works.
