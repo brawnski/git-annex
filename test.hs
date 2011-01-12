@@ -73,6 +73,7 @@ toplevels = TestLabel "toplevel" $ TestList
 	, test_fix
 	, test_trust
 	, test_fsck
+	, test_migrate
 	]
 
 test_init :: Test
@@ -312,6 +313,35 @@ test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
 			r <- git_annex "fsck" ["-q"]
 			not r @? "fsck failed to fail with corrupted file content"
 			git_annex "fsck" ["-q"] @? "fsck unexpectedly failed again; previous one did not fix problem"
+
+test_migrate :: Test
+test_migrate = "git-annex migrate" ~: TestList [t False, t True]
+	where t usegitattributes = TestCase $ intmpclonerepo $ do
+		annexed_notpresent annexedfile
+		annexed_notpresent sha1annexedfile
+		git_annex "migrate" ["-q", annexedfile] @? "migrate of not present failed"
+		git_annex "migrate" ["-q", sha1annexedfile] @? "migrate of not present failed"
+		git_annex "get" ["-q", annexedfile] @? "get of file failed"
+		git_annex "get" ["-q", sha1annexedfile] @? "get of file failed"
+		annexed_present annexedfile
+		annexed_present sha1annexedfile
+		if usegitattributes
+			then do
+				writeFile ".gitattributes" "* annex.backend=SHA1"
+				git_annex "migrate" [sha1annexedfile] @? "migrate to same backend failed"
+				git_annex "migrate" [annexedfile] @? "migrate to different backend failed"
+			else do
+				git_annex "migrate" [sha1annexedfile, "--backend=SHA1"] @? "migrate to same backend failed"
+				git_annex "migrate" [annexedfile, "--backend=SHA1"] @? "migrate to different backend failed"
+		annexed_present annexedfile
+		annexed_present sha1annexedfile
+		backend annexedfile Backend.SHA1.backend
+		backend sha1annexedfile Backend.SHA1.backend
+		where
+			backend file expected = do
+				r <- annexeval $ Backend.lookupFile file
+				let b = snd $ fromJust r
+				assertEqual ("backend for " ++ file) expected b
 
 -- This is equivilant to running git-annex, but it's all run in-process
 -- so test coverage collection works.
