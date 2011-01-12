@@ -27,15 +27,20 @@ seek :: [CommandSeek]
 seek = [withBackendFilesInGit start]
 
 start :: CommandStartBackendFile
-start (_, Nothing) = return Nothing
-start (file, Just newbackend) = isAnnexed file $ \(key, oldbackend) -> do
+start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 	exists <- inAnnex key
+	newbackend <- choosebackend b
 	if (newbackend /= oldbackend) && exists
 		then do
 			showStart "migrate" file
 			return $ Just $ perform file key newbackend
 		else
 			return Nothing
+	where
+		choosebackend Nothing = do
+			backends <- Backend.list
+			return $ head backends
+		choosebackend (Just backend) = return backend
 
 perform :: FilePath -> Key -> Backend -> CommandPerform
 perform file oldkey newbackend = do

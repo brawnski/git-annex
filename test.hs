@@ -328,8 +328,8 @@ test_migrate = "git-annex migrate" ~: TestList [t False, t True]
 		if usegitattributes
 			then do
 				writeFile ".gitattributes" "* annex.backend=SHA1"
-				git_annex "migrate" [sha1annexedfile] @? "migrate to same backend failed"
-				git_annex "migrate" [annexedfile] @? "migrate to different backend failed"
+				git_annex "migrate" ["-q", sha1annexedfile] @? "migrate to same backend failed"
+				git_annex "migrate" ["-q", annexedfile] @? "migrate to different backend failed"
 			else do
 				git_annex "migrate" [sha1annexedfile, "--backend=SHA1"] @? "migrate to same backend failed"
 				git_annex "migrate" [annexedfile, "--backend=SHA1"] @? "migrate to different backend failed"
