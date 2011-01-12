@@ -33,6 +33,7 @@ import qualified UUID
 import qualified Remotes
 import qualified Core
 import qualified Backend.SHA1
+import qualified Backend.WORM
 
 main :: IO ()
 main = do
@@ -327,18 +328,34 @@ test_migrate = "git-annex migrate" ~: TestList [t False, t True]
 		annexed_present sha1annexedfile
 		if usegitattributes
 			then do
-				writeFile ".gitattributes" "* annex.backend=SHA1"
-				git_annex "migrate" ["-q", sha1annexedfile] @? "migrate to same backend failed"
-				git_annex "migrate" ["-q", annexedfile] @? "migrate to different backend failed"
+				writeFile ".gitattributes" $ "* annex.backend=SHA1"
+				git_annex "migrate" ["-q", sha1annexedfile]
+					@? "migrate sha1annexedfile failed"
+				git_annex "migrate" ["-q", annexedfile]
+					@? "migrate annexedfile failed"
 			else do
-				git_annex "migrate" [sha1annexedfile, "--backend=SHA1"] @? "migrate to same backend failed"
-				git_annex "migrate" [annexedfile, "--backend=SHA1"] @? "migrate to different backend failed"
+				git_annex "migrate" ["-q", sha1annexedfile, "--backend", "SHA1"]
+					@? "migrate sha1annexedfile failed"
+				git_annex "migrate" ["-q", annexedfile, "--backend", "SHA1"]
+					@? "migrate annexedfile failed"
 		annexed_present annexedfile
 		annexed_present sha1annexedfile
-		backend annexedfile Backend.SHA1.backend
-		backend sha1annexedfile Backend.SHA1.backend
+		checkbackend annexedfile Backend.SHA1.backend
+		checkbackend sha1annexedfile Backend.SHA1.backend
+
+		-- check that reversing a migration works
+		writeFile ".gitattributes" $ "* annex.backend=WORM"
+		git_annex "migrate" ["-q", sha1annexedfile]
+			@? "migrate sha1annexedfile failed"
+		git_annex "migrate" ["-q", annexedfile]
+			@? "migrate annexedfile failed"
+		annexed_present annexedfile
+		annexed_present sha1annexedfile
+		checkbackend annexedfile Backend.WORM.backend
+		checkbackend sha1annexedfile Backend.WORM.backend
+		
 		where
-			backend file expected = do
+			checkbackend file expected = do
 				r <- annexeval $ Backend.lookupFile file
 				let b = snd $ fromJust r
 				assertEqual ("backend for " ++ file) expected b
