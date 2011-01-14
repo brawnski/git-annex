@@ -18,7 +18,7 @@ command = [Command "fsck" (paramOptional $ paramRepeating paramPath) seek
 	"check for problems"]
 
 seek :: [CommandSeek]
-seek = [withAll (withAttrFilesInGit "annex.numcopies") start]
+seek = [withAttrFilesInGit "annex.numcopies" start]
 
 {- Checks a file's backend data for problems. -}
 start :: CommandStartAttrFile

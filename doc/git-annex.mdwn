@@ -59,7 +59,9 @@ content from the key-value store.
 
 Like many git commands, git-annex can be passed a path that 
 is either a file or a directory. In the latter case it acts on all relevant
-files in the directory.
+files in the directory. If no path is specified, most git-annex commands
+default to acting on all relevant files in the current directory (and
+subdirectories).
 
 Many git-annex commands will stage changes for later `git commit` by you.
 

@@ -18,7 +18,7 @@ command = [Command "find" (paramOptional $ paramRepeating paramPath) seek
 	"lists available files"]
 
 seek :: [CommandSeek]
-seek = [withDefault "." withFilesInGit start]
+seek = [withFilesInGit start]
 
 {- Output a list of files. -}
 start :: CommandStartString

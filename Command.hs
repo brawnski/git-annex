@@ -174,19 +174,6 @@ backendPairs a files = do
 	pairs <- Backend.chooseBackends files
 	return $ map a pairs
 
-{- Default to acting on all files matching the seek action if
- - none are specified. -}
-withAll :: (a -> CommandSeek) -> a -> CommandSeek
-withAll w a [] = do
-	g <- Annex.gitRepo
-	w a [Git.workTree g]
-withAll w a p = w a p
-
-{- Provides a default parameter to act on if none is specified. -}
-withDefault :: String-> (a -> CommandSeek) -> (a -> CommandSeek)
-withDefault d w a [] = w a [d]
-withDefault _ w a p = w a p
-
 {- Filter out files from the state directory, and those matching the
  - exclude glob pattern, if it was specified. -}
 filterFiles :: [FilePath] -> Annex [FilePath]

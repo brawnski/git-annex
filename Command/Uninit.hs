@@ -25,7 +25,7 @@ command = [Command "uninit" paramPath seek
         "de-initialize git-annex and clean out repository"]
 
 seek :: [CommandSeek]
-seek = [withAll withFilesInGit Command.Unannex.start, withNothing start]
+seek = [withFilesInGit Command.Unannex.start, withNothing start]
 
 start :: CommandStartNothing
 start = do
