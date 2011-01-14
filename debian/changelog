@@ -1,4 +1,4 @@
-git-annex (0.18) UNRELEASED; urgency=low
+git-annex (0.18) unstable; urgency=low
 
   * Bugfix: `copy --to` and `move --to` forgot to stage location log changes
     after transferring the file to the remote repository.
@@ -8,7 +8,7 @@ git-annex (0.18) UNRELEASED; urgency=low
   * unlock: Fix behavior when file content is not present.
   * Test suite improvements. Current top-level test coverage: 80%
 
- -- Joey Hess <joeyh@debian.org>  Tue, 11 Jan 2011 16:05:25 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 14 Jan 2011 14:17:44 -0400
 
 git-annex (0.17) unstable; urgency=low
 

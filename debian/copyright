@@ -4,5 +4,6 @@ Source: native package
 Files: *
 Copyright: © 2010-2011 Joey Hess <joey@kitenet.net>
 License: GPL-3+
- The full text of the GPL is distributed as doc/GPL in this package's
- source, or in /usr/share/common-licenses/GPL on Debian systems.
+ The full text of version 3 of the GPL is distributed as doc/GPL in
+ this package's source, or in /usr/share/common-licenses/GPL-3 on
+ Debian systems.
