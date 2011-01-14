@@ -1,7 +1,0 @@
-git-annex 0.13 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Makefile: Install man page and html (when built).
-   * Makefile: Add GHCFLAGS variable.
-   * Fix upgrade from 0.03.
-   * Support remotes using git+ssh and ssh+git as protocol.
-     Closes: #[607056](http://bugs.debian.org/607056)"""]]

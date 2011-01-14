@@ -1,0 +1,9 @@
+git-annex 0.18 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Bugfix: `copy --to` and `move --to` forgot to stage location log changes
+     after transferring the file to the remote repository.
+     (Did not affect ssh remotes.)
+   * fsck: Fix bug in moving of corrupted files to .git/annex/bad/
+   * migrate: Fix support for --backend option.
+   * unlock: Fix behavior when file content is not present.
+   * Test suite improvements. Current top-level test coverage: 80%"""]]
