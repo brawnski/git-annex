@@ -7,6 +7,7 @@
 
 module Command.Unlock where
 
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Directory hiding (copyFile)
 
@@ -32,15 +33,15 @@ seek = [withFilesInGit start]
  - content. -}
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
-	inbackend <- Backend.hasKey key
-	if not inbackend
-		then return Nothing
-		else do
-			showStart "unlock" file
-			return $ Just $ perform file key
+	showStart "unlock" file
+	return $ Just $ perform file key
 
 perform :: FilePath -> Key -> CommandPerform
 perform dest key = do
+	inbackend <- Backend.hasKey key
+	when (not inbackend) $
+		error "content not present"
+
 	g <- Annex.gitRepo
 	let src = annexLocation g key
 	liftIO $ removeFile dest

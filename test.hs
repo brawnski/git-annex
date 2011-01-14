@@ -218,7 +218,7 @@ test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
 	-- regression test: unlock of not present file should skip it
 	annexed_notpresent annexedfile
 	r <- git_annex "unlock" ["-q", annexedfile]
-	r @? "unlock failed with not present file"
+	not r @? "unlock failed to fail with not present file"
 	annexed_notpresent annexedfile
 
 	git_annex "get" ["-q", annexedfile] @? "get of file failed"
