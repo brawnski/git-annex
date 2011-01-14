@@ -12,6 +12,7 @@ import System.Directory hiding (copyFile)
 
 import Command
 import qualified Annex
+import qualified Backend
 import Types
 import Messages
 import Locations
@@ -31,8 +32,12 @@ seek = [withFilesInGit start]
  - content. -}
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
-	showStart "unlock" file
-	return $ Just $ perform file key
+	inbackend <- Backend.hasKey key
+	if not inbackend
+		then return Nothing
+		else do
+			showStart "unlock" file
+			return $ Just $ perform file key
 
 perform :: FilePath -> Key -> CommandPerform
 perform dest key = do

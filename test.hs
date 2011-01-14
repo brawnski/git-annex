@@ -215,6 +215,12 @@ test_copy = "git-annex copy" ~: TestCase $ intmpclonerepo $ do
 
 test_lock :: Test
 test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
+	-- regression test: unlock of not present file should skip it
+	annexed_notpresent annexedfile
+	r <- git_annex "unlock" ["-q", annexedfile]
+	r @? "unlock failed with not present file"
+	annexed_notpresent annexedfile
+
 	git_annex "get" ["-q", annexedfile] @? "get of file failed"
 	annexed_present annexedfile
 	git_annex "unlock" ["-q", annexedfile] @? "unlock failed"		
@@ -232,8 +238,8 @@ test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
 	runchecks [checklink, checkunwritable] annexedfile
 	c <- readFile annexedfile
 	assertEqual ("content of modified file") c (changedcontent annexedfile)
-	r <- git_annex "drop" ["-q", annexedfile]
-	(not r) @? "drop wrongly succeeded with no known copy of modified file"
+	r' <- git_annex "drop" ["-q", annexedfile]
+	not r' @? "drop wrongly succeeded with no known copy of modified file"
 
 test_edit :: Test
 test_edit = "git-annex edit/commit" ~: TestList [t False, t True]
