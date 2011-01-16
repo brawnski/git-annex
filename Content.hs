@@ -1,19 +1,30 @@
-{- git-annex core functions
+{- git-annex file content managing
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Core where
+module Content (
+	inAnnex,
+	calcGitLink,
+	logStatus,
+	getViaTmp,
+	preventWrite,
+	allowWrite,
+	moveAnnex,
+	removeAnnex,
+	fromAnnex,
+	moveBad,
+	getKeysPresent
+) where
 
 import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
-import Control.Monad (when, unless, filterM)
+import Control.Monad (when, filterM)
 import System.Posix.Files
-import Data.Maybe
 import System.FilePath
 
 import Types
@@ -21,56 +32,8 @@ import Locations
 import LocationLog
 import UUID
 import qualified GitRepo as Git
-import qualified GitQueue
 import qualified Annex
-import qualified Backend
 import Utility
-import Messages
-
-{- Runs a list of Annex actions. Catches IO errors and continues
- - (but explicitly thrown errors terminate the whole command).
- - Runs shutdown and propigates an overall error status at the end.
- -}
-tryRun :: AnnexState -> [Annex Bool] -> IO ()
-tryRun state actions = tryRun' state 0 actions
-tryRun' :: AnnexState -> Integer -> [Annex Bool] -> IO ()
-tryRun' state errnum (a:as) = do
-	result <- try $ Annex.run state a
-	case result of
-		Left err -> do
-			Annex.eval state $ showErr err
-			tryRun' state (errnum + 1) as
-		Right (True,state') -> tryRun' state' errnum as
-		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' state errnum [] = do
-	_ <- try $ Annex.run state $ shutdown errnum
-	when (errnum > 0) $ error $ show errnum ++ " failed"
-
-{- Actions to perform each time ran. -}
-startup :: Annex Bool
-startup = do
-	prepUUID
-	return True
-
-{- When git-annex is done, it runs this. -}
-shutdown :: Integer -> Annex Bool
-shutdown errnum = do
-	q <- Annex.queueGet
-	unless (q == GitQueue.empty) $ do
-		showSideAction "Recording state in git..."
-		Annex.queueRun
-
-	-- If nothing failed, clean up any files left in the temp directory,
-	-- but leave the directory itself. If something failed, temp files
-	-- are left behind to allow resuming on re-run.
-	when (errnum == 0) $ do
-		g <- Annex.gitRepo
-		let tmp = annexTmpLocation g
-		exists <- liftIO $ doesDirectoryExist tmp
-		when exists $ liftIO $ removeDirectoryRecursive tmp
-		liftIO $ createDirectoryIfMissing True tmp
-
-	return True
 
 {- Checks if a given key is currently present in the annexLocation. -}
 inAnnex :: Key -> Annex Bool
@@ -200,11 +163,3 @@ getKeysPresent' dir = do
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
-
-{- List of keys referenced by symlinks in the git repo. -}
-getKeysReferenced :: Annex [Key]
-getKeysReferenced = do
-	g <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo g [Git.workTree g]
-	keypairs <- mapM Backend.lookupFile files
-	return $ map fst $ catMaybes keypairs

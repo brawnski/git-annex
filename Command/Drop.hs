@@ -13,7 +13,7 @@ import Command
 import qualified Backend
 import LocationLog
 import Types
-import Core
+import Content
 import Messages
 import Utility
 

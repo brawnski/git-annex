@@ -1,4 +1,4 @@
-{- git-annex command line parsing
+{- git-annex command line parsing and dispatch
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
@@ -7,22 +7,27 @@
 
 module CmdLine (
 	dispatch,
-	parseCmd,
 	usage,
+	shutdown
 ) where
 
+import System.IO.Error (try)
 import System.Console.GetOpt
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
+import Control.Monad (when, unless)
+import System.Directory
 
 import qualified Annex
 import qualified GitRepo as Git
+import qualified GitQueue
 import Types
 import Command
 import BackendList
-import Core
 import Upgrade
 import Options
+import Messages
+import UUID
+import Locations
 
 {- Runs the passed command line. -}
 dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
@@ -68,3 +73,46 @@ usage header cmds options =
 		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
 		longest f = foldl max 0 $ map (length . f) cmds
+
+{- Runs a list of Annex actions. Catches IO errors and continues
+ - (but explicitly thrown errors terminate the whole command).
+ - Runs shutdown and propigates an overall error status at the end.
+ -}
+tryRun :: AnnexState -> [Annex Bool] -> IO ()
+tryRun state actions = tryRun' state 0 actions
+tryRun' :: AnnexState -> Integer -> [Annex Bool] -> IO ()
+tryRun' state errnum (a:as) = do
+	result <- try $ Annex.run state a
+	case result of
+		Left err -> do
+			Annex.eval state $ showErr err
+			tryRun' state (errnum + 1) as
+		Right (True,state') -> tryRun' state' errnum as
+		Right (False,state') -> tryRun' state' (errnum + 1) as
+tryRun' state errnum [] = do
+	_ <- try $ Annex.run state $ shutdown errnum
+	when (errnum > 0) $ error $ show errnum ++ " failed"
+
+{- Actions to perform each time ran. -}
+startup :: Annex Bool
+startup = do
+	prepUUID
+	return True
+
+{- Cleanup actions. -}
+shutdown :: Integer -> Annex ()
+shutdown errnum = do
+	q <- Annex.queueGet
+	unless (q == GitQueue.empty) $ do
+		showSideAction "Recording state in git..."
+		Annex.queueRun
+
+	-- If nothing failed, clean up any files left in the temp directory,
+	-- but leave the directory itself. If something failed, temp files
+	-- are left behind to allow resuming on re-run.
+	when (errnum == 0) $ do
+		g <- Annex.gitRepo
+		let tmp = annexTmpLocation g
+		exists <- liftIO $ doesDirectoryExist tmp
+		when exists $ liftIO $ removeDirectoryRecursive tmp
+		liftIO $ createDirectoryIfMissing True tmp

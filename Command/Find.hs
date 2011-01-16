@@ -11,7 +11,7 @@ import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import Command
-import Core
+import Content
 
 command :: [Command]
 command = [Command "find" (paramOptional $ paramRepeating paramPath) seek

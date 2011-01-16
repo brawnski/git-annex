@@ -17,7 +17,7 @@ import qualified Annex
 import Utility
 import qualified Backend
 import Types
-import Core
+import Content
 import Messages
 
 command :: [Command]

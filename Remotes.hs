@@ -34,7 +34,7 @@ import LocationLog
 import Locations
 import UUID
 import Utility
-import qualified Core
+import qualified Content
 import Messages
 import CopyFile
 import RsyncFile
@@ -159,7 +159,7 @@ inAnnex r key = if Git.repoIsUrl r
 			-- run a local check inexpensively,
 			-- by making an Annex monad using the remote
 			a <- Annex.new r []
-			Annex.eval a (Core.inAnnex key)
+			Annex.eval a (Content.inAnnex key)
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
 			inannex <- onRemote r (boolSystem, False) "inannex" 
@@ -253,7 +253,7 @@ copyToRemote r key
 		liftIO $ do
 			a <- Annex.new r []
 			Annex.eval a $ do
-				ok <- Core.getViaTmp key $
+				ok <- Content.getViaTmp key $
 					\f -> liftIO $ copyFile keysrc f
 				Annex.queueRun
 				return ok

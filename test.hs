@@ -32,7 +32,7 @@ import qualified GitAnnex
 import qualified LocationLog
 import qualified UUID
 import qualified Remotes
-import qualified Core
+import qualified Content
 import qualified Backend.SHA1
 import qualified Backend.WORM
 import qualified Command.DropUnused
@@ -318,7 +318,7 @@ test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
 	where
 		corrupt f = do
 			git_annex "get" ["-q", f] @? "get of file failed"
-			Core.allowWrite f
+			Content.allowWrite f
 			writeFile f (changedcontent f)
 			r <- git_annex "fsck" ["-q"]
 			not r @? "fsck failed to fail with corrupted file content"

@@ -17,7 +17,7 @@ import qualified Backend
 import Types
 import Messages
 import Locations
-import Core
+import Content
 import CopyFile
 
 command :: [Command]

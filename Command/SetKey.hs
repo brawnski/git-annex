@@ -16,7 +16,7 @@ import Utility
 import qualified Backend
 import LocationLog
 import Types
-import Core
+import Content
 import Messages
 
 command :: [Command]

@@ -16,7 +16,7 @@ import qualified Annex
 import qualified Backend
 import Locations
 import Types
-import Core
+import Content
 import Messages
 import qualified Command.Add
 

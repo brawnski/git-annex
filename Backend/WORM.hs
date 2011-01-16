@@ -18,7 +18,7 @@ import qualified Backend.File
 import TypeInternals
 import Locations
 import qualified Annex
-import Core
+import Content
 import Messages
 
 backend :: Backend

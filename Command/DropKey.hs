@@ -12,7 +12,7 @@ import qualified Annex
 import qualified Backend
 import LocationLog
 import Types
-import Core
+import Content
 import Messages
 
 command :: [Command]

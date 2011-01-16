@@ -9,13 +9,16 @@ module Command.Unused where
 
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
+import Data.Maybe
 
 import Command
 import Types
-import Core
+import Content
 import Messages
 import Locations
 import qualified Annex
+import qualified GitRepo as Git
+import qualified Backend
 
 command :: [Command]
 command = [Command "unused" paramNothing seek "look for unused file content"]
@@ -80,3 +83,11 @@ unusedKeys = do
 
 existsMap :: Ord k => [k] -> M.Map k Int
 existsMap l = M.fromList $ map (\k -> (k, 1)) l
+
+{- List of keys referenced by symlinks in the git repo. -}
+getKeysReferenced :: Annex [Key]
+getKeysReferenced = do
+	g <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo g [Git.workTree g]
+	keypairs <- mapM Backend.lookupFile files
+	return $ map fst $ catMaybes keypairs

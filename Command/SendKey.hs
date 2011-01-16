@@ -15,7 +15,7 @@ import Locations
 import qualified Annex
 import Command
 import Types
-import Core
+import Content
 import qualified Backend
 import RsyncFile
 

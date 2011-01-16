@@ -14,7 +14,7 @@ import System.Directory
 import Command
 import qualified Annex
 import Utility
-import Core
+import Content
 import Messages
 
 command :: [Command]

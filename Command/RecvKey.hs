@@ -13,7 +13,8 @@ import System.Exit
 
 import Command
 import Types
-import Core
+import CmdLine
+import Content
 import qualified Backend
 import RsyncFile
 

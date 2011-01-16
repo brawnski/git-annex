@@ -22,7 +22,7 @@ import LocationLog
 import Locations
 import qualified Remotes
 import qualified GitRepo as Git
-import Core
+import Content
 import qualified Annex
 import UUID
 import Messages

@@ -12,7 +12,7 @@ import System.Exit
 
 import Command
 import Types
-import Core
+import Content
 import qualified Backend
 
 command :: [Command]

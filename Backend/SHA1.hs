@@ -18,7 +18,7 @@ import TypeInternals
 import Messages
 import qualified Annex
 import Locations
-import Core
+import Content
 
 backend :: Backend
 backend = Backend.File.backend {

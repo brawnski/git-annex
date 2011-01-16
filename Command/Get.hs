@@ -10,7 +10,7 @@ module Command.Get where
 import Command
 import qualified Backend
 import Types
-import Core
+import Content
 import Messages
 
 command :: [Command]

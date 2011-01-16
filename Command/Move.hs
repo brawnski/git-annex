@@ -14,7 +14,7 @@ import qualified Command.Drop
 import qualified Annex
 import LocationLog
 import Types
-import Core
+import Content
 import qualified GitRepo as Git
 import qualified Remotes
 import UUID

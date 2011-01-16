@@ -14,7 +14,7 @@ import Control.Monad (filterM)
 import System.Posix.Files
 import System.FilePath
 
-import Core
+import Content
 import Types
 import Locations
 import qualified GitRepo as Git
