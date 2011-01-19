@@ -5,24 +5,33 @@ import System.Cmd
 import System.Exit
 import System.Directory
 
-type Test = IO Bool
-data TestCase = TestCase String String Test
-data Config = Config String Bool
+type ConfigKey = String
+data ConfigValue = BoolConfig Bool | StringConfig String
+data Config = Config ConfigKey ConfigValue
+
+type Test = IO Config
+type TestName = String
+data TestCase = TestCase TestName Test
 
 instance Show Config where
         show (Config key value) = unlines [
-			  key ++ " :: Bool"
-			, key ++ " = " ++ show value
+			  key ++ " :: " ++ valuetype value
+			, key ++ " = " ++ showvalue value
 		]
+		where
+			valuetype (BoolConfig _) = "Bool"
+			valuetype (StringConfig _) = "String"
+			showvalue (BoolConfig b) = show b
+			showvalue (StringConfig s) = show s
 
 tests :: [TestCase]
 tests = [
-	  TestCase "cp -a" "cp_a" $ testCp "-a"
-	, TestCase "cp -p" "cp_p" $ testCp "-p"
-	, TestCase "cp --reflink=auto" "cp_reflink_auto" $ testCp "--reflink=auto"
-	, TestCase "uuid" "uuid" $ requireCmd "uuid" "uuid"
-	, TestCase "xargs -0" "xargs_0" $ requireCmd "xargs -0" "xargs -0 </dev/null"
-	, TestCase "rsync" "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
+	  TestCase "cp -a" $ testCp "cp_a" "-a"
+	, TestCase "cp -p" $ testCp "cp_p" "-p"
+	, TestCase "cp --reflink=auto" $ testCp "cp_reflink_auto" "--reflink=auto"
+	, TestCase "uuid" $ selectCmd "uuid" ["uuid", "uuidgen"]
+	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0" "xargs -0 </dev/null"
+	, TestCase "rsync" $ requireCmd "rsync" "rsync" "rsync --version >/dev/null"
 	]
 
 tmpDir :: String
@@ -31,34 +40,49 @@ tmpDir = "tmp"
 testFile :: String
 testFile = tmpDir ++ "/testfile"
 
+requireCmd :: ConfigKey -> String -> String -> Test
+requireCmd k c cmdline = do
+	ret <- testCmd k cmdline
+	handle ret
+	where
+		handle r@(Config _ (BoolConfig True)) = return r
+		handle r = do
+			testEnd r
+			error $ "** the " ++ c ++ " command is required to use git-annex"
+
+testCp :: ConfigKey -> String -> Test
+testCp k option = testCmd k $
+	"cp " ++ option ++ " " ++ testFile ++ " " ++ testFile ++ ".new"
+
+testCmd :: ConfigKey -> String -> Test
+testCmd k c = do
+	ret <- system $ quiet c
+	return $ Config k (BoolConfig $ ret == ExitSuccess)
+
+selectCmd :: ConfigKey -> [String] -> Test
+selectCmd k cmds = search cmds
+	where
+		search [] = do
+			testEnd $ Config k (BoolConfig False)
+			error $ "* need one of these commands, but none are available: " ++ show cmds
+		search (c:cs) = do
+			ret <- system $ quiet c
+			if (ret == ExitSuccess)
+				then return $ Config k (StringConfig c)
+				else search cs
+
 quiet :: String -> String
 quiet s = s ++ " >/dev/null 2>&1"
 
-requireCmd :: String -> String -> Test
-requireCmd c cmdline = do
-	ret <- testCmd $ quiet cmdline
-	if ret
-		then return True
-		else do
-			testEnd False
-			error $ "** the " ++ c ++ " command is required to use git-annex"
-
-testCp :: String -> Test
-testCp option = testCmd $ quiet $ "cp " ++ option ++ " " ++ testFile ++ 
-			" " ++ testFile ++ ".new"
-
-testCmd :: String -> Test
-testCmd c = do
-	ret <- system c
-	return $ ret == ExitSuccess
-
-testStart :: String -> IO ()
+testStart :: TestName -> IO ()
 testStart s = do
 	putStr $ "  checking " ++ s ++ "..."
 	hFlush stdout
 
-testEnd :: Bool -> IO ()
-testEnd r = putStrLn $ " " ++ show r
+testEnd :: Config -> IO ()
+testEnd (Config _ (BoolConfig True)) = putStrLn $ " yes"
+testEnd (Config _ (BoolConfig False)) = putStrLn $ " no"
+testEnd (Config _ (StringConfig s)) = putStrLn $ " " ++ s
 
 writeSysConfig :: [Config] -> IO ()
 writeSysConfig config = writeFile "SysConfig.hs" body
@@ -73,12 +97,12 @@ writeSysConfig config = writeFile "SysConfig.hs" body
 
 runTests :: [TestCase] -> IO [Config]
 runTests [] = return []
-runTests ((TestCase tname key t):ts) = do
+runTests ((TestCase tname t):ts) = do
 	testStart tname
-	val <- t
-	testEnd val
+	c <- t
+	testEnd c
 	rest <- runTests ts
-	return $ (Config key val):rest
+	return $ c:rest
 
 setup :: IO ()
 setup = do

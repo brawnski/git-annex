@@ -33,6 +33,7 @@ import Types
 import Locations
 import qualified Annex
 import Utility
+import qualified SysConfig
 
 type UUID = String
 
@@ -42,7 +43,14 @@ configkey="annex.uuid"
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}
 genUUID :: IO UUID
-genUUID = liftIO $ pOpen ReadFromPipe "uuid" ["-m"] $ \h -> hGetLine h
+genUUID = liftIO $ pOpen ReadFromPipe command params $ \h -> hGetLine h
+	where
+		command = SysConfig.uuid
+		params = if (command == "uuid")
+			-- request a random uuid be generated
+			then ["-m"]
+			-- uuidgen generates random uuid by default
+			else []
 
 {- Looks up a repo's UUID. May return "" if none is known.
  -
