@@ -7,7 +7,7 @@ mans=git-annex.1 git-annex-shell.1
 
 all: $(bins) $(mans) docs
 
-SysConfig.hs: configure.hs
+SysConfig.hs: configure.hs TestConfig.hs
 	$(GHCMAKE) configure
 	./configure
 
