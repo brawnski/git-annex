@@ -295,8 +295,13 @@ Here are all the supported configuration settings.
 * `remote.<name>.annex-ignore`
 
   If set to `true`, prevents git-annex
-  from ever using this remote. This is, for example, useful if the
-  remote is a bare repository, which git-annex does not currently support.
+  from using this remote by default. (You can still request it be used
+  by the --from and --to options.)
+
+  This is, for example, useful if the remote is a bare repository,
+  which git-annex does not currently support. Or, it could be used
+  if the network connection between two repositories is too slow
+  to be used normally.
 
 * `remote.<name>.annex-uuid`
 
