@@ -14,10 +14,10 @@ SysConfig.hs: configure.hs TestConfig.hs
 $(bins): SysConfig.hs
 	$(GHCMAKE) $@
 
-git-annex.1:
+git-annex.1: doc/git-annex.mdwn
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
-git-annex-shell.1:
-	./mdwn2man git-annex 1 doc/git-annex-shell.mdwn > git-annex-shell.1
+git-annex-shell.1: doc/git-annex-shell.mdwn
+	./mdwn2man git-annex-shell 1 doc/git-annex-shell.mdwn > git-annex-shell.1
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/bin
