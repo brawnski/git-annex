@@ -15,7 +15,7 @@ import System.Directory
 import Data.String.Utils
 
 import qualified Backend.File
-import TypeInternals
+import BackendTypes
 import Locations
 import qualified Annex
 import Content

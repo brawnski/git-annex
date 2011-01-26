@@ -38,7 +38,7 @@ import Locations
 import qualified GitRepo as Git
 import qualified Annex
 import Types
-import qualified TypeInternals as Internals
+import qualified BackendTypes as B
 import Messages
 
 {- List of backends in the order to try them when storing a new key. -}
@@ -78,7 +78,7 @@ maybeLookupBackendName bs s =
 	if 1 /= length matches
 		then Nothing
 		else Just $ head matches
-	where matches = filter (\b -> s == Internals.name b) bs
+	where matches = filter (\b -> s == B.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
 storeFileKey :: FilePath -> Maybe (Backend Annex) -> Annex (Maybe (Key, Backend Annex))
@@ -91,11 +91,11 @@ storeFileKey file trybackend = do
 storeFileKey' :: [Backend Annex] -> FilePath -> Annex (Maybe (Key, Backend Annex))
 storeFileKey' [] _ = return Nothing
 storeFileKey' (b:bs) file = do
-	result <- (Internals.getKey b) file
+	result <- (B.getKey b) file
 	case result of
 		Nothing -> nextbackend
 		Just key -> do
-			stored <- (Internals.storeFileKey b) file key
+			stored <- (B.storeFileKey b) file key
 			if (not stored)
 				then nextbackend
 				else return $ Just (key, b)
@@ -105,21 +105,21 @@ storeFileKey' (b:bs) file = do
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
 retrieveKeyFile :: Backend Annex -> Key -> FilePath -> Annex Bool
-retrieveKeyFile backend key dest = (Internals.retrieveKeyFile backend) key dest
+retrieveKeyFile backend key dest = (B.retrieveKeyFile backend) key dest
 
 {- Removes a key from a backend. -}
 removeKey :: Backend Annex -> Key -> Maybe Int -> Annex Bool
-removeKey backend key numcopies = (Internals.removeKey backend) key numcopies
+removeKey backend key numcopies = (B.removeKey backend) key numcopies
 
 {- Checks if a key is present in its backend. -}
 hasKey :: Key -> Annex Bool
 hasKey key = do
 	backend <- keyBackend key
-	(Internals.hasKey backend) key
+	(B.hasKey backend) key
 
 {- Checks a key's backend for problems. -}
 fsckKey :: Backend Annex -> Key -> Maybe Int -> Annex Bool
-fsckKey backend key numcopies = (Internals.fsckKey backend) key numcopies
+fsckKey backend key numcopies = (B.fsckKey backend) key numcopies
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

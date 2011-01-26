@@ -14,7 +14,7 @@ import System.IO
 import System.Directory
 
 import qualified Backend.File
-import TypeInternals
+import BackendTypes
 import Messages
 import qualified Annex
 import Locations

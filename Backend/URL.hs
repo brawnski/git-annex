@@ -11,7 +11,7 @@ import Control.Monad.State (liftIO)
 import Data.String.Utils
 
 import Types
-import TypeInternals
+import BackendTypes
 import Utility
 import Messages
 

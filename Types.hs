@@ -14,5 +14,5 @@ module Types (
 	keyName
 ) where
 
-import TypeInternals
+import BackendTypes
 import Annex

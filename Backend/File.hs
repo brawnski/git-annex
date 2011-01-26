@@ -17,7 +17,7 @@ module Backend.File (backend, checkKey) where
 import Control.Monad.State
 import System.Directory
 
-import TypeInternals
+import BackendTypes
 import LocationLog
 import Locations
 import qualified Remotes

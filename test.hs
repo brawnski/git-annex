@@ -27,7 +27,7 @@ import qualified Backend
 import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
-import qualified TypeInternals
+import qualified BackendTypes
 import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
@@ -54,7 +54,7 @@ quickchecks :: Test
 quickchecks = TestLabel "quickchecks" $ TestList
 	[ qctest "prop_idempotent_deencode" Git.prop_idempotent_deencode
 	, qctest "prop_idempotent_fileKey" Locations.prop_idempotent_fileKey
-	, qctest "prop_idempotent_key_read_show" TypeInternals.prop_idempotent_key_read_show
+	, qctest "prop_idempotent_key_read_show" BackendTypes.prop_idempotent_key_read_show
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
@@ -106,8 +106,8 @@ test_add = "git-annex add" ~: TestCase $ inmainrepo $ do
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	writeFile tmp $ content sha1annexedfile
-	r <- annexeval $ TypeInternals.getKey Backend.SHA1.backend tmp
-	let sha1 = TypeInternals.keyName $ fromJust r
+	r <- annexeval $ BackendTypes.getKey Backend.SHA1.backend tmp
+	let sha1 = BackendTypes.keyName $ fromJust r
 	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
 	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
@@ -384,7 +384,7 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	checkunused [annexedfilekey, sha1annexedfilekey]
 
 	-- good opportunity to test dropkey also
-	git_annex "dropkey" ["-q", "--force", TypeInternals.keyName annexedfilekey]
+	git_annex "dropkey" ["-q", "--force", BackendTypes.keyName annexedfilekey]
 		@? "dropkey failed"
 	checkunused [sha1annexedfilekey]
 
