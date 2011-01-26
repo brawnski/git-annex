@@ -96,9 +96,10 @@ checkRemoveKey key numcopiesM = do
 		then return True
 		else do
 			(remotes, trusteduuids) <- Remotes.keyPossibilities key
-			untrusted <- reposWithoutUUID remotes trusteduuids
+			untrusteduuids <- trustGet UnTrusted
+			tocheck <- reposWithoutUUID remotes (trusteduuids++untrusteduuids)
 			numcopies <- getNumCopies numcopiesM
-			findcopies numcopies trusteduuids untrusted []
+			findcopies numcopies trusteduuids tocheck []
 	where
 		findcopies need have [] bad
 			| length have >= need = return True
@@ -131,11 +132,18 @@ showLocations key exclude = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	uuids <- liftIO $ keyLocations g key
-	let uuidsf = filter (\l -> l /= u && (not $ elem l exclude)) uuids
-	ppuuids <- prettyPrintUUIDs uuidsf
-	if null uuidsf
-		then showLongNote $ "No other repository is known to contain the file."
-		else showLongNote $ "Try making some of these repositories available:\n" ++ ppuuids
+	untrusteduuids <- trustGet UnTrusted
+	let uuidswanted = filteruuids uuids (u:exclude++untrusteduuids) 
+	let uuidsskipped = filteruuids uuids (u:exclude++uuidswanted)
+	ppuuidswanted <- prettyPrintUUIDs uuidswanted
+	ppuuidsskipped <- prettyPrintUUIDs uuidsskipped
+	showLongNote $ message ppuuidswanted ppuuidsskipped
+	where
+		filteruuids list x = filter (\l -> not $ elem l x) list
+		message [] [] = "No other repository is known to contain the file."
+		message rs [] = "Try making some of these repositories available:\n" ++ rs
+		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
+		message rs us = message rs [] ++ message [] us
 
 showTriedRemotes :: [Git.Repo] -> Annex ()
 showTriedRemotes [] = return ()	
