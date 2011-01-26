@@ -6,6 +6,8 @@ git-annex (0.19) UNRELEASED; urgency=low
   * untrust: Now marks the current repository as untrusted.
   * semitrust: Now restores the default trust level. (What untrust used to do.)
   * fsck: Warn if content is only in untrusted repositories.
+  * bugfix: Files were copied from trusted remotes first even if their
+    annex.cost was higher than other remotes.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 19 Jan 2011 18:07:51 -0400
 

@@ -110,8 +110,8 @@ toCleanup dest move key = do
 fromStart :: Git.Repo -> Bool -> CommandStartString
 fromStart src move file = isAnnexed file $ \(key, _) -> do
 	g <- Annex.gitRepo
-	(trusted, untrusted, _) <- Remotes.keyPossibilities key
-	if (g == src) || (null $ filter (\r -> Remotes.same r src) (trusted ++ untrusted))
+	(remotes, _) <- Remotes.keyPossibilities key
+	if (g == src) || (null $ filter (\r -> Remotes.same r src) remotes)
 		then return Nothing
 		else do
 			showAction move file

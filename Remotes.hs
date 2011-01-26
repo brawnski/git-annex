@@ -113,14 +113,10 @@ readConfigs = do
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
  -
- - The first list is of remotes that are trusted to have the key.
- -
- - The second is of untrusted remotes that may have the key.
- -
  - Also returns a list of UUIDs that are trusted to have the key
  - (some may not have configured remotes).
  -}
-keyPossibilities :: Key -> Annex ([Git.Repo], [Git.Repo], [UUID])
+keyPossibilities :: Key -> Annex ([Git.Repo], [UUID])
 keyPossibilities key = do
 	readConfigs
 
@@ -129,23 +125,17 @@ keyPossibilities key = do
 	u <- getUUID g
 	trusted <- trustGet Trusted
 
-	-- get uuids of other repositories that are
-	-- believed to have the key
+	-- get uuids of all repositories that are recorded to have the key
 	uuids <- liftIO $ keyLocations g key
 	let validuuids = filter (/= u) uuids
 
-	-- get uuids trusted to have the key
 	-- note that validuuids is assumed to not have dups
 	let validtrusteduuids = intersect validuuids trusted
 
 	-- remotes that match uuids that have the key
 	validremotes <- reposByUUID allremotes validuuids
 
-	-- partition out the trusted and untrusted remotes
-	trustedremotes <- reposByUUID validremotes validtrusteduuids
-	untrustedremotes <- reposWithoutUUID validremotes trusted
-
-	return (trustedremotes, untrustedremotes, validtrusteduuids)
+	return (validremotes, validtrusteduuids)
 
 {- Checks if a given remote has the content for a key inAnnex.
  - If the remote cannot be accessed, returns a Left error.
