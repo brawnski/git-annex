@@ -186,6 +186,8 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Records that a repository is [[trusted|trust]] to not unexpectedly lose
   content. Use with care.
 
+  To trust the current repository, use "."
+
 * untrust [repository ...]
 
   Records that a repository is [[not trusted|trust]] and could lose content

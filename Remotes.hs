@@ -222,6 +222,7 @@ same a b = Git.repoRemoteName a == Git.repoRemoteName b
 
 {- Looks up a remote by name. -}
 byName :: String -> Annex Git.Repo
+byName "." = Annex.gitRepo -- special case to refer to current repository
 byName name = do
 	when (null name) $ error "no remote specified"
 	g <- Annex.gitRepo

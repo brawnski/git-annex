@@ -42,7 +42,7 @@ import qualified Command.DropUnused
 main :: IO ()
 main = do
 	prepare
-	r <- runVerboseTests $ TestList [quickchecks, toplevels]
+	r <- runVerboseTests $ TestList [quickcheck, blackbox]
 	cleanup tmpdir
 	propigate r
 
@@ -51,8 +51,8 @@ propigate (Counts { errors = e }, _)
 	| e > 0 = error "failed"
 	| otherwise = return ()
 
-quickchecks :: Test
-quickchecks = TestLabel "quickchecks" $ TestList
+quickcheck :: Test
+quickcheck = TestLabel "quickcheck" $ TestList
 	[ qctest "prop_idempotent_deencode" Git.prop_idempotent_deencode
 	, qctest "prop_idempotent_fileKey" Locations.prop_idempotent_fileKey
 	, qctest "prop_idempotent_key_read_show" BackendTypes.prop_idempotent_key_read_show
@@ -62,8 +62,8 @@ quickchecks = TestLabel "quickchecks" $ TestList
 	, qctest "prop_relPathDirToDir_basics" Utility.prop_relPathDirToDir_basics
 	]
 
-toplevels :: Test
-toplevels = TestLabel "toplevel" $ TestList
+blackbox :: Test
+blackbox = TestLabel "blackbox" $ TestList
 	-- test order matters, later tests may rely on state from earlier
 	[ test_init
 	, test_add
@@ -290,38 +290,44 @@ test_fix = "git-annex fix" ~: intmpclonerepo $ do
 
 test_trust :: Test
 test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
-	trustcheck Trust.SemiTrusted
-	git_annex "trust" ["-q", "origin"] @? "trust failed"
-	trustcheck Trust.Trusted
-	git_annex "trust" ["-q", "origin"] @? "trust of trusted failed"
-	trustcheck Trust.Trusted
-	git_annex "untrust" ["-q", "origin"] @? "untrust failed"
-	trustcheck Trust.UnTrusted
-	git_annex "untrust" ["-q", "origin"] @? "untrust of untrusted failed"
-	trustcheck Trust.UnTrusted
-	git_annex "semitrust" ["-q", "origin"] @? "semitrust failed"
-	trustcheck Trust.SemiTrusted
-	git_annex "semitrust" ["-q", "origin"] @? "semitrust of semitrusted failed"
-	trustcheck Trust.SemiTrusted
+	git_annex "trust" ["-q", repo] @? "trust failed"
+	trustcheck Trust.Trusted "trusted 1"
+	git_annex "trust" ["-q", repo] @? "trust of trusted failed"
+	trustcheck Trust.Trusted "trusted 2"
+	git_annex "untrust" ["-q", repo] @? "untrust failed"
+	trustcheck Trust.UnTrusted "untrusted 1"
+	git_annex "untrust" ["-q", repo] @? "untrust of untrusted failed"
+	trustcheck Trust.UnTrusted "untrusted 2"
+	git_annex "semitrust" ["-q", repo] @? "semitrust failed"
+	trustcheck Trust.SemiTrusted "semitrusted 1"
+	git_annex "semitrust" ["-q", repo] @? "semitrust of semitrusted failed"
+	trustcheck Trust.SemiTrusted "semitrusted 2"
 	where
-		trustcheck expected = do
+		trustcheck expected msg = do
 			present <- annexeval $ do
+				Remotes.readConfigs
 				l <- Trust.trustGet expected
-				r <- Remotes.byName "origin"
+				r <- Remotes.byName repo
 				u <- UUID.getUUID r
 				return $ elem u l
-			assertEqual ("trust value " ++ show expected) True present
+			assertBool msg present
+		repo = "origin"
 
 test_fsck :: Test
-test_fsck = "git-annex fsck" ~: intmpclonerepo $ do
-	git_annex "fsck" ["-q"] @? "fsck failed"
-	Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
-	r <- git_annex "fsck" ["-q"]
-	not r @? "fsck failed to fail with numcopies unsatisfied"
-	Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
-	corrupt annexedfile
-	corrupt sha1annexedfile
+test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted]
 	where
+		basicfsck = TestCase $ intmpclonerepo $ do
+			git_annex "fsck" ["-q"] @? "fsck failed"
+			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
+			r <- git_annex "fsck" ["-q"]
+			not r @? "fsck failed to fail with numcopies unsatisfied"
+			Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
+			corrupt annexedfile
+			corrupt sha1annexedfile
+		withlocaluntrusted = TestCase $ intmpcopyrepo $ do
+			git_annex "untrust" ["-q", "."] @? "untrust of current repo failed"
+			r <- git_annex "fsck" ["-q"]
+			not r @? "fsck failed to fail with content only available in untrusted (current) repository"
 		corrupt f = do
 			git_annex "get" ["-q", f] @? "get of file failed"
 			Content.allowWrite f

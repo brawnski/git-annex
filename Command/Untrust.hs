@@ -21,11 +21,11 @@ command = [Command "untrust" (paramRepeating paramRemote) seek
 seek :: [CommandSeek]
 seek = [withString start]
 
-{- Marks a remote as not trusted. -}
 start :: CommandStartString
 start name = do
-	r <- Remotes.byName name
 	showStart "untrust" name
+	Remotes.readConfigs
+	r <- Remotes.byName name
 	return $ Just $ perform r
 
 perform :: Git.Repo -> CommandPerform

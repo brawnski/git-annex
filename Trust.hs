@@ -73,6 +73,8 @@ trustMapParse s = M.fromList $ map pair $ filter (not . null) $ lines s
 {- Changes the trust level for a uuid in the trustLog, and commits it. -}
 trustSet :: UUID -> TrustLevel -> Annex ()
 trustSet uuid level = do
+	when (null uuid) $
+		error "unknown UUID; cannot modify trust level"
         m <- trustMap
 	when (M.lookup uuid m /= Just level) $ do
 		let m' = M.insert uuid level m
