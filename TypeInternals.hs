@@ -9,13 +9,8 @@
 
 module TypeInternals where
 
-import Control.Monad.State (StateT)
 import Data.String.Utils
-import qualified Data.Map as M
 import Test.QuickCheck
-
-import qualified GitRepo as Git
-import qualified GitQueue
 
 -- annexed filenames are mapped through a backend into keys
 type KeyName = String
