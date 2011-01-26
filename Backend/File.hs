@@ -16,6 +16,7 @@ module Backend.File (backend, checkKey) where
 
 import Control.Monad.State
 import System.Directory
+import Data.List
 
 import BackendTypes
 import LocationLog
@@ -27,6 +28,7 @@ import qualified Annex
 import Types
 import UUID
 import Messages
+import Trust
 
 backend :: Backend Annex
 backend = Backend {
@@ -150,8 +152,8 @@ getNumCopies Nothing = do
 		config = "annex.numcopies"
 
 {- This is used to check that numcopies is satisfied for the key on fsck.
- - This trusts the location log, and so checks all keys, even those with
- - data not present in the current annex.
+ - This trusts data in the the location log, and so can check all keys, even
+ - those with data not present in the current annex.
  -
  - The passed action is first run to allow backends deriving this one
  - to do their own checks.
@@ -167,15 +169,31 @@ checkKeyNumCopies key numcopies = do
 	needed <- getNumCopies numcopies
 	g <- Annex.gitRepo
 	locations <- liftIO $ keyLocations g key
-	let present = length locations
+	untrusted <- trustGet UnTrusted
+	let untrustedlocations = intersect untrusted locations
+	let safelocations = filter (\l -> not $ l `elem` untrusted) locations
+	let present = length safelocations
 	if present < needed
 		then do
-			warning $ note present needed
+			ppuuids <- prettyPrintUUIDs untrustedlocations
+			missingNote present needed ppuuids
 			return False
 		else return True
 	where
-		note 0 _ = "** No known copies of "++show key++" exist!"
-		note present needed = 
-			"Only " ++ show present ++ " of " ++ show needed ++ 
-			" copies of "++show key++" exist. " ++
-			"Back it up with git-annex copy."
+
+missingNote :: Int -> Int -> String -> Annex ()
+missingNote 0 _ [] = showLongNote $ "** No known copies of this file exist!"
+missingNote 0 _ untrusted = do
+	showLongNote $
+		"Only these untrusted locations may have copies of this file!" ++
+		"\n" ++ untrusted ++
+		"Back it up to trusted locations with git-annex copy."
+missingNote present needed untrusted = do
+	showLongNote $
+		"Only " ++ show present ++ " of " ++ show needed ++ 
+		" trustworthy copies of this file exist." ++
+		"\nBack it up with git-annex copy."
+	when (not $ null untrusted) $ do
+		showLongNote $
+			"\nThe following untrusted copies may also exist: " ++
+			"\n" ++ untrusted

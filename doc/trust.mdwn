@@ -25,8 +25,7 @@ restores a repository to this default, when it has been overridden.)
 ## untrusted
 
 An untrusted repository is not trusted to retain data at all. Git-annex
-will not count data in such a repository as a of the data, and will
-retain sufficient [[copies]] elsewhere.
+will retain sufficient [[copies]] of data elsewhere.
 
 This is a good choice for eg, portable drives that could get lost. Or,
 if a disk is known to be dying, you can set it to untrusted and let

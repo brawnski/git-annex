@@ -391,3 +391,30 @@ it so anything put in there is backed up more thoroughly:
 	# echo "* annex.numcopies=3" > important_stuff/.gitattributes
 
 For more details about the numcopies setting, see [[copies]].
+
+## untrusted repositories
+
+Suppose you have a portable USB drive and are using it as a git annex
+repository. You don't trust the drive, because you could lose it, or
+just because portable USB drives don't tend to last very long. You can
+let git-annex know about this, and it will adjust its behavior to avoid
+relying on that drive's continued availability.
+	
+	# cd /media/usb
+	# git annex untrust .
+	untrust . ok
+
+Now when you do a fsck, you'll be warned appropriately:
+
+	# git annex fsck .
+	fsck my_big_file
+	  Only these untrusted locations may have copies of this file!
+	  	05e296c4-2989-11e0-bf40-bad1535567fe  -- portable USB drive
+	  Back it up to trusted locations with git-annex copy.
+	failed
+
+Also, git-annex will refuse to drop a file from elsewhere just because
+it can see a copy on the untrusted drive.
+
+It's also possible to tell git-annex that you have an unusually high
+level of trust for a repository. See [[trust]] for details.
