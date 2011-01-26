@@ -78,9 +78,9 @@ usage header cmds options =
  - (but explicitly thrown errors terminate the whole command).
  - Runs shutdown and propigates an overall error status at the end.
  -}
-tryRun :: AnnexState -> [Annex Bool] -> IO ()
+tryRun :: Annex.AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
-tryRun' :: AnnexState -> Integer -> [Annex Bool] -> IO ()
+tryRun' :: Annex.AnnexState -> Integer -> [Annex Bool] -> IO ()
 tryRun' state errnum (a:as) = do
 	result <- try $ Annex.run state a
 	case result of

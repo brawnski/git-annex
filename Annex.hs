@@ -6,18 +6,20 @@
  -}
 
 module Annex (
+	Annex,
+	AnnexState(..),
+	getState,
 	new,
 	run,
 	eval,
 	gitRepo,
 	gitRepoChange,
-	backends,
 	backendsChange,
-	supportedBackends,
+	FlagName,
+	Flag(..),	
 	flagIsSet,
 	flagChange,
 	flagGet,
-	Flag(..),
 	queue,
 	queueGet,
 	queueRun,
@@ -29,19 +31,38 @@ import qualified Data.Map as M
 
 import qualified GitRepo as Git
 import qualified GitQueue
-import Types
-import qualified TypeInternals as Internals
+import qualified TypeInternals
+
+-- git-annex's monad
+type Annex = StateT AnnexState IO
+
+-- internal state storage
+data AnnexState = AnnexState {
+	repo :: Git.Repo,
+	backends :: [TypeInternals.Backend Annex],
+	supportedBackends :: [TypeInternals.Backend Annex],
+	flags :: M.Map FlagName Flag,
+	repoqueue :: GitQueue.Queue,
+	quiet :: Bool
+} deriving (Show)
+
+-- command-line flags
+type FlagName = String
+data Flag =
+	FlagBool Bool |
+	FlagString String
+		deriving (Eq, Read, Show)
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [Backend Annex] -> IO AnnexState
+new :: Git.Repo -> [TypeInternals.Backend Annex] -> IO AnnexState
 new gitrepo allbackends = do
-	let s = Internals.AnnexState {
-		Internals.repo = gitrepo,
-		Internals.backends = [],
-		Internals.supportedBackends = allbackends,
-		Internals.flags = M.empty,
-		Internals.repoqueue = GitQueue.empty,
-		Internals.quiet = False
+	let s = AnnexState {
+		repo = gitrepo,
+		backends = [],
+		supportedBackends = allbackends,
+		flags = M.empty,
+		repoqueue = GitQueue.empty,
+		quiet = False
 	}
 	(_,s') <- Annex.run s prep
 	return s'
@@ -57,41 +78,33 @@ run state action = runStateT action state
 eval :: AnnexState -> Annex a -> IO a
 eval state action = evalStateT action state
 
+{- gets a value from the internal Annex state -}
+getState :: (AnnexState -> a) -> Annex a
+getState a = do
+	state <- get
+	return (a state)
+
 {- Returns the git repository being acted on -}
 gitRepo :: Annex Git.Repo
-gitRepo = do
-	state <- get
-	return (Internals.repo state)
+gitRepo = getState repo
 
 {- Changes the git repository being acted on. -}
 gitRepoChange :: Git.Repo -> Annex ()
 gitRepoChange r = do
 	state <- get
-	put state { Internals.repo = r }
-
-{- Returns the backends being used. -}
-backends :: Annex [Backend Annex]
-backends = do
-	state <- get
-	return (Internals.backends state)
+	put state { repo = r }
 
 {- Sets the backends to use. -}
-backendsChange :: [Backend Annex] -> Annex ()
+backendsChange :: [TypeInternals.Backend Annex] -> Annex ()
 backendsChange b = do
 	state <- get
-	put state { Internals.backends = b }
-
-{- Returns the full list of supported backends. -}
-supportedBackends :: Annex [Backend Annex]
-supportedBackends = do
-	state <- get
-	return (Internals.supportedBackends state)
+	put state { backends = b }
 
 {- Return True if a Bool flag is set. -}
 flagIsSet :: FlagName -> Annex Bool
 flagIsSet name = do
 	state <- get
-	case (M.lookup name $ Internals.flags state) of
+	case (M.lookup name $ flags state) of
 		Just (FlagBool True) -> return True
 		_ -> return False 
 
@@ -99,13 +112,13 @@ flagIsSet name = do
 flagChange :: FlagName -> Flag -> Annex ()
 flagChange name val = do
 	state <- get
-	put state { Internals.flags = M.insert name val $ Internals.flags state }
+	put state { flags = M.insert name val $ flags state }
 
 {- Gets the value of a String flag (or "" if there is no such String flag) -}
 flagGet :: FlagName -> Annex String
 flagGet name = do
 	state <- get
-	case (M.lookup name $ Internals.flags state) of
+	case (M.lookup name $ flags state) of
 		Just (FlagString s) -> return s
 		_ -> return ""
 
@@ -113,23 +126,23 @@ flagGet name = do
 queue :: String -> [String] -> FilePath -> Annex ()
 queue command params file = do
 	state <- get
-	let q = Internals.repoqueue state
-	put state { Internals.repoqueue = GitQueue.add q command params file }
+	let q = repoqueue state
+	put state { repoqueue = GitQueue.add q command params file }
 
 {- Returns the queue. -}
 queueGet :: Annex GitQueue.Queue
 queueGet = do
 	state <- get
-	return (Internals.repoqueue state)
+	return (repoqueue state)
 
 {- Runs (and empties) the queue. -}
 queueRun :: Annex ()
 queueRun = do
 	state <- get
-	let q = Internals.repoqueue state
+	let q = repoqueue state
 	g <- gitRepo
 	liftIO $ GitQueue.run g q
-	put state { Internals.repoqueue = GitQueue.empty }
+	put state { repoqueue = GitQueue.empty }
 
 {- Changes a git config setting in both internal state and .git/config -}
 setConfig :: String -> String -> Annex ()

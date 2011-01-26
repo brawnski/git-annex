@@ -44,11 +44,11 @@ import Messages
 {- List of backends in the order to try them when storing a new key. -}
 list :: Annex [Backend Annex]
 list = do
-	l <- Annex.backends -- list is cached here
+	l <- Annex.getState Annex.backends -- list is cached here
 	if not $ null l
 		then return l
 		else do
-			bs <- Annex.supportedBackends
+			bs <- Annex.getState Annex.supportedBackends
 			g <- Annex.gitRepo
 			let defaults = parseBackendList bs $ Git.configGet g "annex.backends" ""
 			backendflag <- Annex.flagGet "backend"
@@ -121,7 +121,7 @@ fsckKey backend key numcopies = (Internals.fsckKey backend) key numcopies
  - by examining what the file symlinks to. -}
 lookupFile :: FilePath -> Annex (Maybe (Key, Backend Annex))
 lookupFile file = do
-	bs <- Annex.supportedBackends
+	bs <- Annex.getState Annex.supportedBackends
 	tl <- liftIO $ try getsymlink
 	case tl of
 		Left _ -> return Nothing
@@ -150,12 +150,12 @@ lookupFile file = do
 chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe (Backend Annex))]
 chooseBackends fs = do
 	g <- Annex.gitRepo
-	bs <- Annex.supportedBackends
+	bs <- Annex.getState Annex.supportedBackends
 	pairs <- liftIO $ Git.checkAttr g "annex.backend" fs
 	return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
 
 {- Returns the backend to use for a key. -}
 keyBackend :: Key -> Annex (Backend Annex)
 keyBackend key = do
-	bs <- Annex.supportedBackends
+	bs <- Annex.getState Annex.supportedBackends
 	return $ lookupBackendName bs $ backendName key

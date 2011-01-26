@@ -20,6 +20,7 @@ import Locations
 import qualified Annex
 import Content
 import Messages
+import Types
 
 backend :: Backend Annex
 backend = Backend.File.backend {

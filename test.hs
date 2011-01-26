@@ -28,6 +28,7 @@ import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
 import qualified TypeInternals
+import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
 import qualified UUID
@@ -416,7 +417,7 @@ git_annex command params = do
 
 -- Runs an action in the current annex. Note that shutdown actions
 -- are not run; this should only be used for actions that query state.
-annexeval :: TypeInternals.Annex a -> IO a
+annexeval :: Types.Annex a -> IO a
 annexeval a = do
 	g <- Git.repoFromCwd
 	g' <- Git.configRead g

@@ -17,27 +17,6 @@ import Test.QuickCheck
 import qualified GitRepo as Git
 import qualified GitQueue
 
--- command-line flags
-type FlagName = String
-data Flag =
-	FlagBool Bool |
-	FlagString String
-		deriving (Eq, Read, Show)
-
--- git-annex's runtime state type doesn't really belong here,
--- but it uses Backend, so has to be here to avoid a depends loop.
-data AnnexState = AnnexState {
-	repo :: Git.Repo,
-	backends :: [Backend Annex],
-	supportedBackends :: [Backend Annex],
-	flags :: M.Map FlagName Flag,
-	repoqueue :: GitQueue.Queue,
-	quiet :: Bool
-} deriving (Show)
-
--- git-annex's monad
-type Annex = StateT AnnexState IO
-
 -- annexed filenames are mapped through a backend into keys
 type KeyName = String
 type BackendName = String

@@ -7,14 +7,12 @@
 
 module Types (
 	Annex,
-	AnnexState,
 	Backend,
 	Key,
 	genKey,
 	backendName,
-	keyName,
-	FlagName,
-	Flag(..)
+	keyName
 ) where
 
 import TypeInternals
+import Annex

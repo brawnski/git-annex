@@ -18,10 +18,10 @@ import Command
  -}
 type Option = OptDescr (Annex ())
 
-storeOptBool :: FlagName -> Bool -> Annex ()
-storeOptBool name val = Annex.flagChange name $ FlagBool val
-storeOptString :: FlagName -> String -> Annex ()
-storeOptString name val = Annex.flagChange name $ FlagString val
+storeOptBool :: Annex.FlagName -> Bool -> Annex ()
+storeOptBool name val = Annex.flagChange name $ Annex.FlagBool val
+storeOptString :: Annex.FlagName -> String -> Annex ()
+storeOptString name val = Annex.flagChange name $ Annex.FlagString val
 
 commonOptions :: [Option]
 commonOptions =

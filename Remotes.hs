@@ -105,7 +105,7 @@ readConfigs = do
 		let todo = cheap ++ doexpensive
 		unless (null todo) $ do
 			_ <- mapM tryGitConfigRead todo
-			Annex.flagChange "remotesread" $ FlagBool True
+			Annex.flagChange "remotesread" $ Annex.FlagBool True
 	where
 		cachedUUID r = do
 			u <- getUUID r

@@ -24,6 +24,7 @@ import qualified Remotes
 import qualified GitRepo as Git
 import Content
 import qualified Annex
+import Types
 import UUID
 import Messages
 

@@ -10,6 +10,7 @@ module Backend.URL (backend) where
 import Control.Monad.State (liftIO)
 import Data.String.Utils
 
+import Types
 import TypeInternals
 import Utility
 import Messages
