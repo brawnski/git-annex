@@ -71,8 +71,9 @@ remoteHasKey remote key present	= do
  -}
 toStart :: Git.Repo -> Bool -> CommandStartString
 toStart dest move file = isAnnexed file $ \(key, _) -> do
+	g <- Annex.gitRepo
 	ishere <- inAnnex key
-	if not ishere
+	if not ishere || g == dest
 		then return Nothing -- not here, so nothing to do
 		else do
 			showAction move file
@@ -108,8 +109,9 @@ toCleanup dest move key = do
  -}
 fromStart :: Git.Repo -> Bool -> CommandStartString
 fromStart src move file = isAnnexed file $ \(key, _) -> do
+	g <- Annex.gitRepo
 	(trusted, untrusted, _) <- Remotes.keyPossibilities key
-	if null $ filter (\r -> Remotes.same r src) (trusted ++ untrusted)
+	if (g == src) || (null $ filter (\r -> Remotes.same r src) (trusted ++ untrusted))
 		then return Nothing
 		else do
 			showAction move file
