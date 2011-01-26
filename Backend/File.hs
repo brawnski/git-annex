@@ -176,24 +176,22 @@ checkKeyNumCopies key numcopies = do
 	if present < needed
 		then do
 			ppuuids <- prettyPrintUUIDs untrustedlocations
-			missingNote present needed ppuuids
+			showLongNote $ missingNote present needed ppuuids
 			return False
 		else return True
 	where
 
-missingNote :: Int -> Int -> String -> Annex ()
-missingNote 0 _ [] = showLongNote $ "** No known copies of this file exist!"
-missingNote 0 _ untrusted = do
-	showLongNote $
+missingNote :: Int -> Int -> String -> String
+missingNote 0 _ [] = 
+		"** No known copies of this file exist!"
+missingNote 0 _ untrusted =
 		"Only these untrusted locations may have copies of this file!" ++
 		"\n" ++ untrusted ++
 		"Back it up to trusted locations with git-annex copy."
-missingNote present needed untrusted = do
-	showLongNote $
+missingNote present needed [] =
 		"Only " ++ show present ++ " of " ++ show needed ++ 
 		" trustworthy copies of this file exist." ++
 		"\nBack it up with git-annex copy."
-	when (not $ null untrusted) $ do
-		showLongNote $
-			"\nThe following untrusted copies may also exist: " ++
-			"\n" ++ untrusted
+missingNote present needed untrusted = missingNote present needed [] ++
+		"\nThe following untrusted copies may also exist: " ++
+		"\n" ++ untrusted
