@@ -21,11 +21,19 @@ On the smudge side, I have not heard of a way to have the smudge filter
 point to an existing file, it probably still needs to cat it out. Luckily
 that is only done at checkout anyway.
 
-----
+### dealing with partial content availability
 
-The other trick may be doing it with partial content availability.
-When a smudge filter fails, git leaves the tree and index in a very weird
-state. More investigation needed.
+The smudge filter cannot be allowed to fail, that leaves the tree and
+index in a weird state. So if a file's content is requested by calling
+the smudge filter, the trick is to instead provide dummy content,
+indicating it is not available (and perhaps saying to run "git-annex get").
+
+Then, in the clean filter, it has to detect that it's cleaning a file
+with that dummy content, and make sure to provide the same identifier as
+it would if the file content was there. 
+
+I've a demo implementation of this technique in the scripts below.
+
 
 ### test files
 
@@ -35,7 +43,11 @@ huge-smudge:
 #!/bin/sh
 read sha1
 echo "smudging $sha1" >&2
-cat ~/$sha1
+if [ -e ~/$sha1 ]; then
+	cat ~/$sha1
+else
+	echo "$sha1 not available"
+fi
 </pre>
 
 huge-clean:
@@ -43,6 +55,11 @@ huge-clean:
 <pre>
 #!/bin/sh
 cat >temp
+if grep -q 'not available' temp; then
+	awk '{print $1}' temp # provide what we would if the content were avail!
+	rm temp
+	exit 0
+fi
 sha1=`sha1sum temp | cut -d' ' -f1`
 echo "cleaning $sha1" >&2
 ls -l temp >&2
