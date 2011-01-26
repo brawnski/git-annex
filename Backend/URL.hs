@@ -14,7 +14,7 @@ import TypeInternals
 import Utility
 import Messages
 
-backend :: Backend
+backend :: Backend Annex
 backend = Backend {
 	name = "URL",
 	getKey = keyValue,

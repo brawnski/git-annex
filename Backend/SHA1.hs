@@ -20,7 +20,7 @@ import qualified Annex
 import Locations
 import Content
 
-backend :: Backend
+backend :: Backend Annex
 backend = Backend.File.backend {
 	name = "SHA1",
 	getKey = keyValue,

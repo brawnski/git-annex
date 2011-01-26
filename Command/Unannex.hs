@@ -36,7 +36,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 			return $ Just $ perform file key backend
 		else return Nothing
 
-perform :: FilePath -> Key -> Backend -> CommandPerform
+perform :: FilePath -> Key -> Backend Annex -> CommandPerform
 perform file key backend = do
 	-- force backend to always remove
 	ok <- Backend.removeKey backend key (Just 0)

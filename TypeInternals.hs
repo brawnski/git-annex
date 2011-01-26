@@ -28,10 +28,11 @@ data Flag =
 -- but it uses Backend, so has to be here to avoid a depends loop.
 data AnnexState = AnnexState {
 	repo :: Git.Repo,
-	backends :: [Backend],
-	supportedBackends :: [Backend],
+	backends :: [Backend Annex],
+	supportedBackends :: [Backend Annex],
 	flags :: M.Map FlagName Flag,
-	repoqueue :: GitQueue.Queue
+	repoqueue :: GitQueue.Queue,
+	quiet :: Bool
 } deriving (Show)
 
 -- git-annex's monad
@@ -43,7 +44,7 @@ type BackendName = String
 data Key = Key (BackendName, KeyName) deriving (Eq, Ord)
 
 -- constructs a key in a backend
-genKey :: Backend -> KeyName -> Key
+genKey :: Backend a -> KeyName -> Key
 genKey b f = Key (name b,f)
 
 -- show a key to convert it to a string; the string includes the
@@ -77,28 +78,28 @@ keyName :: Key -> KeyName
 keyName (Key (_,k)) = k
 
 -- this structure represents a key-value backend
-data Backend = Backend {
+data Backend a = Backend {
 	-- name of this backend
 	name :: String,
 	-- converts a filename to a key
-	getKey :: FilePath -> Annex (Maybe Key),
+	getKey :: FilePath -> a (Maybe Key),
 	-- stores a file's contents to a key
-	storeFileKey :: FilePath -> Key -> Annex Bool,
+	storeFileKey :: FilePath -> Key -> a Bool,
 	-- retrieves a key's contents to a file
-	retrieveKeyFile :: Key -> FilePath -> Annex Bool,
+	retrieveKeyFile :: Key -> FilePath -> a Bool,
 	-- removes a key, optionally checking that enough copies are stored
 	-- elsewhere
-	removeKey :: Key -> Maybe Int -> Annex Bool,
+	removeKey :: Key -> Maybe Int -> a Bool,
 	-- checks if a backend is storing the content of a key
-	hasKey :: Key -> Annex Bool,
+	hasKey :: Key -> a Bool,
 	-- called during fsck to check a key
 	-- (second parameter may be the number of copies that there should
 	-- be of the key)
-	fsckKey :: Key -> Maybe Int -> Annex Bool
+	fsckKey :: Key -> Maybe Int -> a Bool
 }
 
-instance Show Backend where
+instance Show (Backend a) where
 	show backend = "Backend { name =\"" ++ name backend ++ "\" }"
 
-instance Eq Backend where
+instance Eq (Backend a) where
 	a == b = name a == name b

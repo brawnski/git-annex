@@ -21,7 +21,7 @@ import qualified Annex
 import Content
 import Messages
 
-backend :: Backend
+backend :: Backend Annex
 backend = Backend.File.backend {
 	name = "WORM",
 	getKey = keyValue,

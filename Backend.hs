@@ -42,7 +42,7 @@ import qualified TypeInternals as Internals
 import Messages
 
 {- List of backends in the order to try them when storing a new key. -}
-list :: Annex [Backend]
+list :: Annex [Backend Annex]
 list = do
 	l <- Annex.backends -- list is cached here
 	if not $ null l
@@ -64,12 +64,12 @@ list = do
 				else map (lookupBackendName bs) $ words s
 
 {- Looks up a backend in a list. May fail if unknown. -}
-lookupBackendName :: [Backend] -> String -> Backend
+lookupBackendName :: [Backend Annex] -> String -> Backend Annex
 lookupBackendName bs s =
 	case maybeLookupBackendName bs s of
 		Just b -> b
 		Nothing -> error $ "unknown backend " ++ s
-maybeLookupBackendName :: [Backend] -> String -> Maybe Backend
+maybeLookupBackendName :: [Backend Annex] -> String -> Maybe (Backend Annex)
 maybeLookupBackendName bs s =
 	if 1 /= length matches
 		then Nothing
@@ -77,14 +77,14 @@ maybeLookupBackendName bs s =
 	where matches = filter (\b -> s == Internals.name b) bs
 
 {- Attempts to store a file in one of the backends. -}
-storeFileKey :: FilePath -> Maybe Backend -> Annex (Maybe (Key, Backend))
+storeFileKey :: FilePath -> Maybe (Backend Annex) -> Annex (Maybe (Key, Backend Annex))
 storeFileKey file trybackend = do
 	bs <- list
 	let bs' = case trybackend of
 		Nothing -> bs
 		Just backend -> backend:bs
 	storeFileKey' bs' file
-storeFileKey' :: [Backend] -> FilePath -> Annex (Maybe (Key, Backend))
+storeFileKey' :: [Backend Annex] -> FilePath -> Annex (Maybe (Key, Backend Annex))
 storeFileKey' [] _ = return Nothing
 storeFileKey' (b:bs) file = do
 	result <- (Internals.getKey b) file
@@ -100,11 +100,11 @@ storeFileKey' (b:bs) file = do
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
-retrieveKeyFile :: Backend -> Key -> FilePath -> Annex Bool
+retrieveKeyFile :: Backend Annex -> Key -> FilePath -> Annex Bool
 retrieveKeyFile backend key dest = (Internals.retrieveKeyFile backend) key dest
 
 {- Removes a key from a backend. -}
-removeKey :: Backend -> Key -> Maybe Int -> Annex Bool
+removeKey :: Backend Annex -> Key -> Maybe Int -> Annex Bool
 removeKey backend key numcopies = (Internals.removeKey backend) key numcopies
 
 {- Checks if a key is present in its backend. -}
@@ -114,12 +114,12 @@ hasKey key = do
 	(Internals.hasKey backend) key
 
 {- Checks a key's backend for problems. -}
-fsckKey :: Backend -> Key -> Maybe Int -> Annex Bool
+fsckKey :: Backend Annex -> Key -> Maybe Int -> Annex Bool
 fsckKey backend key numcopies = (Internals.fsckKey backend) key numcopies
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
-lookupFile :: FilePath -> Annex (Maybe (Key, Backend))
+lookupFile :: FilePath -> Annex (Maybe (Key, Backend Annex))
 lookupFile file = do
 	bs <- Annex.supportedBackends
 	tl <- liftIO $ try getsymlink
@@ -147,7 +147,7 @@ lookupFile file = do
 {- Looks up the backends that should be used for each file in a list.
  - That can be configured on a per-file basis in the gitattributes file.
  -}
-chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe Backend)]
+chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe (Backend Annex))]
 chooseBackends fs = do
 	g <- Annex.gitRepo
 	bs <- Annex.supportedBackends
@@ -155,7 +155,7 @@ chooseBackends fs = do
 	return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
 
 {- Returns the backend to use for a key. -}
-keyBackend :: Key -> Annex Backend
+keyBackend :: Key -> Annex (Backend Annex)
 keyBackend key = do
 	bs <- Annex.supportedBackends
 	return $ lookupBackendName bs $ backendName key

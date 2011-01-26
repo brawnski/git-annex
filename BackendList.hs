@@ -13,7 +13,7 @@ import qualified Backend.SHA1
 import qualified Backend.URL
 import Types
 
-allBackends :: [Backend]
+allBackends :: [Backend Annex]
 allBackends = 
 	[ Backend.WORM.backend
 	, Backend.SHA1.backend

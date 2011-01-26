@@ -27,7 +27,7 @@ import qualified Annex
 import UUID
 import Messages
 
-backend :: Backend
+backend :: Backend Annex
 backend = Backend {
 	name = mustProvide,
 	getKey = mustProvide,

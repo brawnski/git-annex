@@ -28,7 +28,7 @@ start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
-perform :: Key -> Backend -> Maybe Int -> CommandPerform
+perform :: Key -> Backend Annex -> Maybe Int -> CommandPerform
 perform key backend numcopies = do
 	success <- Backend.fsckKey backend key numcopies
 	if success

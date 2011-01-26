@@ -30,7 +30,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 			showStart "get" file
 			return $ Just $ perform key backend
 
-perform :: Key -> Backend -> CommandPerform
+perform :: Key -> Backend Annex -> CommandPerform
 perform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
 	if ok

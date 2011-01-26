@@ -33,14 +33,15 @@ import Types
 import qualified TypeInternals as Internals
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [Backend] -> IO AnnexState
+new :: Git.Repo -> [Backend Annex] -> IO AnnexState
 new gitrepo allbackends = do
 	let s = Internals.AnnexState {
 		Internals.repo = gitrepo,
 		Internals.backends = [],
 		Internals.supportedBackends = allbackends,
 		Internals.flags = M.empty,
-		Internals.repoqueue = GitQueue.empty
+		Internals.repoqueue = GitQueue.empty,
+		Internals.quiet = False
 	}
 	(_,s') <- Annex.run s prep
 	return s'
@@ -69,19 +70,19 @@ gitRepoChange r = do
 	put state { Internals.repo = r }
 
 {- Returns the backends being used. -}
-backends :: Annex [Backend]
+backends :: Annex [Backend Annex]
 backends = do
 	state <- get
 	return (Internals.backends state)
 
 {- Sets the backends to use. -}
-backendsChange :: [Backend] -> Annex ()
+backendsChange :: [Backend Annex] -> Annex ()
 backendsChange b = do
 	state <- get
 	put state { Internals.backends = b }
 
 {- Returns the full list of supported backends. -}
-supportedBackends :: Annex [Backend]
+supportedBackends :: Annex [Backend Annex]
 supportedBackends = do
 	state <- get
 	return (Internals.supportedBackends state)

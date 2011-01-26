@@ -43,7 +43,7 @@ type CommandCleanup = Annex Bool
  - functions. -}
 type CommandSeekStrings = CommandStartString -> CommandSeek
 type CommandStartString = String -> CommandStart
-type BackendFile = (FilePath, Maybe Backend)
+type BackendFile = (FilePath, Maybe (Backend Annex))
 type CommandSeekBackendFiles = CommandStartBackendFile -> CommandSeek
 type CommandStartBackendFile = BackendFile -> CommandStart
 type AttrFile = (FilePath, String)
@@ -95,7 +95,7 @@ notAnnexed file a = do
 		Just _ -> return Nothing
 		Nothing -> a
 
-isAnnexed :: FilePath -> ((Key, Backend) -> Annex (Maybe a)) -> Annex (Maybe a)
+isAnnexed :: FilePath -> ((Key, Backend Annex) -> Annex (Maybe a)) -> Annex (Maybe a)
 isAnnexed file a = do
 	r <- Backend.lookupFile file
 	case r of

@@ -42,7 +42,7 @@ start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 			return $ head backends
 		choosebackend (Just backend) = return backend
 
-perform :: FilePath -> Key -> Backend -> CommandPerform
+perform :: FilePath -> Key -> Backend Annex -> CommandPerform
 perform file oldkey newbackend = do
 	g <- Annex.gitRepo
 
