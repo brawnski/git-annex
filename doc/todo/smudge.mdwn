@@ -17,10 +17,6 @@ do nothing, file content is already cached.
 SHA1 has a harder job. Would not want to re-sha1 the file every time,
 probably. So it'd need a cache of file stat info, mapped to known objects.
 
-On the smudge side, I have not heard of a way to have the smudge filter
-point to an existing file, it probably still needs to cat it out. Luckily
-that is only done at checkout anyway.
-
 ### dealing with partial content availability
 
 The smudge filter cannot be allowed to fail, that leaves the tree and
@@ -34,6 +30,13 @@ it would if the file content was there.
 
 I've a demo implementation of this technique in the scripts below.
 
+----
+
+It may further be possible to use the %f with the smudge filter
+(docs say it's supported), and instead of outputting the dummy content, 
+it could create a dangling symlink, which would be more like git-annex's
+behavior now, and makes it easy to tell what content is not available
+with `ls`.
 
 ### test files
 
