@@ -183,12 +183,13 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * trust [repository ...]
 
-  Records that a repository is [[trusted]] to not unexpectedly lose content.
-  Use with care.
+  Records that a repository is [[trusted|trust]] to not unexpectedly lose
+  content. Use with care.
 
 * untrust [repository ...]
 
-  Undoes a trust command.
+  Records that a repository is [[not trusted|trusted]] and could lose content
+  at any time.
 
 * fromkey file
 
