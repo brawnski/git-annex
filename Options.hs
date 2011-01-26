@@ -18,19 +18,18 @@ import Command
  -}
 type Option = OptDescr (Annex ())
 
-storeOptBool :: Annex.FlagName -> Bool -> Annex ()
-storeOptBool name val = Annex.flagChange name $ Annex.FlagBool val
-storeOptString :: Annex.FlagName -> String -> Annex ()
-storeOptString name val = Annex.flagChange name $ Annex.FlagString val
-
 commonOptions :: [Option]
 commonOptions =
-	[ Option ['f'] ["force"] (NoArg (storeOptBool "force" True))
+	[ Option ['f'] ["force"] (NoArg (setforce True))
 		"allow actions that may lose annexed data"
-	, Option ['q'] ["quiet"] (NoArg (storeOptBool "quiet" True))
+	, Option ['q'] ["quiet"] (NoArg (setquiet True))
 		"avoid verbose output"
-	, Option ['v'] ["verbose"] (NoArg (storeOptBool "quiet" False))
+	, Option ['v'] ["verbose"] (NoArg (setquiet False))
 		"allow verbose output"
-	, Option ['b'] ["backend"] (ReqArg (storeOptString "backend") paramName)
+	, Option ['b'] ["backend"] (ReqArg setdefaultbackend paramName)
 		"specify default key-value backend to use"
 	]
+	where
+		setforce v = Annex.changeState $ \s -> s { Annex.force = v }
+		setquiet v = Annex.changeState $ \s -> s { Annex.quiet = v }
+		setdefaultbackend v = Annex.changeState $ \s -> s { Annex.defaultbackend = Just v }

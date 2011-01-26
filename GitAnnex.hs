@@ -13,6 +13,7 @@ import qualified GitRepo as Git
 import CmdLine
 import Command
 import Options
+import qualified Annex
 
 import qualified Command.Add
 import qualified Command.Unannex
@@ -65,15 +66,20 @@ cmds = concat
 
 options :: [Option]
 options = commonOptions ++
-	[ Option ['k'] ["key"] (ReqArg (storeOptString "key") paramKey)
+	[ Option ['k'] ["key"] (ReqArg setkey paramKey)
 		"specify a key to use"
-	, Option ['t'] ["to"] (ReqArg (storeOptString "torepository") paramRemote)
+	, Option ['t'] ["to"] (ReqArg setto paramRemote)
 		"specify to where to transfer content"
-	, Option ['f'] ["from"] (ReqArg (storeOptString "fromrepository") paramRemote)
+	, Option ['f'] ["from"] (ReqArg setfrom paramRemote)
 		"specify from where to transfer content"
-	, Option ['x'] ["exclude"] (ReqArg (storeOptString "exclude") paramGlob)
+	, Option ['x'] ["exclude"] (ReqArg addexclude paramGlob)
 		"skip files matching the glob pattern"
 	]
+	where
+		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
+		setto v = Annex.changeState $ \s -> s { Annex.toremote = Just v }
+		setfrom v = Annex.changeState $ \s -> s { Annex.fromremote = Just v }
+		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:(Annex.exclude s) }
 
 header :: String
 header = "Usage: git-annex command [option ..]"

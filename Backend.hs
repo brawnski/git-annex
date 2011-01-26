@@ -48,20 +48,24 @@ list = do
 	if not $ null l
 		then return l
 		else do
+			s <- getstandard
+			d <- Annex.getState Annex.defaultbackend
+			handle d s
+	where
+		parseBackendList l [] = l
+		parseBackendList bs s = map (lookupBackendName bs) $ words s
+		handle Nothing s = return s
+		handle (Just "") s = return s
+		handle (Just name) s = do
+			bs <- Annex.getState Annex.supportedBackends
+			let l' = (lookupBackendName bs name):s
+			Annex.changeState $ \state -> state { Annex.backends = l' }
+			return l'
+		getstandard = do
 			bs <- Annex.getState Annex.supportedBackends
 			g <- Annex.gitRepo
-			let defaults = parseBackendList bs $ Git.configGet g "annex.backends" ""
-			backendflag <- Annex.flagGet "backend"
-			let l' = if not $ null backendflag
-				then (lookupBackendName bs backendflag):defaults
-				else defaults
-			Annex.backendsChange l'
-			return l'
-	where
-		parseBackendList bs s = 
-			if null s
-				then bs
-				else map (lookupBackendName bs) $ words s
+			return $ parseBackendList bs $
+				Git.configGet g "annex.backends" ""
 
 {- Looks up a backend in a list. May fail if unknown. -}
 lookupBackendName :: [Backend Annex] -> String -> Backend Annex

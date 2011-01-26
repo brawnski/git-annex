@@ -90,7 +90,7 @@ copyKeyFile key file = do
  - error if not. -}
 checkRemoveKey :: Key -> Maybe Int -> Annex Bool
 checkRemoveKey key numcopiesM = do
-	force <- Annex.flagIsSet "force"
+	force <- Annex.getState Annex.force
 	if force || numcopiesM == Just 0
 		then return True
 		else do

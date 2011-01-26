@@ -179,11 +179,11 @@ backendPairs a files = do
 filterFiles :: [FilePath] -> Annex [FilePath]
 filterFiles l = do
 	let l' = filter notState l
-	exclude <- Annex.flagGet "exclude"
+	exclude <- Annex.getState Annex.exclude
 	if null exclude
 		then return l'
 		else do
-			let regexp = compile ("^" ++ wildToRegex exclude) []
+			let regexp = compile (toregex exclude) []
 			return $ filter (notExcluded regexp) l'
 	where
 		notState f = stateLoc /= take stateLocLen f
@@ -191,6 +191,10 @@ filterFiles l = do
 		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False
+		toregex exclude = "^(" ++ toregex' exclude "" ++ ")"
+		toregex' [] c = c
+		toregex' (w:ws) "" = toregex' ws (wildToRegex w)
+		toregex' (w:ws) c = toregex' ws (c ++ "|" ++ wildToRegex w)
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
@@ -219,3 +223,16 @@ paramName :: String
 paramName = "NAME"
 paramNothing :: String
 paramNothing = ""
+
+{- The Key specified by the --key and --backend parameters. -}
+cmdlineKey :: Annex Key
+cmdlineKey  = do
+	k <- Annex.getState Annex.defaultkey
+	backends <- Backend.list
+	return $ genKey (head backends) (keyname' k)
+	where
+		keyname' Nothing = badkey
+		keyname' (Just "") = badkey
+		keyname' (Just n) = n
+		badkey = error "please specify the key with --key"
+

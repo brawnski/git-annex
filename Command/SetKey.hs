@@ -8,14 +8,10 @@
 module Command.SetKey where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when)
 
 import Command
-import qualified Annex
 import Utility
-import qualified Backend
 import LocationLog
-import Types
 import Content
 import Messages
 
@@ -29,26 +25,24 @@ seek = [withTempFile start]
 {- Sets cached content for a key. -}
 start :: CommandStartString
 start file = do
-	keyname <- Annex.flagGet "key"
-	when (null keyname) $ error "please specify the key with --key"
-	backends <- Backend.list
-	let key = genKey (head backends) keyname
 	showStart "setkey" file
-	return $ Just $ perform file key
-perform :: FilePath -> Key -> CommandPerform
-perform file key = do
+	return $ Just $ perform file
+
+perform :: FilePath -> CommandPerform
+perform file = do
+	key <- cmdlineKey
 	-- the file might be on a different filesystem, so mv is used
-	-- rather than simply calling moveToObjectDir key file
+	-- rather than simply calling moveToObjectDir
 	ok <- getViaTmp key $ \dest -> do
 		if dest /= file
 			then liftIO $ boolSystem "mv" [file, dest]
 			else return True
 	if ok
-		then return $ Just $ cleanup key
+		then return $ Just $ cleanup
 		else error "mv failed!"
 
-cleanup :: Key -> CommandCleanup
-cleanup key = do
+cleanup :: CommandCleanup
+cleanup = do
+	key <- cmdlineKey
 	logStatus key ValuePresent
 	return True
-

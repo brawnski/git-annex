@@ -34,12 +34,16 @@ seek = [withFilesInGit $ start True]
  - moving data in the key-value backend. -}
 start :: Bool -> CommandStartString
 start move file = do
-	fromName <- Annex.flagGet "fromrepository"
-	toName <- Annex.flagGet "torepository"
-	case (fromName, toName) of
-		("", "") -> error "specify either --from or --to"
-		("",  _) -> toStart move file
-		(_ , "") -> fromStart move file
+	to <- Annex.getState Annex.toremote
+	from <- Annex.getState Annex.fromremote
+	case (from, to) of
+		(Nothing, Nothing) -> error "specify either --from or --to"
+		(Nothing, Just name) -> do
+			dest <- Remotes.byName name
+			toStart dest move file
+		(Just name, Nothing) -> do
+			src <- Remotes.byName name
+			fromStart src move file
 		(_ ,  _) -> error "only one of --from or --to can be specified"
 
 showAction :: Bool -> FilePath -> Annex ()
@@ -65,34 +69,33 @@ remoteHasKey remote key present	= do
  - A file's content can be moved even if there are insufficient copies to
  - allow it to be dropped.
  -}
-toStart :: Bool -> CommandStartString
-toStart move file = isAnnexed file $ \(key, _) -> do
+toStart :: Git.Repo -> Bool -> CommandStartString
+toStart dest move file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if not ishere
 		then return Nothing -- not here, so nothing to do
 		else do
 			showAction move file
-			return $ Just $ toPerform move key
-toPerform :: Bool -> Key -> CommandPerform
-toPerform move key = do
+			return $ Just $ toPerform dest move key
+toPerform :: Git.Repo -> Bool -> Key -> CommandPerform
+toPerform dest move key = do
 	Remotes.readConfigs
 	-- checking the remote is expensive, so not done in the start step
-	remote <- Remotes.commandLineRemote
-	isthere <- Remotes.inAnnex remote key
+	isthere <- Remotes.inAnnex dest key
 	case isthere of
 		Left err -> do
 			showNote $ show err
 			return Nothing
 		Right False -> do
-			showNote $ "to " ++ Git.repoDescribe remote ++ "..."
-			ok <- Remotes.copyToRemote remote key
+			showNote $ "to " ++ Git.repoDescribe dest ++ "..."
+			ok <- Remotes.copyToRemote dest key
 			if ok
-				then return $ Just $ toCleanup move remote key
+				then return $ Just $ toCleanup dest move key
 				else return Nothing -- failed
-		Right True -> return $ Just $ toCleanup move remote key
-toCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
-toCleanup move remote key = do
-	remoteHasKey remote key True
+		Right True -> return $ Just $ toCleanup dest move key
+toCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
+toCleanup dest move key = do
+	remoteHasKey dest key True
 	if move
 		then Command.Drop.cleanup key
 		else return True
@@ -103,36 +106,34 @@ toCleanup move remote key = do
  - If the current repository already has the content, it is still removed
  - from the other repository when moving.
  -}
-fromStart :: Bool -> CommandStartString
-fromStart move file = isAnnexed file $ \(key, _) -> do
-	remote <- Remotes.commandLineRemote
+fromStart :: Git.Repo -> Bool -> CommandStartString
+fromStart src move file = isAnnexed file $ \(key, _) -> do
 	(trusted, untrusted, _) <- Remotes.keyPossibilities key
-	if null $ filter (\r -> Remotes.same r remote) (trusted ++ untrusted)
+	if null $ filter (\r -> Remotes.same r src) (trusted ++ untrusted)
 		then return Nothing
 		else do
 			showAction move file
-			return $ Just $ fromPerform move key
-fromPerform :: Bool -> Key -> CommandPerform
-fromPerform move key = do
-	remote <- Remotes.commandLineRemote
+			return $ Just $ fromPerform src move key
+fromPerform :: Git.Repo -> Bool -> Key -> CommandPerform
+fromPerform src move key = do
 	ishere <- inAnnex key
 	if ishere
-		then return $ Just $ fromCleanup move remote key
+		then return $ Just $ fromCleanup src move key
 		else do
-			showNote $ "from " ++ Git.repoDescribe remote ++ "..."
-			ok <- getViaTmp key $ Remotes.copyFromRemote remote key
+			showNote $ "from " ++ Git.repoDescribe src ++ "..."
+			ok <- getViaTmp key $ Remotes.copyFromRemote src key
 			if ok
-				then return $ Just $ fromCleanup move remote key
+				then return $ Just $ fromCleanup src move key
 				else return Nothing -- fail
-fromCleanup :: Bool -> Git.Repo -> Key -> CommandCleanup
-fromCleanup True remote key = do
-	ok <- Remotes.onRemote remote (boolSystem, False) "dropkey" 
+fromCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
+fromCleanup src True key = do
+	ok <- Remotes.onRemote src (boolSystem, False) "dropkey" 
 		["--quiet", "--force",
 		"--backend=" ++ backendName key,
 		keyName key]
-	-- better safe than sorry: assume the remote dropped the key
+	-- better safe than sorry: assume the src dropped the key
 	-- even if it seemed to fail; the failure could have occurred
 	-- after it really dropped it
-	remoteHasKey remote key False
+	remoteHasKey src key False
 	return ok
-fromCleanup False _ _ = return True
+fromCleanup _ False _ = return True

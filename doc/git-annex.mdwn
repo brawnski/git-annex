@@ -258,6 +258,8 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Skips files matching the glob pattern. The glob is matched relative to
   the current directory.
 
+  This option can be specified multiple times.
+
 * --backend=name
 
   Specifies which key-value backend to use.

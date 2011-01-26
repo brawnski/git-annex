@@ -1,6 +1,7 @@
 git-annex (0.19) UNRELEASED; urgency=low
 
   * Support using the uuidgen command if the uuid command is not available.
+  * Allow --exclude to be specified more than once.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 19 Jan 2011 18:07:51 -0400
 

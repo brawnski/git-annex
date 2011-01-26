@@ -102,7 +102,7 @@ startup = do
 {- Cleanup actions. -}
 shutdown :: Integer -> Annex ()
 shutdown errnum = do
-	q <- Annex.queueGet
+	q <- Annex.getState Annex.repoqueue
 	unless (q == GitQueue.empty) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun

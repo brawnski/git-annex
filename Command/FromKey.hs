@@ -10,7 +10,7 @@ module Command.FromKey where
 import Control.Monad.State (liftIO)
 import System.Posix.Files
 import System.Directory
-import Control.Monad (when, unless)
+import Control.Monad (unless)
 
 import Command
 import qualified Annex
@@ -30,22 +30,21 @@ seek = [withFilesMissing start]
 {- Adds a file pointing at a manually-specified key -}
 start :: CommandStartString
 start file = do
-	keyname <- Annex.flagGet "key"
-	when (null keyname) $ error "please specify the key with --key"
-	backends <- Backend.list
-	let key = genKey (head backends) keyname
-
+	key <- cmdlineKey
 	inbackend <- Backend.hasKey key
 	unless inbackend $ error $
-		"key ("++keyname++") is not present in backend"
+		"key ("++keyName key++") is not present in backend"
 	showStart "fromkey" file
-	return $ Just $ perform file key
-perform :: FilePath -> Key -> CommandPerform
-perform file key = do
+	return $ Just $ perform file
+
+perform :: FilePath -> CommandPerform
+perform file = do
+	key <- cmdlineKey
 	link <- calcGitLink file key
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ createSymbolicLink link file
 	return $ Just $ cleanup file
+
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do
 	Annex.queue "add" ["--"] file

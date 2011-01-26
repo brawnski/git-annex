@@ -11,7 +11,6 @@ module Remotes (
 	keyPossibilities,
 	inAnnex,
 	same,
-	commandLineRemote,
 	byName,
 	copyFromRemote,
 	copyToRemote,
@@ -69,7 +68,7 @@ tryGitConfigRead r
 			g <- Annex.gitRepo
 			let l = Git.remotes g
 			let g' = Git.remotesAdd g $ exchange l r'
-			Annex.gitRepoChange g'
+			Annex.changeState $ \s -> s { Annex.repo = g' }
 			return $ Right r'
 		exchange [] _ = []
 		exchange (old:ls) new =
@@ -93,7 +92,7 @@ tryGitConfigRead r
 readConfigs :: Annex ()
 readConfigs = do
 	g <- Annex.gitRepo
-	remotesread <- Annex.flagIsSet "remotesread"
+	remotesread <- Annex.getState Annex.remotesread
 	unless remotesread $ do
 		allremotes <- filterM repoNotIgnored $ Git.remotes g
 		let cheap = filter (not . Git.repoIsUrl) allremotes
@@ -105,7 +104,7 @@ readConfigs = do
 		let todo = cheap ++ doexpensive
 		unless (null todo) $ do
 			_ <- mapM tryGitConfigRead todo
-			Annex.flagChange "remotesread" $ Annex.FlagBool True
+			Annex.changeState $ \s -> s { Annex.remotesread = True }
 	where
 		cachedUUID r = do
 			u <- getUUID r
@@ -204,26 +203,21 @@ repoCost r = do
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
 	ignored <- repoConfig r "ignore" "false"
-	fromName <- Annex.flagGet "fromrepository"
-	toName <- Annex.flagGet "torepository"
-	let name = if null fromName then toName else fromName
-	if not $ null name
-		then return $ match name
+	to <- match Annex.toremote
+	from <- match Annex.fromremote
+	if to || from
+		then return True
 		else return $ not $ Git.configTrue ignored
 	where
-		match name = name == Git.repoRemoteName r
+		match a = do
+			name <- Annex.getState a
+			case name of
+				Nothing -> return False
+				Just n -> return $ n == Git.repoRemoteName r
 
 {- Checks if two repos are the same, by comparing their remote names. -}
 same :: Git.Repo -> Git.Repo -> Bool
 same a b = Git.repoRemoteName a == Git.repoRemoteName b
-
-{- Returns the remote specified by --from or --to, may fail with error. -}
-commandLineRemote :: Annex Git.Repo
-commandLineRemote = do
-	fromName <- Annex.flagGet "fromrepository"
-	toName <- Annex.flagGet "torepository"
-	let name = if null fromName then toName else fromName
-	byName name
 
 {- Looks up a remote by name. -}
 byName :: String -> Annex Git.Repo

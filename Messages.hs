@@ -17,7 +17,7 @@ import qualified Annex
 
 verbose :: Annex () -> Annex ()
 verbose a = do
-	q <- Annex.flagIsSet "quiet"
+	q <- Annex.getState Annex.quiet
 	unless q a
 
 showSideAction :: String -> Annex ()

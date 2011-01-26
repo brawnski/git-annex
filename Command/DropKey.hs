@@ -28,7 +28,7 @@ start keyname = do
 	backends <- Backend.list
 	let key = genKey (head backends) keyname
 	present <- inAnnex key
-	force <- Annex.flagIsSet "force"
+	force <- Annex.getState Annex.force
 	if not present
 		then return Nothing
 		else if not force
