@@ -17,10 +17,7 @@ module UUID (
 	reposWithoutUUID,
 	prettyPrintUUIDs,
 	describeUUID,
-	uuidLog,
-	trustLog,
-	getTrusted,
-	setTrusted
+	uuidLog
 ) where
 
 import Control.Monad.State
@@ -141,28 +138,3 @@ uuidLog :: Annex FilePath
 uuidLog = do
 	g <- Annex.gitRepo
 	return $ gitStateDir g ++ "uuid.log"
-
-{- Filename of trust.log. -}
-trustLog :: Annex FilePath
-trustLog = do
-	g <- Annex.gitRepo
-	return $ gitStateDir g ++ "trust.log"
-
-{- List of trusted UUIDs. -}
-getTrusted :: Annex [UUID]
-getTrusted = do
-	logfile <- trustLog
-	s <- liftIO $ catch (readFile logfile) ignoreerror
-	return $ parse s
-	where
-		parse [] = []
-		parse s = map firstword $ lines s
-		firstword [] = ""
-		firstword l = head $ words l
-		ignoreerror _ = return ""
-
-{- Changes the list of trusted UUIDs. -}
-setTrusted :: [UUID] -> Annex ()
-setTrusted u = do
-	logfile <- trustLog
-	liftIO $ safeWriteFile logfile $ unlines u

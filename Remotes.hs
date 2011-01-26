@@ -32,6 +32,7 @@ import qualified Annex
 import LocationLog
 import Locations
 import UUID
+import Trust
 import Utility
 import qualified Content
 import Messages
@@ -126,7 +127,7 @@ keyPossibilities key = do
 	allremotes <- remotesByCost
 	g <- Annex.gitRepo
 	u <- getUUID g
-	trusted <- getTrusted
+	trusted <- trustGet Trusted
 
 	-- get uuids of other repositories that are
 	-- believed to have the key

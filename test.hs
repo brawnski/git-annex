@@ -32,6 +32,7 @@ import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
 import qualified UUID
+import qualified Trust
 import qualified Remotes
 import qualified Content
 import qualified Backend.SHA1
@@ -288,24 +289,28 @@ test_fix = "git-annex fix" ~: intmpclonerepo $ do
 		newfile = subdir ++ "/" ++ annexedfile
 
 test_trust :: Test
-test_trust = "git-annex trust/untrust" ~: intmpclonerepo $ do
-	trust False
+test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
+	trustcheck Trust.SemiTrusted
 	git_annex "trust" ["-q", "origin"] @? "trust failed"
-	trust True
+	trustcheck Trust.Trusted
 	git_annex "trust" ["-q", "origin"] @? "trust of trusted failed"
-	trust True
+	trustcheck Trust.Trusted
 	git_annex "untrust" ["-q", "origin"] @? "untrust failed"
-	trust False
+	trustcheck Trust.UnTrusted
 	git_annex "untrust" ["-q", "origin"] @? "untrust of untrusted failed"
-	trust False
+	trustcheck Trust.UnTrusted
+	git_annex "semitrust" ["-q", "origin"] @? "semitrust failed"
+	trustcheck Trust.SemiTrusted
+	git_annex "semitrust" ["-q", "origin"] @? "semitrust of semitrusted failed"
+	trustcheck Trust.SemiTrusted
 	where
-		trust expected = do
-			istrusted <- annexeval $ do
-				uuids <- UUID.getTrusted
+		trustcheck expected = do
+			present <- annexeval $ do
+				l <- Trust.trustGet expected
 				r <- Remotes.byName "origin"
 				u <- UUID.getUUID r
-				return $ elem u uuids
-			assertEqual "trust value" expected istrusted
+				return $ elem u l
+			assertEqual ("trust value " ++ show expected) True present
 
 test_fsck :: Test
 test_fsck = "git-annex fsck" ~: intmpclonerepo $ do

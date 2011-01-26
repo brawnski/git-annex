@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Command.Untrust where
+module Command.Semitrust where
 
 import Command
 import qualified GitRepo as Git
@@ -15,8 +15,8 @@ import Trust
 import Messages
 
 command :: [Command]
-command = [Command "untrust" (paramRepeating paramRemote) seek
-	"do not trust a repository"]
+command = [Command "semitrust" (paramRepeating paramRemote) seek
+	"return repository to default trust level"]
 
 seek :: [CommandSeek]
 seek = [withString start]
@@ -31,5 +31,5 @@ start name = do
 perform :: Git.Repo -> CommandPerform
 perform repo = do
 	uuid <- getUUID repo
-	trustSet uuid UnTrusted
+	trustSet uuid SemiTrusted
 	return $ Just $ return True

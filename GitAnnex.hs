@@ -37,6 +37,7 @@ import qualified Command.Migrate
 import qualified Command.Uninit
 import qualified Command.Trust
 import qualified Command.Untrust
+import qualified Command.Semitrust
 
 cmds :: [Command]
 cmds = concat
@@ -53,6 +54,7 @@ cmds = concat
 	, Command.PreCommit.command
 	, Command.Trust.command
 	, Command.Untrust.command
+	, Command.Semitrust.command
 	, Command.FromKey.command
 	, Command.DropKey.command
 	, Command.SetKey.command

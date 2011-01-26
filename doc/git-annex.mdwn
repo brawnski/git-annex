@@ -188,8 +188,12 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * untrust [repository ...]
 
-  Records that a repository is [[not trusted|trusted]] and could lose content
+  Records that a repository is [[not trusted|trust]] and could lose content
   at any time.
+
+* semitrust [repository ...]
+
+  Returns a repository to the default [[semi trusted|trust]] state.
 
 * fromkey file
 
@@ -356,7 +360,8 @@ available. Annexed files in your git repository symlink to that content.
 `.git-annex/uuid.log` is used to map between repository UUID and
 decscriptions.
 
-`.git-annex/trust.log` is used to list the UUIDs of trusted repositories.
+`.git-annex/trust.log` is used to indicate which repositories are trusted
+and untrusted.
 
 `.git-annex/*.log` is where git-annex records its content tracking
 information. These files should be committed to git.
