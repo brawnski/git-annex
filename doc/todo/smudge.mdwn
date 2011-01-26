@@ -1,0 +1,65 @@
+git-annex should use smudge/clean filters.
+
+The trick is doing it efficiently. Since git a2b665d, 2011-01-05,
+something like this works to provide a filename to the clean script:
+
+	git config --global filter.huge.clean huge-clean %f
+
+This avoids it needing to read all the current file content from stdin
+when doing eg, a git status or git commit. Instead it is passed the
+filename that git is operating on, I think that's from the working
+directory.
+
+So, WORM could just look at that file and easily tell if it is one
+it already knows (same mtime and size). If so, it can short-circuit and
+do nothing, file content is already cached.
+
+SHA1 has a harder job. Would not want to re-sha1 the file every time,
+probably. So it'd need a cache of file stat info, mapped to known objects.
+
+On the smudge side, I have not heard of a way to have the smudge filter
+point to an existing file, it probably still needs to cat it out. Luckily
+that is only done at checkout anyway.
+
+----
+
+The other trick may be doing it with partial content availability.
+When a smudge filter fails, git leaves the tree and index in a very weird
+state. More investigation needed.
+
+### test files
+
+huge-smudge:
+
+<pre>
+#!/bin/sh
+read sha1
+echo "smudging $sha1" >&2
+cat ~/$sha1
+</pre>
+
+huge-clean:
+
+<pre>
+#!/bin/sh
+cat >temp
+sha1=`sha1sum temp | cut -d' ' -f1`
+echo "cleaning $sha1" >&2
+ls -l temp >&2
+mv temp ~/$sha1
+echo $sha1
+</pre>
+
+.gitattributes:
+
+<pre>
+*.huge filter=huge
+</pre>
+
+in .git/config:
+
+<pre>
+[filter "huge"]
+        clean = huge-clean
+        smudge = huge-smudge
+<pre>
