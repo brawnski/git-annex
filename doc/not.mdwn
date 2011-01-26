@@ -20,3 +20,13 @@
   down to a binary. And it has a fairly extensive test suite. (Don't be
   fooled by "make test" only showing a few dozen test cases; each test
   involves checking dozens to hundreds of assertions.)
+
+* git-annex is not [git-media](https://github.com/schacon/git-media),
+  although they both approach the same problem from a similar direction.
+  I only learned of git-media after writing git-annex, but I probably
+  would have still written git-annex instead of using it. Currently,
+  git-media has the advantage of using git smudge filters rather than
+  git-annex's pile of symlinks, and it may be a tighter fit for certian
+  situations. It lacks git-annex's support for widely distributed storage,
+  using only a single backend data store. It also does not support
+  partial checkouts of file contents, like git-annex does.
