@@ -184,7 +184,7 @@ checkKeyNumCopies key numcopies = do
 	if present < needed
 		then do
 			ppuuids <- prettyPrintUUIDs untrustedlocations
-			showLongNote $ missingNote present needed ppuuids
+			warning $ missingNote present needed ppuuids
 			return False
 		else return True
 	where
