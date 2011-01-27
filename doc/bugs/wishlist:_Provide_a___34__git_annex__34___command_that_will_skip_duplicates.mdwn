@@ -1,4 +1,4 @@
-(Hi, this is paulproteus/Asheesh Laroia).
+(Hi, this is paulproteus@debian, AKA Asheesh).
 
 I've been enjoying using git-annex to archive my data.
 
@@ -8,12 +8,12 @@ My question is, is there a frontend by which I can look at some files and only s
 
 It seems there is not, so this is a wishlist bug filed so that maybe such a thing might exist. What I would really like to do is:
 
- $ git annex add --no-add-if-already-present .
- $ git commit -m "Slurping in some photos I found on my old laptop hard drive"
+* $ git annex add --no-add-if-already-present .
+* $ git commit -m "Slurping in some photos I found on my old laptop hard drive"
 
 And then I'd do something like:
 
- $ git clean -f
+* $ git clean -f
 
 to remove the files that didn't get annexed in this run. That way, only one filename would ever point to a particular SHA1.
 
