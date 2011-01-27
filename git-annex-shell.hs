@@ -51,7 +51,7 @@ main' c@(cmd:dir:params)
 main' c@(cmd:_)
 	-- Handle the case of being the user's login shell. It will be passed
 	-- a single string containing all the real parameters.
-	| isPrefixOf "git-annex-shell " cmd = main' $ drop 1 $ shellUnEscape cmd
+	| "git-annex-shell " `isPrefixOf` cmd = main' $ drop 1 $ shellUnEscape cmd
 	| elem cmd builtins = failure
 	| otherwise = external c
 

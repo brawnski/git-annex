@@ -93,7 +93,7 @@ gitAnnexUnusedLog r = gitAnnexDir r </> "unused"
 
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool
-isLinkToAnnex s = isInfixOf ("/" ++ objectDir) s
+isLinkToAnnex s = ("/" ++ objectDir) `isInfixOf` s
 
 {- Converts a key into a filename fragment.
  -

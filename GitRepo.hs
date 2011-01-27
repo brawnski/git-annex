@@ -323,7 +323,7 @@ configRemotes repo = map construct remotepairs
 			| otherwise = repoFromPath v
 		-- git remotes can be written scp style -- [user@]host:dir
 		-- where dir is relative to the user's home directory.
-		scpstyle v = isInfixOf ":" v && (not $ isInfixOf "//" v)
+		scpstyle v = ":" `isInfixOf` v && (not $ "//" `isInfixOf` v)
 		scptourl v = "ssh://" ++ host ++ slash dir
 			where
 				bits = split ":" v
@@ -458,7 +458,7 @@ prop_idempotent_deencode s = s == decodeGitFile (encodeGitFile s)
  -}
 absDir :: String -> IO String
 absDir d
-	| isPrefixOf "/" d = expandt d
+	| "/" `isPrefixOf` d = expandt d
 	| otherwise = do
 		h <- myhomedir
 		return $ h ++ d

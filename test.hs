@@ -88,7 +88,7 @@ test_init = "git-annex init" ~: TestCase $ innewrepo $ do
 	e <- doesFileExist annexlog
 	e @? (annexlog ++ " not created")
 	c <- readFile annexlog
-	isInfixOf reponame c @? annexlog ++ " does not contain repo name"
+	reponame `isInfixOf` c @? annexlog ++ " does not contain repo name"
 	where
 		annexlog = ".git-annex/uuid.log"
 		reponame = "test repo"
