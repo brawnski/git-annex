@@ -34,6 +34,7 @@ seek = [withFilesInGit $ start True]
  - moving data in the key-value backend. -}
 start :: Bool -> CommandStartString
 start move file = do
+	Remotes.readConfigs
 	to <- Annex.getState Annex.toremote
 	from <- Annex.getState Annex.fromremote
 	case (from, to) of
@@ -80,7 +81,6 @@ toStart dest move file = isAnnexed file $ \(key, _) -> do
 			return $ Just $ toPerform dest move key
 toPerform :: Git.Repo -> Bool -> Key -> CommandPerform
 toPerform dest move key = do
-	Remotes.readConfigs
 	-- checking the remote is expensive, so not done in the start step
 	isthere <- Remotes.inAnnex dest key
 	case isthere of
