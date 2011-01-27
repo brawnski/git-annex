@@ -133,11 +133,11 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 			unannexed ingitfile
 
 test_drop :: Test
-test_drop = "git-annex drop" ~: TestList [noremote, withremote]
+test_drop = "git-annex drop" ~: TestList [noremote, withremote, untrustedremote]
 	where
 		noremote = "no remotes" ~: TestCase $ intmpcopyrepo $ do
 			r <- git_annex "drop" ["-q", annexedfile]
-			(not r) @? "drop wrongly succeeded with no known copy of file"
+			not r @? "drop wrongly succeeded with no known copy of file"
 			annexed_present annexedfile
 			git_annex "drop" ["-q", "--force", annexedfile] @? "drop --force failed"
 			annexed_notpresent annexedfile
@@ -145,8 +145,18 @@ test_drop = "git-annex drop" ~: TestList [noremote, withremote]
 			git_annex "drop" ["-q", ingitfile] @? "drop ingitfile should be no-op"
 			unannexed ingitfile
 		withremote = "with remote" ~: TestCase $ intmpclonerepo $ do
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			annexed_present annexedfile
 			git_annex "drop" ["-q", annexedfile] @? "drop failed though origin has copy"
 			annexed_notpresent annexedfile
+			inmainrepo $ annexed_present annexedfile
+		untrustedremote = "untrusted remote" ~: TestCase $ intmpclonerepo $ do
+			git_annex "untrust" ["-q", "origin"] @? "untrust of origin failed"
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			annexed_present annexedfile
+			r <- git_annex "drop" ["-q", annexedfile]
+			not r @? "drop wrongly suceeded with only an untrusted copy of the file"
+			annexed_present annexedfile
 			inmainrepo $ annexed_present annexedfile
 
 test_get :: Test
@@ -314,20 +324,27 @@ test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
 		repo = "origin"
 
 test_fsck :: Test
-test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted]
+test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withremoteuntrusted]
 	where
 		basicfsck = TestCase $ intmpclonerepo $ do
 			git_annex "fsck" ["-q"] @? "fsck failed"
 			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
-			r <- git_annex "fsck" ["-q"]
-			not r @? "fsck failed to fail with numcopies unsatisfied"
+			fsck_should_fail "numcopies unsatisfied"
 			Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
 			corrupt annexedfile
 			corrupt sha1annexedfile
 		withlocaluntrusted = TestCase $ intmpcopyrepo $ do
 			git_annex "untrust" ["-q", "."] @? "untrust of current repo failed"
-			r <- git_annex "fsck" ["-q"]
-			not r @? "fsck failed to fail with content only available in untrusted (current) repository"
+			fsck_should_fail "content only available in untrusted (current) repository"
+			git_annex "trust" ["-q", "."] @? "trust of current repo failed"
+			git_annex "fsck" ["-q"] @? "fsck failed on trusted repo"
+		withremoteuntrusted = TestCase $ intmpclonerepo $ do
+			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			git_annex "get" ["-q", sha1annexedfile] @? "get failed"
+			git_annex "fsck" ["-q"] @? "fsck failed with numcopies=2 and 2 copies"
+			git_annex "untrust" ["-q", "origin"] @? "untrust of origin failed"
+			fsck_should_fail "content not replicated to enough non-untrusted repositories"
 		corrupt f = do
 			git_annex "get" ["-q", f] @? "get of file failed"
 			Content.allowWrite f
@@ -335,6 +352,9 @@ test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted]
 			r <- git_annex "fsck" ["-q"]
 			not r @? "fsck failed to fail with corrupted file content"
 			git_annex "fsck" ["-q"] @? "fsck unexpectedly failed again; previous one did not fix problem"
+		fsck_should_fail m = do
+			r <- git_annex "fsck" ["-q"]
+			not r @? "fsck failed to fail with " ++ m
 
 test_migrate :: Test
 test_migrate = "git-annex migrate" ~: TestList [t False, t True]
