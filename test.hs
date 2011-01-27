@@ -94,15 +94,27 @@ test_init = "git-annex init" ~: TestCase $ innewrepo $ do
 		reponame = "test repo"
 
 test_add :: Test
-test_add = "git-annex add" ~: TestCase $ inmainrepo $ do
-	writeFile annexedfile $ content annexedfile
-	git_annex "add" ["-q", annexedfile] @? "add failed"
-	annexed_present annexedfile
-	writeFile ingitfile $ content ingitfile
-	Utility.boolSystem "git" ["add", ingitfile] @? "git add failed"
-	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
-	git_annex "add" ["-q", ingitfile] @? "add ingitfile should be no-op"
-	unannexed ingitfile
+test_add = "git-annex add" ~: TestList [basic, sha1dup]
+	where
+		-- this test case runs in the main repo, to set up a basic
+		-- annexed file that later tests will use
+		basic = TestCase $ inmainrepo $ do
+			writeFile annexedfile $ content annexedfile
+			git_annex "add" ["-q", annexedfile] @? "add failed"
+			annexed_present annexedfile
+			writeFile ingitfile $ content ingitfile
+			Utility.boolSystem "git" ["add", ingitfile] @? "git add failed"
+			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
+			git_annex "add" ["-q", ingitfile] @? "add ingitfile should be no-op"
+			unannexed ingitfile
+		sha1dup = TestCase $ intmpclonerepo $ do
+			writeFile sha1annexedfile $ content sha1annexedfile
+			git_annex "add" ["-q", sha1annexedfile, "--backend=SHA1"] @? "add with SHA1 failed"
+			annexed_present sha1annexedfile
+			writeFile sha1annexedfiledup $ content sha1annexedfiledup
+			git_annex "add" ["-q", sha1annexedfiledup, "--backend=SHA1"] @? "add of second file with same SHA1 failed"
+			annexed_present sha1annexedfiledup
+			annexed_present sha1annexedfile
 
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
@@ -647,6 +659,9 @@ annexedfile = "foo"
 sha1annexedfile :: String
 sha1annexedfile = "sha1foo"
 
+sha1annexedfiledup :: String
+sha1annexedfiledup = "sha1foodup"
+
 ingitfile :: String
 ingitfile = "bar"
 
@@ -655,6 +670,7 @@ content f
 	| f == annexedfile = "annexed file content"
 	| f == ingitfile = "normal file content"
 	| f == sha1annexedfile ="sha1 annexed file content"
+	| f == sha1annexedfiledup = content sha1annexedfile
 	| otherwise = "unknown file " ++ f
 
 changecontent :: FilePath -> IO ()
