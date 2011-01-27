@@ -43,7 +43,7 @@ perform dest key = do
 		error "content not present"
 
 	g <- Annex.gitRepo
-	let src = annexLocation g key
+	let src = gitAnnexLocation g key
 	liftIO $ removeFile dest
 	showNote "copying..."
 	ok <- liftIO $ copyFile src dest

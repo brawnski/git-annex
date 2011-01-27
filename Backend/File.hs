@@ -77,7 +77,7 @@ copyKeyFile key file = do
 		-- before going on to the next remote.)
 		probablyPresent r =
 			if not $ Git.repoIsUrl r
-				then liftIO $ doesFileExist $ annexLocation r key
+				then liftIO $ doesFileExist $ gitAnnexLocation r key
 				else return True
 		docopy r continue = do
 			showNote $ "copying from " ++ Git.repoDescribe r ++ "..."

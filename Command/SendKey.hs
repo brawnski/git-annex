@@ -32,7 +32,7 @@ start keyname = do
 	let key = genKey (head backends) keyname
 	present <- inAnnex key
 	g <- Annex.gitRepo
-	let file = annexLocation g key
+	let file = gitAnnexLocation g key
 	when present $
 		liftIO $ rsyncServerSend file
 	liftIO exitFailure

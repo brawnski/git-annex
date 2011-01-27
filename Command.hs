@@ -187,7 +187,7 @@ filterFiles l = do
 			let regexp = compile (toregex exclude) []
 			return $ filter (notExcluded regexp) l'
 	where
-		notState f = not $ isPrefixOf stateLoc f
+		notState f = not $ isPrefixOf stateDir f
 		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False

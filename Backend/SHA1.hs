@@ -48,7 +48,7 @@ keyValue file = do
 checkKeySHA1 :: Key -> Annex Bool
 checkKeySHA1 key = do
 	g <- Annex.gitRepo
-	let file = annexLocation g key
+	let file = gitAnnexLocation g key
 	present <- liftIO $ doesFileExist file
 	if not present
 		then return True

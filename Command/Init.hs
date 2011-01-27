@@ -10,6 +10,7 @@ module Command.Init where
 import Control.Monad.State (liftIO)
 import Control.Monad (when)
 import System.Directory
+import System.FilePath
 
 import Command
 import qualified Annex
@@ -75,7 +76,7 @@ gitAttributesWrite repo = do
 					attributes]
 
 attrLine :: String		
-attrLine = stateLoc ++ "*.log merge=union"
+attrLine = stateDir </> "*.log merge=union"
 
 {- set up a git pre-commit hook, if one is not already present -}
 gitPreCommitHookWrite :: Git.Repo -> Annex ()

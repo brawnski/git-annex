@@ -43,7 +43,7 @@ checkUnused = do
 	unused <- unusedKeys
 	let list = number 1 unused
 	g <- Annex.gitRepo
-	liftIO $ writeFile (annexUnusedLog g) $ unlines $ 
+	liftIO $ writeFile (gitAnnexUnusedLog g) $ unlines $ 
 		map (\(n, k) -> show n ++ " " ++ show k) list
 	if null unused
 		then return True

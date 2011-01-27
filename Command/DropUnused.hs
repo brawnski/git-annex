@@ -40,7 +40,7 @@ start s = do
 readUnusedLog :: Annex (M.Map String Key)
 readUnusedLog = do
 	g <- Annex.gitRepo
-	let f = annexUnusedLog g
+	let f = gitAnnexUnusedLog g
 	e <- liftIO $ doesFileExist f
 	if e
 		then do

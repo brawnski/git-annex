@@ -225,7 +225,7 @@ byName name = do
 {- Tries to copy a key's content from a remote's annex to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
 copyFromRemote r key file
-	| not $ Git.repoIsUrl r = liftIO $ copyFile (annexLocation r key) file
+	| not $ Git.repoIsUrl r = liftIO $ copyFile (gitAnnexLocation r key) file
 	| Git.repoIsSsh r = rsynchelper r True key file
 	| otherwise = error "copying from non-ssh repo not supported"
 
@@ -234,7 +234,7 @@ copyToRemote :: Git.Repo -> Key -> Annex Bool
 copyToRemote r key
 	| not $ Git.repoIsUrl r = do
 		g <- Annex.gitRepo
-		let keysrc = annexLocation g key
+		let keysrc = gitAnnexLocation g key
 		-- run copy from perspective of remote
 		liftIO $ do
 			a <- Annex.new r []
@@ -245,7 +245,7 @@ copyToRemote r key
 				return ok
 	| Git.repoIsSsh r = do
 		g <- Annex.gitRepo
-		let keysrc = annexLocation g key
+		let keysrc = gitAnnexLocation g key
 		rsynchelper r False key keysrc
 	| otherwise = error "copying to non-ssh repo not supported"
 

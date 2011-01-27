@@ -39,9 +39,9 @@ upgradeFrom0 = do
 	g <- Annex.gitRepo
 
 	-- do the reorganisation of the files
-	let olddir = annexDir g
+	let olddir = gitAnnexDir g
 	keys <- getKeysPresent0' olddir
-	_ <- mapM (\k -> moveAnnex k $ olddir ++ "/" ++ keyFile k) keys
+	_ <- mapM (\k -> moveAnnex k $ olddir </> keyFile k) keys
 
 	-- update the symlinks to the files
 	files <- liftIO $ Git.inRepo g [Git.workTree g]

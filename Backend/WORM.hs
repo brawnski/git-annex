@@ -57,7 +57,7 @@ keySize key = read $ section !! 1
 checkKeySize :: Key -> Annex Bool
 checkKeySize key = do
 	g <- Annex.gitRepo
-	let file = annexLocation g key
+	let file = gitAnnexLocation g key
 	present <- liftIO $ doesFileExist file
 	if not present
 		then return True

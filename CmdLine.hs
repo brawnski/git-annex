@@ -111,7 +111,7 @@ shutdown errnum = do
 	-- are left behind to allow resuming on re-run.
 	when (errnum == 0) $ do
 		g <- Annex.gitRepo
-		let tmp = annexTmpLocation g
+		let tmp = gitAnnexTmpDir g
 		exists <- liftIO $ doesDirectoryExist tmp
 		when exists $ liftIO $ removeDirectoryRecursive tmp
 		liftIO $ createDirectoryIfMissing True tmp

@@ -50,7 +50,7 @@ perform file oldkey newbackend = do
 	-- (the file can't be stored as usual, because it's already a symlink).
 	-- The old backend's key is not dropped from it, because there may
 	-- be other files still pointing at that key.
-	let src = annexLocation g oldkey
+	let src = gitAnnexLocation g oldkey
 	stored <- Backend.storeFileKey src $ Just newbackend
 	case stored of
 		Nothing -> return Nothing
