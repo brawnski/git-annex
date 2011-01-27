@@ -196,7 +196,6 @@ missingNote file 0 _ [] =
 		"** No known copies of " ++ file ++ " exist!"
 missingNote file 0 _ untrusted =
 		"Only these untrusted locations may have copies of " ++ file ++
-		"\n-- they could lose it at any time!" ++
 		"\n" ++ untrusted ++
 		"Back it up to trusted locations with git-annex copy."
 missingNote file present needed [] =
