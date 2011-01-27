@@ -4,7 +4,7 @@ Git-annex supports three levels of trust of a repository:
 * untrusted
 * trusted
 
-## semi-trusted
+## semitrusted
 
 Normally, git-annex does not fully trust its stored [[location_tracking]]
 information. When removing content, it will directly check
@@ -15,7 +15,7 @@ Generally that explicit checking is a good idea. Consider that the current
 out. Or, a remote may have suffered a catastrophic loss of data, or itself
 been lost.
 
-There is still some trust involved here. A semi-trusted repository is
+There is still some trust involved here. A semitrusted repository is
 dependended on to retain a copy of the file content; possibly the only
 [[copy|copies]].
 
