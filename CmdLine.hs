@@ -70,7 +70,6 @@ usage header cmds options =
 			cmdparams c ++
 			pad (longest cmdparams + 2) (cmdparams c) ++
 			cmddesc c
-		indent l = "  " ++ l
 		pad n s = replicate (n - length s) ' '
 		longest f = foldl max 0 $ map (length . f) cmds
 

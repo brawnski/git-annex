@@ -37,9 +37,8 @@ showProgress :: Annex ()
 showProgress = verbose $ liftIO $ putStr "\n"
 
 showLongNote :: String -> Annex ()
-showLongNote s = verbose $ liftIO $ putStr $ "\n" ++ indented
-	where
-		indented = join "\n" $ map (\l -> "  " ++ l) $ lines s 
+showLongNote s = verbose $ liftIO $ putStr $ "\n" ++ indent s
+
 showEndOk :: Annex ()
 showEndOk = verbose $ liftIO $ putStrLn "ok"
 
@@ -48,9 +47,13 @@ showEndFail = verbose $ liftIO $ putStrLn "\nfailed"
 
 {- Exception pretty-printing. -}
 showErr :: (Show a) => a -> Annex ()
-showErr e = warning $ show e
+showErr e = warning $ "git-annex: " ++ show e
 
 warning :: String -> Annex ()
-warning s = do
+warning w = do
 	verbose $ liftIO $ putStr "\n"
-	liftIO $ hPutStrLn stderr $ "git-annex: " ++ s ++ " "
+	liftIO $ hFlush stdout
+	liftIO $ hPutStrLn stderr $ indent w
+
+indent :: String -> String
+indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
