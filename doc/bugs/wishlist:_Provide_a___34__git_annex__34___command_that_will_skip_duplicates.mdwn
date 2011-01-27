@@ -17,6 +17,6 @@ And then I'd do something like:
 
 to remove the files that didn't get annexed in this run. That way, only one filename would ever point to a particular SHA1.
 
-I want this because I have copies of various of mine (photos, in particular) scattered across various hard disks.
+I want this because I have copies of various of mine (photos, in particular) scattered across various hard disks. If this feature existed, I could comfortably toss them all into one git annex that grew, bit by bit, to store all of these files exactly once.
 
 (I would be even happier for "git annex add --unlink-duplicates .")
