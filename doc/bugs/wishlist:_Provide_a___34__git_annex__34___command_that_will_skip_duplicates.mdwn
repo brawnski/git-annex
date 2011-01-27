@@ -1,0 +1,22 @@
+(Hi, this is paulproteus/Asheesh Laroia).
+
+I've been enjoying using git-annex to archive my data.
+
+It's great that, by using git-annex and the SHA1 backend, I get a space-saving kind of deduplication through the symbolic links.
+
+My question is, is there a frontend by which I can look at some files and only store the ones that are not already in the repository? That would help me in terms of personal file organization.
+
+It seems there is not, so this is a wishlist bug filed so that maybe such a thing might exist. What I would really like to do is:
+
+ $ git annex add --no-add-if-already-present .
+ $ git commit -m "Slurping in some photos I found on my old laptop hard drive"
+
+And then I'd do something like:
+
+ $ git clean -f
+
+to remove the files that didn't get annexed in this run. That way, only one filename would ever point to a particular SHA1.
+
+I want this because I have copies of various of mine (photos, in particular) scattered across various hard disks.
+
+(I would be even happier for "git annex add --unlink-duplicates .")
