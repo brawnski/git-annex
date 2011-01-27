@@ -24,13 +24,13 @@ seek = [withAttrFilesInGit "annex.numcopies" start]
 start :: CommandStartAttrFile
 start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	showStart "fsck" file
-	return $ Just $ perform key backend numcopies
+	return $ Just $ perform key file backend numcopies
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
-perform :: Key -> Backend Annex -> Maybe Int -> CommandPerform
-perform key backend numcopies = do
-	success <- Backend.fsckKey backend key numcopies
+perform :: Key -> FilePath -> Backend Annex -> Maybe Int -> CommandPerform
+perform key file backend numcopies = do
+	success <- Backend.fsckKey backend key (Just file) numcopies
 	if success
 		then return $ Just $ return True
 		else return Nothing

@@ -118,8 +118,8 @@ hasKey key = do
 	(B.hasKey backend) key
 
 {- Checks a key's backend for problems. -}
-fsckKey :: Backend Annex -> Key -> Maybe Int -> Annex Bool
-fsckKey backend key numcopies = (B.fsckKey backend) key numcopies
+fsckKey :: Backend Annex -> Key -> Maybe FilePath -> Maybe Int -> Annex Bool
+fsckKey backend key file numcopies = (B.fsckKey backend) key file numcopies
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

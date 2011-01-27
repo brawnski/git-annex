@@ -41,8 +41,8 @@ dummyStore _ _ = return False
 dummyRemove :: Key -> Maybe a -> Annex Bool
 dummyRemove _ _ = return False
 
-dummyFsck :: Key -> Maybe a -> Annex Bool
-dummyFsck _ _ = return True
+dummyFsck :: Key -> Maybe FilePath -> Maybe a -> Annex Bool
+dummyFsck _ _ _ = return True
 
 dummyOk :: Key -> Annex Bool
 dummyOk _ = return True

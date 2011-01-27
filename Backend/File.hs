@@ -166,14 +166,14 @@ getNumCopies Nothing = do
  - The passed action is first run to allow backends deriving this one
  - to do their own checks.
  -}
-checkKey :: (Key -> Annex Bool) -> Key -> Maybe Int -> Annex Bool
-checkKey a key numcopies = do
+checkKey :: (Key -> Annex Bool) -> Key -> Maybe FilePath -> Maybe Int -> Annex Bool
+checkKey a key file numcopies = do
 	a_ok <- a key
-	copies_ok <- checkKeyNumCopies key numcopies
+	copies_ok <- checkKeyNumCopies key file numcopies
 	return $ a_ok && copies_ok
 
-checkKeyNumCopies :: Key -> Maybe Int -> Annex Bool
-checkKeyNumCopies key numcopies = do
+checkKeyNumCopies :: Key -> Maybe FilePath -> Maybe Int -> Annex Bool
+checkKeyNumCopies key file numcopies = do
 	needed <- getNumCopies numcopies
 	g <- Annex.gitRepo
 	locations <- liftIO $ keyLocations g key
@@ -184,10 +184,12 @@ checkKeyNumCopies key numcopies = do
 	if present < needed
 		then do
 			ppuuids <- prettyPrintUUIDs untrustedlocations
-			warning $ missingNote (show key) present needed ppuuids
+			warning $ missingNote (filename file key) present needed ppuuids
 			return False
 		else return True
 	where
+		filename Nothing k = show k
+		filename (Just f) _ = f
 
 missingNote :: String -> Int -> Int -> String -> String
 missingNote file 0 _ [] = 
@@ -203,5 +205,5 @@ missingNote file present needed [] =
 		"\nBack it up with git-annex copy."
 missingNote file present needed untrusted = 
 		missingNote file present needed [] ++
-		"\nThe following untrusted copies may also exist: " ++
+		"\nThe following untrusted locations may also have copies: " ++
 		"\n" ++ untrusted
