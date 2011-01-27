@@ -254,7 +254,7 @@ virus_checker: clamdscan -
 
 # comments plugin
 # PageSpec of pages where comments are allowed
-comments_pagespec: forum/* and !*/Discussion
+comments_pagespec: (forum/* or todo/* or bugs/*) and !*/Discussion
 # PageSpec of pages where posting new comments is not allowed
 comments_closed_pagespec: ''
 # Base name for comments, e.g. "comment_" for pages like "sandbox/comment_12"
@@ -414,5 +414,3 @@ recentchangesnum: 100
 # extra underlay directories to add
 #add_underlays:
 #  - /home/b-git-annex/wiki.underlay
-ENV:
- TMPDIR: /home/b-git-annex/tmp
