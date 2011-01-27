@@ -137,7 +137,8 @@ lookupFile file = do
 		makekey bs l = do
 			case maybeLookupBackendName bs bname of
 				Nothing -> do
-					unless (null kname || null bname) $
+					unless (null kname || null bname ||
+					        not (isLinkToAnnex l)) $
 						warning skip
 					return Nothing
 				Just backend -> return $ Just (k, backend)

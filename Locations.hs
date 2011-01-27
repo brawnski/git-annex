@@ -15,6 +15,7 @@ module Locations (
 	annexTmpLocation,
 	annexBadLocation,
 	annexUnusedLog,
+	isLinkToAnnex,
 	annexDir,
 	annexObjectDir,
 
@@ -22,6 +23,7 @@ module Locations (
 ) where
 
 import Data.String.Utils
+import Data.List
 
 import Types
 import qualified GitRepo as Git
@@ -68,6 +70,10 @@ annexBadLocation r = annexDir r ++ "/bad/"
 {- .git/annex/unused is used to number possibly unused keys -}
 annexUnusedLog :: Git.Repo -> FilePath
 annexUnusedLog r = annexDir r ++ "/unused"
+
+{- Checks a symlink target to see if it appears to point to annexed content. -}
+isLinkToAnnex :: FilePath -> Bool
+isLinkToAnnex s = isInfixOf "/.git/annex/objects/" s
 
 {- Converts a key into a filename fragment.
  -
