@@ -13,6 +13,7 @@ import System.Posix.Files
 import Control.Monad (filterM)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
+import Data.List
 
 import Types
 import qualified Backend
@@ -186,8 +187,7 @@ filterFiles l = do
 			let regexp = compile (toregex exclude) []
 			return $ filter (notExcluded regexp) l'
 	where
-		notState f = stateLoc /= take stateLocLen f
-		stateLocLen = length stateLoc
+		notState f = not $ isPrefixOf stateLoc f
 		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False
