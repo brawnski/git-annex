@@ -59,5 +59,5 @@ gitAttributesUnWrite repo = do
 	attrexists <- doesFileExist attributes
 	when attrexists $ do
 		c <- readFileStrict attributes
-		writeFile attributes $ unlines $
+		safeWriteFile attributes $ unlines $
 			filter (/= Command.Init.attrLine) $ lines c

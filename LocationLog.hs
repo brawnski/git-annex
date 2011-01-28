@@ -32,7 +32,6 @@ import Data.Time
 import System.Locale
 import qualified Data.Map as Map
 import System.Directory
-import System.Posix.Process
 import Control.Monad (when)
 
 import qualified GitRepo as Git
@@ -112,12 +111,7 @@ readLog file = do
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()
-writeLog file ls = do
-	pid <- getProcessID
-	let tmpfile = file ++ ".tmp" ++ show pid
-	createDirectoryIfMissing True (parentDir file)
-	writeFile tmpfile $ unlines $ map show ls
-	renameFile tmpfile file
+writeLog file ls = safeWriteFile file (unlines $ map show ls)
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> UUID -> IO LogLine

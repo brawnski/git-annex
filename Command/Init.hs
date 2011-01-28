@@ -20,6 +20,7 @@ import Version
 import Messages
 import Locations
 import Types
+import Utility
 	
 command :: [Command]
 command = [Command "init" paramDesc seek
@@ -61,7 +62,7 @@ gitAttributesWrite repo = do
 	exists <- doesFileExist attributes
 	if not exists
 		then do
-			writeFile attributes $ attrLine ++ "\n"
+			safeWriteFile attributes $ attrLine ++ "\n"
 			commit
 		else do
 			content <- readFile attributes
@@ -85,7 +86,7 @@ gitPreCommitHookWrite repo = do
 	if exists
 		then warning $ "pre-commit hook (" ++ hook ++ ") already exists, not configuring"
 		else liftIO $ do
-			writeFile hook preCommitScript
+			safeWriteFile hook preCommitScript
 			p <- getPermissions hook
 			setPermissions hook $ p {executable = True}
 	where

@@ -16,6 +16,7 @@ import Types
 import Content
 import Messages
 import Locations
+import Utility
 import qualified Annex
 import qualified GitRepo as Git
 import qualified Backend
@@ -43,7 +44,7 @@ checkUnused = do
 	unused <- unusedKeys
 	let list = number 1 unused
 	g <- Annex.gitRepo
-	liftIO $ writeFile (gitAnnexUnusedLog g) $ unlines $ 
+	liftIO $ safeWriteFile (gitAnnexUnusedLog g) $ unlines $ 
 		map (\(n, k) -> show n ++ " " ++ show k) list
 	if null unused
 		then return True
