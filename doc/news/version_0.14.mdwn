@@ -1,5 +1,0 @@
-git-annex 0.14 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Bugfix to git annex unused in a repository with nothing yet annexed.
-   * Support upgrading from a v0 annex with nothing in it.
-   * Avoid multiple calls to git ls-files when passed eg, "*"."""]]

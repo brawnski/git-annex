@@ -1,0 +1,17 @@
+git-annex 0.19 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * configure: Support using the uuidgen command if the uuid command is
+     not available.
+   * Allow --exclude to be specified more than once.
+   * There are now three levels of repository trust.
+   * untrust: Now marks the current repository as untrusted.
+   * semitrust: Now restores the default trust level. (What untrust used to do.)
+   * fsck, drop: Take untrusted repositories into account.
+   * Bugfix: Files were copied from trusted remotes first even if their
+     annex.cost was higher than other remotes.
+   * Improved temp file handling. Transfers of content can now be resumed
+     from temp files later; the resume does not have to be the immediate
+     next git-annex run.
+   * unused: Include partially transferred content in the list.
+   * Bugfix: Running a second git-annex while a first has a transfer in
+     progress no longer deletes the first processes's temp file."""]]
