@@ -1,6 +1,7 @@
-git-annex (0.19) UNRELEASED; urgency=low
+git-annex (0.19) unstable; urgency=low
 
-  * Support using the uuidgen command if the uuid command is not available.
+  * configure: Support using the uuidgen command if the uuid command is
+    not available.
   * Allow --exclude to be specified more than once.
   * There are now three levels of repository trust.
   * untrust: Now marks the current repository as untrusted.
@@ -12,8 +13,10 @@ git-annex (0.19) UNRELEASED; urgency=low
     from temp files later; the resume does not have to be the immediate
     next git-annex run.
   * unused: Include partially transferred content in the list.
+  * Bugfix: Running a second git-annex while a first has a transfer in
+    progress no longer deletes the first processes's temp file.
 
- -- Joey Hess <joeyh@debian.org>  Wed, 19 Jan 2011 18:07:51 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 28 Jan 2011 14:31:37 -0400
 
 git-annex (0.18) unstable; urgency=low
 
