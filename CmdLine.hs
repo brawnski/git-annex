@@ -105,13 +105,3 @@ shutdown errnum = do
 	unless (q == GitQueue.empty) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun
-
-	-- If nothing failed, clean up any files left in the temp directory,
-	-- but leave the directory itself. If something failed, temp files
-	-- are left behind to allow resuming on re-run.
-	when (errnum == 0) $ do
-		g <- Annex.gitRepo
-		let tmp = gitAnnexTmpDir g
-		exists <- liftIO $ doesDirectoryExist tmp
-		when exists $ liftIO $ removeDirectoryRecursive tmp
-		liftIO $ createDirectoryIfMissing True tmp

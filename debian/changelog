@@ -8,6 +8,10 @@ git-annex (0.19) UNRELEASED; urgency=low
   * fsck, drop: Take untrusted repositories into account.
   * Bugfix: Files were copied from trusted remotes first even if their
     annex.cost was higher than other remotes.
+  * Improved temp file handling. Transfers of content can now be resumed
+    from temp files later; the resume does not have to be the immediate
+    next git-annex run.
+  * unused: Include partially transferred content in the list.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 19 Jan 2011 18:07:51 -0400
 

@@ -15,6 +15,7 @@ module Locations (
 	gitAnnexDir,
 	gitAnnexObjectDir,
 	gitAnnexTmpDir,
+	gitAnnexTmpLocation,
 	gitAnnexBadDir,
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
@@ -82,6 +83,10 @@ gitAnnexObjectDir r = addTrailingPathSeparator $ Git.workTree r </> objectDir
 {- .git-annex/tmp/ is used for temp files -}
 gitAnnexTmpDir :: Git.Repo -> FilePath
 gitAnnexTmpDir r = addTrailingPathSeparator $ gitAnnexDir r </> "tmp"
+
+{- The temp file to use for a given key. -}
+gitAnnexTmpLocation :: Git.Repo -> Key -> FilePath
+gitAnnexTmpLocation r key = gitAnnexTmpDir r </> keyFile key
 
 {- .git-annex/bad/ is used for bad files found during fsck -}
 gitAnnexBadDir :: Git.Repo -> FilePath

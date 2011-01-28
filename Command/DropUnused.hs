@@ -7,6 +7,7 @@
 
 module Command.DropUnused where
 
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Directory
@@ -33,8 +34,14 @@ start s = do
 	case M.lookup s m of
 		Nothing -> return Nothing
 		Just key -> do
+			g <- Annex.gitRepo
 			showStart "dropunused" s
 			backend <- keyBackend key
+			-- drop both content in the backend and any tmp
+			-- file for the key
+			let tmp = gitAnnexTmpLocation g key
+			tmp_exists <- liftIO $ doesFileExist tmp
+			when tmp_exists $ liftIO $ removeFile tmp
 			return $ Just $ Command.Drop.perform key backend (Just 0)
 
 readUnusedLog :: Annex (M.Map String Key)

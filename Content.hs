@@ -67,7 +67,7 @@ logStatus key status = do
 getViaTmp :: Key -> (FilePath -> Annex Bool) -> Annex Bool
 getViaTmp key action = do
 	g <- Annex.gitRepo
-	let tmp = gitAnnexTmpDir g </> keyFile key
+	let tmp = gitAnnexTmpLocation g key
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	success <- action tmp
 	if success
