@@ -46,13 +46,13 @@ main' [] = failure
 main' ("-c":p) = main' p
 -- a command can be either a builtin or something to pass to git-shell
 main' c@(cmd:dir:params)
-	| elem cmd builtins = builtin cmd dir params
+	| cmd `elem` builtins = builtin cmd dir params
 	| otherwise = external c
 main' c@(cmd:_)
 	-- Handle the case of being the user's login shell. It will be passed
 	-- a single string containing all the real parameters.
 	| "git-annex-shell " `isPrefixOf` cmd = main' $ drop 1 $ shellUnEscape cmd
-	| elem cmd builtins = failure
+	| cmd `elem` builtins = failure
 	| otherwise = external c
 
 builtins :: [String]

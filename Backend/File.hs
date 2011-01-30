@@ -108,7 +108,7 @@ checkRemoveKey key numcopiesM = do
 			| length have >= need = return True
 			| otherwise = do
 				u <- getUUID r
-				let dup = elem u have
+				let dup = u `elem` have
 				haskey <- Remotes.inAnnex r key
 				case (dup, haskey) of
 					(False, Right True)	-> findcopies need (u:have) rs bad
@@ -139,7 +139,7 @@ showLocations key exclude = do
 	ppuuidsskipped <- prettyPrintUUIDs uuidsskipped
 	showLongNote $ message ppuuidswanted ppuuidsskipped
 	where
-		filteruuids list x = filter (\l -> not $ elem l x) list
+		filteruuids list x = filter (`notElem` x) list
 		message [] [] = "No other repository is known to contain the file."
 		message rs [] = "Try making some of these repositories available:\n" ++ rs
 		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
@@ -179,7 +179,7 @@ checkKeyNumCopies key file numcopies = do
 	locations <- liftIO $ keyLocations g key
 	untrusted <- trustGet UnTrusted
 	let untrustedlocations = intersect untrusted locations
-	let safelocations = filter (\l -> not $ l `elem` untrusted) locations
+	let safelocations = filter (`notElem` untrusted) locations
 	let present = length safelocations
 	if present < needed
 		then do

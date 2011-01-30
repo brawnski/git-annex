@@ -75,5 +75,5 @@ instance Arbitrary Key where
 prop_idempotent_key_read_show :: Key -> Bool
 prop_idempotent_key_read_show k
 	-- backend names will never contain colons
-	| elem ':' (backendName k) = True
+	| ':' `elem` (backendName k) = True
 	| otherwise = k == (read $ show k)

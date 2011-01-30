@@ -331,7 +331,7 @@ test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
 				l <- Trust.trustGet expected
 				r <- Remotes.byName repo
 				u <- UUID.getUUID r
-				return $ elem u l
+				return $ u `elem` l
 			assertBool msg present
 		repo = "origin"
 
@@ -588,7 +588,7 @@ checklocationlog f expected = do
 				g <- Annex.gitRepo
 				liftIO $ LocationLog.keyLocations g k
 			assertEqual ("bad content in location log for " ++ f ++ " key " ++ (show k) ++ " uuid " ++ thisuuid)
-				expected (elem thisuuid uuids)
+				expected (thisuuid `elem` uuids)
 
 			-- Location log files should always be checked
 			-- into git, and any modifications staged for
