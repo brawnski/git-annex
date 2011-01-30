@@ -15,7 +15,6 @@ import System.IO.Error (try)
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
 import Control.Monad (when, unless)
-import System.Directory
 
 import qualified Annex
 import qualified GitRepo as Git
@@ -27,7 +26,6 @@ import Upgrade
 import Options
 import Messages
 import UUID
-import Locations
 
 {- Runs the passed command line. -}
 dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
