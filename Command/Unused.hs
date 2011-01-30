@@ -51,12 +51,9 @@ checkUnused = do
 	g <- Annex.gitRepo
 	liftIO $ safeWriteFile (gitAnnexUnusedLog g) $ unlines $ 
 		map (\(n, k) -> show n ++ " " ++ show k) list
-	unless (null unused) $
-		showLongNote $ unusedmsg unusedlist
-	unless (null staletmp) $
-		showLongNote $ staletmpmsg staletmplist
-	unless (null list) $
-		showLongNote $ "\n"
+	unless (null unused) $ showLongNote $ unusedmsg unusedlist
+	unless (null staletmp) $ showLongNote $ staletmpmsg staletmplist
+	unless (null list) $ showLongNote $ "\n"
 	return $ null list
 
 	where
@@ -85,20 +82,23 @@ unusedKeys = do
 	g <- Annex.gitRepo
 	present <- getKeysPresent
 	referenced <- getKeysReferenced
-	
-	let unused = present `exclude` referenced
-
-	-- Some tmp files may be dups copies of content that is fully present.
-	-- Simply delete those, while including the keys for the rest of
-	-- the temp files in the returned list for the user to deal with.
 	tmps <- tmpKeys
-	let staletmp = tmps `exclude` present
-	let duptmp = tmps `exclude` staletmp
+	
+	let (unused, staletmp, duptmp) = calcUnusedKeys present referenced tmps
+
+	-- Tmp files that are dups of content already present can simply
+	-- be removed.
 	_ <- liftIO $ mapM (\t -> removeFile $ gitAnnexTmpLocation g t) duptmp
 
 	return (unused, staletmp)
 
+calcUnusedKeys :: [Key] -> [Key] -> [Key] -> ([Key], [Key], [Key])
+calcUnusedKeys present referenced tmps = (unused, staletmp, duptmp)
 	where
+		unused = present `exclude` referenced
+		staletmp = tmps `exclude` present
+		duptmp = tmps `exclude` staletmp
+
 		-- Constructing a single map, of the set that tends to be
 		-- smaller, appears more efficient in both memory and CPU
 		-- than constructing and taking the M.difference of two maps.
