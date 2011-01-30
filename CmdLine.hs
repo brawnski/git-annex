@@ -32,7 +32,7 @@ dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
 dispatch gitrepo args cmds options header = do
 	state <- Annex.new gitrepo allBackends
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options
-	tryRun state' $ [startup, upgrade] ++ actions
+	tryRun state' $ [startup, upgrade] ++ actions ++ [shutdown]
 
 {- Parses command line, stores configure flags, and returns a 
  - list of actions to be run in the Annex monad. -}
@@ -73,7 +73,6 @@ usage header cmds options =
 
 {- Runs a list of Annex actions. Catches IO errors and continues
  - (but explicitly thrown errors terminate the whole command).
- - Runs shutdown and propigates an overall error status at the end.
  -}
 tryRun :: Annex.AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
@@ -86,8 +85,7 @@ tryRun' state errnum (a:as) = do
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' state errnum [] = do
-	_ <- try $ Annex.run state $ shutdown errnum
+tryRun' _ errnum [] = do
 	when (errnum > 0) $ error $ show errnum ++ " failed"
 
 {- Actions to perform each time ran. -}
@@ -97,9 +95,11 @@ startup = do
 	return True
 
 {- Cleanup actions. -}
-shutdown :: Integer -> Annex ()
-shutdown errnum = do
+shutdown :: Annex Bool
+shutdown = do
 	q <- Annex.getState Annex.repoqueue
 	unless (q == GitQueue.empty) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun
+
+	return True

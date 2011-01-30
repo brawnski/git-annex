@@ -38,6 +38,6 @@ start keyname = do
 		then do
 			-- forcibly quit after receiving one key,
 			-- and shutdown cleanly so queued git commands run
-			_ <- shutdown 0
+			_ <- shutdown
 			liftIO exitSuccess
 		else liftIO exitFailure
