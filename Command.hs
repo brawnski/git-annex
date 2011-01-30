@@ -183,17 +183,16 @@ filterFiles l = do
 	exclude <- Annex.getState Annex.exclude
 	if null exclude
 		then return l'
-		else do
-			let regexp = compile (wildsRegex exclude) []
-			return $ filter (notExcluded regexp) l'
+		else return $ filter (notExcluded $ wildsRegex exclude) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
 		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False
 
-wildsRegex :: [String] -> String
-wildsRegex ws = "^(" ++ wildsRegex' ws "" ++ ")"
+wildsRegex :: [String] -> Regex
+wildsRegex ws = compile regex []
+	where regex = "^(" ++ wildsRegex' ws "" ++ ")"
 wildsRegex' :: [String] -> String -> String
 wildsRegex' [] c = c
 wildsRegex' (w:ws) "" = wildsRegex' ws (wildToRegex w)
