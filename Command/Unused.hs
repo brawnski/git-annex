@@ -9,7 +9,7 @@ module Command.Unused where
 
 import Control.Monad (filterM, unless)
 import Control.Monad.State (liftIO)
-import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Maybe
 import System.FilePath
 import System.Directory
@@ -99,16 +99,12 @@ calcUnusedKeys present referenced tmps = (unused, staletmp, duptmp)
 		staletmp = tmps `exclude` present
 		duptmp = tmps `exclude` staletmp
 
-		-- Constructing a single map, of the set that tends to be
+		-- Constructing a single set, of the list that tends to be
 		-- smaller, appears more efficient in both memory and CPU
-		-- than constructing and taking the M.difference of two maps.
+		-- than constructing and taking the S.difference of two sets.
 		exclude [] _ = [] -- optimisation
-		exclude smaller larger = M.keys $ remove larger $ existsMap smaller
-
-		existsMap :: Ord k => [k] -> M.Map k Int
-		existsMap l = M.fromList $ map (\k -> (k, 1)) l
-
-		remove a b = foldl (flip M.delete) b a
+		exclude smaller larger = S.toList $ remove larger $ S.fromList smaller
+		remove a b = foldl (flip S.delete) b a
 
 {- List of keys referenced by symlinks in the git repo. -}
 getKeysReferenced :: Annex [Key]
