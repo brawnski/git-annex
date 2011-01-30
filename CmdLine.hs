@@ -101,5 +101,4 @@ shutdown = do
 	unless (q == GitQueue.empty) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun
-
 	return True

@@ -104,10 +104,14 @@ readLog file = do
 	if exists
 		then do
 			s <- readFile file
-			-- filter out any unparsable lines
-			return $ filter (\l -> status l /= Undefined )
-				$ map read $ lines s
+			return $ parseLog s
 		else return []
+
+parseLog :: String -> [LogLine]
+parseLog s = filter parsable $ map read $ lines s
+	where
+		-- some lines may be unparseable, avoid them
+		parsable l = status l /= Undefined
 
 {- Writes a set of lines to a log file -}
 writeLog :: FilePath -> [LogLine] -> IO ()

@@ -184,17 +184,20 @@ filterFiles l = do
 	if null exclude
 		then return l'
 		else do
-			let regexp = compile (toregex exclude) []
+			let regexp = compile (wildsRegex exclude) []
 			return $ filter (notExcluded regexp) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
 		notExcluded r f = case match r f [] of
 			Nothing -> True
 			Just _ -> False
-		toregex exclude = "^(" ++ toregex' exclude "" ++ ")"
-		toregex' [] c = c
-		toregex' (w:ws) "" = toregex' ws (wildToRegex w)
-		toregex' (w:ws) c = toregex' ws (c ++ "|" ++ wildToRegex w)
+
+wildsRegex :: [String] -> String
+wildsRegex ws = "^(" ++ wildsRegex' ws "" ++ ")"
+wildsRegex' :: [String] -> String -> String
+wildsRegex' [] c = c
+wildsRegex' (w:ws) "" = wildsRegex' ws (wildToRegex w)
+wildsRegex' (w:ws) c = wildsRegex' ws (c ++ "|" ++ wildToRegex w)
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
