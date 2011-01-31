@@ -14,7 +14,7 @@ import Test.QuickCheck
 
 type KeyName = String
 type BackendName = String
-data Key = Key (BackendName, KeyName) deriving (Eq, Ord)
+newtype Key = Key (BackendName, KeyName) deriving (Eq, Ord)
 
 data Backend a = Backend {
 	-- name of this backend
