@@ -45,7 +45,7 @@ add queue subcommand params file = M.insertWith (++) action [file] queue
 {- Runs a queue on a git repository. -}
 run :: Git.Repo -> Queue -> IO ()
 run repo queue = do
-	_ <- mapM (uncurry $ runAction repo) $ M.toList queue
+	mapM_ (uncurry $ runAction repo) $ M.toList queue
 	return ()
 
 {- Runs an Action on a list of files in a git repository.

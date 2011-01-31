@@ -88,7 +88,7 @@ unusedKeys = do
 
 	-- Tmp files that are dups of content already present can simply
 	-- be removed.
-	_ <- liftIO $ mapM (\t -> removeFile $ gitAnnexTmpLocation g t) duptmp
+	liftIO $ mapM_ (\t -> removeFile $ gitAnnexTmpLocation g t) duptmp
 
 	return (unused, staletmp)
 
