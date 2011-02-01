@@ -14,7 +14,6 @@ import Control.Monad (filterM)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
-import System.Path
 
 import Types
 import qualified Backend
@@ -22,6 +21,7 @@ import Messages
 import qualified Annex
 import qualified GitRepo as Git
 import Locations
+import Utility
 
 {- A command runs in four stages.
  -
@@ -109,20 +109,20 @@ isAnnexed file a = do
 withFilesInGit :: CommandSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	return $ map a files'
 withAttrFilesInGit :: String -> CommandSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
 withBackendFilesInGit :: CommandSeekBackendFiles
 withBackendFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	backendPairs a files'
 withFilesMissing :: CommandSeekStrings
@@ -137,7 +137,7 @@ withFilesMissing a params = do
 withFilesNotInGit :: CommandSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
-	newfiles <- liftIO $ runPreserverOrder (Git.notInRepo repo) params
+	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
 withString :: CommandSeekStrings
@@ -147,7 +147,7 @@ withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	tocommit <- liftIO $ runPreserverOrder (Git.stagedFiles repo) params
+	tocommit <- liftIO $ runPreserveOrder (Git.stagedFiles repo) params
 	tocommit' <- filterFiles tocommit
 	return $ map a tocommit'
 withFilesUnlocked :: CommandSeekBackendFiles
@@ -158,7 +158,7 @@ withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> CommandSeekBa
 withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file
 	repo <- Annex.gitRepo
-	typechangedfiles <- liftIO $ runPreserverOrder (typechanged repo) params
+	typechangedfiles <- liftIO $ runPreserveOrder (typechanged repo) params
 	unlockedfiles <- liftIO $ filterM notSymlink $
 		map (\f -> Git.workTree repo ++ "/" ++ f) typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
@@ -256,20 +256,14 @@ preserveOrder orig new = collect orig new
 		collect (l:ls) n = found ++ collect ls rest
 			where (found, rest)=partition (l `dirContains`) n
 
-runPreserverOrder :: ([FilePath] -> IO [FilePath]) -> [FilePath] -> IO [FilePath]
-runPreserverOrder a files = do
+{- Runs an action that takes a list of FilePaths, and ensures that 
+ - its return list preserves order.
+ -
+ - This assumes that it's cheaper to call preserveOrder on the result,
+ - than it would be to run the action once with each param. In the case
+ - of git file list commands, that assumption tends to hold.
+ -}
+runPreserveOrder :: ([FilePath] -> IO [FilePath]) -> [FilePath] -> IO [FilePath]
+runPreserveOrder a files = do
 	r <- a files
 	return $ preserveOrder files r
-
-{- Checks if the first FilePath is, or could be said to contain the second.
- - For example, "foo/" contains "foo/bar". Also, "foo", "./foo", "foo/" etc
- - are all equivilant.
- -}
-dirContains :: FilePath -> FilePath -> Bool
-dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
-	where
-		norm p = case (absNormPath p ".") of
-			Just r -> r
-			Nothing -> ""
-		a' = norm a
-		b' = norm b

@@ -18,6 +18,7 @@ module Utility (
 	unsetFileMode,
 	readMaybe,
 	safeWriteFile,
+	dirContains,
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -36,6 +37,7 @@ import System.Path
 import System.FilePath
 import System.Directory
 import Foreign (complement)
+import Data.List
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
@@ -64,6 +66,19 @@ prop_parentDir_basics dir
 	| otherwise = p /= dir
 	where
 		p = parentDir dir
+
+{- Checks if the first FilePath is, or could be said to contain the second.
+ - For example, "foo/" contains "foo/bar". Also, "foo", "./foo", "foo/" etc
+ - are all equivilant.
+ -}
+dirContains :: FilePath -> FilePath -> Bool
+dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
+	where
+		norm p = case (absNormPath p ".") of
+			Just r -> r
+			Nothing -> ""
+		a' = norm a
+		b' = norm b
 
 {- Converts a filename into a normalized, absolute path. -}
 absPath :: FilePath -> IO FilePath
