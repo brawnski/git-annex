@@ -10,7 +10,7 @@ module Upgrade where
 import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
-import Control.Monad (filterM)
+import Control.Monad (filterM, forM_)
 import System.Posix.Files
 import System.FilePath
 
@@ -41,7 +41,7 @@ upgradeFrom0 = do
 	-- do the reorganisation of the files
 	let olddir = gitAnnexDir g
 	keys <- getKeysPresent0' olddir
-	mapM_ (\k -> moveAnnex k $ olddir </> keyFile k) keys
+	forM_ keys $ \k -> moveAnnex k $ olddir </> keyFile k
 
 	-- update the symlinks to the files
 	files <- liftIO $ Git.inRepo g [Git.workTree g]

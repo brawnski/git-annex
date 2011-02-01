@@ -7,7 +7,7 @@
 
 module Command.Unused where
 
-import Control.Monad (filterM, unless)
+import Control.Monad (filterM, unless, forM_)
 import Control.Monad.State (liftIO)
 import qualified Data.Set as S
 import Data.Maybe
@@ -88,7 +88,7 @@ unusedKeys = do
 
 	-- Tmp files that are dups of content already present can simply
 	-- be removed.
-	liftIO $ mapM_ (\t -> removeFile $ gitAnnexTmpLocation g t) duptmp
+	liftIO $ forM_ duptmp $ \t -> removeFile $ gitAnnexTmpLocation g t
 
 	return (unused, staletmp)
 

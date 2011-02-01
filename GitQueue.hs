@@ -16,7 +16,7 @@ import qualified Data.Map as M
 import System.IO
 import System.Cmd.Utils
 import Data.String.Utils
-import Control.Monad (unless)
+import Control.Monad (unless, forM_)
 
 import qualified GitRepo as Git
 
@@ -45,7 +45,7 @@ add queue subcommand params file = M.insertWith (++) action [file] queue
 {- Runs a queue on a git repository. -}
 run :: Git.Repo -> Queue -> IO ()
 run repo queue = do
-	mapM_ (uncurry $ runAction repo) $ M.toList queue
+	forM_ (M.toList queue) $ uncurry $ runAction repo
 	return ()
 
 {- Runs an Action on a list of files in a git repository.
