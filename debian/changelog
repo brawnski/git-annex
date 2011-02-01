@@ -1,3 +1,10 @@
+git-annex (0.20) UNRELEASED; urgency=low
+
+  * Preserve specified file ordering when instructed to act on multiple
+    files or directories.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 31 Jan 2011 20:06:02 -0400
+
 git-annex (0.19) unstable; urgency=low
 
   * configure: Support using the uuidgen command if the uuid command is

@@ -14,6 +14,7 @@ import Control.Monad (filterM)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
+import System.Path
 
 import Types
 import qualified Backend
@@ -108,20 +109,20 @@ isAnnexed file a = do
 withFilesInGit :: CommandSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo repo params
+	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	return $ map a files'
 withAttrFilesInGit :: String -> CommandSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo repo params
+	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	pairs <- liftIO $ Git.checkAttr repo attr files'
 	return $ map a pairs
 withBackendFilesInGit :: CommandSeekBackendFiles
 withBackendFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo repo params
+	files <- liftIO $ runPreserverOrder (Git.inRepo repo) params
 	files' <- filterFiles files
 	backendPairs a files'
 withFilesMissing :: CommandSeekStrings
@@ -136,7 +137,7 @@ withFilesMissing a params = do
 withFilesNotInGit :: CommandSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
-	newfiles <- liftIO $ Git.notInRepo repo params
+	newfiles <- liftIO $ runPreserverOrder (Git.notInRepo repo) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
 withString :: CommandSeekStrings
@@ -146,7 +147,7 @@ withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	tocommit <- liftIO $ Git.stagedFiles repo params
+	tocommit <- liftIO $ runPreserverOrder (Git.stagedFiles repo) params
 	tocommit' <- filterFiles tocommit
 	return $ map a tocommit'
 withFilesUnlocked :: CommandSeekBackendFiles
@@ -157,7 +158,7 @@ withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> CommandSeekBa
 withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file
 	repo <- Annex.gitRepo
-	typechangedfiles <- liftIO $ typechanged repo params
+	typechangedfiles <- liftIO $ runPreserverOrder (typechanged repo) params
 	unlockedfiles <- liftIO $ filterM notSymlink $
 		map (\f -> Git.workTree repo ++ "/" ++ f) typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
@@ -238,3 +239,37 @@ cmdlineKey  = do
 		keyname' (Just n) = n
 		badkey = error "please specify the key with --key"
 
+{- Given an original list of files, and an expanded list derived from it,
+ - ensures that the original list's ordering is preserved. 
+ -
+ - The input list may contain a directory, like "dir" or "dir/". Any
+ - items in the expanded list that are contained in that directory will
+ - appear at the same position as it did in the input list.
+ -}
+preserveOrder :: [FilePath] -> [FilePath] -> [FilePath]
+-- optimisation, only one item in original list, so no reordering needed
+preserveOrder [_] new = new
+preserveOrder orig new = collect orig new
+	where
+		collect [] n = n
+		collect [_] n = n -- optimisation
+		collect (l:ls) n = found ++ collect ls rest
+			where (found, rest)=partition (l `dirContains`) n
+
+runPreserverOrder :: ([FilePath] -> IO [FilePath]) -> [FilePath] -> IO [FilePath]
+runPreserverOrder a files = do
+	r <- a files
+	return $ preserveOrder files r
+
+{- Checks if the first FilePath is, or could be said to contain the second.
+ - For example, "foo/" contains "foo/bar". Also, "foo", "./foo", "foo/" etc
+ - are all equivilant.
+ -}
+dirContains :: FilePath -> FilePath -> Bool
+dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
+	where
+		norm p = case (absNormPath p ".") of
+			Just r -> r
+			Nothing -> ""
+		a' = norm a
+		b' = norm b

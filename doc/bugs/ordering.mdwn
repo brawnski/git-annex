@@ -8,3 +8,5 @@ This ordering comes from "git ls-files". git-annex passes it all the files
 the user specified. This is a useful optimisation -- earlier it would
 run "git ls-files" once per parameter, and so "git annex get *" could be
 rather slow. But, it produces this ordering problem.
+
+[[done]]
