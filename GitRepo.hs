@@ -38,6 +38,7 @@ module GitRepo (
 	inRepo,
 	notInRepo,
 	stagedFiles,
+	stagedFilesNotDeleted,
 	changedUnstagedFiles,
 	checkAttr,
 	decodeGitFile,
@@ -243,12 +244,20 @@ notInRepo :: Repo -> [FilePath] -> IO [FilePath]
 notInRepo repo l = pipeNullSplit repo $
 	["ls-files", "--others", "--exclude-standard", "-z", "--"] ++ l
 
+{- Returns a list of all files that are staged for commit. -}
+stagedFiles :: Repo -> [FilePath] -> IO [FilePath]
+stagedFiles repo l = stagedFiles' repo l []
+
 {- Returns a list of the files, staged for commit, that are being added,
  - moved, or changed (but not deleted), from the specified locations. -}
-stagedFiles :: Repo -> [FilePath] -> IO [FilePath]
-stagedFiles repo l = pipeNullSplit repo $
-	["diff", "--cached", "--name-only", "--diff-filter=ACMRT", "-z", 
-		"--"] ++ l
+stagedFilesNotDeleted :: Repo -> [FilePath] -> IO [FilePath]
+stagedFilesNotDeleted repo l = stagedFiles' repo l ["--diff-filter=ACMRT"]
+
+stagedFiles' :: Repo -> [FilePath] -> [String] -> IO [FilePath]
+stagedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
+	where
+		start = ["diff", "--cached", "--name-only", "-z"]
+		end = ["--"] ++ l
 
 {- Returns a list of files that have unstaged changes. -}
 changedUnstagedFiles :: Repo -> [FilePath] -> IO [FilePath]

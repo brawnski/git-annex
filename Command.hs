@@ -147,7 +147,7 @@ withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	tocommit <- liftIO $ runPreserveOrder (Git.stagedFiles repo) params
+	tocommit <- liftIO $ runPreserveOrder (Git.stagedFilesNotDeleted repo) params
 	tocommit' <- filterFiles tocommit
 	return $ map a tocommit'
 withFilesUnlocked :: CommandSeekBackendFiles

@@ -8,6 +8,7 @@
 module Command.Unannex where
 
 import Control.Monad.State (liftIO)
+import Control.Monad (unless)
 import System.Directory
 
 import Command
@@ -32,6 +33,11 @@ start file = isAnnexed file $ \(key, backend) -> do
 	ishere <- inAnnex key
 	if ishere
 		then do
+			g <- Annex.gitRepo
+			staged <- liftIO $ Git.stagedFiles g [Git.workTree g]
+			unless (null staged) $
+				error "This command cannot be run when there are already files staged for commit."
+
 			showStart "unannex" file
 			return $ Just $ perform file key backend
 		else return Nothing
