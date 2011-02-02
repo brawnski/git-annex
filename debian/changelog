@@ -3,6 +3,9 @@ git-annex (0.20) UNRELEASED; urgency=low
   * Preserve specified file ordering when instructed to act on multiple
     files or directories. For example, "git annex get a b" will now always
     get "a" before "b". Previously it could operate in either order.
+  * unannex: Commit staged changes at end, to avoid some confusing behavior
+    with the pre-commit hook, which would see some types of commits after
+    an unannex as checking in of an unlocked file.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 31 Jan 2011 20:06:02 -0400
 

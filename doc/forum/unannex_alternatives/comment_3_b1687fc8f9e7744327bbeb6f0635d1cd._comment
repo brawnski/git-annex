@@ -8,5 +8,9 @@ Sorry for all the followups, but I see now that if you unannex, then add the fil
 
 This seems to be a bug. git-annex's hook thinks that you have used git annex unlock (or \"git annex edit\") on the file and are now committing a changed version, and the right thing to do there is to add the new content to the annex and update the symlink accordingly. I'll track this bug over at [[bugs/unannex_vs_unlock_hook_confusion]].
 
-So, committing after unannex, and before checking the file into git in the usual way, is a workaround.
+So, committing after unannex, and before checking the file into git in the
+usual way, is a workaround. But only if you do a "git commit" to commit
+staged changes.
+
+Anyway, this confusing point is fixed in git now!
 """]]

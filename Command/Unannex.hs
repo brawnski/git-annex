@@ -55,5 +55,10 @@ cleanup file key = do
 
 	fromAnnex key file
 	logStatus key ValueMissing
-
+	
+	-- Commit staged changes at end to avoid confusing the
+	-- pre-commit hook if this file is later added back to
+	-- git as a normal, non-annexed file.
+	Annex.queue "commit" ["-m", "content removed from git annex"] "--"
+	
 	return True

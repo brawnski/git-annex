@@ -11,3 +11,5 @@ and has been re-added as a normal file, vs an unlocked file? --[[Joey||
 > Hmm, not really. An unannexed file's content will have been dropped from
 > the backend, but that's about the only difference. Perhaps unannex should
 > just commit the removal of the file itself? --[[Joey]]
+
+> [[done]], staged changes committed at end.

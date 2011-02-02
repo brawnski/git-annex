@@ -156,10 +156,13 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * unannex [path ...]
 
-  Use this to undo an accidental add command. This is not the command you
-  should use if you intentionally annexed a file and don't want its contents
-  any more. In that case you should use `git annex drop` instead, and you
-  can also `git rm` the file.
+  Use this to undo an accidental `git annex add` command. You can use
+  `git annex unannex` to move content out of the annex at any point,
+  even if you've already committed it.
+
+  This is not the command you should use if you intentionally annexed a
+  file and don't want its contents any more. In that case you should use
+  `git annex drop` instead, and you can also `git rm` the file.
 
 * uninit
 
