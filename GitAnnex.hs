@@ -38,6 +38,7 @@ import qualified Command.Uninit
 import qualified Command.Trust
 import qualified Command.Untrust
 import qualified Command.Semitrust
+import qualified Command.Map
 
 cmds :: [Command]
 cmds = concat
@@ -64,6 +65,7 @@ cmds = concat
 	, Command.DropUnused.command
 	, Command.Find.command
 	, Command.Migrate.command
+	, Command.Map.command
 	]
 
 options :: [Option]

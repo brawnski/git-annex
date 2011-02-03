@@ -11,13 +11,15 @@
 module UUID (
 	UUID,
 	getUUID,
+	getUncachedUUID,
 	prepUUID,
 	genUUID,
 	reposByUUID,
 	reposWithoutUUID,
 	prettyPrintUUIDs,
 	describeUUID,
-	uuidLog
+	uuidLog,
+	uuidMap
 ) where
 
 import Control.Monad.State
@@ -60,7 +62,7 @@ getUUID r = do
 	g <- Annex.gitRepo
 
 	let c = cached g
-	let u = uncached
+	let u = getUncachedUUID r
 	
 	if c /= u && u /= ""
 		then do
@@ -68,10 +70,12 @@ getUUID r = do
 			return u
 		else return c
 	where
-		uncached = Git.configGet r "annex.uuid" ""
 		cached g = Git.configGet g cachekey ""
 		updatecache g u = when (g /= r) $ Annex.setConfig cachekey u
 		cachekey = "remote." ++ Git.repoRemoteName r ++ ".annex-uuid"
+
+getUncachedUUID :: Git.Repo -> UUID
+getUncachedUUID r = Git.configGet r "annex.uuid" ""
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()

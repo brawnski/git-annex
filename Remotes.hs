@@ -7,6 +7,7 @@
 
 module Remotes (
 	list,
+	tryGitConfigRead,
 	readConfigs,
 	keyPossibilities,
 	inAnnex,
@@ -14,7 +15,8 @@ module Remotes (
 	byName,
 	copyFromRemote,
 	copyToRemote,
-	onRemote
+	onRemote,
+	repoConfig
 ) where
 
 import Control.Exception.Extensible
@@ -77,7 +79,6 @@ tryGitConfigRead r
 				then new : exchange ls new
 				else old : exchange ls new
 
-
 {- Reads the configs of all remotes.
  -
  - This has to be called before things that rely on eg, the UUID of
@@ -92,9 +93,9 @@ tryGitConfigRead r
  - -}
 readConfigs :: Annex ()
 readConfigs = do
-	g <- Annex.gitRepo
 	remotesread <- Annex.getState Annex.remotesread
 	unless remotesread $ do
+		g <- Annex.gitRepo
 		allremotes <- filterM repoNotIgnored $ Git.remotes g
 		let cheap = filter (not . Git.repoIsUrl) allremotes
 		let expensive = filter Git.repoIsUrl allremotes

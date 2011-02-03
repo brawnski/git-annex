@@ -6,6 +6,8 @@ git-annex (0.20) UNRELEASED; urgency=low
   * unannex: Commit staged changes at end, to avoid some confusing behavior
     with the pre-commit hook, which would see some types of commits after
     an unannex as checking in of an unlocked file.
+  * map: New subcommand that uses graphviz to display a nice map of
+    the git repository network.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 31 Jan 2011 20:06:02 -0400
 

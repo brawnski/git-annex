@@ -154,6 +154,23 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Note that the content is not removed from the backend it was previously in.
   Use `git annex unused` to find and remove such content. 
 
+* map
+
+  Helps you keep track of your repositories, and the connections between them,
+  by going out and looking at all the ones it can get to, and generating a
+  Graphviz file displaying it all. If the `dot` command is available, it is
+  used to display the file to your screen (using x11 backend).
+
+  Note that this only connects to hosts that the host it's run on can
+  directly connect to. It does not try to tunnel through intermediate hosts.
+  So it might not show all connections between the repositories in the network.
+
+  Also, if connecting to a host requires a password, you might have to enter
+  it several times as the map is being built.
+
+  Note that this subcommand can be used to graph any git repository; it
+  is not limited to git-annex repositories.
+
 * unannex [path ...]
 
   Use this to undo an accidental `git annex add` command. You can use
