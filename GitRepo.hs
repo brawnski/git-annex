@@ -16,11 +16,13 @@ module GitRepo (
 	repoIsUrl,
 	repoIsSsh,
 	repoDescribe,
+	repoLocation,
 	workTree,
 	gitDir,
 	relative,
 	urlPath,
 	urlHost,
+	urlScheme,
 	configGet,
 	configMap,
 	configRead,
@@ -101,13 +103,21 @@ repoFromUrl :: String -> Repo
 repoFromUrl url
 	| startswith "file://" url = repoFromPath $ uriPath u
 	| otherwise = newFrom $ Url u
-		where u = fromJust $ parseURI url
+		where
+			u = case (parseURI url) of
+				Just v -> v
+				Nothing -> error $ "bad url " ++ url
 
 {- User-visible description of a git repo. -}
 repoDescribe :: Repo -> String
 repoDescribe Repo { remoteName = Just name } = name
 repoDescribe Repo { location = Url url } = show url
 repoDescribe Repo { location = Dir dir } = dir
+
+{- Location of the repo, either as a path or url. -}
+repoLocation :: Repo -> String
+repoLocation Repo { location = Url url } = show url
+repoLocation Repo { location = Dir dir } = dir
 
 {- Constructs and returns an updated version of a repo with
  - different remotes list. -}
@@ -192,10 +202,16 @@ relative repo@(Repo { location = Dir d }) file = do
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 relative repo _ = assertLocal repo $ error "internal"
 
+{- Scheme of an URL repo. -}
+urlScheme :: Repo -> String
+urlScheme Repo { location = Url u } = uriScheme u
+urlScheme repo = assertUrl repo $ error "internal"
+
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
 urlHost Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
-	where a = fromJust $ uriAuthority u
+	where
+		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
 urlHost repo = assertUrl repo $ error "internal"
 
 {- Path of an URL repo. -}
