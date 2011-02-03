@@ -8,6 +8,8 @@ sudo port install haskell-platform git-core ossp-uuid md5sha1sum
 sudo cabal  update
 sudo cabal install missingh
 sudo cabal install utf8-string
+sudo port install pcre
+sudo cabal install pcre-light
 
 git clone  git://git.kitenet.net/git-annex
 
