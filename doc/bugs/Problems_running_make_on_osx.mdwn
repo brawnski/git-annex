@@ -5,8 +5,14 @@ and had to install the following extra packages to be able to get make to start:
 [realizes pcre-light is needed but pcre not installed on my mac]  
 sudo port install pcre  
 sudo cabal install pcre-light  
+
+> Ah right, that is a new dependency. I've updated the forum page
+> with this info.
+> --[[Joey]] 
+
 But then I got the following error:  
 
+<pre>
 ghc -O2 -Wall --make git-annex  
 [ 7 of 52] Compiling BackendTypes     ( BackendTypes.hs, BackendTypes.o   
 
@@ -24,5 +30,14 @@ BackendTypes.hs:71:17:
                        keyname <- arbitrary  
                          return $ Key (backendname, keyname)  
 make: *** [git-annex] Error 1  
+</pre>
 
 My knowledge of Haskell (had to lookup the spelling...) is more than rudimentary so any help would be appreciated.
+
+> Hmm, it seems you may be missing part of the quickcheck haskell
+> library, or have a different version than me.
+> 
+> The easy fix is probably to just edit BackendTypes.hs and delete the
+> entire end of the file from line 68, "for quickcheck" down. This code
+> is only used by the test suite (so "make test" will fail), 
+> but it should get it to build. --[[Joey]]
