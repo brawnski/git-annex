@@ -5,7 +5,6 @@ and had to install the following extra packages to be able to get make to start:
 [realizes pcre-light is needed but pcre not installed on my mac]
 sudo port install pcre
 sudo cabal install pcre-light
-
 But then I got the following error:
 
 ghc -O2 -Wall --make git-annex
