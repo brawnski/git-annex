@@ -21,6 +21,7 @@ import Messages
 import Types
 import Utility
 import UUID
+import qualified Dot
 
 -- a link from the first repository to the second (its remote)
 data Link = Link Git.Repo Git.Repo
@@ -50,41 +51,41 @@ start = do
  - displayed as a node, and each of its remotes is represented as an edge
  - pointing at the node for the remote. -}
 drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
-drawMap rs umap = dotGraph $ repos ++ others
+drawMap rs umap = Dot.graph $ repos ++ others
 	where
 		repos = map (dotGraphRepo umap rs) rs
 		others = map uuidnode (M.keys umap)
-		uuidnode u = dotGraphNode u $ M.findWithDefault "" u umap
+		uuidnode u = Dot.graphNode u $ M.findWithDefault "" u umap
 
 dotGraphRepo :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
 dotGraphRepo umap fullinfo r = unlines $ node:edges
 	where
-		node = inhost $ dotGraphNode (nodeid r) (repoName umap r)
+		node = inhost $ Dot.graphNode (nodeid r) (repoName umap r)
 		edges = map edge (Git.remotes r)
 
 		inhost a
-			| Git.repoIsUrl r = dotSubGraph hostname a
+			| Git.repoIsUrl r = Dot.subGraph (Git.urlHost r) (hostname r) a
 			| otherwise = a
 
-		hostname = head $ split "." $ Git.urlHost r
+		hostname n = head $ split "." $ Git.urlHost n
 
 		edge to =
 			-- get the full info for the repo since its UUID
 			-- is in there
 			let to' = findfullinfo to
-			in dotGraphEdge
+			in Dot.graphEdge
 				(nodeid r)
 				(nodeid $ makeabs r to')
 				(edgename to to')
 		
 		-- Only name an edge if the name is different than the name
-		-- that will be used for the destination node. (This
-		-- reduces visual clutter.)
+		-- that will be used for the destination node, and is
+		-- different from its hostname. (This reduces visual clutter.)
 		edgename to to' =
 			case (Git.repoRemoteName to) of
 				Nothing -> Nothing
 				Just n ->
-					if (n == repoName umap to')
+					if (n == repoName umap to' || n == hostname to')
 						then Nothing
 						else Just n
 
@@ -107,39 +108,6 @@ repoName umap r
 			case (Git.repoRemoteName r) of
 				Just n -> n
 				Nothing -> "unknown"
-
-dotGraphNode :: String -> String -> String
-dotGraphNode nodeid desc = dotLineLabeled desc $ dotQuote nodeid
-
-dotGraphEdge :: String -> String -> Maybe String -> String
-dotGraphEdge fromid toid d =
-	case d of
-		Nothing -> dotLine edge
-		Just desc -> dotLineLabeled desc edge
-	where
-		edge = dotQuote fromid ++ " -> " ++ dotQuote toid
-
-dotGraph :: [String] -> String
-dotGraph s = unlines $ [header] ++ s ++ [footer]
-	where
-		header = "digraph map {"
-		footer= "}"
-
-dotQuote :: String -> String
-dotQuote s = "\"" ++ s ++ "\""
-
-dotLine :: String -> String
-dotLine s = "\t" ++ s ++ ";"
-
-dotLineLabeled :: String -> String -> String
-dotLineLabeled label s = dotLine $ s ++ " [ label=" ++ dotQuote label ++ " ]"
-
-dotSubGraph :: String -> String -> String
-dotSubGraph label s = "subgraph " ++ name ++ "{ " ++ setlabel ++ s ++ " }"
-	where
-		-- the "cluster_" makes dot draw a box
-		name = dotQuote ("cluster_ " ++ label)
-		setlabel = dotLine $ "label=" ++ dotQuote label
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]
