@@ -26,6 +26,7 @@ import Control.Monad.State
 import System.Cmd.Utils
 import System.IO
 import qualified Data.Map as M
+import Data.Maybe
 
 import qualified GitRepo as Git
 import Types
@@ -72,7 +73,7 @@ getUUID r = do
 	where
 		cached g = Git.configGet g cachekey ""
 		updatecache g u = when (g /= r) $ Annex.setConfig cachekey u
-		cachekey = "remote." ++ Git.repoRemoteName r ++ ".annex-uuid"
+		cachekey = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-uuid"
 
 getUncachedUUID :: Git.Repo -> UUID
 getUncachedUUID r = Git.configGet r "annex.uuid" ""

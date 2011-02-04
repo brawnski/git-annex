@@ -205,7 +205,7 @@ repoNotIgnored r = do
 			name <- Annex.getState a
 			case name of
 				Nothing -> return False
-				Just n -> return $ n == Git.repoRemoteName r
+				n -> return $ n == Git.repoRemoteName r
 
 {- Checks if two repos are the same, by comparing their remote names. -}
 same :: Git.Repo -> Git.Repo -> Bool
@@ -217,7 +217,7 @@ byName "." = Annex.gitRepo -- special case to refer to current repository
 byName name = do
 	when (null name) $ error "no remote specified"
 	g <- Annex.gitRepo
-	let match = filter (\r -> name == Git.repoRemoteName r) $
+	let match = filter (\r -> Just name == Git.repoRemoteName r) $
 		Git.remotes g
 	when (null match) $ error $
 		"there is no git remote named \"" ++ name ++ "\""
@@ -309,7 +309,7 @@ git_annex_shell r command params
 	| Git.repoIsSsh r = do
 		sshoptions <- repoConfig r "ssh-options" ""
 		return $ Just $ ["ssh"] ++ words sshoptions ++ 
-			[Git.urlHost r, sshcmd]
+			[Git.urlHostFull r, sshcmd]
 	| otherwise = return Nothing
 	where
 		dir = Git.workTree r
@@ -325,5 +325,5 @@ repoConfig r key def = do
 	let def' = Git.configGet g global def
 	return $ Git.configGet g local def'
 	where
-		local = "remote." ++ Git.repoRemoteName r ++ ".annex-" ++ key
+		local = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-" ++ key
 		global = "annex." ++ key

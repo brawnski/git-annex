@@ -10,6 +10,8 @@ module Command.Map where
 import Control.Monad.State (liftIO)
 import Control.Exception.Extensible
 import System.Cmd.Utils
+import qualified Data.Map as M
+import Data.List.Utils
 
 import Command
 import qualified Annex
@@ -18,6 +20,7 @@ import qualified Remotes
 import Messages
 import Types
 import Utility
+import UUID
 
 -- a link from the first repository to the second (its remote)
 data Link = Link Git.Repo Git.Repo
@@ -33,32 +36,110 @@ start = do
 	g <- Annex.gitRepo
 	rs <- spider g
 
-	liftIO $ writeFile file (dotGraph rs)
-	showLongNote $ "running: dot -Tx11 " ++ file ++ "\n"
+	umap <- uuidMap
+
+	liftIO $ writeFile file (drawMap rs umap)
+	showLongNote $ "running: dot -Tx11 " ++ file
+	showProgress
 	r <- liftIO $ boolSystem "dot" ["-Tx11", file]
 	return $ Just $ return $ Just $ return r
 	where
 		file = "map.dot"
 
-{- Generates a graph for dot(1). Each repository is displayed
- - as a node, and each of its remotes is represented as an edge
+{- Generates a graph for dot(1). Each repository, and any other uuids, are
+ - displayed as a node, and each of its remotes is represented as an edge
  - pointing at the node for the remote. -}
-dotGraph :: [Git.Repo] -> String
-dotGraph rs = unlines $ [header] ++ map dotGraphRepo rs ++ [footer]
+drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
+drawMap rs umap = dotGraph $ repos ++ others
+	where
+		repos = map (dotGraphRepo umap rs) rs
+		others = map uuidnode (M.keys umap)
+		uuidnode u = dotGraphNode u $ M.findWithDefault "" u umap
+
+dotGraphRepo :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
+dotGraphRepo umap fullinfo r = unlines $ node:edges
+	where
+		node = inhost $ dotGraphNode (nodeid r) (repoName umap r)
+		edges = map edge (Git.remotes r)
+
+		inhost a
+			| Git.repoIsUrl r = dotSubGraph hostname a
+			| otherwise = a
+
+		hostname = head $ split "." $ Git.urlHost r
+
+		edge to =
+			-- get the full info for the repo since its UUID
+			-- is in there
+			let to' = findfullinfo to
+			in dotGraphEdge
+				(nodeid r)
+				(nodeid $ makeabs r to')
+				(edgename to to')
+		
+		-- Only name an edge if the name is different than the name
+		-- that will be used for the destination node. (This
+		-- reduces visual clutter.)
+		edgename to to' =
+			case (Git.repoRemoteName to) of
+				Nothing -> Nothing
+				Just n ->
+					if (n == repoName umap to')
+						then Nothing
+						else Just n
+
+		nodeid n =
+			case (getUncachedUUID n) of
+				"" -> Git.repoLocation n
+				u -> u
+		findfullinfo n =
+			case (filter (same n) fullinfo) of
+				[] -> n
+				(n':_) -> n'
+
+repoName :: (M.Map UUID String) -> Git.Repo -> String
+repoName umap r
+	| null repouuid = fallback
+	| otherwise = M.findWithDefault fallback repouuid umap
+	where
+		repouuid = getUncachedUUID r
+		fallback =
+			case (Git.repoRemoteName r) of
+				Just n -> n
+				Nothing -> "unknown"
+
+dotGraphNode :: String -> String -> String
+dotGraphNode nodeid desc = dotLineLabeled desc $ dotQuote nodeid
+
+dotGraphEdge :: String -> String -> Maybe String -> String
+dotGraphEdge fromid toid d =
+	case d of
+		Nothing -> dotLine edge
+		Just desc -> dotLineLabeled desc edge
+	where
+		edge = dotQuote fromid ++ " -> " ++ dotQuote toid
+
+dotGraph :: [String] -> String
+dotGraph s = unlines $ [header] ++ s ++ [footer]
 	where
 		header = "digraph map {"
 		footer= "}"
 
-dotGraphRepo :: Git.Repo -> String
-dotGraphRepo r = unlines $ map dotline (node:edges)
+dotQuote :: String -> String
+dotQuote s = "\"" ++ s ++ "\""
+
+dotLine :: String -> String
+dotLine s = "\t" ++ s ++ ";"
+
+dotLineLabeled :: String -> String -> String
+dotLineLabeled label s = dotLine $ s ++ " [ label=" ++ dotQuote label ++ " ]"
+
+dotSubGraph :: String -> String -> String
+dotSubGraph label s = "subgraph " ++ name ++ "{ " ++ setlabel ++ s ++ " }"
 	where
-		node = nodename r ++
-			" [ label=" ++ dotquote (Git.repoDescribe r) ++ " ]"
-		edges = map edge (Git.remotes r)
-		edge e = nodename r ++ " -> " ++ nodename (makeabs r e)
-		nodename n = dotquote (Git.repoLocation n)
-		dotquote s = "\"" ++ s ++ "\""
-		dotline s = "\t" ++ s ++ ";"
+		-- the "cluster_" makes dot draw a box
+		name = dotQuote ("cluster_ " ++ label)
+		setlabel = dotLine $ "label=" ++ dotQuote label
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]
@@ -81,13 +162,13 @@ makeabs repo remote
 		where
 			combinedurl =
 				Git.urlScheme repo ++ "//" ++
-				Git.urlHost repo ++
+				Git.urlHostFull repo ++
 				Git.workTree remote
 
 {- Checks if two repos are the same. -}
 same :: Git.Repo -> Git.Repo -> Bool
 same a b
-	| both Git.repoIsSsh = matching Git.urlHost && matching Git.workTree
+	| both Git.repoIsSsh = matching Git.urlHostFull && matching Git.workTree
 	| both Git.repoIsUrl && neither Git.repoIsSsh = matching show
 	| otherwise = False
 		
@@ -134,7 +215,7 @@ tryScan r
 				"cd " ++ shellEscape(Git.workTree r) ++ " && " ++
 				"git config --list"
 			liftIO $ pipedconfig "ssh" $
-				words sshoptions ++ [Git.urlHost r, sshcmd]
+				words sshoptions ++ [Git.urlHostFull r, sshcmd]
 
 		-- First, try sshing and running git config manually,
 		-- only fall back to git-annex-shell configlist if that

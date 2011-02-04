@@ -22,6 +22,7 @@ module GitRepo (
 	relative,
 	urlPath,
 	urlHost,
+	urlHostFull,
 	urlScheme,
 	configGet,
 	configMap,
@@ -124,11 +125,11 @@ repoLocation Repo { location = Dir dir } = dir
 remotesAdd :: Repo -> [Repo] -> Repo
 remotesAdd repo rs = repo { remotes = rs }
 
-{- Returns the name of the remote that corresponds to the repo, if 
- - it is a remote. Otherwise, "" -}
-repoRemoteName :: Repo -> String
-repoRemoteName Repo { remoteName = Just name } = name
-repoRemoteName _ = ""
+{- Returns the name of the remote that corresponds to the repo, if
+ - it is a remote. -}
+repoRemoteName :: Repo -> Maybe String
+repoRemoteName Repo { remoteName = Just name } = Just name
+repoRemoteName _ = Nothing
 
 {- Some code needs to vary between URL and normal repos,
  - or bare and non-bare, these functions help with that. -}
@@ -209,10 +210,17 @@ urlScheme repo = assertUrl repo $ error "internal"
 
 {- Hostname of an URL repo. (May include a username and/or port too.) -}
 urlHost :: Repo -> String
-urlHost Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
+urlHost Repo { location = Url u } = uriRegName a
 	where
 		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
 urlHost repo = assertUrl repo $ error "internal"
+
+{- Full hostname of an URL repo. (May include a username and/or port too.) -}
+urlHostFull :: Repo -> String
+urlHostFull Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
+	where
+		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
+urlHostFull repo = assertUrl repo $ error "internal"
 
 {- Path of an URL repo. -}
 urlPath :: Repo -> String
