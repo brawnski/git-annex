@@ -51,11 +51,12 @@ start = do
  - displayed as a node, and each of its remotes is represented as an edge
  - pointing at the node for the remote. -}
 drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
-drawMap rs umap = Dot.graph $ repos ++ others
+drawMap rs umap = Dot.graph $ others ++ repos
 	where
 		repos = map (node umap rs) rs
 		others = map uuidnode (M.keys umap)
-		uuidnode u = Dot.graphNode u $ M.findWithDefault "" u umap
+		uuidnode u = unreachable $
+			Dot.graphNode u $ M.findWithDefault "" u umap
 
 hostname :: Git.Repo -> String
 hostname r
@@ -78,7 +79,7 @@ repoName umap r
 				Just n -> n
 				Nothing -> "unknown"
 
-{- A unique id for the node. Uses the annex.uuid if available. -}
+{- A unique id for the node for a repo. Uses the annex.uuid if available. -}
 nodeId :: Git.Repo -> String
 nodeId r =
 	case (getUncachedUUID r) of
@@ -90,8 +91,11 @@ node :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
 node umap fullinfo r = unlines $ n:edges
 	where
 		n = Dot.subGraph (hostname r) (basehostname r) $
-			Dot.graphNode (nodeId r) (repoName umap r)
+			decorate $ Dot.graphNode (nodeId r) (repoName umap r)
 		edges = map (edge umap fullinfo r) (Git.remotes r)
+		decorate
+			| Git.configMap r == M.empty = unreachable
+			| otherwise = reachable
 
 {- An edge between two repos. The second repo is a remote of the first. -}
 edge :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
@@ -114,6 +118,11 @@ edge umap fullinfo from to =
 					if (n == repoName umap fullto || n == hostname fullto)
 						then Nothing
 						else Just n
+
+unreachable :: String -> String
+unreachable s = Dot.fillColor "red" s
+reachable :: String -> String
+reachable s = Dot.fillColor "white" s
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]

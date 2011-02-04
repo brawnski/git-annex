@@ -9,39 +9,50 @@ module Dot where -- import qualified
 
 {- generates a graph description from a list of lines -}
 graph :: [String] -> String
-graph s = unlines $ [header] ++ s ++ [footer]
+graph s = unlines $ [header] ++ map formatLine s ++ [footer]
 	where
 		header = "digraph map {"
 		footer= "}"
 
 {- a node in the graph -}
 graphNode :: String -> String -> String
-graphNode nodeid desc = lineLabeled desc $ quote nodeid
+graphNode nodeid desc = label desc $ quote nodeid
 
 {- an edge between two nodes -}
 graphEdge :: String -> String -> Maybe String -> String
-graphEdge fromid toid d =
-	case d of
-		Nothing -> line edge
-		Just desc -> lineLabeled desc edge
+graphEdge fromid toid desc =
+	case desc of
+		Nothing -> edge
+		Just d -> label d edge
 	where
 		edge = quote fromid ++ " -> " ++ quote toid
 
-quote :: String -> String
-quote s = "\"" ++ s ++ "\""
+{- adds a label to a node or edge -}
+label :: String -> String -> String
+label l s = attr "label" l s
 
-line :: String -> String
-line s = "\t" ++ s ++ ";"
+{- adds an attribute to a node or edge
+ - (can be called multiple times for multiple attributes) -}
+attr :: String -> String -> String -> String
+attr a v s = s ++ " [ " ++ a ++ "=" ++ quote v ++ " ]"
 
-{- a line with a label -}
-lineLabeled :: String -> String -> String
-lineLabeled label s = line $ s ++ " [ label=" ++ quote label ++ " ]"
+{- fills a node with a color -}
+fillColor :: String -> String -> String
+fillColor color s = attr "fillcolor" color $ attr "style" "filled" $ s
 
 {- apply to graphNode to put the node in a labeled box -}
 subGraph :: String -> String -> String -> String
-subGraph subid label s = line $
-	"subgraph " ++ name ++ "{\n" ++ setlabel ++ "\n" ++ s ++ "\n}"
+subGraph subid l s =
+	"subgraph " ++ name ++ "{\n\t" ++ setlabel ++ "\n\t\t" ++ s ++ "\n\t}"
 	where
 		-- the "cluster_" makes dot draw a box
 		name = quote ("cluster_" ++ subid)
-		setlabel = line $ "label=" ++ quote label
+		setlabel = formatLine $ "label=" ++ quote l
+
+formatLine :: String -> String	
+formatLine s = "\t" ++ s ++ ";"
+
+quote :: String -> String
+quote s = "\"" ++ s' ++ "\""
+	where
+		s' = filter (/= '"') s
