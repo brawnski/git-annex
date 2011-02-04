@@ -107,7 +107,7 @@ node umap fullinfo r = unlines $ n:edges
 {- An edge between two repos. The second repo is a remote of the first. -}
 edge :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
 edge umap fullinfo from to =
-	Dot.graphEdge (nodeId from) (nodeId $ makeabs from fullto) edgename
+	Dot.graphEdge (nodeId from) (nodeId $ absRepo from fullto) edgename
 	where
 		-- get the full info for the remote, to get its UUID
 		fullto = findfullinfo to
@@ -140,20 +140,13 @@ spider' (r:rs) known
 	| any (same r) known = spider' rs known
 	| otherwise = do
 		r' <- scan r
-		let remotes = map (makeabs r') (Git.remotes r')
+		let remotes = map (absRepo r') (Git.remotes r')
 		spider' (rs ++ remotes) (r':known)
 
-{- Makes a remote have an absolute url, rather than a host-local path. -}
-makeabs :: Git.Repo -> Git.Repo -> Git.Repo
-makeabs repo remote
-	| Git.repoIsUrl remote = remote
-	| not $ Git.repoIsUrl repo = remote
-	| otherwise = Git.repoFromUrl combinedurl
-		where
-			combinedurl =
-				Git.urlScheme repo ++ "//" ++
-				Git.urlHostFull repo ++
-				Git.workTree remote
+absRepo :: Git.Repo -> Git.Repo -> Git.Repo
+absRepo reference r
+	| Git.repoIsUrl reference = Git.localToUrl reference r
+	| otherwise = r
 
 {- Checks if two repos are the same. -}
 same :: Git.Repo -> Git.Repo -> Bool
@@ -217,9 +210,14 @@ tryScan r
 		-- Secondly, configlist doesn't include information about
 		-- the remote's remotes.
 		sshscan = do
-			showNote "sshing..."
-			showProgress
+			sshnote
 			v <- manualconfiglist
 			case v of
-				Nothing -> configlist
+				Nothing -> do
+					sshnote
+					configlist
 				ok -> return ok
+
+		sshnote = do
+			showNote "sshing..."
+			showProgress

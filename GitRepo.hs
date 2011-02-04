@@ -13,6 +13,7 @@ module GitRepo (
 	repoFromCwd,
 	repoFromPath,
 	repoFromUrl,
+	localToUrl,
 	repoIsUrl,
 	repoIsSsh,
 	repoDescribe,
@@ -108,6 +109,19 @@ repoFromUrl url
 			u = case (parseURI url) of
 				Just v -> v
 				Nothing -> error $ "bad url " ++ url
+
+{- Converts a Local Repo into a remote repo, using the reference repo
+ - which is assumed to be on the same host. -}
+localToUrl :: Repo -> Repo -> Repo
+localToUrl reference r
+	| not $ repoIsUrl reference = error "internal error; reference repo not url"
+	| repoIsUrl r = r
+	| otherwise = r { location = Url $ fromJust $ parseURI absurl }
+	where
+		absurl =
+			urlScheme reference ++ "//" ++
+			urlHostFull reference ++
+			workTree r
 
 {- User-visible description of a git repo. -}
 repoDescribe :: Repo -> String
@@ -338,7 +352,7 @@ configStore :: Repo -> String -> Repo
 configStore repo s = r { remotes = configRemotes r }
 	where r = repo { config = configParse s }
 
-{- Checks if a string fron git config is a true value. -}
+{- Checks if a string from git config is a true value. -}
 configTrue :: String -> Bool
 configTrue s = map toLower s == "true"
 
