@@ -53,51 +53,20 @@ start = do
 drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
 drawMap rs umap = Dot.graph $ repos ++ others
 	where
-		repos = map (dotGraphRepo umap rs) rs
+		repos = map (node umap rs) rs
 		others = map uuidnode (M.keys umap)
 		uuidnode u = Dot.graphNode u $ M.findWithDefault "" u umap
 
-dotGraphRepo :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
-dotGraphRepo umap fullinfo r = unlines $ node:edges
-	where
-		node = inhost $ Dot.graphNode (nodeid r) (repoName umap r)
-		edges = map edge (Git.remotes r)
+hostname :: Git.Repo -> String
+hostname r
+	| Git.repoIsUrl r = Git.urlHost r
+	| otherwise = "localhost"
 
-		inhost a
-			| Git.repoIsUrl r = Dot.subGraph (Git.urlHost r) (hostname r) a
-			| otherwise = a
+basehostname :: Git.Repo -> String
+basehostname r = head $ split "." $ hostname r
 
-		hostname n = head $ split "." $ Git.urlHost n
-
-		edge to =
-			-- get the full info for the repo since its UUID
-			-- is in there
-			let to' = findfullinfo to
-			in Dot.graphEdge
-				(nodeid r)
-				(nodeid $ makeabs r to')
-				(edgename to to')
-		
-		-- Only name an edge if the name is different than the name
-		-- that will be used for the destination node, and is
-		-- different from its hostname. (This reduces visual clutter.)
-		edgename to to' =
-			case (Git.repoRemoteName to) of
-				Nothing -> Nothing
-				Just n ->
-					if (n == repoName umap to' || n == hostname to')
-						then Nothing
-						else Just n
-
-		nodeid n =
-			case (getUncachedUUID n) of
-				"" -> Git.repoLocation n
-				u -> u
-		findfullinfo n =
-			case (filter (same n) fullinfo) of
-				[] -> n
-				(n':_) -> n'
-
+{- A name to display for a repo. Uses the name from uuid.log if available,
+ - or the remote name if not. -}
 repoName :: (M.Map UUID String) -> Git.Repo -> String
 repoName umap r
 	| null repouuid = fallback
@@ -108,6 +77,43 @@ repoName umap r
 			case (Git.repoRemoteName r) of
 				Just n -> n
 				Nothing -> "unknown"
+
+{- A unique id for the node. Uses the annex.uuid if available. -}
+nodeId :: Git.Repo -> String
+nodeId r =
+	case (getUncachedUUID r) of
+		"" -> Git.repoLocation r
+		u -> u
+
+{- A node representing a repo. -}
+node :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
+node umap fullinfo r = unlines $ n:edges
+	where
+		n = Dot.subGraph (hostname r) (basehostname r) $
+			Dot.graphNode (nodeId r) (repoName umap r)
+		edges = map (edge umap fullinfo r) (Git.remotes r)
+
+{- An edge between two repos. The second repo is a remote of the first. -}
+edge :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
+edge umap fullinfo from to =
+	Dot.graphEdge (nodeId from) (nodeId $ makeabs from fullto) edgename
+	where
+		-- get the full info for the remote, to get its UUID
+		fullto = findfullinfo to
+		findfullinfo n =
+			case (filter (same n) fullinfo) of
+				[] -> n
+				(n':_) -> n'
+		{- Only name an edge if the name is different than the name
+		 - that will be used for the destination node, and is
+		 - different from its hostname. (This reduces visual clutter.) -}
+		edgename =
+			case (Git.repoRemoteName to) of
+				Nothing -> Nothing
+				Just n ->
+					if (n == repoName umap fullto || n == hostname fullto)
+						then Nothing
+						else Just n
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]
@@ -148,7 +154,7 @@ same a b
 {- reads the config of a remote, with progress display -}
 scan :: Git.Repo -> Annex Git.Repo
 scan r = do
-	showStart "map" (Git.repoDescribe r)
+	showStart "map" $ Git.repoDescribe r
 	v <- tryScan r
 	case v of
 		Just r' -> do
