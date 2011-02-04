@@ -49,12 +49,19 @@ start = do
 
 {- Generates a graph for dot(1). Each repository, and any other uuids, are
  - displayed as a node, and each of its remotes is represented as an edge
- - pointing at the node for the remote. -}
+ - pointing at the node for the remote.
+ -
+ - The order nodes are added to the graph matters, since dot will draw
+ - the first ones near to the top and left. So it looks better to put
+ - the repositories first, followed by uuids that were not matched
+ - to a repository.
+ -}
 drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
-drawMap rs umap = Dot.graph $ others ++ repos
+drawMap rs umap = Dot.graph $ repos ++ others
 	where
 		repos = map (node umap rs) rs
-		others = map uuidnode (M.keys umap)
+		ruuids = map getUncachedUUID rs
+		others = map uuidnode $ filter (`notElem` ruuids) (M.keys umap)
 		uuidnode u = unreachable $
 			Dot.graphNode u $ M.findWithDefault "" u umap
 
@@ -120,9 +127,9 @@ edge umap fullinfo from to =
 						else Just n
 
 unreachable :: String -> String
-unreachable s = Dot.fillColor "red" s
+unreachable = Dot.fillColor "red"
 reachable :: String -> String
-reachable s = Dot.fillColor "white" s
+reachable = Dot.fillColor "white"
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]
