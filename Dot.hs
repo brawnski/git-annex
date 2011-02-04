@@ -9,7 +9,7 @@ module Dot where -- import qualified
 
 {- generates a graph description from a list of lines -}
 graph :: [String] -> String
-graph s = unlines $ [header] ++ map formatLine s ++ [footer]
+graph s = unlines $ [header] ++ map indent s ++ [footer]
 	where
 		header = "digraph map {"
 		footer= "}"
@@ -20,7 +20,7 @@ graphNode nodeid desc = label desc $ quote nodeid
 
 {- an edge between two nodes -}
 graphEdge :: String -> String -> Maybe String -> String
-graphEdge fromid toid desc =
+graphEdge fromid toid desc = indent $
 	case desc of
 		Nothing -> edge
 		Just d -> label d edge
@@ -43,14 +43,15 @@ fillColor color s = attr "fillcolor" color $ attr "style" "filled" $ s
 {- apply to graphNode to put the node in a labeled box -}
 subGraph :: String -> String -> String -> String
 subGraph subid l s =
-	"subgraph " ++ name ++ "{\n\t" ++ setlabel ++ "\n\t\t" ++ s ++ "\n\t}"
+	"subgraph " ++ name ++ " {\n" ++ ii setlabel ++ ii s ++ indent "}"
 	where
 		-- the "cluster_" makes dot draw a box
 		name = quote ("cluster_" ++ subid)
-		setlabel = formatLine $ "label=" ++ quote l
+		setlabel = "label=" ++ quote l
+		ii x = (indent $ indent x) ++ "\n"
 
-formatLine :: String -> String	
-formatLine s = "\t" ++ s ++ ";"
+indent ::String -> String
+indent s = "\t" ++ s
 
 quote :: String -> String
 quote s = "\"" ++ s' ++ "\""
