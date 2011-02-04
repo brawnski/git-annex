@@ -144,6 +144,7 @@ same :: Git.Repo -> Git.Repo -> Bool
 same a b
 	| both Git.repoIsSsh = matching Git.urlHostFull && matching Git.workTree
 	| both Git.repoIsUrl && neither Git.repoIsSsh = matching show
+	| neither Git.repoIsSsh = matching Git.workTree
 	| otherwise = False
 		
 	where
