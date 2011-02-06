@@ -1,7 +1,5 @@
 The main git repository for git-annex is `git://git.kitenet.net/git-annex`
 [[gitweb](http://git.kitenet.net/?p=git-annex;a=summary)]
 
-Users of Debian unstable/testing and Ubuntu natty can
-`apt-get install git-annex`
-
-Next: [[install]]
+Some operating systems include git-annex in easily prepackaged form and
+others need some manual work. See [[install]] for details.

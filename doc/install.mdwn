@@ -12,3 +12,9 @@ To build and use git-annex, you will need:
 
 ([Ikiwiki](http://ikiwiki.info) is needed to build the documentation,
 but that will be skipped if it is not installed.)
+
+OS-specific instructions:
+
+* [[OSX]]
+* [[Debian]]
+* [[Ubuntu]]

@@ -1,0 +1,9 @@
+If using Debian testing or unstable:
+
+	sudo apt-get install git-annex
+
+git-annex is not yet in a Debian stable release, but the source
+can be built from Debian stable. Just [[download]] it from git, and
+then in the `git-annex` directory, run `dpkg-checkbuilddeps` and install
+the necessary packages. You can also run `sudo debian/rules binary` to build
+a `git-annex.deb`.
