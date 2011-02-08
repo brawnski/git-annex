@@ -1,5 +1,5 @@
 PREFIX=/usr
-GHCFLAGS=-O2 -Wall
+GHCFLAGS=-O2 -Wall -ignore-package monads-fd
 GHCMAKE=ghc $(GHCFLAGS) --make
 
 bins=git-annex git-annex-shell
