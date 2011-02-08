@@ -107,10 +107,10 @@ node umap fullinfo r = unlines $ n:edges
 {- An edge between two repos. The second repo is a remote of the first. -}
 edge :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
 edge umap fullinfo from to =
-	Dot.graphEdge (nodeId from) (nodeId $ absRepo from fullto) edgename
+	Dot.graphEdge (nodeId from) (nodeId fullto) edgename
 	where
 		-- get the full info for the remote, to get its UUID
-		fullto = findfullinfo to
+		fullto = findfullinfo (absRepo from to)
 		findfullinfo n =
 			case (filter (same n) fullinfo) of
 				[] -> n
