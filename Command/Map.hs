@@ -21,6 +21,7 @@ import Messages
 import Types
 import Utility
 import UUID
+import Trust
 import qualified Dot
 
 -- a link from the first repository to the second (its remote)
@@ -38,8 +39,9 @@ start = do
 	rs <- spider g
 
 	umap <- uuidMap
+	trusted <- trustGet Trusted
 
-	liftIO $ writeFile file (drawMap rs umap)
+	liftIO $ writeFile file (drawMap rs umap trusted)
 	showLongNote $ "running: dot -Tx11 " ++ file
 	showProgress
 	r <- liftIO $ boolSystem "dot" ["-Tx11", file]
@@ -56,14 +58,15 @@ start = do
  - the repositories first, followed by uuids that were not matched
  - to a repository.
  -}
-drawMap :: [Git.Repo] -> (M.Map UUID String) -> String
-drawMap rs umap = Dot.graph $ repos ++ others
+drawMap :: [Git.Repo] -> (M.Map UUID String) -> [UUID] -> String
+drawMap rs umap ts = Dot.graph $ repos ++ trusted ++ others
 	where
 		repos = map (node umap rs) rs
-		ruuids = map getUncachedUUID rs
-		others = map uuidnode $ filter (`notElem` ruuids) (M.keys umap)
-		uuidnode u = unreachable $
-			Dot.graphNode u $ M.findWithDefault "" u umap
+		ruuids = ts ++ map getUncachedUUID rs
+		others = map (unreachable . uuidnode) $
+			filter (`notElem` ruuids) (M.keys umap)
+		trusted = map (trustworthy . uuidnode) ts
+		uuidnode u = Dot.graphNode u $ M.findWithDefault "" u umap
 
 hostname :: Git.Repo -> String
 hostname r
@@ -130,6 +133,8 @@ unreachable :: String -> String
 unreachable = Dot.fillColor "red"
 reachable :: String -> String
 reachable = Dot.fillColor "white"
+trustworthy :: String -> String
+trustworthy = Dot.fillColor "green"
 
 {- Recursively searches out remotes starting with the specified repo. -}
 spider :: Git.Repo -> Annex [Git.Repo]
