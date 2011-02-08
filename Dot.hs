@@ -41,13 +41,18 @@ fillColor :: String -> String -> String
 fillColor color s = attr "fillcolor" color $ attr "style" "filled" $ s
 
 {- apply to graphNode to put the node in a labeled box -}
-subGraph :: String -> String -> String -> String
-subGraph subid l s =
-	"subgraph " ++ name ++ " {\n" ++ ii setlabel ++ ii s ++ indent "}"
+subGraph :: String -> String -> String -> String -> String
+subGraph subid l color s =
+	"subgraph " ++ name ++ " {\n" ++
+		ii setlabel ++
+		ii setcolor ++
+		ii s ++
+		indent "}"
 	where
 		-- the "cluster_" makes dot draw a box
 		name = quote ("cluster_" ++ subid)
 		setlabel = "label=" ++ quote l
+		setcolor = "fillcolor=" ++ quote color
 		ii x = (indent $ indent x) ++ "\n"
 
 indent ::String -> String
