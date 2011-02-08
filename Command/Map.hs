@@ -100,7 +100,7 @@ nodeId r =
 node :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
 node umap fullinfo r = unlines $ n:edges
 	where
-		n = Dot.subGraph (hostname r) (basehostname r) "grey" $
+		n = Dot.subGraph (hostname r) (basehostname r) "lightblue" $
 			decorate $ Dot.graphNode (nodeId r) (repoName umap r)
 		edges = map (edge umap fullinfo r) (Git.remotes r)
 		decorate

@@ -45,6 +45,7 @@ subGraph :: String -> String -> String -> String -> String
 subGraph subid l color s =
 	"subgraph " ++ name ++ " {\n" ++
 		ii setlabel ++
+		ii setfilled ++
 		ii setcolor ++
 		ii s ++
 		indent "}"
@@ -52,6 +53,7 @@ subGraph subid l color s =
 		-- the "cluster_" makes dot draw a box
 		name = quote ("cluster_" ++ subid)
 		setlabel = "label=" ++ quote l
+		setfilled = "style=" ++ quote "filled"
 		setcolor = "fillcolor=" ++ quote color
 		ii x = (indent $ indent x) ++ "\n"
 
