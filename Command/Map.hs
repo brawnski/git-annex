@@ -110,7 +110,7 @@ edge umap fullinfo from to =
 	Dot.graphEdge (nodeId from) (nodeId fullto) edgename
 	where
 		-- get the full info for the remote, to get its UUID
-		fullto = findfullinfo (absRepo from to)
+		fullto = findfullinfo to
 		findfullinfo n =
 			case (filter (same n) fullinfo) of
 				[] -> n
@@ -140,8 +140,13 @@ spider' (r:rs) known
 	| any (same r) known = spider' rs known
 	| otherwise = do
 		r' <- scan r
+
+		-- The remotes will be relative to r', and need to be
+		-- made absolute for later use.
 		let remotes = map (absRepo r') (Git.remotes r')
-		spider' (rs ++ remotes) (r':known)
+		let r'' = Git.remotesAdd r' remotes
+
+		spider' (rs ++ remotes) (r'':known)
 
 absRepo :: Git.Repo -> Git.Repo -> Git.Repo
 absRepo reference r
