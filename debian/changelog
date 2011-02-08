@@ -1,4 +1,4 @@
-git-annex (0.20) UNRELEASED; urgency=low
+git-annex (0.20) unstable; urgency=low
 
   * Preserve specified file ordering when instructed to act on multiple
     files or directories. For example, "git annex get a b" will now always
@@ -9,8 +9,9 @@ git-annex (0.20) UNRELEASED; urgency=low
   * map: New subcommand that uses graphviz to display a nice map of
     the git repository network.
   * Deal with the mtl/monads-fd conflict.
+  * configure: Check for sha1sum.
 
- -- Joey Hess <joeyh@debian.org>  Mon, 31 Jan 2011 20:06:02 -0400
+ -- Joey Hess <joeyh@debian.org>  Tue, 08 Feb 2011 18:57:24 -0400
 
 git-annex (0.19) unstable; urgency=low
 

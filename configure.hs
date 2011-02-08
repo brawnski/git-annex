@@ -10,6 +10,7 @@ tests = [
 	, testCp "cp_p" "-p"
 	, testCp "cp_reflink_auto" "--reflink=auto"
 	, TestCase "uuid generator" $ selectCmd "uuid" ["uuid", "uuidgen"]
+	, TestCase "sha1sum" $ requireCmd "sha1sum" "sha1sum </dev/null"
 	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0 </dev/null"
 	, TestCase "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
 	]
