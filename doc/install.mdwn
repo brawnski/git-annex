@@ -1,3 +1,11 @@
+## OS-specific instructions
+
+* [[OSX]]
+* [[Debian]]
+* [[Ubuntu]]
+
+## Generic instructions
+
 To build and use git-annex, you will need:
 
 * `git`: <http://git-scm.com/>
@@ -14,8 +22,7 @@ To build and use git-annex, you will need:
 ([Ikiwiki](http://ikiwiki.info) is needed to build the documentation,
 but that will be skipped if it is not installed.)
 
-OS-specific instructions:
+Additionally, to run the test suite (via `make test`), you will need:
 
-* [[OSX]]
-* [[Debian]]
-* [[Ubuntu]]
+* `TestPack` <http://hackage.haskell.org/cgi-bin/hackage-scripts/package/testpack>
+* `QuickCheck` 2 <http://hackage.haskell.org/package/QuickCheck>
