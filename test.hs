@@ -139,7 +139,7 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 			annexed_notpresent annexedfile
 		withcopy = "with content" ~: intmpcopyrepo $ do
 			annexed_present annexedfile
-			git_annex "unannex" ["-q", annexedfile] @? "unannex failed"
+			git_annex "unannex" ["-q", annexedfile, sha1annexedfile] @? "unannex failed"
 			unannexed annexedfile
 			git_annex "unannex" ["-q", annexedfile] @? "unannex failed on non-annexed file"
 			unannexed annexedfile
