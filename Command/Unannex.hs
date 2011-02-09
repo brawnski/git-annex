@@ -33,10 +33,13 @@ start file = isAnnexed file $ \(key, backend) -> do
 	ishere <- inAnnex key
 	if ishere
 		then do
-			g <- Annex.gitRepo
-			staged <- liftIO $ Git.stagedFiles g [Git.workTree g]
-			unless (null staged) $
-				error "This command cannot be run when there are already files staged for commit."
+			force <- Annex.getState Annex.force
+			unless force $ do
+				g <- Annex.gitRepo
+				staged <- liftIO $ Git.stagedFiles g [Git.workTree g]
+				unless (null staged) $
+					error "This command cannot be run when there are already files staged for commit."
+				Annex.changeState $ \s -> s { Annex.force = True }
 
 			showStart "unannex" file
 			return $ Just $ perform file key backend
@@ -65,6 +68,6 @@ cleanup file key = do
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to
 	-- git as a normal, non-annexed file.
-	Annex.queue "commit" ["-m", "content removed from git annex"] "--"
+	Annex.queue "commit" ["-m", "content removed from git annex"] "-a"
 	
 	return True
