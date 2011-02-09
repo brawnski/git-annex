@@ -11,7 +11,7 @@ import System.Directory
 import System.Posix.Directory (changeWorkingDirectory)
 import System.Posix.Files
 import IO (bracket_, bracket)
-import Control.Monad (unless, when)
+import Control.Monad (unless, when, filterM)
 import Data.List
 import System.IO.Error
 import System.Posix.Env
@@ -537,13 +537,11 @@ cleanup dir = do
 	e <- doesDirectoryExist dir
 	when e $ do
 		-- git-annex prevents annexed file content from being
-		-- removed via permissions bits; undo
-		recurseDir SystemFS dir >>= mapM_ fixmodes
+		-- removed via directory permissions; undo
+		recurseDir SystemFS dir >>=
+			filterM doesDirectoryExist >>=
+			mapM_ Content.allowWrite
 		removeDirectoryRecursive dir
-	where
-		fixmodes f = do
-			s <- getSymbolicLinkStatus f
-			unless (isSymbolicLink s) $ Content.allowWrite f
 	
 checklink :: FilePath -> Assertion
 checklink f = do
