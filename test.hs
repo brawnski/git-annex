@@ -20,6 +20,8 @@ import Control.Exception (throw)
 import Control.Monad.State (liftIO)
 import Maybe
 import qualified Data.Map as M
+import System.Path (recurseDir)
+import System.IO.HVFS (SystemFS(..))
 
 import qualified Annex
 import qualified BackendList
@@ -536,8 +538,12 @@ cleanup dir = do
 	when e $ do
 		-- git-annex prevents annexed file content from being
 		-- removed via permissions bits; undo
-		_ <- Utility.boolSystem "chmod" ["+rw", "-R", dir]
+		recurseDir SystemFS dir >>= mapM_ fixmodes
 		removeDirectoryRecursive dir
+	where
+		fixmodes f = do
+			s <- getSymbolicLinkStatus f
+			unless (isSymbolicLink s) $ Content.allowWrite f
 	
 checklink :: FilePath -> Assertion
 checklink f = do
