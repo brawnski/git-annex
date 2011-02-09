@@ -508,6 +508,9 @@ setuprepo dir = do
 	cleanup dir
 	ensuretmpdir
 	Utility.boolSystem "git" ["init", "-q", dir] @? "git init failed"
+	indir dir $ do
+		Utility.boolSystem "git" ["config", "user.name", "Test User"] @? "git config failed"
+		Utility.boolSystem "git" ["config", "user.email", "test@example.com"] @? "git config failed"
 	return dir
 
 copyrepo :: FilePath -> FilePath -> IO FilePath

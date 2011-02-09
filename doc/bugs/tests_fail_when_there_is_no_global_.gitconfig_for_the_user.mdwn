@@ -46,3 +46,5 @@ After doing this, you may fix the identity used for this commit with:
 </pre>
 
 I guess it also depends a bit on how git figures out who it is is committing and how the machine in question is configured with hostnames and domain names.
+
+> Fixed that. [[done]] --[[Joey]] 

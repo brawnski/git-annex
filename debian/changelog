@@ -3,6 +3,7 @@ git-annex (0.21) UNRELEASED; urgency=low
   * test: Don't rely on chmod -R working.
   * unannex: Fix recently introduced bug when attempting to unannex more
     than one file at a time.
+  * test: Set git user name and email in case git can't guess values.
 
  -- Joey Hess <joeyh@debian.org>  Wed, 09 Feb 2011 00:12:11 -0400
 
