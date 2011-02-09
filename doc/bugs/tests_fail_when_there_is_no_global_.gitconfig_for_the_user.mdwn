@@ -22,4 +22,4 @@ Cases: 30  Tried: 8  Errors: 0  Failures: 1
 *** Please tell me who you are.
 </pre>
 
-I guess most users or people testing git-annex probably have a .gitconfig sitting in their home directories already so the above never cropped up. This failure was initially found in a clean and fresh install of a virtual machine with archlinux and repeated again on my archlinux laptop.
+I guess most users testing git-annex probably have a .gitconfig sitting in their home directories already so the above never cropped up. This failure was initially found in a clean and fresh install of a virtual machine with archlinux and repeated again on my archlinux laptop.
