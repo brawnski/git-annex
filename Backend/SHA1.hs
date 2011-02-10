@@ -58,5 +58,5 @@ checkKeySHA1 key = do
 				then return True
 				else do
 					dest <- moveBad key
-					warning $ "Bad file content; moved to "++dest
+					warning $ "Bad file content; moved to " ++ showFile dest
 					return False

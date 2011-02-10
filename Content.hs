@@ -49,7 +49,7 @@ calcGitLink file key = do
 	cwd <- liftIO $ getCurrentDirectory
 	let absfile = case absNormPath cwd file of
 		Just f -> f
-		Nothing -> error $ "unable to normalize " ++ file
+		Nothing -> error $ "unable to normalize " ++ showFile file
 	return $ relPathDirToDir (parentDir absfile) (Git.workTree g) ++
 		annexLocation key
 

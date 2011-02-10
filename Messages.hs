@@ -11,6 +11,7 @@ import Control.Monad.State (liftIO)
 import System.IO
 import Control.Monad (unless)
 import Data.String.Utils
+import Codec.Binary.UTF8.String as UTF8
 
 import Types
 import qualified Annex
@@ -25,7 +26,7 @@ showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ ")"
 
 showStart :: String -> String -> Annex ()
 showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ file ++ " "
+	liftIO $ putStr $ command ++ " " ++ showFile file ++ " "
 	liftIO $ hFlush stdout
 
 showNote :: String -> Annex ()
@@ -45,7 +46,6 @@ showEndOk = verbose $ liftIO $ putStrLn "ok"
 showEndFail :: Annex ()
 showEndFail = verbose $ liftIO $ putStrLn "\nfailed"
 
-{- Exception pretty-printing. -}
 showErr :: (Show a) => a -> Annex ()
 showErr e = warning $ "git-annex: " ++ show e
 
@@ -57,3 +57,8 @@ warning w = do
 
 indent :: String -> String
 indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
+
+{- Prepares a filename for display. This is needed because strings are 
+ - internally represented in git-annex is non-decoded form. -}
+showFile :: String -> String
+showFile = decodeString

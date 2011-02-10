@@ -37,10 +37,22 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    encoded in utf-8 (an archive could have historical filenames using
 >    varying encodings), and you don't want which files are accessed to
 >    depend on locale settings.
+>    > I tried to do this by making parts of GitRepo call
+>    > Codec.Binary.UTF8.String.decodeString when reading filenames from
+>    > git. This seemed to break attempts to operate on the files,
+>    > weirdly encoded strings were seen in syscalls in strace.
 > 1. Keep input and internal data un-decoded, but decode it when
 >    outputting a filename (assuming the filename is encoded using the
 >    user's configured encoding), and allow haskell's output encoding to then
 >    encode it according to the user's locale configuration.
+>    > This is now [[implemented|done]]. I'm not very happy that I have to watch
+>    > out for any place that a filename is output and call `showFile`
+>    > on it, but there are really not too many such places in git-annex.
+>    >
+>    > Note that this only affects filenames apparently. 
+>    > (Names of files in the annex, and also some places where names
+>    > of keys are displayed.) Utf-8 in the uuid.map file etc seems
+>    > to be handled cleanly.
 > 1. Avoid encodings entirely. Mostly what I'm doing now; probably
 >    could find a way to disable encoding of console output. Then the raw
 >    filename would be displayed, which should work ok. git-annex does
@@ -50,13 +62,3 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    One other possible
 >    issue would be that this could cause problems if git-annex were
 >    translated.
-> 
-> BTW, for more fun, try unsetting LANG, and then you can see
-> stuff like this:
-
-	joey@gnu:~/tmp/aa>git annex add ./Üa
-	add add add add git-annex: <stdout>: commitAndReleaseBuffer: invalid
-	argument (Invalid or incomplete multibyte or wide character)
-
-> (Add -q to work around this; once it doesn't need to print the filename,
-> it can act on it ok!)

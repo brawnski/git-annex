@@ -12,6 +12,7 @@ import Control.Monad.State (liftIO)
 
 import Command
 import Content
+import Messages
 
 command :: [Command]
 command = [Command "find" (paramOptional $ paramRepeating paramPath) seek
@@ -24,5 +25,5 @@ seek = [withFilesInGit start]
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	exists <- inAnnex key
-	when exists $ liftIO $ putStrLn file
+	when exists $ liftIO $ putStrLn $ showFile file
 	return Nothing
