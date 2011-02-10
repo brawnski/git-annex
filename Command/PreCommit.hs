@@ -14,6 +14,7 @@ import qualified Annex
 import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
+import Messages
 
 command :: [Command]
 command = [Command "pre-commit" paramPath seek "run by git pre-commit hook"]

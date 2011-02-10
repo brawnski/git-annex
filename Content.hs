@@ -34,6 +34,7 @@ import UUID
 import qualified GitRepo as Git
 import qualified Annex
 import Utility
+import Messages
 
 {- Checks if a given key is currently present in the gitAnnexLocation. -}
 inAnnex :: Key -> Annex Bool
