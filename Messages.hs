@@ -60,5 +60,5 @@ indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
 
 {- Prepares a filename for display. This is needed because strings are 
  - internally represented in git-annex is non-decoded form. -}
-showFile :: String -> String
+showFile :: FilePath -> String
 showFile = decodeString
