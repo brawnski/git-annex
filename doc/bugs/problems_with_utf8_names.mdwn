@@ -63,3 +63,39 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    One other possible
 >    issue would be that this could cause problems if git-annex were
 >    translated.
+
+----
+
+Simpler test case:
+
+<pre>
+import Codec.Binary.UTF8.String
+import System.Environment
+
+main = do
+        args <- getArgs
+        let file = decodeString $ head args
+        putStrLn $ "file is: " ++ file
+        putStr =<< readFile file
+</pre>
+
+If I pass this a filename like 'ü', it will fail, and notice
+the bad encoding of the filename in the error message:
+
+<pre>
+$ echo hi > ü; runghc foo.hs ü
+file is: ü
+foo.hs: �: openFile: does not exist (No such file or directory)
+</pre>
+
+On the other hand, if I remove the decodeString, it prints the filename
+wrong, while accessing it right:
+
+<pre>
+$ runghc foo.hs ü
+file is: Ã¼a
+hi
+</pre>
+
+The only way that seems to consistently work is to delay decoding the
+filename to places where it's output. But then it's easy to miss some.
