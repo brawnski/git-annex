@@ -58,7 +58,8 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    filename would be displayed, which should work ok. git-annex does
 >    not really need to pull apart filenames; they are almost entirely
 >    opaque blobs. I guess that the `--exclude` option is the exception
->    to that, but it is currently not unicode safe anyway.
+>    to that, but it is currently not unicode safe anyway. (Update: tried
+>    `--exclude` again, seems it is unicode clean..)
 >    One other possible
 >    issue would be that this could cause problems if git-annex were
 >    translated.
