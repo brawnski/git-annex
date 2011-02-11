@@ -46,7 +46,7 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    user's configured encoding), and allow haskell's output encoding to then
 >    encode it according to the user's locale configuration.
 >    > This is now [[implemented|done]]. I'm not very happy that I have to watch
->    > out for any place that a filename is output and call `showFile`
+>    > out for any place that a filename is output and call `filePathToString`
 >    > on it, but there are really not too many such places in git-annex.
 >    >
 >    > Note that this only affects filenames apparently. 

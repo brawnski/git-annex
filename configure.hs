@@ -1,6 +1,7 @@
 {- Checks system configuration and generates SysConfig.hs. -}
 
 import System.Directory
+import Data.List
 
 import TestConfig
 
@@ -13,6 +14,7 @@ tests = [
 	, TestCase "sha1sum" $ requireCmd "sha1sum" "sha1sum </dev/null"
 	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0 </dev/null"
 	, TestCase "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
+	, TestCase "unicode FilePath support" $ unicodeFilePath
 	]
 
 tmpDir :: String
@@ -26,6 +28,19 @@ testCp k option = TestCase cmd $ testCmd k run
 	where
 		cmd = "cp " ++ option
 		run = cmd ++ " " ++ testFile ++ " " ++ testFile ++ ".new"
+
+{- Checks if FilePaths contain decoded unicode, or not. The testdata
+ - directory contains a "unicode-test-ü" file; try to find the file,
+ - and see if the "ü" is encoded correctly.
+ -
+ - Note that the file is shipped with git-annex, rather than created,
+ - to avoid other potential unicode issues.
+ -}
+unicodeFilePath :: Test
+unicodeFilePath = do
+	fs <- getDirectoryContents "testdata"
+	let file = head $ filter (isInfixOf "unicode-test") fs
+	return $ Config "unicodefilepath" (BoolConfig $ isInfixOf "ü" file)
 
 setup :: IO ()
 setup = do

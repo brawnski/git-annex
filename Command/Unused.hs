@@ -68,7 +68,7 @@ checkUnused = do
 		dropmsg = ["(To remove unwanted data: git-annex dropunused NUMBER)"]
 			
 		table l = ["  NUMBER  KEY"] ++ map cols l
-		cols (n,k) = "  " ++ pad 6 (show n) ++ "  " ++ (showFile . show) k
+		cols (n,k) = "  " ++ pad 6 (show n) ++ "  " ++ (filePathToString . show) k
 		pad n s = s ++ replicate (n - length s) ' '
 
 number :: Int -> [a] -> [(Int, a)]

@@ -11,10 +11,11 @@ import Control.Monad.State (liftIO)
 import System.IO
 import Control.Monad (unless)
 import Data.String.Utils
-import Codec.Binary.UTF8.String as UTF8
+import qualified Codec.Binary.UTF8.String as UTF8
 
 import Types
 import qualified Annex
+import SysConfig
 
 verbose :: Annex () -> Annex ()
 verbose a = do
@@ -26,7 +27,7 @@ showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ ")"
 
 showStart :: String -> String -> Annex ()
 showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ showFile file ++ " "
+	liftIO $ putStr $ command ++ " " ++ filePathToString file ++ " "
 	liftIO $ hFlush stdout
 
 showNote :: String -> Annex ()
@@ -58,7 +59,8 @@ warning w = do
 indent :: String -> String
 indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
 
-{- Prepares a filename for display. This is needed because strings are 
- - internally represented in git-annex is non-decoded form. -}
-showFile :: FilePath -> String
-showFile = decodeString
+{- Prepares a filename for display. This is needed because on many
+ - platforms (eg, unix), FilePaths are internally stored in
+ - non-decoded form. -}
+filePathToString :: FilePath -> String
+filePathToString = if unicodefilepath then id else UTF8.decodeString

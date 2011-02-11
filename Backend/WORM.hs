@@ -67,5 +67,5 @@ checkKeySize key = do
 				then return True
 				else do
 					dest <- moveBad key
-					warning $ "Bad file size; moved to " ++ showFile dest
+					warning $ "Bad file size; moved to " ++ filePathToString dest
 					return False
