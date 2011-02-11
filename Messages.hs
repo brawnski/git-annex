@@ -15,7 +15,7 @@ import qualified Codec.Binary.UTF8.String as UTF8
 
 import Types
 import qualified Annex
-import SysConfig
+import qualified SysConfig
 
 verbose :: Annex () -> Annex ()
 verbose a = do
@@ -63,4 +63,4 @@ indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
  - platforms (eg, unix), FilePaths are internally stored in
  - non-decoded form. -}
 filePathToString :: FilePath -> String
-filePathToString = if unicodefilepath then id else UTF8.decodeString
+filePathToString = if SysConfig.unicodefilepath then id else UTF8.decodeString
