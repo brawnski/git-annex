@@ -137,7 +137,10 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 			annexed_notpresent annexedfile
 			git_annex "unannex" ["-q", annexedfile] @? "unannex failed with no copy"
 			annexed_notpresent annexedfile
-		withcopy = "with content" ~: intmpcopyrepo $ do
+		withcopy = "with content" ~: intmpclonerepo $ do
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "state changed"]
+				@? "git commit of state failed"
 			annexed_present annexedfile
 			git_annex "unannex" ["-q", annexedfile, sha1annexedfile] @? "unannex failed"
 			unannexed annexedfile
@@ -149,7 +152,12 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 test_drop :: Test
 test_drop = "git-annex drop" ~: TestList [noremote, withremote, untrustedremote]
 	where
-		noremote = "no remotes" ~: TestCase $ intmpcopyrepo $ do
+		noremote = "no remotes" ~: TestCase $ intmpclonerepo $ do
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "state changed"]
+				@? "git commit of state failed"
+			Utility.boolSystem "git" ["remote", "rm", "origin"]
+				@? "git remote rm origin failed"
 			r <- git_annex "drop" ["-q", annexedfile]
 			not r @? "drop wrongly succeeded with no known copy of file"
 			annexed_present annexedfile
@@ -347,11 +355,13 @@ test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withrem
 			Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
 			corrupt annexedfile
 			corrupt sha1annexedfile
-		withlocaluntrusted = TestCase $ intmpcopyrepo $ do
+		withlocaluntrusted = TestCase $ intmpclonerepo $ do
+			git_annex "get" ["-q", annexedfile] @? "get failed"
+			git_annex "untrust" ["-q", "origin"] @? "untrust of origin repo failed"
 			git_annex "untrust" ["-q", "."] @? "untrust of current repo failed"
 			fsck_should_fail "content only available in untrusted (current) repository"
 			git_annex "trust" ["-q", "."] @? "trust of current repo failed"
-			git_annex "fsck" ["-q"] @? "fsck failed on trusted repo"
+			git_annex "fsck" ["-q", annexedfile] @? "fsck failed on file present in trusted repo"
 		withremoteuntrusted = TestCase $ intmpclonerepo $ do
 			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
 			git_annex "get" ["-q", annexedfile] @? "get failed"
@@ -475,14 +485,8 @@ innewrepo a = withgitrepo $ \r -> indir r a
 inmainrepo :: Assertion -> Assertion
 inmainrepo a = indir mainrepodir a
 
-intmpcopyrepo :: Assertion -> Assertion
-intmpcopyrepo a = withtmpcopyrepo $ \r -> indir r a
-
 intmpclonerepo :: Assertion -> Assertion
 intmpclonerepo a = withtmpclonerepo $ \r -> indir r a
-
-withtmpcopyrepo :: (FilePath -> Assertion) -> Assertion
-withtmpcopyrepo = bracket (copyrepo mainrepodir tmprepodir) cleanup
 
 withtmpclonerepo :: (FilePath -> Assertion) -> Assertion
 withtmpclonerepo = bracket (clonerepo mainrepodir tmprepodir) cleanup
@@ -512,13 +516,6 @@ setuprepo dir = do
 		Utility.boolSystem "git" ["config", "user.name", "Test User"] @? "git config failed"
 		Utility.boolSystem "git" ["config", "user.email", "test@example.com"] @? "git config failed"
 	return dir
-
-copyrepo :: FilePath -> FilePath -> IO FilePath
-copyrepo old new = do
-	cleanup new
-	ensuretmpdir
-	Utility.boolSystem "cp" ["-pr", old, new] @? "cp -pr failed"
-	return new
 
 -- clones are always done as local clones; we cannot test ssh clones
 clonerepo :: FilePath -> FilePath -> IO FilePath

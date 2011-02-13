@@ -41,3 +41,9 @@ My knowledge of Haskell (had to lookup the spelling...) is more than rudimentary
 > entire end of the file from line 68, "for quickcheck" down. This code
 > is only used by the test suite (so "make test" will fail), 
 > but it should get it to build. --[[Joey]]
+
+---
+
+Closing this bug because the above problem now has a solution documented on
+the install page, and the below test suite failure problems should all be
+resolved on OSX. [[done]] --[[Joey]] 
