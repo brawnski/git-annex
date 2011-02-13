@@ -1,3 +1,9 @@
+git-annex (0.22) UNRELEASED; urgency=low
+
+  * Fix test suite to reap zombies.
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
+
 git-annex (0.21) unstable; urgency=low
 
   * test: Don't rely on chmod -R working.

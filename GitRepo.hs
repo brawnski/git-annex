@@ -34,7 +34,6 @@ module GitRepo (
 	gitCommandLine,
 	run,
 	pipeRead,
-	hPipeRead,
 	attributes,
 	remotes,
 	remotesAdd,
@@ -50,6 +49,7 @@ module GitRepo (
 	typeChangedFiles,
 	typeChangedStagedFiles,
 	absDir,
+	reap,
 
 	prop_idempotent_deencode
 ) where
@@ -58,6 +58,7 @@ import Control.Monad (unless)
 import System.Directory
 import System.Posix.Directory
 import System.Posix.User
+import System.Posix.Process
 import System.Path
 import System.Cmd.Utils
 import IO (bracket_)
@@ -254,22 +255,24 @@ run repo params = assertLocal repo $ do
 	ok <- boolSystem "git" (gitCommandLine repo params)
 	unless ok $ error $ "git " ++ show params ++ " failed"
 
-{- Runs a git subcommand and returns its output. -}
+{- Runs a git subcommand and returns it output, lazily. 
+ -
+ - Note that this leaves the git process running, and so zombies will
+ - result unless reap is called.
+ -}
 pipeRead :: Repo -> [String] -> IO String
 pipeRead repo params = assertLocal repo $ do
-	pOpen ReadFromPipe "git" (gitCommandLine repo params) $ \h -> do
-		hGetContentsStrict h
+	(_, s) <- pipeFrom "git" (gitCommandLine repo params)
+	return s
 
-{- Like pipeRead, but does not read output strictly; recommended
- - for git commands that produce a lot of output that will be processed
- - lazily. 
- -
- - ONLY AFTER the string has been read completely, You must call either
- - getProcessStatus or forceSuccess on the PipeHandle. Zombies will result
- - otherwise.-}
-hPipeRead :: Repo -> [String] -> IO (PipeHandle, String)
-hPipeRead repo params = assertLocal repo $ do
-	pipeFrom "git" (gitCommandLine repo params)
+{- Reaps any zombie git processes. -}
+reap :: IO ()
+reap = do
+	-- throws an exception when there are no child processes
+	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
+	case r of
+		Nothing -> return ()
+		Just _ -> reap
 
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]
@@ -322,9 +325,7 @@ typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
  - parameter), and splits it into a list of files. -}
 pipeNullSplit :: Repo -> [String] -> IO [FilePath]
 pipeNullSplit repo params = do
-	-- XXX handle is left open, this is ok for git-annex, but may need
-	-- to be cleaned up for other uses.
-	(_, fs0) <- hPipeRead repo params
+	fs0 <- pipeRead repo params
 	return $ split0 fs0
 	where
 		split0 s = filter (not . null) $ split "\0" s
@@ -410,8 +411,6 @@ checkAttr repo attr files = do
 	(_, s) <- pipeBoth "git" params $ join "\0" absfiles
 	cwd <- getCurrentDirectory
 	return $ map (topair $ cwd++"/") $ lines s
-	-- XXX handle is left open, this is ok for git-annex, but may need
-	-- to be cleaned up for other uses.
 	where
 		params = gitCommandLine repo ["check-attr", attr, "-z", "--stdin"]
 		topair cwd l = (relfile, value)
