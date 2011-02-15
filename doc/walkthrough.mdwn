@@ -84,7 +84,7 @@ can get them.
 
 ## transferring files: When things go wrong
 
-After a while, you'll have serveral annexes, with different file contents.
+After a while, you'll have several annexes, with different file contents.
 You don't have to try to keep all that straight; git-annex does 
 [[location_tracking]] for you. If you ask it to get a file and the drive
 or file server is not accessible, it will let you know what it needs to get
@@ -146,7 +146,7 @@ That's a good thing, because it might be the only copy, you wouldn't
 want to lose it in a fumblefingered mistake.
 
 	# echo oops > my_cool_big_file
-	bash: my_cool_big_file: Permission deined
+	bash: my_cool_big_file: Permission denied
 
 In order to modify a file, it should first be unlocked.
 
@@ -176,7 +176,7 @@ There is one problem with using `git commit` like this: Git wants to first
 stage the entire contents of the file in its index. That can be slow for
 big files (sorta why git-annex exists in the first place). So, the
 automatic handling on commit is a nice safety feature, since it prevents
-the file content being accidentially commited into git. But when working with
+the file content being accidentally committed into git. But when working with
 big files, it's faster to explicitly add them to the annex yourself
 before committing.
 
@@ -267,12 +267,12 @@ that the URL is stable; no local backup is kept.
 
 Another handy alternative to the default [[backend|backends]] is the
 SHA1 backend. This backend provides more git-style assurance that your data
-has not been damanged. And the checksum means that when you add the same
+has not been damaged. And the checksum means that when you add the same
 content to the annex twice, only one copy need be stored in the backend.
 
 The only reason it's not the default is that it needs to checksum
 files when they're added to the annex, and this can slow things down
-significantly for really big files. To make SHA1 the detault, just
+significantly for really big files. To make SHA1 the default, just
 add something like this to `.gitattributes`:
 
 	* annex.backend=SHA1
@@ -292,7 +292,7 @@ files will be skipped.
 
 After migrating a file to a new backend, the old content in the old backend
 will still be present. That is necessary because multiple files
-can point to the same content. The `git annex unused` sucommand can be
+can point to the same content. The `git annex unused` subcommand can be
 used to clear up that detritus later. Note that hard links are used,
 to avoid wasting disk space.
 
@@ -342,7 +342,7 @@ setting is satisfied for all files.
 	fsck my_cool_big_file (checksum...) ok
 	...
 
-You can also specifiy the files to check.  This is particularly useful if 
+You can also specify the files to check.  This is particularly useful if 
 you're using sha1 and don't want to spend a long time checksumming everything.
 
 	# git annex fsck my_cool_big_file
@@ -367,7 +367,7 @@ might say about a badly messed up annex:
 ## backups
 
 git-annex can be configured to require more than one copy of a file exists,
-as a simple backup for your data. This is controled by the "annex.numcopies"
+as a simple backup for your data. This is controlled by the "annex.numcopies"
 setting, which defaults to 1 copy. Let's change that to require 2 copies,
 and send a copy of every file to a USB drive.
 
@@ -394,9 +394,9 @@ For more details about the numcopies setting, see [[copies]].
 
 ## untrusted repositories
 
-Suppose you have a USB thunb drive and are using it as a git annex
+Suppose you have a USB thumb drive and are using it as a git annex
 repository. You don't trust the drive, because you could lose it, or
-accidentially run it through the laundry. Or, maybe you have a drive that
+accidentally run it through the laundry. Or, maybe you have a drive that
 you know is dying, and you'd like to be warned if there are any files
 on it not backed up somewhere else. Maybe the drive has already died
 or been lost.
