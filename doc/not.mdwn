@@ -26,7 +26,7 @@
   I only learned of git-media after writing git-annex, but I probably
   would have still written git-annex instead of using it. Currently,
   git-media has the advantage of using git smudge filters rather than
-  git-annex's pile of symlinks, and it may be a tighter fit for certian
+  git-annex's pile of symlinks, and it may be a tighter fit for certain
   situations. It lacks git-annex's support for widely distributed storage,
   using only a single backend data store. It also does not support
   partial checkouts of file contents, like git-annex does.
