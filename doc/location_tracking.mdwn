@@ -27,5 +27,5 @@ descriptions to help you with finding them:
 	  	c0a28e06-d7ef-11df-885c-775af44f8882  -- USB archive drive 1
 	  	e1938fee-d95b-11df-96cc-002170d25c55
 
-In certian cases you may want to configure git-annex to [[trust]]
+In certain cases you may want to configure git-annex to [[trust]]
 that location tracking information is always correct for a repository.
