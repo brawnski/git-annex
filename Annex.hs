@@ -75,9 +75,7 @@ eval state action = evalStateT action state
 {- Gets a value from the internal state, selected by the passed value
  - constructor. -}
 getState :: (AnnexState -> a) -> Annex a
-getState c = do
-	state <- get
-	return (c state)
+getState c = liftM c get
 
 {- Applies a state mutation function to change the internal state. 
  -

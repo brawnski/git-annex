@@ -10,7 +10,7 @@ module Command where
 import Control.Monad.State (liftIO)
 import System.Directory
 import System.Posix.Files
-import Control.Monad (filterM)
+import Control.Monad (filterM, liftM)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
@@ -110,15 +110,13 @@ withFilesInGit :: CommandSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
-	files' <- filterFiles files
-	return $ map a files'
+	liftM (map a) $ filterFiles files
 withAttrFilesInGit :: String -> CommandSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
 	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
 	files' <- filterFiles files
-	pairs <- liftIO $ Git.checkAttr repo attr files'
-	return $ map a pairs
+	liftM (map a) $ liftIO $ Git.checkAttr repo attr files'
 withBackendFilesInGit :: CommandSeekBackendFiles
 withBackendFilesInGit a params = do
 	repo <- Annex.gitRepo
@@ -128,8 +126,7 @@ withBackendFilesInGit a params = do
 withFilesMissing :: CommandSeekStrings
 withFilesMissing a params = do
 	files <- liftIO $ filterM missing params
-	files' <- filterFiles files
-	return $ map a files'
+	liftM (map a) $ filterFiles files
 	where
 		missing f = do
 			e <- doesFileExist f
@@ -148,8 +145,7 @@ withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
 	tocommit <- liftIO $ runPreserveOrder (Git.stagedFilesNotDeleted repo) params
-	tocommit' <- filterFiles tocommit
-	return $ map a tocommit'
+	liftM (map a) $ filterFiles tocommit
 withFilesUnlocked :: CommandSeekBackendFiles
 withFilesUnlocked = withFilesUnlocked' Git.typeChangedFiles
 withFilesUnlockedToBeCommitted :: CommandSeekBackendFiles
@@ -172,9 +168,7 @@ withNothing a [] = return [a]
 withNothing _ _ = return []
 
 backendPairs :: CommandSeekBackendFiles
-backendPairs a files = do
-	pairs <- Backend.chooseBackends files
-	return $ map a pairs
+backendPairs a files = liftM (map a) $ Backend.chooseBackends files
 
 {- Filter out files from the state directory, and those matching the
  - exclude glob pattern, if it was specified. -}
@@ -201,9 +195,7 @@ wildsRegex' (w:ws) c = wildsRegex' ws (c ++ "|" ++ wildToRegex w)
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
-notSymlink f = do
-	s <- liftIO $ getSymbolicLinkStatus f
-	return $ not $ isSymbolicLink s
+notSymlink f = liftM (not . isSymbolicLink) $ liftIO $ getSymbolicLinkStatus f
 
 {- Descriptions of params used in usage messages. -}
 paramRepeating :: String -> String
@@ -260,10 +252,8 @@ preserveOrder orig new = collect orig new
  - its return list preserves order.
  -
  - This assumes that it's cheaper to call preserveOrder on the result,
- - than it would be to run the action once with each param. In the case
+ - than it would be to run the action separately with each param. In the case
  - of git file list commands, that assumption tends to hold.
  -}
 runPreserveOrder :: ([FilePath] -> IO [FilePath]) -> [FilePath] -> IO [FilePath]
-runPreserveOrder a files = do
-	r <- a files
-	return $ preserveOrder files r
+runPreserveOrder a files = liftM (preserveOrder files) (a files)

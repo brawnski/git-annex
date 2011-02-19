@@ -38,6 +38,7 @@ import System.FilePath
 import System.Directory
 import Foreign (complement)
 import Data.List
+import Control.Monad (liftM2)
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
@@ -95,10 +96,7 @@ absPath file = do
  -    relPathCwdToDir "/tmp/foo/bar" == "" 
  -}
 relPathCwdToDir :: FilePath -> IO FilePath
-relPathCwdToDir dir = do
-	cwd <- getCurrentDirectory
-	a <- absPath dir
-	return $ relPathDirToDir cwd a
+relPathCwdToDir dir = liftM2 relPathDirToDir getCurrentDirectory (absPath dir)
 
 {- Constructs a relative path from one directory to another.
  -
