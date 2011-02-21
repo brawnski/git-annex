@@ -219,7 +219,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * fromkey file
 
-  This can be used to maually set up a file to link to a specified key
+  This can be used to manually set up a file to link to a specified key
   in the key-value backend. How you determine an existing key in the backend
   varies. For the URL backend, the key is just a URL to the content.
 
@@ -244,7 +244,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * setkey file
 
-  This plumbing-level command sets the annxed data for a key to the content of
+  This plumbing-level command sets the annexed data for a key to the content of
   the specified file, and then removes the file.
 
   A backend will typically need to be specified with --backend. If none
@@ -380,7 +380,7 @@ These files are used by git-annex, in your git repository:
 available. Annexed files in your git repository symlink to that content.
 
 `.git-annex/uuid.log` is used to map between repository UUID and
-decscriptions.
+descriptions.
 
 `.git-annex/trust.log` is used to indicate which repositories are trusted
 and untrusted.

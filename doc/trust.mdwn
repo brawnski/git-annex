@@ -11,12 +11,12 @@ information. When removing content, it will directly check
 that other repositories have enough [[copies]].
 
 Generally that explicit checking is a good idea. Consider that the current
-[[location_tracking]] information for a remote may not yet have propigated
+[[location_tracking]] information for a remote may not yet have propagated
 out. Or, a remote may have suffered a catastrophic loss of data, or itself
 been lost.
 
 There is still some trust involved here. A semitrusted repository is
-dependended on to retain a copy of the file content; possibly the only
+depended on to retain a copy of the file content; possibly the only
 [[copy|copies]].
 
 (Being semitrusted is the default. The `git annex semitrust` command
