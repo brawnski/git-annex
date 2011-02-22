@@ -28,7 +28,7 @@ version.
   just remove the files from the location log, but keep them in-annex.
   Dropping a file only looks at repos that the location log says have a
   file; so other repos can have retained a copy of a file secretly like
-  this, and can safely remove it at any time. I'd need to look into this a bit more to be 100% sure it's safe, but have started [[todo/hidden_files]].
+  this, and can safely remove it at any time. I'd need to look into this a bit more to be 100% sure it's safe, but have started [[todo/hidden_files]]. 
 
 - I don't see any reduced round trips. It still has to contact N other
   repos on drop. Now, rather than checking that they have a file, it needs
