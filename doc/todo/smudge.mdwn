@@ -1,14 +1,34 @@
 git-annex should use smudge/clean filters.
 
-The trick is doing it efficiently. Since git a2b665d, 2011-01-05,
+The clean filter is run when files are staged for commit. So a user could copy
+any file into the annex, git add it, and git-annex's clean filter causes
+the file's key to be staged, while its value is added to the annex.
+
+The smudge filter is run when files are checked out. Since git annex
+repos have partial content, this would not git annex get the file content.
+Instead, if the content is not currently available, it would need to do
+something like return empty file content. (Sadly, it cannot create a
+symlink, as git still wants to write the file afterwards.
+
+So the nice current behavior of unavailable files being clearly missing due
+to dangling symlinks, would be lost when using smudge/clean filters.
+(Contact git developers to get an interface to do this?)
+
+Instead, we get the nice behavior of not having to remeber to `git annex
+add` files, and just being able to use `git add` or `git commit -a`,
+and have it use git-annex when .gitattributes says to. Also, annexed
+files can be directly modified without having to `git annex unlock`.
+
+### efficiency
+
+The trick is doing it efficiently. Since git a2b665d, v1.7.4.1,
 something like this works to provide a filename to the clean script:
 
 	git config --global filter.huge.clean huge-clean %f
 
 This avoids it needing to read all the current file content from stdin
 when doing eg, a git status or git commit. Instead it is passed the
-filename that git is operating on, I think that's from the working
-directory.
+filename that git is operating on, in the working directory.
 
 So, WORM could just look at that file and easily tell if it is one
 it already knows (same mtime and size). If so, it can short-circuit and
@@ -31,12 +51,6 @@ it would if the file content was there.
 I've a demo implementation of this technique in the scripts below.
 
 ----
-
-It may further be possible to use the %f with the smudge filter
-(docs say it's supported), and instead of outputting the dummy content, 
-it could create a dangling symlink, which would be more like git-annex's
-behavior now, and makes it easy to tell what content is not available
-with `ls`.
 
 ### test files
 
