@@ -282,7 +282,7 @@ rsyncParams r sending key file = do
 		-- inplace makes rsync resume partial files
 		options = ["-p", "--progress", "--inplace"]
 		-- the rsync shell parameter controls where rsync
-		-- does, so the source/dest parameter can be a dummy value,
+		-- goes, so the source/dest parameter can be a dummy value,
 		-- that just enables remote rsync mode.
 		dummy = ":"
 

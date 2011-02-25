@@ -23,9 +23,11 @@ copyFile src dest = do
 	boolSystem "cp" opts
 	where
 		opts = if SysConfig.cp_reflink_auto
-			then ["--reflink=auto", src, dest]
+			then ["--reflink=auto", src', dest']
 			else if SysConfig.cp_a
-				then ["-a", src, dest]
+				then ["-a", src', dest']
 				else if SysConfig.cp_p
-					then ["-p", src, dest]
-					else [src, dest]
+					then ["-p", src', dest']
+					else [src', dest']
+		src' = utilityEscape src
+		dest' = utilityEscape dest

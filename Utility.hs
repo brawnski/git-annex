@@ -15,6 +15,7 @@ module Utility (
 	boolSystem,
 	shellEscape,
 	shellUnEscape,
+	utilityEscape,
 	unsetFileMode,
 	readMaybe,
 	safeWriteFile,
@@ -178,6 +179,13 @@ shellUnEscape s = word:(shellUnEscape rest)
 		inquote q w (c:cs)
 			| c == q = findword w cs
 			| otherwise = inquote q (w++[c]) cs
+
+{- Ensures that a filename is safe to pass to a utility program. In particular
+ - since utilities tend to interpret things starting with a dash as
+ - an option, relative filenames starting with a dash are escaped. -}
+utilityEscape :: FilePath -> FilePath
+utilityEscape ('-':s) = "./-" ++ s
+utilityEscape s = s
 
 {- For quickcheck. -}
 prop_idempotent_shellEscape :: String -> Bool

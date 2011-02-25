@@ -35,7 +35,8 @@ perform file = do
 	-- rather than simply calling moveToObjectDir
 	ok <- getViaTmp key $ \dest -> do
 		if dest /= file
-			then liftIO $ boolSystem "mv" [file, dest]
+			then liftIO $
+				boolSystem "mv" [utilityEscape file, utilityEscape dest]
 			else return True
 	if ok
 		then return $ Just $ cleanup

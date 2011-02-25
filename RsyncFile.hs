@@ -24,11 +24,12 @@ rsyncShell command = ["-e", unwords $ map escape command]
 
 {- Runs rsync in server mode to send a file, and exits. -}
 rsyncServerSend :: FilePath -> IO ()
-rsyncServerSend file = rsyncExec $ rsyncServerParams ++ ["--sender", file]
+rsyncServerSend file = rsyncExec $
+	rsyncServerParams ++ ["--sender", utilityEscape file]
 
 {- Runs rsync in server mode to receive a file. -}
 rsyncServerReceive :: FilePath -> IO Bool
-rsyncServerReceive file = rsync $ rsyncServerParams ++ [file]
+rsyncServerReceive file = rsync $ rsyncServerParams ++ [utilityEscape file]
 
 rsyncServerParams :: [String]
 rsyncServerParams =
