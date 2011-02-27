@@ -1,7 +1,8 @@
 `git annex migrate` leaves old, unlinked backend versions lying around. It
 would be great if these were purged automatically somehow. 
 
-> Yes, this is an issue mentioned in the [[walkthrough#index14h2]].
+> Yes, this is an issue mentioned in the
+> [[walkthrough|walkthrough/migrating_data_to_a_new_backend]].
 > 
 > Since multiple files can point to the same content, it could be that
 > only one file has been migrated, and the content is still used. So
