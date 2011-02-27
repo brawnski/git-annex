@@ -2,7 +2,7 @@ A walkthrough of the basic features of git-annex.
 
 [[!toc]]
 
-[[!inline feeds=no pagenames="""
+[[!inline feeds=no template=walkthrough pagenames="""
 	creating_a_repository
 	adding_a_remote
 	adding_files
