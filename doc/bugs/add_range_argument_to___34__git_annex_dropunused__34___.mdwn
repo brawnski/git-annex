@@ -7,3 +7,12 @@ A range argument, such as `1-1845`, possibly combined with other argument types 
 I work around this lack as I want to drop all unused files anyway by something like this:
        
     git annex unused | grep -o -P "^    [0-9]+" | xargs git annex dropunused
+
+> It's designed to be used with `seq`. There's an example in the
+> [[walkthrough]], and of course multiple seq calls can be used to
+> specifiy multiple ranges. So:
+
+	git annex dropunused `seq 1 9` `seq 11 1845`
+
+> I don't see adding my own range operations to be an improvement worth
+> making; it'd arguably only be a complication. --[[Joey]] [[done]]
