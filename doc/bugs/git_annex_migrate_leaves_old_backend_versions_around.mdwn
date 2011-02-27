@@ -1,0 +1,1 @@
+`git annex migrate` leaves old, unlinked backend versions lying around. It would be great if these were purged automatically somehow. 
