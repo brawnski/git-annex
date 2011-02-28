@@ -6,8 +6,8 @@
  -}
 
 module Utility (
-	ShellParam(..),
-	toShell,
+	CommandParam(..),
+	toCommand,
 	hGetContentsStrict,
 	readFileStrict,
 	parentDir,
@@ -47,18 +47,18 @@ import Control.Monad (liftM2)
  - whitespace-separated, or a single Param (for when parameters contain
  - whitespace), or a File.
  -}
-data ShellParam = Params String | Param String | File FilePath
+data CommandParam = Params String | Param String | File FilePath
 	deriving (Eq, Show, Ord)
 
-{- Used to pass a list of ShellParams to a function that runs
- - a shell command and expects Strings. -}
-toShell :: [ShellParam] -> [String]
-toShell l = concat $ map unwrap l
+{- Used to pass a list of CommandParams to a function that runs
+ - a command and expects Strings. -}
+toCommand :: [CommandParam] -> [String]
+toCommand l = concat $ map unwrap l
 	where
 		unwrap (Param s) = [s]
 		unwrap (Params s) = filter (not . null) (split " " s)
 		-- Files that start with a dash are modified to avoid
-		-- the shell command interpreting them as options.
+		-- the command interpreting them as options.
 		unwrap (File ('-':s)) = ["./-" ++ s]
 		unwrap (File s) = [s]
 
@@ -67,7 +67,7 @@ toShell l = concat $ map unwrap l
  -
  - SIGINT(ctrl-c) is allowed to propigate and will terminate the program.
  -}
-boolSystem :: FilePath -> [ShellParam] -> IO Bool
+boolSystem :: FilePath -> [CommandParam] -> IO Bool
 boolSystem command params = do
 	-- Going low-level because all the high-level system functions
 	-- block SIGINT etc. We need to block SIGCHLD, but allow
@@ -88,7 +88,7 @@ boolSystem command params = do
 			setSignalMask oldset
 		childaction oldint oldset = do
 			restoresignals oldint oldset
-			executeFile command True (toShell params) Nothing
+			executeFile command True (toCommand params) Nothing
 
 {- Escapes a filename to be safely able to be exposed to the shell. -}
 shellEscape :: FilePath -> String

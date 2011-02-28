@@ -64,7 +64,7 @@ tryGitConfigRead r
 				Left _ -> return r
 				Right r' -> return r'
 		pipedconfig cmd params = safely $
-			pOpen ReadFromPipe cmd (toShell params) $
+			pOpen ReadFromPipe cmd (toCommand params) $
 				Git.hConfigRead r
 		store a = do
 			r' <- a
@@ -263,7 +263,7 @@ rsynchelper r sending key file = do
 
 {- Generates rsync parameters that ssh to the remote and asks it
  - to either receive or send the key's content. -}
-rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [ShellParam]
+rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [CommandParam]
 rsyncParams r sending key file = do
 	Just (shellcmd, shellparams) <- git_annex_shell r
 		(if sending then "sendkey" else "recvkey")
@@ -295,9 +295,9 @@ rsyncParams r sending key file = do
  - a specified error value. -}
 onRemote 
 	:: Git.Repo
-	-> (FilePath -> [ShellParam] -> IO a, a)
+	-> (FilePath -> [CommandParam] -> IO a, a)
 	-> String
-	-> [ShellParam]
+	-> [CommandParam]
 	-> Annex a
 onRemote r (with, errorval) command params = do
 	s <- git_annex_shell r command params
@@ -306,7 +306,7 @@ onRemote r (with, errorval) command params = do
 		Nothing -> return errorval
 
 {- Generates parameters to run a git-annex-shell command on a remote. -}
-git_annex_shell :: Git.Repo -> String -> [ShellParam] -> Annex (Maybe (FilePath, [ShellParam]))
+git_annex_shell :: Git.Repo -> String -> [CommandParam] -> Annex (Maybe (FilePath, [CommandParam]))
 git_annex_shell r command params
 	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
 	| Git.repoIsSsh r = do
@@ -319,7 +319,7 @@ git_annex_shell r command params
 		shellcmd = "git-annex-shell"
 		shellopts = (Param command):(File dir):params
 		sshcmd = shellcmd ++ " " ++ 
-			unwords (map shellEscape $ toShell shellopts)
+			unwords (map shellEscape $ toCommand shellopts)
 
 {- Looks up a per-remote config option in git config.
  - Failing that, tries looking for a global config option. -}

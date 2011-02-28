@@ -198,7 +198,7 @@ tryScan r
 				Left _ -> return Nothing
 				Right r' -> return $ Just r'
 		pipedconfig cmd params = safely $
-			pOpen ReadFromPipe cmd (toShell params) $
+			pOpen ReadFromPipe cmd (toCommand params) $
 				Git.hConfigRead r
 
 		configlist =

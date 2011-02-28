@@ -92,7 +92,7 @@ gitRepo :: Annex Git.Repo
 gitRepo = getState repo
 
 {- Adds a git command to the queue. -}
-queue :: String -> [ShellParam] -> FilePath -> Annex ()
+queue :: String -> [CommandParam] -> FilePath -> Annex ()
 queue command params file = do
 	state <- get
 	let q = repoqueue state

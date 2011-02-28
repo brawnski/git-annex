@@ -25,7 +25,7 @@ import qualified GitRepo as Git
  - is not included, and must be able to be appended after the params. -}
 data Action = Action {
 		getSubcommand :: String,
-		getParams :: [ShellParam]
+		getParams :: [CommandParam]
 	} deriving (Show, Eq, Ord)
 
 {- A queue of actions to perform (in any order) on a git repository,
@@ -38,7 +38,7 @@ empty :: Queue
 empty = M.empty
 
 {- Adds an action to a queue. -}
-add :: Queue -> String -> [ShellParam] -> FilePath -> Queue
+add :: Queue -> String -> [CommandParam] -> FilePath -> Queue
 add queue subcommand params file = M.insertWith (++) action [file] queue
 	where
 		action = Action subcommand params
@@ -57,6 +57,6 @@ runAction repo action files = do
 	unless (null files) runxargs
 	where
 		runxargs = pOpen WriteToPipe "xargs" ("-0":"git":params) feedxargs
-		params = toShell $ Git.gitCommandLine repo
+		params = toCommand $ Git.gitCommandLine repo
 			(Param (getSubcommand action):getParams action)
 		feedxargs h = hPutStr h $ join "\0" files

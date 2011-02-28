@@ -14,8 +14,8 @@ import Utility
 
 {- Generates parameters to make rsync use a specified command as its remote
  - shell. -}
-rsyncShell :: [ShellParam] -> [ShellParam]
-rsyncShell command = [Param "-e", Param $ unwords $ map escape (toShell command)]
+rsyncShell :: [CommandParam] -> [CommandParam]
+rsyncShell command = [Param "-e", Param $ unwords $ map escape (toCommand command)]
 	where
 		{- rsync requires some weird, non-shell like quoting in
                  - here. A doubled single quote inside the single quoted
@@ -31,7 +31,7 @@ rsyncServerSend file = rsyncExec $
 rsyncServerReceive :: FilePath -> IO Bool
 rsyncServerReceive file = rsync $ rsyncServerParams ++ [File file]
 
-rsyncServerParams :: [ShellParam]
+rsyncServerParams :: [CommandParam]
 rsyncServerParams =
 	[ Param "--server"
 	-- preserve permissions
@@ -42,8 +42,8 @@ rsyncServerParams =
 	, Params "-e.Lsf ."
 	]
 
-rsync :: [ShellParam] -> IO Bool
+rsync :: [CommandParam] -> IO Bool
 rsync = boolSystem "rsync"
 
-rsyncExec :: [ShellParam] -> IO ()
-rsyncExec params = executeFile "rsync" True (toShell params) Nothing
+rsyncExec :: [CommandParam] -> IO ()
+rsyncExec params = executeFile "rsync" True (toCommand params) Nothing

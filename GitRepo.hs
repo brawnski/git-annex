@@ -243,7 +243,7 @@ urlPath Repo { location = Url u } = uriPath u
 urlPath repo = assertUrl repo $ error "internal"
 
 {- Constructs a git command line operating on the specified repo. -}
-gitCommandLine :: Repo -> [ShellParam] -> [ShellParam]
+gitCommandLine :: Repo -> [CommandParam] -> [CommandParam]
 gitCommandLine repo@(Repo { location = Dir d} ) params =
 	-- force use of specified repo via --git-dir and --work-tree
 	[ Param ("--git-dir=" ++ d ++ "/" ++ gitDir repo)
@@ -252,7 +252,7 @@ gitCommandLine repo@(Repo { location = Dir d} ) params =
 gitCommandLine repo _ = assertLocal repo $ error "internal"
 
 {- Runs git in the specified repo, throwing an error if it fails. -}
-run :: Repo -> String -> [ShellParam] -> IO ()
+run :: Repo -> String -> [CommandParam] -> IO ()
 run repo subcommand params = assertLocal repo $ do
 	ok <- boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
 	unless ok $ error $ "git " ++ show params ++ " failed"
@@ -262,9 +262,9 @@ run repo subcommand params = assertLocal repo $ do
  - Note that this leaves the git process running, and so zombies will
  - result unless reap is called.
  -}
-pipeRead :: Repo -> [ShellParam] -> IO String
+pipeRead :: Repo -> [CommandParam] -> IO String
 pipeRead repo params = assertLocal repo $ do
-	(_, s) <- pipeFrom "git" $ toShell $ gitCommandLine repo params
+	(_, s) <- pipeFrom "git" $ toCommand $ gitCommandLine repo params
 	return s
 
 {- Reaps any zombie git processes. -}
@@ -296,7 +296,7 @@ stagedFiles repo l = stagedFiles' repo l []
 stagedFilesNotDeleted :: Repo -> [FilePath] -> IO [FilePath]
 stagedFilesNotDeleted repo l = stagedFiles' repo l [Param "--diff-filter=ACMRT"]
 
-stagedFiles' :: Repo -> [FilePath] -> [ShellParam] -> IO [FilePath]
+stagedFiles' :: Repo -> [FilePath] -> [CommandParam] -> IO [FilePath]
 stagedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = [Params "diff --cached --name-only -z"]
@@ -317,7 +317,7 @@ typeChangedStagedFiles repo l = typeChangedFiles' repo l [Param "--cached"]
 typeChangedFiles :: Repo -> [FilePath] -> IO [FilePath]
 typeChangedFiles repo l = typeChangedFiles' repo l []
 
-typeChangedFiles' :: Repo -> [FilePath] -> [ShellParam] -> IO [FilePath]
+typeChangedFiles' :: Repo -> [FilePath] -> [CommandParam] -> IO [FilePath]
 typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = [Params "diff --name-only --diff-filter=T -z"]
@@ -325,7 +325,7 @@ typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 
 {- Reads null terminated output of a git command (as enabled by the -z 
  - parameter), and splits it into a list of files. -}
-pipeNullSplit :: Repo -> [ShellParam] -> IO [FilePath]
+pipeNullSplit :: Repo -> [CommandParam] -> IO [FilePath]
 pipeNullSplit repo params = do
 	fs0 <- pipeRead repo params
 	return $ split0 fs0
@@ -410,7 +410,7 @@ checkAttr repo attr files = do
 	-- directory. Convert to absolute, and then convert the filenames
 	-- in its output back to relative.
 	absfiles <- mapM absPath files
-	(_, s) <- pipeBoth "git" (toShell params) $ join "\0" absfiles
+	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
 	cwd <- getCurrentDirectory
 	return $ map (topair $ cwd++"/") $ lines s
 	where
