@@ -36,7 +36,7 @@ perform file = do
 	ok <- getViaTmp key $ \dest -> do
 		if dest /= file
 			then liftIO $
-				boolSystem "mv" [utilityEscape file, utilityEscape dest]
+				boolSystem "mv" [File file, File dest]
 			else return True
 	if ok
 		then return $ Just $ cleanup

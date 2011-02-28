@@ -51,6 +51,6 @@ downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do
 	showNote "downloading"
 	showProgress -- make way for curl progress bar
-	liftIO $ boolSystem "curl" ["-#", "-o", utilityEscape file, url]
+	liftIO $ boolSystem "curl" [Params "-# -o", File file, File url]
 	where
 		url = join ":" $ drop 1 $ split ":" $ show key 

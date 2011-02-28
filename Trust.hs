@@ -81,8 +81,12 @@ trustSet uuid level = do
 	        logfile <- trustLog
 	        liftIO $ safeWriteFile logfile (serialize m')
 		g <- Annex.gitRepo
-		liftIO $ Git.run g ["add", logfile]
-		liftIO $ Git.run g ["commit", "-q", "-m", "git annex trust change", logfile]
+		liftIO $ Git.run g "add" [File logfile]
+		liftIO $ Git.run g "commit"
+			[ Params "-q -m"
+			, Param "git annex trust change"
+			, File logfile
+			]
         where
                 serialize m = unlines $ map showpair $ M.toList m
 		showpair (u, t) = u ++ " " ++ show t

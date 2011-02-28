@@ -1,6 +1,6 @@
 {- git-annex utility functions
  -
- - Copyright 2010 Joey Hess <joey@kitenet.net>
+ - Copyright 2010-2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
@@ -50,16 +50,17 @@ import Control.Monad (liftM2)
 data ShellParam = Params String | Param String | File FilePath
 	deriving (Eq, Show, Ord)
 
-{- When converting ShellParam to a String in preparation for passing to
- - a shell command, Files that start with a dash are modified to avoid
- - the shell command interpreting them as options. -}
+{- Used to pass a list of ShellParams to a function that runs
+ - a shell command and expects Strings. -}
 toShell :: [ShellParam] -> [String]
 toShell l = concat $ map unwrap l
 	where
 		unwrap (Param s) = [s]
 		unwrap (Params s) = filter (not . null) (split " " s)
+		-- Files that start with a dash are modified to avoid
+		-- the shell command interpreting them as options.
 		unwrap (File ('-':s)) = ["./-" ++ s]
-		unwrap (File (s)) = [s]
+		unwrap (File s) = [s]
 
 {- Run a system command, and returns True or False
  - if it succeeded or failed.

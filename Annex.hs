@@ -24,6 +24,7 @@ import Control.Monad.State
 import qualified GitRepo as Git
 import qualified GitQueue
 import qualified BackendTypes
+import Utility
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -91,7 +92,7 @@ gitRepo :: Annex Git.Repo
 gitRepo = getState repo
 
 {- Adds a git command to the queue. -}
-queue :: String -> [String] -> FilePath -> Annex ()
+queue :: String -> [ShellParam] -> FilePath -> Annex ()
 queue command params file = do
 	state <- get
 	let q = repoqueue state
@@ -110,7 +111,7 @@ queueRun = do
 setConfig :: String -> String -> Annex ()
 setConfig k value = do
 	g <- Annex.gitRepo
-	liftIO $ Git.run g ["config", k, value]
+	liftIO $ Git.run g "config" [Param k, Param value]
 	-- re-read git config and update the repo's state
 	g' <- liftIO $ Git.configRead g
 	Annex.changeState $ \s -> s { Annex.repo = g' }

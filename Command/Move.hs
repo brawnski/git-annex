@@ -56,7 +56,7 @@ remoteHasKey remote key present	= do
 	g <- Annex.gitRepo
 	remoteuuid <- getUUID remote
 	logfile <- liftIO $ logChange g key remoteuuid status
-	Annex.queue "add" ["--"] logfile
+	Annex.queue "add" [Param "--"] logfile
 	where
 		status = if present then ValuePresent else ValueMissing
 
@@ -130,9 +130,10 @@ fromPerform src move key = do
 fromCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
 fromCleanup src True key = do
 	ok <- Remotes.onRemote src (boolSystem, False) "dropkey" 
-		["--quiet", "--force",
-		"--backend=" ++ backendName key,
-		keyName key]
+		[ Params "--quiet --force"
+		, Param $ "--backend=" ++ backendName key
+		, Param $ keyName key
+		]
 	-- better safe than sorry: assume the src dropped the key
 	-- even if it seemed to fail; the failure could have occurred
 	-- after it really dropped it

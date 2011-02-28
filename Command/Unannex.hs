@@ -58,7 +58,7 @@ cleanup file key = do
 	g <- Annex.gitRepo
 
 	liftIO $ removeFile file
-	liftIO $ Git.run g ["rm", "--quiet", "--", file]
+	liftIO $ Git.run g "rm" [Params "--quiet --", File file]
 	-- git rm deletes empty directories; put them back
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 
@@ -68,6 +68,6 @@ cleanup file key = do
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to
 	-- git as a normal, non-annexed file.
-	Annex.queue "commit" ["-m", "content removed from git annex"] "-a"
+	Annex.queue "commit" [Params "-a -m", Param "content removed from git annex"] "-a"
 	
 	return True

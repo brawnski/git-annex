@@ -14,6 +14,7 @@ import Command
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
+import Utility
 	
 command :: [Command]
 command = [Command "lock" paramPath seek "undo unlock command"]
@@ -32,7 +33,7 @@ perform file = do
 	liftIO $ removeFile file
 	g <- Annex.gitRepo
 	-- first reset the file to drop any changes checked into the index
-	liftIO $ Git.run g ["reset", "-q", "--", file]
+	liftIO $ Git.run g "reset" [Params "-q --", File file]
 	-- checkout the symlink
-	liftIO $ Git.run g ["checkout", "--", file]
+	liftIO $ Git.run g "checkout" [Param "--", File file]
 	return $ Just $ return True -- no cleanup needed

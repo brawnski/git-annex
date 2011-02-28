@@ -32,7 +32,7 @@ backend = Backend.File.backend {
 sha1 :: FilePath -> Annex String
 sha1 file = do
 	showNote "checksum..."
-	liftIO $ pOpen ReadFromPipe "sha1sum" [utilityEscape file] $ \h -> do
+	liftIO $ pOpen ReadFromPipe "sha1sum" (toShell [File file]) $ \h -> do
 		line <- hGetLine h
 		let bits = split " " line
 		if null bits

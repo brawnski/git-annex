@@ -15,6 +15,7 @@ import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
 import Messages
+import Utility
 
 command :: [Command]
 command = [Command "pre-commit" paramPath seek "run by git pre-commit hook"]
@@ -41,6 +42,6 @@ cleanup file = do
 	-- drop that and run command queued by Add.state to
 	-- stage the symlink
 	g <- Annex.gitRepo
-	liftIO $ Git.run g ["reset", "-q", "--", file]
+	liftIO $ Git.run g "reset" [Params "-q --", File file]
 	Annex.queueRun
 	return True

@@ -64,7 +64,7 @@ tryGitConfigRead r
 				Left _ -> return r
 				Right r' -> return r'
 		pipedconfig cmd params = safely $
-			pOpen ReadFromPipe cmd params $
+			pOpen ReadFromPipe cmd (toShell params) $
 				Git.hConfigRead r
 		store a = do
 			r' <- a
@@ -154,7 +154,7 @@ inAnnex r key = if Git.repoIsUrl r
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
 			inannex <- onRemote r (boolSystem, False) "inannex" 
-				["--backend=" ++ backendName key, keyName key]
+				[Param ("--backend=" ++ backendName key), Param (keyName key)]
 			return $ Right inannex
 
 {- Cost Ordered list of remotes. -}
@@ -263,28 +263,31 @@ rsynchelper r sending key file = do
 
 {- Generates rsync parameters that ssh to the remote and asks it
  - to either receive or send the key's content. -}
-rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [String]
+rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [ShellParam]
 rsyncParams r sending key file = do
-	-- Note that the command is terminated with "--", because
-	-- rsync will tack on its own options to this command,
-	-- and they need to be ignored.
-	shellcmd <- git_annex_shell r
+	Just (shellcmd, shellparams) <- git_annex_shell r
 		(if sending then "sendkey" else "recvkey")
-		["--backend=" ++ backendName key, keyName key, "--"]
+		[ Param $ "--backend=" ++ backendName key
+		, Param $ keyName key
+		-- Command is terminated with "--", because
+		-- rsync will tack on its own options afterwards,
+		-- and they need to be ignored.
+		, Param "--"
+		]
 	-- Convert the ssh command into rsync command line.
-	let eparam = rsyncShell $ fromJust shellcmd
+	let eparam = rsyncShell (Param shellcmd:shellparams)
 	o <- repoConfig r "rsync-options" ""
-	let base = options ++ words o ++ eparam
+	let base = options ++ map Param (words o) ++ eparam
 	if sending
-		then return $ base ++ [dummy, file]
-		else return $ base ++ [file, dummy]
+		then return $ base ++ [dummy, File file]
+		else return $ base ++ [File file, dummy]
 	where
 		-- inplace makes rsync resume partial files
-		options = ["-p", "--progress", "--inplace"]
+		options = [Params "-p --progress --inplace"]
 		-- the rsync shell parameter controls where rsync
 		-- goes, so the source/dest parameter can be a dummy value,
 		-- that just enables remote rsync mode.
-		dummy = ":"
+		dummy = Param ":"
 
 {- Uses a supplied function to run a git-annex-shell command on a remote.
  -
@@ -292,30 +295,31 @@ rsyncParams r sending key file = do
  - a specified error value. -}
 onRemote 
 	:: Git.Repo
-	-> (String -> [String] -> IO a, a)
+	-> (FilePath -> [ShellParam] -> IO a, a)
 	-> String
-	-> [String]
+	-> [ShellParam]
 	-> Annex a
 onRemote r (with, errorval) command params = do
 	s <- git_annex_shell r command params
 	case s of
-		Just shellcmd -> liftIO $ with (shellcmd !! 0) (tail shellcmd)
+		Just (c, ps) -> liftIO $ with c ps
 		Nothing -> return errorval
 
 {- Generates parameters to run a git-annex-shell command on a remote. -}
-git_annex_shell :: Git.Repo -> String -> [String] -> Annex (Maybe [String])
+git_annex_shell :: Git.Repo -> String -> [ShellParam] -> Annex (Maybe (FilePath, [ShellParam]))
 git_annex_shell r command params
-	| not $ Git.repoIsUrl r = return $ Just (shellcmd:shellopts)
+	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
 	| Git.repoIsSsh r = do
 		sshoptions <- repoConfig r "ssh-options" ""
-		return $ Just $ ["ssh"] ++ words sshoptions ++ 
-			[Git.urlHostFull r, sshcmd]
+		return $ Just ("ssh", map Param (words sshoptions) ++ 
+			[Param (Git.urlHostFull r), Param sshcmd])
 	| otherwise = return Nothing
 	where
 		dir = Git.workTree r
 		shellcmd = "git-annex-shell"
-		shellopts = command:dir:params
-		sshcmd = shellcmd ++ " " ++ unwords (map shellEscape shellopts)
+		shellopts = (Param command):(File dir):params
+		sshcmd = shellcmd ++ " " ++ 
+			unwords (map shellEscape $ toShell shellopts)
 
 {- Looks up a per-remote config option in git config.
  - Failing that, tries looking for a global config option. -}

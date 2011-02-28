@@ -14,8 +14,8 @@ import Utility
 
 {- Generates parameters to make rsync use a specified command as its remote
  - shell. -}
-rsyncShell :: [String] -> [String]
-rsyncShell command = ["-e", unwords $ map escape command]
+rsyncShell :: [ShellParam] -> [ShellParam]
+rsyncShell command = [Param "-e", Param $ unwords $ map escape (toShell command)]
 	where
 		{- rsync requires some weird, non-shell like quoting in
                  - here. A doubled single quote inside the single quoted
@@ -25,22 +25,25 @@ rsyncShell command = ["-e", unwords $ map escape command]
 {- Runs rsync in server mode to send a file, and exits. -}
 rsyncServerSend :: FilePath -> IO ()
 rsyncServerSend file = rsyncExec $
-	rsyncServerParams ++ ["--sender", utilityEscape file]
+	rsyncServerParams ++ [Param "--sender", File file]
 
 {- Runs rsync in server mode to receive a file. -}
 rsyncServerReceive :: FilePath -> IO Bool
-rsyncServerReceive file = rsync $ rsyncServerParams ++ [utilityEscape file]
+rsyncServerReceive file = rsync $ rsyncServerParams ++ [File file]
 
-rsyncServerParams :: [String]
+rsyncServerParams :: [ShellParam]
 rsyncServerParams =
-	[ "--server"
-	, "-p"		-- preserve permissions
-	, "--inplace"	-- allow resuming of transfers of big files
-	, "-e.Lsf", "."	-- other options rsync normally uses in server mode
+	[ Param "--server"
+	-- preserve permissions
+	, Param "-p"
+	-- allow resuming of transfers of big files
+	, Param "--inplace"
+	-- other options rsync normally uses in server mode
+	, Params "-e.Lsf ."
 	]
 
-rsync :: [String] -> IO Bool
-rsync params = boolSystem "rsync" params 
+rsync :: [ShellParam] -> IO Bool
+rsync = boolSystem "rsync"
 
-rsyncExec :: [String] -> IO ()
-rsyncExec params = executeFile "rsync" True params Nothing
+rsyncExec :: [ShellParam] -> IO ()
+rsyncExec params = executeFile "rsync" True (toShell params) Nothing

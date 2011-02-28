@@ -44,7 +44,7 @@ start = do
 	liftIO $ writeFile file (drawMap rs umap trusted)
 	showLongNote $ "running: dot -Tx11 " ++ file
 	showProgress
-	r <- liftIO $ boolSystem "dot" ["-Tx11", file]
+	r <- liftIO $ boolSystem "dot" [Param "-Tx11", File file]
 	return $ Just $ return $ Just $ return r
 	where
 		file = "map.dot"
@@ -198,7 +198,7 @@ tryScan r
 				Left _ -> return Nothing
 				Right r' -> return $ Just r'
 		pipedconfig cmd params = safely $
-			pOpen ReadFromPipe cmd params $
+			pOpen ReadFromPipe cmd (toShell params) $
 				Git.hConfigRead r
 
 		configlist =
@@ -208,8 +208,9 @@ tryScan r
 			let sshcmd =
 				"cd " ++ shellEscape(Git.workTree r) ++ " && " ++
 				"git config --list"
-			liftIO $ pipedconfig "ssh" $
-				words sshoptions ++ [Git.urlHostFull r, sshcmd]
+			liftIO $ pipedconfig "ssh" $ map Param $ 
+					words sshoptions ++
+					[Git.urlHostFull r, sshcmd]
 
 		-- First, try sshing and running git config manually,
 		-- only fall back to git-annex-shell configlist if that

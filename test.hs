@@ -105,8 +105,8 @@ test_add = "git-annex add" ~: TestList [basic, sha1dup]
 			git_annex "add" ["-q", annexedfile] @? "add failed"
 			annexed_present annexedfile
 			writeFile ingitfile $ content ingitfile
-			Utility.boolSystem "git" ["add", ingitfile] @? "git add failed"
-			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
+			Utility.boolSystem "git" [Utility.Param "add", Utility.File ingitfile] @? "git add failed"
+			Utility.boolSystem "git" [Utility.Params "commit -q -a -m commit"] @? "git commit failed"
 			git_annex "add" ["-q", ingitfile] @? "add ingitfile should be no-op"
 			unannexed ingitfile
 		sha1dup = TestCase $ intmpclonerepo $ do
@@ -125,7 +125,7 @@ test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	let sha1 = BackendTypes.keyName $ fromJust r
 	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
-	Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "commit"] @? "git commit failed"
+	Utility.boolSystem "git" [Utility.Params "commit -q -a -m commit"] @? "git commit failed"
 	annexed_present sha1annexedfile
 	where
 		tmp = "tmpfile"
@@ -139,7 +139,7 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 			annexed_notpresent annexedfile
 		withcopy = "with content" ~: intmpclonerepo $ do
 			git_annex "get" ["-q", annexedfile] @? "get failed"
-			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "state changed"]
+			Utility.boolSystem "git" [Utility.Params "commit -q -a -m statechanged"]
 				@? "git commit of state failed"
 			annexed_present annexedfile
 			git_annex "unannex" ["-q", annexedfile, sha1annexedfile] @? "unannex failed"
@@ -154,9 +154,9 @@ test_drop = "git-annex drop" ~: TestList [noremote, withremote, untrustedremote]
 	where
 		noremote = "no remotes" ~: TestCase $ intmpclonerepo $ do
 			git_annex "get" ["-q", annexedfile] @? "get failed"
-			Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "state changed"]
+			Utility.boolSystem "git" [Utility.Params "commit -q -a -m statechanged"]
 				@? "git commit of state failed"
-			Utility.boolSystem "git" ["remote", "rm", "origin"]
+			Utility.boolSystem "git" [Utility.Params "remote rm origin"]
 				@? "git remote rm origin failed"
 			r <- git_annex "drop" ["-q", annexedfile]
 			not r @? "drop wrongly succeeded with no known copy of file"
@@ -287,12 +287,12 @@ test_edit = "git-annex edit/commit" ~: TestList [t False, t True]
 			then do
 				-- pre-commit depends on the file being
 				-- staged, normally git commit does this
-				Utility.boolSystem "git" ["add", annexedfile]
+				Utility.boolSystem "git" [Utility.Param "add", Utility.File annexedfile]
 					@? "git add of edited file failed"
 				git_annex "pre-commit" ["-q"]
 					@? "pre-commit failed"
 			else do
-				Utility.boolSystem "git" ["commit", "-q", "-a", "-m", "content changed"]
+				Utility.boolSystem "git" [Utility.Params "commit -q -a -m contentchanged"]
 					@? "git commit of edited file failed"
 		runchecks [checklink, checkunwritable] annexedfile
 		c <- readFile annexedfile
@@ -310,7 +310,7 @@ test_fix = "git-annex fix" ~: intmpclonerepo $ do
 	git_annex "fix" ["-q", annexedfile] @? "fix of present file failed"
 	annexed_present annexedfile
 	createDirectory subdir
-	Utility.boolSystem "git" ["mv", annexedfile, subdir]
+	Utility.boolSystem "git" [Utility.Param "mv", Utility.File annexedfile, Utility.File subdir]
 		@? "git mv failed"
 	git_annex "fix" ["-q", newfile] @? "fix of moved file failed"
 	runchecks [checklink, checkunwritable] newfile
@@ -350,9 +350,9 @@ test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withrem
 	where
 		basicfsck = TestCase $ intmpclonerepo $ do
 			git_annex "fsck" ["-q"] @? "fsck failed"
-			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
+			Utility.boolSystem "git" [Utility.Params "config annex.numcopies 2"] @? "git config failed"
 			fsck_should_fail "numcopies unsatisfied"
-			Utility.boolSystem "git" ["config", "annex.numcopies", "1"] @? "git config failed"
+			Utility.boolSystem "git" [Utility.Params "config annex.numcopies 1"] @? "git config failed"
 			corrupt annexedfile
 			corrupt sha1annexedfile
 		withlocaluntrusted = TestCase $ intmpclonerepo $ do
@@ -363,7 +363,7 @@ test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withrem
 			git_annex "trust" ["-q", "."] @? "trust of current repo failed"
 			git_annex "fsck" ["-q", annexedfile] @? "fsck failed on file present in trusted repo"
 		withremoteuntrusted = TestCase $ intmpclonerepo $ do
-			Utility.boolSystem "git" ["config", "annex.numcopies", "2"] @? "git config failed"
+			Utility.boolSystem "git" [Utility.Params "config annex.numcopies 2"] @? "git config failed"
 			git_annex "get" ["-q", annexedfile] @? "get failed"
 			git_annex "get" ["-q", sha1annexedfile] @? "get failed"
 			git_annex "fsck" ["-q"] @? "fsck failed with numcopies=2 and 2 copies"
@@ -433,9 +433,9 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	git_annex "get" ["-q", annexedfile] @? "get of file failed"
 	git_annex "get" ["-q", sha1annexedfile] @? "get of file failed"
 	checkunused []
-	Utility.boolSystem "git" ["rm", "-q", annexedfile] @? "git rm failed"
+	Utility.boolSystem "git" [Utility.Params "rm -q", Utility.File annexedfile] @? "git rm failed"
 	checkunused [annexedfilekey]
-	Utility.boolSystem "git" ["rm", "-q", sha1annexedfile] @? "git rm failed"
+	Utility.boolSystem "git" [Utility.Params "rm -q", Utility.File sha1annexedfile] @? "git rm failed"
 	checkunused [annexedfilekey, sha1annexedfilekey]
 
 	-- good opportunity to test dropkey also
@@ -511,10 +511,10 @@ setuprepo :: FilePath -> IO FilePath
 setuprepo dir = do
 	cleanup dir
 	ensuretmpdir
-	Utility.boolSystem "git" ["init", "-q", dir] @? "git init failed"
+	Utility.boolSystem "git" [Utility.Params "init -q", Utility.File dir] @? "git init failed"
 	indir dir $ do
-		Utility.boolSystem "git" ["config", "user.name", "Test User"] @? "git config failed"
-		Utility.boolSystem "git" ["config", "user.email", "test@example.com"] @? "git config failed"
+		Utility.boolSystem "git" [Utility.Params "config user.name", Utility.Param "Test User"] @? "git config failed"
+		Utility.boolSystem "git" [Utility.Params "config user.email test@example.com"] @? "git config failed"
 	return dir
 
 -- clones are always done as local clones; we cannot test ssh clones
@@ -522,7 +522,7 @@ clonerepo :: FilePath -> FilePath -> IO FilePath
 clonerepo old new = do
 	cleanup new
 	ensuretmpdir
-	Utility.boolSystem "git" ["clone", "-q", old, new] @? "git clone failed"
+	Utility.boolSystem "git" [Utility.Params "clone -q", Utility.File old, Utility.File new] @? "git clone failed"
 	indir new $ git_annex "init" ["-q", new] @? "git annex init failed"
 	return new
 	

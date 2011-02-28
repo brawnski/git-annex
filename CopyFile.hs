@@ -20,14 +20,12 @@ copyFile src dest = do
 	e <- doesFileExist dest
 	when e $
 		removeFile dest
-	boolSystem "cp" opts
+	boolSystem "cp" [params, File src, File dest]
 	where
-		opts = if SysConfig.cp_reflink_auto
-			then ["--reflink=auto", src', dest']
+		params = if SysConfig.cp_reflink_auto
+			then Params "--reflink=auto"
 			else if SysConfig.cp_a
-				then ["-a", src', dest']
+				then Params "-a"
 				else if SysConfig.cp_p
-					then ["-p", src', dest']
-					else [src', dest']
-		src' = utilityEscape src
-		dest' = utilityEscape dest
+					then Params "-p"
+					else Params ""

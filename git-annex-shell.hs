@@ -66,7 +66,7 @@ builtin cmd dir params = do
 
 external :: [String] -> IO ()
 external params = do
-	ret <- boolSystem "git-shell" ("-c":(filterparams params))
+	ret <- boolSystem "git-shell" $ map Param $ ("-c":filterparams params)
 	when (not ret) $
 		error "git-shell failed"
 

@@ -22,6 +22,7 @@ import qualified Annex
 import qualified Backend
 import Messages
 import Version
+import Utility
 
 {- Uses the annex.version git config setting to automate upgrades. -}
 upgrade :: Annex Bool
@@ -62,7 +63,7 @@ upgradeFrom0 = do
 					link <- calcGitLink f k
 					liftIO $ removeFile f
 					liftIO $ createSymbolicLink link f
-					Annex.queue "add" ["--"] f
+					Annex.queue "add" [Param "--"] f
 			fixlinks fs
 
 getKeysPresent0' :: FilePath -> Annex [Key]
