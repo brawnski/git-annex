@@ -6,6 +6,8 @@
  -}
 
 module Utility (
+	ShellParam(..),
+	toShell,
 	hGetContentsStrict,
 	readFileStrict,
 	parentDir,
@@ -15,7 +17,6 @@ module Utility (
 	boolSystem,
 	shellEscape,
 	shellUnEscape,
-	utilityEscape,
 	unsetFileMode,
 	readMaybe,
 	safeWriteFile,
@@ -40,6 +41,83 @@ import System.Directory
 import Foreign (complement)
 import Data.List
 import Control.Monad (liftM2)
+
+{- A type for parameters passed to a shell command. A command can
+ - be passed either some Params (multiple parameters can be included,
+ - whitespace-separated, or a single Param (for when parameters contain
+ - whitespace), or a File.
+ -}
+data ShellParam = Params String | Param String | File FilePath
+	deriving (Eq, Show, Ord)
+
+{- When converting ShellParam to a String in preparation for passing to
+ - a shell command, Files that start with a dash are modified to avoid
+ - the shell command interpreting them as options. -}
+toShell :: [ShellParam] -> [String]
+toShell l = concat $ map unwrap l
+	where
+		unwrap (Param s) = [s]
+		unwrap (Params s) = filter (not . null) (split " " s)
+		unwrap (File ('-':s)) = ["./-" ++ s]
+		unwrap (File (s)) = [s]
+
+{- Run a system command, and returns True or False
+ - if it succeeded or failed.
+ -
+ - SIGINT(ctrl-c) is allowed to propigate and will terminate the program.
+ -}
+boolSystem :: FilePath -> [ShellParam] -> IO Bool
+boolSystem command params = do
+	-- Going low-level because all the high-level system functions
+	-- block SIGINT etc. We need to block SIGCHLD, but allow
+	-- SIGINT to do its default program termination.
+	let sigset = addSignal sigCHLD emptySignalSet
+	oldint <- installHandler sigINT Default Nothing
+	oldset <- getSignalMask
+	blockSignals sigset
+	childpid <- forkProcess $ childaction oldint oldset
+	mps <- getProcessStatus True False childpid
+	restoresignals oldint oldset
+	case mps of
+		Just (Exited ExitSuccess) -> return True
+		_ -> return False
+	where
+		restoresignals oldint oldset = do
+			_ <- installHandler sigINT oldint Nothing
+			setSignalMask oldset
+		childaction oldint oldset = do
+			restoresignals oldint oldset
+			executeFile command True (toShell params) Nothing
+
+{- Escapes a filename to be safely able to be exposed to the shell. -}
+shellEscape :: FilePath -> String
+shellEscape f = "'" ++ escaped ++ "'"
+	where
+		-- replace ' with '"'"'
+		escaped = join "'\"'\"'" $ split "'" f
+
+{- Unescapes a set of shellEscaped words or filenames. -}
+shellUnEscape :: String -> [String]
+shellUnEscape [] = []
+shellUnEscape s = word:(shellUnEscape rest)
+	where
+		(word, rest) = findword "" s
+		findword w [] = (w, "")
+		findword w (c:cs)
+			| c == ' ' = (w, cs)
+			| c == '\'' = inquote c w cs
+			| c == '"' = inquote c w cs
+			| otherwise = findword (w++[c]) cs
+		inquote _ w [] = (w, "")
+		inquote q w (c:cs)
+			| c == q = findword w cs
+			| otherwise = inquote q (w++[c]) cs
+
+{- For quickcheck. -}
+prop_idempotent_shellEscape :: String -> Bool
+prop_idempotent_shellEscape s = [s] == (shellUnEscape $ shellEscape s)
+prop_idempotent_shellEscape_multiword :: [String] -> Bool
+prop_idempotent_shellEscape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}
@@ -127,71 +205,6 @@ prop_relPathDirToDir_basics from to
 	| otherwise = not (null r) && (last r == '/')
 	where
 		r = relPathDirToDir from to 
-
-{- Run a system command, and returns True or False
- - if it succeeded or failed.
- -
- - SIGINT(ctrl-c) is allowed to propigate and will terminate the program.
- -}
-boolSystem :: FilePath -> [String] -> IO Bool
-boolSystem command params = do
-	-- Going low-level because all the high-level system functions
-	-- block SIGINT etc. We need to block SIGCHLD, but allow
-	-- SIGINT to do its default program termination.
-	let sigset = addSignal sigCHLD emptySignalSet
-	oldint <- installHandler sigINT Default Nothing
-	oldset <- getSignalMask
-	blockSignals sigset
-	childpid <- forkProcess $ childaction oldint oldset
-	mps <- getProcessStatus True False childpid
-	restoresignals oldint oldset
-	case mps of
-		Just (Exited ExitSuccess) -> return True
-		_ -> return False
-	where
-		restoresignals oldint oldset = do
-			_ <- installHandler sigINT oldint Nothing
-			setSignalMask oldset
-		childaction oldint oldset = do
-			restoresignals oldint oldset
-			executeFile command True params Nothing
-
-{- Escapes a filename to be safely able to be exposed to the shell. -}
-shellEscape :: FilePath -> String
-shellEscape f = "'" ++ escaped ++ "'"
-	where
-		-- replace ' with '"'"'
-		escaped = join "'\"'\"'" $ split "'" f
-
-{- Unescapes a set of shellEscaped words or filenames. -}
-shellUnEscape :: String -> [String]
-shellUnEscape [] = []
-shellUnEscape s = word:(shellUnEscape rest)
-	where
-		(word, rest) = findword "" s
-		findword w [] = (w, "")
-		findword w (c:cs)
-			| c == ' ' = (w, cs)
-			| c == '\'' = inquote c w cs
-			| c == '"' = inquote c w cs
-			| otherwise = findword (w++[c]) cs
-		inquote _ w [] = (w, "")
-		inquote q w (c:cs)
-			| c == q = findword w cs
-			| otherwise = inquote q (w++[c]) cs
-
-{- Ensures that a filename is safe to pass to a utility program. In particular
- - since utilities tend to interpret things starting with a dash as
- - an option, relative filenames starting with a dash are escaped. -}
-utilityEscape :: FilePath -> FilePath
-utilityEscape ('-':s) = "./-" ++ s
-utilityEscape s = s
-
-{- For quickcheck. -}
-prop_idempotent_shellEscape :: String -> Bool
-prop_idempotent_shellEscape s = [s] == (shellUnEscape $ shellEscape s)
-prop_idempotent_shellEscape_multiword :: [String] -> Bool
-prop_idempotent_shellEscape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
 
 {- Removes a FileMode from a file.
  - For example, call with otherWriteMode to chmod o-w -}
