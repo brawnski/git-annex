@@ -8,6 +8,7 @@ git-annex (0.22) UNRELEASED; urgency=low
   * Support filenames that start with a dash; when such a file is passed
     to a utility it will be escaped to avoid it being interpreted as an
     option.
+  * New backends: SHA512 SHA384 SHA256 SHA224
 
  -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
 

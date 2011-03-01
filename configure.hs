@@ -11,11 +11,17 @@ tests = [
 	, testCp "cp_p" "-p"
 	, testCp "cp_reflink_auto" "--reflink=auto"
 	, TestCase "uuid generator" $ selectCmd "uuid" ["uuid", "uuidgen"]
-	, TestCase "sha1sum" $ requireCmd "sha1sum" "sha1sum </dev/null"
 	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0 </dev/null"
 	, TestCase "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
 	, TestCase "unicode FilePath support" $ unicodeFilePath
-	]
+	] ++ shaTestCases [1, 256, 512, 224, 384]
+
+shaTestCases :: [Int] -> [TestCase]
+shaTestCases l = map make l
+	where
+		make n = 
+			let cmd = "sha" ++ show n ++ "sum"
+			in TestCase cmd $ requireCmd cmd (cmd ++ " </dev/null")
 
 tmpDir :: String
 tmpDir = "tmp"

@@ -19,6 +19,9 @@ can use different backends for different files.
   allows modifications of files to be tracked. Its need to generate checksums
   can make it slower for large files.
   for use.
+* `SHA512`, `SHA384`, `SHA256`, `SHA224` -- Like SHA1, but larger
+  checksums. Mostly useful for the very paranoid, or anyone who is
+  researching checksum collisions and wants to annex their colliding data. ;)
 * `URL` -- This backend downloads the file's content from an external URL.
 
 The `annex.backends` git-config setting can be used to list the backends
