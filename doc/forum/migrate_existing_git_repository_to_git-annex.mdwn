@@ -32,7 +32,9 @@ I finally got it working for my purposes. Hardest part was preserving the branch
 #### Migrate repository
     mkdir .temp
     cp .git-annex/* .temp/
-    MYWORKDIR=$(pwd) git filter-branch --tree-filter '
+    MYWORKDIR=$(pwd) git filter-branch \
+     --tag-name-filter cat \
+     --tree-filter '
         mkdir -p .git-annex;
         cp ${MYWORKDIR}/.temp/* .git-annex/;
         for rpm in $(git ls-files | grep "\.rpm$"); do
