@@ -1,0 +1,56 @@
+In the world of git, we're not scared about internal implementation
+details, and sometimes we like to dive in and tweak things by hand. Here's
+some documentation to that end.
+
+## .git/annex/objects/*/*
+
+This is where locally available file contents are actually stored.
+Files added to the annex get a symlink checked into git that points
+to the file content.
+
+Each subdirectory has the name of a key. The file inside also has the name
+of the key. This two-level structure is used because it allows the write
+bit to be removed from the subdirectories as well as from the files.
+That prevents accidentially deleting or changing the file contents.
+
+## .git-annex/uuid.log
+
+Records the UUIDs of known repositories, and associates them with a
+description of the repository. This allows git-annex to display something
+more useful than a UUID when it refers to a repository that does not have
+a configured git remote pointing at it.
+
+The file format is simply one line per repository, with the uuid followed by a
+space and then the description through to the end of the line. Example:
+
+	e605dca6-446a-11e0-8b2a-002170d25c55 laptop
+	26339d22-446b-11e0-9101-002170d25c55 usb disk
+
+## .git-annex/trust.log
+
+Records the [[trust]] information for repositories. Does not exist unless
+[[trust]] values are configured.
+
+The file format is one line per repository, with the uuid followed by a
+space, and then either 1 (trusted), 0 (untrusted), or ? (semi-trusted).
+Repositories not listed are semi-trusted.
+
+Example:
+
+	e605dca6-446a-11e0-8b2a-002170d25c55 1
+	26339d22-446b-11e0-9101-002170d25c55 ?
+
+## .git-annex/*.log
+
+The remainder of the log files record [[location_tracking]] information
+for file contents. The name of the key is the filename, and the content
+consists of a timestamp, either 1 (present) or 0 (not present), and
+the UUID of the repository that has or lacks the file content.
+
+Example:
+
+	1287290776.765152s 1 e605dca6-446a-11e0-8b2a-002170d25c55
+	1287290767.478634s 0 26339d22-446b-11e0-9101-002170d25c55
+
+These files are designed to be auto-merged using git's union merge driver.
+The timestamps allow the most recent information to be identified.

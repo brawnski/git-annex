@@ -53,6 +53,7 @@ files with git.
 * [[location_tracking]] reminds you where git-annex has seen files
 * git-annex prevents accidental data loss by [[tracking copies|copies]]
   of your files
+* [[internals]]
 * [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
 
