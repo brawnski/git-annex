@@ -8,10 +8,11 @@ This is where locally available file contents are actually stored.
 Files added to the annex get a symlink checked into git that points
 to the file content.
 
-Each subdirectory has the name of a key. The file inside also has the name
-of the key. This two-level structure is used because it allows the write
-bit to be removed from the subdirectories as well as from the files.
-That prevents accidentially deleting or changing the file contents.
+Each subdirectory has the name of a key in one of the
+[[key-value_backends|backends]]. The file inside also has the name of the key.
+This two-level structure is used because it allows the write bit to be removed
+from the subdirectories as well as from the files. That prevents accidentially
+deleting or changing the file contents.
 
 ## `.git-annex/uuid.log`
 
