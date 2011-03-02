@@ -37,8 +37,8 @@ import qualified UUID
 import qualified Trust
 import qualified Remotes
 import qualified Content
-import qualified Backend.SHA1
-import qualified Backend.WORM
+import qualified BackendList
+import qualified Backend
 import qualified Command.DropUnused
 
 main :: IO ()
@@ -121,7 +121,7 @@ test_add = "git-annex add" ~: TestList [basic, sha1dup]
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	writeFile tmp $ content sha1annexedfile
-	r <- annexeval $ BackendTypes.getKey Backend.SHA1.backend tmp
+	r <- annexeval $ BackendTypes.getKey backendSHA1 tmp
 	let sha1 = BackendTypes.keyName $ fromJust r
 	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
@@ -405,8 +405,8 @@ test_migrate = "git-annex migrate" ~: TestList [t False, t True]
 					@? "migrate annexedfile failed"
 		annexed_present annexedfile
 		annexed_present sha1annexedfile
-		checkbackend annexedfile Backend.SHA1.backend
-		checkbackend sha1annexedfile Backend.SHA1.backend
+		checkbackend annexedfile backendSHA1
+		checkbackend sha1annexedfile backendSHA1
 
 		-- check that reversing a migration works
 		writeFile ".gitattributes" $ "* annex.backend=WORM"
@@ -416,8 +416,8 @@ test_migrate = "git-annex migrate" ~: TestList [t False, t True]
 			@? "migrate annexedfile failed"
 		annexed_present annexedfile
 		annexed_present sha1annexedfile
-		checkbackend annexedfile Backend.WORM.backend
-		checkbackend sha1annexedfile Backend.WORM.backend
+		checkbackend annexedfile backendWORM
+		checkbackend sha1annexedfile backendWORM
 		
 		where
 			checkbackend file expected = do
@@ -682,3 +682,12 @@ changecontent f = writeFile f $ changedcontent f
 
 changedcontent :: FilePath -> String
 changedcontent f = (content f) ++ " (modified)"
+
+backendSHA1 :: Types.Backend Types.Annex
+backendSHA1 = backend_ "SHA1"
+
+backendWORM :: Types.Backend Types.Annex
+backendWORM = backend_ "WORM"
+
+backend_ :: String -> Types.Backend Types.Annex
+backend_ name = Backend.lookupBackendName BackendList.allBackends name

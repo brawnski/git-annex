@@ -7,7 +7,7 @@ sudo port install pcre
 sudo cabal install pcre-light
 sudo cabal install quickcheck  
 
-# this will enable the gnu tools, (to give sha224sum etc..., it does not override the BSD userland)
+# optional: this will enable the gnu tools, (to give sha224sum etc..., it does not override the BSD userland)
 export PATH=$PATH:/opt/local/libexec/gnubin
 
 git clone  git://git.kitenet.net/git-annex

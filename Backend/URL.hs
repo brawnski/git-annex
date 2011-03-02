@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Backend.URL (backend) where
+module Backend.URL (backends) where
 
 import Control.Monad.State (liftIO)
 import Data.String.Utils
@@ -14,6 +14,9 @@ import Types
 import BackendTypes
 import Utility
 import Messages
+
+backends :: [Backend Annex]
+backends = [backend]
 
 backend :: Backend Annex
 backend = Backend {

@@ -26,7 +26,8 @@ module Backend (
 	fsckKey,
 	lookupFile,
 	chooseBackends,
-	keyBackend
+	keyBackend,
+	lookupBackendName
 ) where
 
 import Control.Monad.State

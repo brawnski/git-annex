@@ -5,13 +5,14 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Backend.SHA (genBackend) where
+module Backend.SHA (backends) where
 
 import Control.Monad.State
 import Data.String.Utils
 import System.Cmd.Utils
 import System.IO
 import System.Directory
+import Data.Maybe
 
 import qualified Backend.File
 import BackendTypes
@@ -21,16 +22,31 @@ import Locations
 import Content
 import Types
 import Utility
+import qualified SysConfig
 
 type SHASize = Int
 
--- Constructor for Backends using a given SHASize.
-genBackend :: SHASize -> Backend Annex
-genBackend size = Backend.File.backend 
-	{ name = shaName size
-	, getKey = keyValue size
-	, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
-	}
+backends :: [Backend Annex]
+-- order is slightly significant; want sha1 first ,and more general
+-- sizes earlier
+backends = catMaybes $ map genBackend [1, 256, 512, 224, 384]
+
+genBackend :: SHASize -> Maybe (Backend Annex)
+genBackend size
+	| supported size = Just b 
+	| otherwise = Nothing
+	where
+		b = Backend.File.backend 
+			{ name = shaName size
+			, getKey = keyValue size
+			, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
+			}
+		supported 1 = SysConfig.sha1sum
+		supported 256 = SysConfig.sha256sum
+		supported 224 = SysConfig.sha224sum
+		supported 384 = SysConfig.sha384sum
+		supported 512 = SysConfig.sha512sum
+		supported _ = False
 
 shaName :: SHASize -> String
 shaName size = "SHA" ++ show size

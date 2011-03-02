@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Backend.WORM (backend) where
+module Backend.WORM (backends) where
 
 import Control.Monad.State
 import System.FilePath
@@ -21,6 +21,9 @@ import qualified Annex
 import Content
 import Messages
 import Types
+
+backends :: [Backend Annex]
+backends = [backend]
 
 backend :: Backend Annex
 backend = Backend.File.backend {
