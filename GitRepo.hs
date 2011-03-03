@@ -17,7 +17,6 @@ module GitRepo (
 	repoIsUrl,
 	repoIsSsh,
 	repoIsLocalBare,
-	repoIsLocalFull,
 	repoDescribe,
 	repoLocation,
 	workTree,
@@ -169,10 +168,6 @@ configAvail Repo { config = c } = c /= Map.empty
 repoIsLocalBare :: Repo -> Bool
 repoIsLocalBare r@(Repo { location = Dir _ }) = configAvail r && configBare r
 repoIsLocalBare _ = False
-
-repoIsLocalFull :: Repo -> Bool
-repoIsLocalFull r@(Repo { location = Dir _ }) = configAvail r && not (configBare r)
-repoIsLocalFull _ = False
 
 assertLocal :: Repo -> a -> a
 assertLocal repo action = 
