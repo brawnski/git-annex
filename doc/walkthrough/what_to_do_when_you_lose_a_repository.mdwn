@@ -7,11 +7,11 @@ can help you deal with the loss.
 First, go somewhere that knows about the lost repository, and mark it as
 untrusted.
 
-# git annex untrust usbdrive
+	git annex untrust usbdrive
 
 To remind yourself later what happened, you can change its description, too:
 
-# git annex describe usbdrive "USB drive lost in Timbuktu. Probably gone forever."
+	git annex describe usbdrive "USB drive lost in Timbuktu. Probably gone forever."
 
 This retains the [[location_tracking]] information for the repository.
 Maybe you'll find the drive later. Maybe that's impossible. Either way,
