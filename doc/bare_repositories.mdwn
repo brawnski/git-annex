@@ -1,0 +1,29 @@
+Due to popular demand, git-annex can now be used with bare repositories.
+
+**This is still an experimental feature!** 
+
+Known to work ok, so far for local bare repositories only:
+
+* `git annex move --to` and `--from`, when pointed at a bare repository.
+* `git annex copy` ditto.
+* `git annex drop` can check that a bare repository has a copy of data
+  that is being dropped.
+* `git annex get` can transfer data from a bare repository.
+
+There are a few caveats to keep in mind:
+
+* Using non-local bare repositories is not tested and probably broken.
+* `git annex init` can be run in a bare repository, but it cannot
+  store the name you gave the repository in .git-annex/uuid.log (because
+  the bare repository has no such file to commit to).
+* `git annex trust` cannot be used in a bare repository, and currently
+  does something pointless. Same for `untrust` and `semitrust`.
+* `git annex fromkey` does something pointless in a bare repository.
+* `git annex fsck` cannot detect any problems in a bare repository.
+* `git annex unused` will think everything stored in a bare repository
+  is unused.
+* `git annex setkey` is a plumbing-level command, and using it manually
+  to add content to a bare repository is not recommended, since there
+  will be no record accessible by other repositories that the content
+  is stored there.
+* `git-annex-shell inannex` fails in a bare repository
