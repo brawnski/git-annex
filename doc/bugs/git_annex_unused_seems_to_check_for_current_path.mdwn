@@ -25,8 +25,13 @@ I am using git-annex version 836e71297b8e3b5bd6f89f7eb1198f59af985b0b
 > But, git annex unused absolutely does not let the current directory
 > influence what it does. It always scans the entire repo from the top.
 > And I've tested it just now to make sure that in a subdirectory
-> it does the same thing as at the top. The only way I could explain
-> what you show above is if "Software" were a separate git repository
-> than "~/annex". Or if the symlinks to the content are somehow broken
-> when looked at from within Software, but unbroken when looked at from the
-> parent directory. I can't think how that would happen. --[[Joey]] 
+> it does the same thing as at the top. 
+> 
+> There are only two ways this could happen that I can think of:
+> 
+> 1. If "Software" were a separate git repository than "~/annex".
+> 2. If gitignores or something made `git ls-files`
+>    not list the files when ran in the subdir. This seems *possible*,
+>    but I don't know how to construct such an ignore.
+> 
+> --[[Joey]] 
