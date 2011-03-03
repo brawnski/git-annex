@@ -27,4 +27,6 @@ I am using git-annex version 836e71297b8e3b5bd6f89f7eb1198f59af985b0b
 > And I've tested it just now to make sure that in a subdirectory
 > it does the same thing as at the top. The only way I could explain
 > what you show above is if "Software" were a separate git repository
-> than "~/annex". --[[Joey]] 
+> than "~/annex". Or if the symlinks to the content are somehow broken
+> when looked at from within Software, but unbroken when looked at from the
+> parent directory. I can't think how that would happen. --[[Joey]] 
