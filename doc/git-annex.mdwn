@@ -83,19 +83,6 @@ Many git-annex commands will stage changes for later `git commit` by you.
   git-annex may refuse to drop content if the backend does not think
   it is safe to do so, typically because of the setting of annex.numcopies.
 
-* unlock [path ...]
-
-  Normally, the content of annexed files is protected from being changed.
-  Unlocking a annexed file allows it to be modified. This replaces the
-  symlink for each specified file with a copy of the file's content.
-  You can then modify it and `git annex add` (or `git commit`) to inject
-  it back into the annex.
-
-* edit [path ...]
-
-  This is an alias for the unlock command. May be easier to remember,
-  if you think of this as allowing you to edit an annexed file.
-
 * move [path ...]
 
   When used with the --to option, moves the content of annexed files from
@@ -112,15 +99,36 @@ Many git-annex commands will stage changes for later `git commit` by you.
   When used with the --from option, copies the content of annexed files
   from the specified repository to the current one.
 
-* init description
+* unlock [path ...]
 
-  Initializes git-annex with a description of the git repository,
-  and sets up `.gitattributes` and the pre-commit hook.
+  Normally, the content of annexed files is protected from being changed.
+  Unlocking a annexed file allows it to be modified. This replaces the
+  symlink for each specified file with a copy of the file's content.
+  You can then modify it and `git annex add` (or `git commit`) to inject
+  it back into the annex.
+
+* edit [path ...]
+
+  This is an alias for the unlock command. May be easier to remember,
+  if you think of this as allowing you to edit an annexed file.
 
 * lock [path ...]
 
   Use this to undo an unlock command if you don't want to modify
   the files, or have made modifications you want to discard.
+
+* init description
+
+  Initializes git-annex with a description of the git repository,
+  and sets up `.gitattributes` and the pre-commit hook.
+
+* describe repository description
+
+  Changes the description of a git repository.
+
+  The repository to describe can be specified by git remote name or
+  by uuid. To change the description of the current repository, use
+  "."
 
 * fsck [path ...]
 
