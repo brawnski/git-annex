@@ -2,7 +2,7 @@ Due to popular demand, git-annex can now be used with bare repositories.
 
 **This is still an experimental feature!** 
 
-Known to work ok, so far for local bare repositories only:
+Known to work ok:
 
 * `git annex move --to` and `--from`, when pointed at a bare repository.
 * `git annex copy` ditto.
@@ -26,4 +26,3 @@ There are a few caveats to keep in mind:
   to add content to a bare repository is not recommended, since there
   will be no record accessible by other repositories that the content
   is stored there.
-* `git-annex-shell inannex` fails in a bare repository
