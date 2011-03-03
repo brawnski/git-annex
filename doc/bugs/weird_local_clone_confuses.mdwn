@@ -7,3 +7,8 @@ new cannot see origin.
 the .git/config has "url=/.../orig/.git". Apparently git is ok with that
 weird construction; probably it treats it as a bare git repo. But git-annex
 just sees a directory w/o a .git subdir, and gives up.
+
+---
+
+Just tested, and the new support for bare repositories didn't solve this.
+--[[Joey]] 

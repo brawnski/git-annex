@@ -1,5 +1,12 @@
 Due to popular demand, git-annex can now be used with bare repositories.
 
+So, for example, you can stash a file away in your
+repos's origin: `git annex move mybigfile --to origin`
+
+Of course, for that to work, the bare repository has to be on a system with
+[[git-annex-shell]] installed. If "origin" is on gitweb, you still can't
+use git-annex to there.
+
 **This is still an experimental feature!** 
 
 Known to work ok:

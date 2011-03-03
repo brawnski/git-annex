@@ -24,3 +24,6 @@ A possible other approach to the state recording repo is to not
 record state changes on the remote in that case. Git-annex already
 records remote state changes locally whenever it modifies the state of a
 remote. --[[Joey]]
+
+> And... [[done]]! See [[/bare_repositories]] for current status
+> and gotchas. --[[Joey]] 

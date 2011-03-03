@@ -3,8 +3,8 @@ git-annex from being used on USB keys, that would typically
 be VFAT formatted:
 
 - Use of symlinks, which VFAT does not support. Very hard to fix.
-  One possibility is to add [[bare_git_repos]] support, then
-  a git repo on a thumb drive could be used to transfer data.
+  Instead, just use [[/bare_repositories]] on the key,
+  they're supported now.
 - Use of ":" in filenames of object files, also not supported.
   Could easily be fixed by reorganizing the object directory.
 
