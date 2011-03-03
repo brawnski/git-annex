@@ -22,4 +22,5 @@ A walkthrough of the basic features of git-annex.
 	fsck:_when_things_go_wrong
 	backups
 	untrusted_repositories
+	what_to_do_when_you_lose_a_repository
 """]]
