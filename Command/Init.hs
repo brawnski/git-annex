@@ -47,7 +47,7 @@ perform description = do
 			showLongNote $
 				"This is a bare repository, so its description cannot be committed.\n" ++
 				"To record the description, run this command in a clone of this repository:\n" ++
-				"   git annex describe " ++ (show u) ++ " '" ++ description ++ "'\n\n"
+				"   git annex describe " ++ show u ++ " " ++ show description ++ "\n\n"
 			return $ Just $ return True
 		else do
 			describeUUID u description
