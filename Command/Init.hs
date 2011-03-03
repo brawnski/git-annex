@@ -41,11 +41,19 @@ perform :: String -> CommandPerform
 perform description = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	describeUUID u description
 	setVersion
-	liftIO $ gitAttributesWrite g
-	gitPreCommitHookWrite g
-	return $ Just cleanup
+	if Git.repoIsLocalBare g
+		then do
+			showLongNote $
+				"This is a bare repository, so its description cannot be committed.\n" ++
+				"To record the description, run this command in a clone of this repository:\n" ++
+				"   git annex describe " ++ (show u) ++ " '" ++ description ++ "'\n\n"
+			return $ Just $ return True
+		else do
+			describeUUID u description
+			liftIO $ gitAttributesWrite g
+			gitPreCommitHookWrite g
+			return $ Just cleanup
 
 cleanup :: CommandCleanup
 cleanup = do

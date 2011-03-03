@@ -11,7 +11,8 @@ git-annex (0.22) UNRELEASED; urgency=low
   * New backends: SHA512 SHA384 SHA256 SHA224
   * fsck: Check for and repair location log damage.
   * Git annexes can now be attached to bare git repositories. Due to popular
-    demand.
+    demand. Both the local and remote host must have this version of git-annex
+    installed for it to work.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
 

@@ -27,7 +27,7 @@ seek :: [CommandSeek]
 seek = [withAttrFilesInGit "annex.numcopies" start]
 
 start :: CommandStartAttrFile
-start (file, attr) = isAnnexed file $ \(key, backend) -> do
+start (file, attr) = notBareRepo $ isAnnexed file $ \(key, backend) -> do
 	showStart "fsck" file
 	return $ Just $ perform key file backend numcopies
 	where

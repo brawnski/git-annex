@@ -29,7 +29,7 @@ seek = [withStrings start]
 
 {- Drops unused content by number. -} 
 start :: CommandStartString
-start s = do
+start s = notBareRepo $ do
 	m <- readUnusedLog
 	case M.lookup s m of
 		Nothing -> return Nothing

@@ -27,9 +27,8 @@ command = [Command "fromkey" paramPath seek
 seek :: [CommandSeek]
 seek = [withFilesMissing start]
 
-{- Adds a file pointing at a manually-specified key -}
 start :: CommandStartString
-start file = do
+start file = notBareRepo $ do
 	key <- cmdlineKey
 	inbackend <- Backend.hasKey key
 	unless inbackend $ error $

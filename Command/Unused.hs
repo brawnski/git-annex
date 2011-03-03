@@ -32,7 +32,7 @@ seek = [withNothing start]
 
 {- Finds unused content in the annex. -} 
 start :: CommandStartNothing
-start = do
+start = notBareRepo $ do
 	showStart "unused" ""
 	return $ Just perform
 

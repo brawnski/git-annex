@@ -54,6 +54,7 @@ files with git.
 * git-annex prevents accidental data loss by [[tracking copies|copies]]
   of your files
 * [[internals]]
+* [[bare_repositories]]
 * [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
 
