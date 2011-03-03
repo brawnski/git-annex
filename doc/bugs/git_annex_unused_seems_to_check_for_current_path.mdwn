@@ -19,3 +19,12 @@ But... When I run it from a subdirectory, it shows a lot:
 Is this a bug or by design? By removing these "unused" files with `dropunused` I've just lost the only copy of 160 files.
 
 I am using git-annex version 836e71297b8e3b5bd6f89f7eb1198f59af985b0b
+
+> I'm very sorry you lost data.
+> 
+> But, git annex unused absolutely does not let the current directory
+> influence what it does. It always scans the entire repo from the top.
+> And I've tested it just now to make sure that in a subdirectory
+> it does the same thing as at the top. The only way I could explain
+> what you show above is if "Software" were a separate git repository
+> than "~/annex". --[[Joey]] 
