@@ -163,12 +163,15 @@ repoIsSsh Repo { location = Url url }
 	| otherwise = False
 repoIsSsh _ = False
 
+configAvail ::Repo -> Bool
+configAvail Repo { config = c } = c /= Map.empty
+
 repoIsLocalBare :: Repo -> Bool
-repoIsLocalBare r@(Repo { location = Dir _ }) = configBare r
+repoIsLocalBare r@(Repo { location = Dir _ }) = configAvail r && configBare r
 repoIsLocalBare _ = False
 
 repoIsLocalFull :: Repo -> Bool
-repoIsLocalFull r@(Repo { location = Dir _ }) = not $ configBare r
+repoIsLocalFull r@(Repo { location = Dir _ }) = configAvail r && not (configBare r)
 repoIsLocalFull _ = False
 
 assertLocal :: Repo -> a -> a
