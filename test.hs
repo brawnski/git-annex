@@ -37,8 +37,6 @@ import qualified UUID
 import qualified Trust
 import qualified Remotes
 import qualified Content
-import qualified BackendList
-import qualified Backend
 import qualified Command.DropUnused
 
 main :: IO ()
