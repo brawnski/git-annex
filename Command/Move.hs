@@ -51,6 +51,11 @@ showAction :: Bool -> FilePath -> Annex ()
 showAction True file = showStart "move" file
 showAction False file = showStart "copy" file
 
+{- Used to log a change in a remote's having a key. The change is logged
+ - in the local repo, not on the remote. The process of transferring the
+ - key to the remote, or removing the key from it *may* log the change
+ - on the remote, but this cannot be relied on. For example, it's not done
+ - for bare repos. -}
 remoteHasKey :: Git.Repo -> Key -> Bool -> Annex ()
 remoteHasKey remote key present	= do
 	g <- Annex.gitRepo

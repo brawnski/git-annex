@@ -23,7 +23,7 @@ import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
-import Control.Monad (when, filterM)
+import Control.Monad (when, unless, filterM)
 import System.Posix.Files
 import System.FilePath
 
@@ -54,13 +54,19 @@ calcGitLink file key = do
 	return $ relPathDirToDir (parentDir absfile) 
 			(Git.workTree g) </> ".git" </> annexLocation key
 
-{- Updates the LocationLog when a key's presence changes. -}
+{- Updates the LocationLog when a key's presence changes.
+ -
+ - Note that the LocationLog is not updated in bare repositories.
+ - Operations that change a bare repository should be done from
+ - a non-bare repository, and the LocationLog in that repository be
+ - updated instead. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
-	u <- getUUID g
-	logfile <- liftIO $ logChange g key u status
-	Annex.queue "add" [Param "--"] logfile
+	unless (Git.repoIsLocalBare g) $ do
+		u <- getUUID g
+		logfile <- liftIO $ logChange g key u status
+		Annex.queue "add" [Param "--"] logfile
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 
