@@ -19,12 +19,9 @@ Known to work ok:
 
 There are a few caveats to keep in mind:
 
-* Using non-local bare repositories is not tested and probably broken.
 * `git annex init` can be run in a bare repository, but it cannot
   store the name you gave the repository in .git-annex/uuid.log (because
   the bare repository has no such file to commit to).
-* `git annex trust` cannot be used in a bare repository, and currently
-  does something pointless. Same for `untrust` and `semitrust`.
 * `git annex fromkey` does something pointless in a bare repository.
 * `git annex fsck` cannot detect any problems in a bare repository.
 * `git annex unused` will think everything stored in a bare repository

@@ -10,7 +10,7 @@ module Command where
 import Control.Monad.State (liftIO)
 import System.Directory
 import System.Posix.Files
-import Control.Monad (filterM, liftM)
+import Control.Monad (filterM, liftM, when)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
@@ -103,6 +103,13 @@ isAnnexed file a = do
 	case r of
 		Just v -> a v
 		Nothing -> return Nothing
+
+notBareRepo :: Annex a -> Annex a
+notBareRepo a = do
+	g <- Annex.gitRepo
+	when (Git.repoIsLocalBare g) $ do
+		error "You cannot run this subcommand in a bare repository."
+	a
 
 {- These functions find appropriate files or other things based on a
    user's parameters, and run a specified action on them. -}

@@ -22,7 +22,7 @@ seek :: [CommandSeek]
 seek = [withString start]
 
 start :: CommandStartString
-start name = do
+start name = notBareRepo $ do
 	showStart "semitrust" name
 	Remotes.readConfigs
 	r <- Remotes.byName name
