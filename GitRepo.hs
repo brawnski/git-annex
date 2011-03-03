@@ -16,6 +16,8 @@ module GitRepo (
 	localToUrl,
 	repoIsUrl,
 	repoIsSsh,
+	repoIsLocalBare,
+	repoIsLocalFull,
 	repoDescribe,
 	repoLocation,
 	workTree,
@@ -161,6 +163,14 @@ repoIsSsh Repo { location = Url url }
 	| otherwise = False
 repoIsSsh _ = False
 
+repoIsLocalBare :: Repo -> Bool
+repoIsLocalBare r@(Repo { location = Dir _ }) = configBare r
+repoIsLocalBare _ = False
+
+repoIsLocalFull :: Repo -> Bool
+repoIsLocalFull r@(Repo { location = Dir _ }) = not $ configBare r
+repoIsLocalFull _ = False
+
 assertLocal :: Repo -> a -> a
 assertLocal repo action = 
 	if not $ repoIsUrl repo
@@ -174,8 +184,8 @@ assertUrl repo action =
 		else error $ "acting on local git repo " ++  repoDescribe repo ++ 
 				" not supported"
 
-bare :: Repo -> Bool
-bare repo = case Map.lookup "core.bare" $ config repo of
+configBare :: Repo -> Bool
+configBare repo = case Map.lookup "core.bare" $ config repo of
 	Just v -> configTrue v
 	Nothing -> error $ "it is not known if git repo " ++
 			repoDescribe repo ++
@@ -184,13 +194,13 @@ bare repo = case Map.lookup "core.bare" $ config repo of
 {- Path to a repository's gitattributes file. -}
 attributes :: Repo -> String
 attributes repo
-	| bare repo = workTree repo ++ "/info/.gitattributes"
+	| configBare repo = workTree repo ++ "/info/.gitattributes"
 	| otherwise = workTree repo ++ "/.gitattributes"
 
 {- Path to a repository's .git directory, relative to its workTree. -}
 gitDir :: Repo -> String
 gitDir repo
-	| bare repo = ""
+	| configBare repo = ""
 	| otherwise = ".git"
 
 {- Path to a repository's --work-tree, that is, its top.

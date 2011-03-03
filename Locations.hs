@@ -50,35 +50,40 @@ stateDir = addTrailingPathSeparator $ ".git-annex"
 gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = addTrailingPathSeparator $ Git.workTree repo </> stateDir
 
-{- Annexed content is stored in .git/annex/objects; .git/annex is used
- - for other temporary storage also. -}
+{- The directory git annex uses for local state, relative to the .git
+ - directory -}
 annexDir :: FilePath
-annexDir = addTrailingPathSeparator $ ".git/annex"
+annexDir = addTrailingPathSeparator $ "annex"
+
+{- The directory git annex uses for locally available object content,
+ - relative to the .git directory -}
 objectDir :: FilePath
 objectDir = addTrailingPathSeparator $ annexDir </> "objects"
 
-{- Annexed file's location relative to git's working tree. 
- -
- - Note: Assumes repo is NOT bare.-}
+{- Annexed file's location relative to the .git directory. -}
 annexLocation :: Key -> FilePath
-annexLocation key = ".git/annex/objects" </> f </> f
+annexLocation key = objectDir </> f </> f
 	where
 		f = keyFile key
 
 {- Annexed file's absolute location in a repository. -}
 gitAnnexLocation :: Git.Repo -> Key -> FilePath
-gitAnnexLocation r key = Git.workTree r </> annexLocation key
+gitAnnexLocation r key
+	| Git.repoIsLocalBare r = Git.workTree r </> annexLocation key
+	| otherwise = Git.workTree r </> ".git" </> annexLocation key
 
-{- The annex directory of a repository.
- -
- - Note: Assumes repo is NOT bare. -}
+{- The annex directory of a repository. -}
 gitAnnexDir :: Git.Repo -> FilePath
-gitAnnexDir r = addTrailingPathSeparator $ Git.workTree r </> annexDir
+gitAnnexDir r
+	| Git.repoIsLocalBare r = addTrailingPathSeparator $ Git.workTree r </> annexDir
+	| otherwise = addTrailingPathSeparator $ Git.workTree r </> ".git" </> annexDir
 
 {- The part of the annex directory where file contents are stored.
  -}
 gitAnnexObjectDir :: Git.Repo -> FilePath
-gitAnnexObjectDir r = addTrailingPathSeparator $ Git.workTree r </> objectDir
+gitAnnexObjectDir r
+	| Git.repoIsLocalBare r = addTrailingPathSeparator $ Git.workTree r </> objectDir
+	| otherwise = addTrailingPathSeparator $ Git.workTree r </> ".git" </> objectDir
 
 {- .git-annex/tmp/ is used for temp files -}
 gitAnnexTmpDir :: Git.Repo -> FilePath
@@ -98,7 +103,7 @@ gitAnnexUnusedLog r = gitAnnexDir r </> "unused"
 
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool
-isLinkToAnnex s = ("/" ++ objectDir) `isInfixOf` s
+isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
 
 {- Converts a key into a filename fragment.
  -
