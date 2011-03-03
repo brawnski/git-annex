@@ -209,6 +209,8 @@ paramRepeating :: String -> String
 paramRepeating s = s ++ " ..."
 paramOptional :: String -> String
 paramOptional s = "[" ++ s ++ "]"
+paramPair :: String -> String -> String
+paramPair a b = a ++ " " ++ b
 paramPath :: String
 paramPath = "PATH"
 paramKey :: String

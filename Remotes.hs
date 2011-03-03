@@ -211,17 +211,23 @@ repoNotIgnored r = do
 same :: Git.Repo -> Git.Repo -> Bool
 same a b = Git.repoRemoteName a == Git.repoRemoteName b
 
-{- Looks up a remote by name. -}
+{- Looks up a remote by name. (Or by UUID.) -}
 byName :: String -> Annex Git.Repo
 byName "." = Annex.gitRepo -- special case to refer to current repository
 byName name = do
 	when (null name) $ error "no remote specified"
 	g <- Annex.gitRepo
-	let match = filter (\r -> Just name == Git.repoRemoteName r) $
-		Git.remotes g
+	match <- filterM matching $ Git.remotes g
 	when (null match) $ error $
 		"there is no git remote named \"" ++ name ++ "\""
 	return $ head match
+	where
+		matching r = do
+			if Just name == Git.repoRemoteName r
+				then return True
+				else do
+					u <- getUUID r
+					return $ (name == u)
 
 {- Tries to copy a key's content from a remote's annex to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool

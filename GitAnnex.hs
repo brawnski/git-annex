@@ -26,6 +26,7 @@ import qualified Command.DropKey
 import qualified Command.SetKey
 import qualified Command.Fix
 import qualified Command.Init
+import qualified Command.Describe
 import qualified Command.Fsck
 import qualified Command.Unused
 import qualified Command.DropUnused
@@ -50,6 +51,7 @@ cmds = concat
 	, Command.Unlock.command
 	, Command.Lock.command
 	, Command.Init.command
+	, Command.Describe.command
 	, Command.Unannex.command
 	, Command.Uninit.command
 	, Command.PreCommit.command

@@ -62,7 +62,7 @@ cleanup = do
 	liftIO $ Git.run g "add" [File logfile]
 	liftIO $ Git.run g "commit" 
 		[ Params "-q -m"
-		, Param "git annex init"
+		, Param "git annex repository description"
 		, File logfile
 		]
 	return True
