@@ -50,9 +50,6 @@ files with git.
 
 * [[git-annex man page|git-annex]]
 * [[key-value backends|backends]] for data storage
-* [[location_tracking]] reminds you where git-annex has seen files
-* git-annex prevents accidental data loss by [[tracking copies|copies]]
-  of your files
 * [[internals]]
 * [[bare_repositories]]
 * [[what git annex is not|not]]
