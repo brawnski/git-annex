@@ -1,10 +1,5 @@
-git-annex (0.22) UNRELEASED; urgency=low
+git-annex (0.22) unstable; urgency=low
 
-  * Fix test suite to reap zombies.
-    (Zombies can be particularly annoying on OSX; thanks to Jimmy Tang
-    for his help eliminating the infestation... for now.)
-  * Make test suite not rely on a working cp -pr.
-    (The Unix wars are still ON!)
   * Git annexes can now be attached to bare git repositories.
     (Both the local and remote host must have this version of git-annex
     installed for it to work.)
@@ -16,6 +11,11 @@ git-annex (0.22) UNRELEASED; urgency=low
     (Supported on systems where corresponding shaNsum commands are available.)
   * describe: New subcommand that can set or change the description of
     a repository.
+  * Fix test suite to reap zombies.
+    (Zombies can be particularly annoying on OSX; thanks to Jimmy Tang
+    for his help eliminating the infestation... for now.)
+  * Make test suite not rely on a working cp -pr.
+    (The Unix wars are still ON!)
   * Look for dir.git directories the same as git does.
   * Support remote urls specified as relative paths.
   * Support non-ssh remote paths that contain tilde expansions.
@@ -23,7 +23,7 @@ git-annex (0.22) UNRELEASED; urgency=low
   * Bugfix: When fsck detected and moved away corrupt file content, it did
     not update the location log.
 
- -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 04 Mar 2011 15:10:57 -0400
 
 git-annex (0.21) unstable; urgency=low
 
