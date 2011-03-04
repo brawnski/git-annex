@@ -11,11 +11,15 @@ git-annex-shell [-c] command [params ...]
 git-annex-shell is a restricted shell, similar to git-shell, which
 can be used as a login shell for SSH accounts.
 
+Since its syntax is identical to git-shell's, it can be used as a drop-in
+replacement anywhere git-shell is used. For example it can be used as a 
+user's restricted login shell.
+
 # COMMANDS
 
 * configlist directory
 
-  This outputs the git configuration, in the same form as
+  This outputs a subset of the git configuration, in the same form as
   `git config --list`
 
 * inannex directory [key ...]
