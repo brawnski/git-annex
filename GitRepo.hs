@@ -537,7 +537,6 @@ repoAbsPath :: FilePath -> IO FilePath
 repoAbsPath d = do
 	d' <- expandTilde d
 	h <- myHomeDir
-	hPutStrLn stderr $ "repoAbsPath " ++ d
 	return $ h </> d'
 
 myHomeDir :: IO FilePath
