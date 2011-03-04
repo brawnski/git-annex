@@ -15,7 +15,7 @@ is on every other drive.
 
 Bob thinks long-term, and so he's glad that git-annex uses a simple
 repository format. He knows his files will be accessible in the future
-even if the world has forgotten about git-annex and git. 
+even if the world has forgotten about git-annex and git.  
 <small>[[more about future-proofing|future_proofing]]</small>
 
 Run in a cron job, git-annex adds new files to archival drives at night. It
