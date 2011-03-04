@@ -367,13 +367,14 @@ test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withrem
 			git_annex "fsck" ["-q"] @? "fsck failed with numcopies=2 and 2 copies"
 			git_annex "untrust" ["-q", "origin"] @? "untrust of origin failed"
 			fsck_should_fail "content not replicated to enough non-untrusted repositories"
+
 		corrupt f = do
 			git_annex "get" ["-q", f] @? "get of file failed"
 			Content.allowWrite f
 			writeFile f (changedcontent f)
 			r <- git_annex "fsck" ["-q"]
 			not r @? "fsck failed to fail with corrupted file content"
-			git_annex "fsck" ["-q"] @? "fsck unexpectedly failed again; previous one did not fix problem"
+			git_annex "fsck" ["-q"] @? "fsck unexpectedly failed again; previous one did not fix problem with " ++ f
 		fsck_should_fail m = do
 			r <- git_annex "fsck" ["-q"]
 			not r @? "fsck failed to fail with " ++ m

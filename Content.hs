@@ -147,6 +147,7 @@ moveBad key = do
 	liftIO $ allowWrite (parentDir src)
 	liftIO $ renameFile src dest
 	liftIO $ removeDirectory (parentDir src)
+	logStatus key ValueMissing
 	return dest
 
 {- List of keys whose content exists in .git/annex/objects/ -}

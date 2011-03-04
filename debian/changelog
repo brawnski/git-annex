@@ -19,6 +19,8 @@ git-annex (0.22) UNRELEASED; urgency=low
   * Look for dir.git directories the same as git does.
   * Support remote urls specified as relative paths.
   * Support non-ssh remote paths that contain tilde expansions.
+  * Bugfix: When fsck detected and moved away corrupt file content, it did
+    not update the location log.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
 
