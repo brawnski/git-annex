@@ -11,15 +11,15 @@ without worry about accidentally deleting anything.
 When Bob needs access to some files, git-annex can tell him which drive(s)
 they're on, and easily make them available. Indeed, every drive knows what
 is on every other drive.  
-<span align=right>[[more about location tracking|location_tracking]]</span>
+<span float=right>[[more about location tracking|location_tracking]]</span>
 
 Bob thinks long-term, and so he's glad that git-annex uses a simple
 repository format. He knows his files will be accessible in the future
 even if the world has forgotten about git-annex and git. 
-<span align=right>[[more about future-proofing|future_proofing]]</span>
+<span float=right>[[more about future-proofing|future_proofing]]</span>
 
 Run in a cron job, git-annex adds new files to archival drives at night. It
 also helps Bob keep track of intentional, and unintentional copies of
 files, and logs information he can use to decide when it's time to duplicate
 the content of old drives.  
-<span align=right>[[more about backup copies|copies]]</span>
+<span float=right>[[more about backup copies|copies]]</span>

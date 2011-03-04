@@ -11,10 +11,10 @@ server for later. At a coffee shop, she has git-annex download them to her
 USB drive. High in the sky or in a remote cabin, she catches up on
 podcasts, videos, and games, first letting git-annex copy them from
 her USB drive to the netbook (this saves battery power).  
-<span align=right>[[more about transferring data|transferring_data]]</span>
+<span float=right>[[more about transferring data|transferring_data]]</span>
 
 When she's done, she tells git-annex which to keep and which to remove.
 They're all removed from her netbook to save space, and Alice knows
 that next time she syncs up to the net, her changes will be synced back 
 to her server.  
-<span align=right>[[more about distributed version control|distributed_version_control]]</span>
+<span float=right>[[more about distributed version control|distributed_version_control]]</span>
