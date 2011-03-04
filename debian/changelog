@@ -16,6 +16,9 @@ git-annex (0.22) UNRELEASED; urgency=low
     use caution!
   * describe: New subcommand that can set or change the description of
     a repository.
+  * Look for dir.git directories the same as git does.
+  * Support remote urls specified as relative paths.
+  * Support non-ssh remote paths that contain tilde expansions.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 13 Feb 2011 00:48:02 -0400
 

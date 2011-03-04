@@ -11,7 +11,7 @@
 module GitRepo (
 	Repo,
 	repoFromCwd,
-	repoFromPath,
+	repoFromAbsPath,
 	repoFromUrl,
 	localToUrl,
 	repoIsUrl,
@@ -49,7 +49,7 @@ module GitRepo (
 	encodeGitFile,
 	typeChangedFiles,
 	typeChangedStagedFiles,
-	absDir,
+	repoAbsPath,
 	reap,
 
 	prop_idempotent_deencode
@@ -57,6 +57,7 @@ module GitRepo (
 
 import Control.Monad (unless)
 import System.Directory
+import System.FilePath
 import System.Posix.Directory
 import System.Posix.User
 import System.Posix.Process
@@ -98,15 +99,23 @@ newFrom l =
 		remoteName = Nothing
 	}
 
-{- Local Repo constructor. -}
-repoFromPath :: FilePath -> Repo
-repoFromPath dir = newFrom $ Dir dir
+{- Local Repo constructor, requires an absolute path to the repo be
+ - specified. -}
+repoFromAbsPath :: FilePath -> IO Repo
+repoFromAbsPath dir
+	| "/" `isPrefixOf` dir = do
+ 		-- Git always looks for "dir.git" in preference to
+		-- to "dir", even if dir ends in a "/".
+		let dir' = (dropTrailingPathSeparator dir) ++ ".git"
+		e <- doesDirectoryExist dir'
+		return $ newFrom $ Dir $ if e then dir' else dir
+	| otherwise = error $ "internal error, " ++ dir ++ " is not absolute"
 
 {- Remote Repo constructor. Throws exception on invalid url. -}
-repoFromUrl :: String -> Repo
+repoFromUrl :: String -> IO Repo
 repoFromUrl url
-	| startswith "file://" url = repoFromPath $ uriPath u
-	| otherwise = newFrom $ Url u
+	| startswith "file://" url = repoFromAbsPath $ uriPath u
+	| otherwise = return $ newFrom $ Url u
 		where
 			u = case (parseURI url) of
 				Just v -> v
@@ -356,31 +365,35 @@ configRead r = assertLocal r $ error "internal"
 hConfigRead :: Repo -> Handle -> IO Repo
 hConfigRead repo h = do
 	val <- hGetContentsStrict h
-	return $ configStore repo val
+	configStore repo val
 
 {- Parses a git config and returns a version of the repo using it. -}
-configStore :: Repo -> String -> Repo
-configStore repo s = r { remotes = configRemotes r }
-	where r = repo { config = configParse s }
+configStore :: Repo -> String -> IO Repo
+configStore repo s = do
+	rs <- configRemotes r
+	return $ r { remotes = rs }
+	where
+		r = repo { config = configParse s }
 
 {- Checks if a string from git config is a true value. -}
 configTrue :: String -> Bool
 configTrue s = map toLower s == "true"
 
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
-configRemotes :: Repo -> [Repo]
-configRemotes repo = map construct remotepairs
+configRemotes :: Repo -> IO [Repo]
+configRemotes repo = mapM construct remotepairs
 	where
 		remotepairs = Map.toList $ filterremotes $ config repo
 		filterremotes = Map.filterWithKey (\k _ -> isremote k)
 		isremote k = startswith "remote." k && endswith ".url" k
 		remotename k = split "." k !! 1
-		construct (k,v) = (gen v) { remoteName = Just $ remotename k }
+		construct (k,v) = do
+			r <- gen v
+			return $ r { remoteName = Just $ remotename k }
 		gen v	| scpstyle v = repoFromUrl $ scptourl v
 			| isURI v = repoFromUrl v
-			| otherwise = repoFromPath v
+			| otherwise = repoFromRemotePath v repo
 		-- git remotes can be written scp style -- [user@]host:dir
-		-- where dir is relative to the user's home directory.
 		scpstyle v = ":" `isInfixOf` v && (not $ "//" `isInfixOf` v)
 		scptourl v = "ssh://" ++ host ++ slash dir
 			where
@@ -389,6 +402,7 @@ configRemotes repo = map construct remotepairs
 				dir = join ":" $ drop 1 bits
 				slash d	| d == "" = "/~/" ++ dir
 					| d !! 0 == '/' = dir
+					| d !! 0 == '~' = '/':dir
 					| otherwise = "/~/" ++ dir
 
 {- Parses git config --list output into a config map. -}
@@ -503,37 +517,51 @@ encodeGitFile s = foldl (++) "\"" (map echar s) ++ "\""
 				e_utf c = concat $ map showoctal $
 						(encode [c] :: [Word8])
 
-
 {- for quickcheck -}
 prop_idempotent_deencode :: String -> Bool
 prop_idempotent_deencode s = s == decodeGitFile (encodeGitFile s)
 
-{- Git ssh remotes can have a directory that is specified relative
- - to a home directory. This converts such a directory to an absolute path.
- - Note that it has to run on the remote system.
+{- Constructs a Repo from the path specified in the git remotes of
+ - another Repo. -}
+repoFromRemotePath :: FilePath -> Repo -> IO Repo
+repoFromRemotePath dir repo = do
+	dir' <- expandTilde dir
+	repoFromAbsPath $ workTree repo </> dir'
+
+{- Git remotes can have a directory that is specified relative
+ - to the user's home directory, or that contains tilde expansions.
+ - This converts such a directory to an absolute path.
+ - Note that it has to run on the system where the remote is.
  -}
-absDir :: String -> IO String
-absDir d
-	| "/" `isPrefixOf` d = expandt d
-	| otherwise = do
-		h <- myhomedir
-		return $ h ++ d
+repoAbsPath :: FilePath -> IO FilePath
+repoAbsPath d = do
+	d' <- expandTilde d
+	h <- myHomeDir
+	hPutStrLn stderr $ "repoAbsPath " ++ d
+	return $ h </> d'
+
+myHomeDir :: IO FilePath
+myHomeDir = do
+	uid <- getEffectiveUserID
+	u <- getUserEntryForID uid
+	return $ homeDirectory u
+
+expandTilde :: FilePath -> IO FilePath
+expandTilde = expandt True
 	where
-		homedir u = (homeDirectory u) ++ "/"
-		myhomedir = do
-			uid <- getEffectiveUserID
-			u <- getUserEntryForID uid
-			return $ homedir u
-		expandt [] = return ""
-		expandt ('/':'~':'/':cs) = do
-			h <- myhomedir
-			return $ h ++ cs
-		expandt ('/':'~':cs) = do
+		expandt _ [] = return ""
+		expandt _ ('/':cs) = do
+			v <- expandt True cs
+			return ('/':v)
+		expandt True ('~':'/':cs) = do
+			h <- myHomeDir
+			return $ h </> cs
+		expandt True ('~':cs) = do
 			let (name, rest) = findname "" cs
 			u <- getUserEntryForName name
-			return $ homedir u ++ rest
-		expandt (c:cs) = do
-			v <- expandt cs
+			return $ homeDirectory u </> rest
+		expandt _ (c:cs) = do
+			v <- expandt False cs
 			return (c:v)
 		findname n [] = (n, "")
 		findname n (c:cs)
@@ -546,10 +574,12 @@ repoFromCwd = do
 	cwd <- getCurrentDirectory
 	top <- seekUp cwd isRepoTop
 	case top of
-		(Just dir) -> return $ repoFromPath dir
+		-- repoFromAbsPath is not used to avoid looking for
+		-- "dir.git" directories.
+		(Just dir) -> return $ newFrom $ Dir dir
 		Nothing -> error "Not in a git repository."
 
-seekUp :: String -> (String -> IO Bool) -> IO (Maybe String)
+seekUp :: FilePath -> (FilePath -> IO Bool) -> IO (Maybe FilePath)
 seekUp dir want = do
 	ok <- want dir
 	if ok
