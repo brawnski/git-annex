@@ -36,8 +36,8 @@ alt="Flattr this" title="Flattr this" /></a>
 
 <table>
 <tr>
-<td>[[!inline feeds=no template=bare pages=use_case/bob]]</td>
-<td>[[!inline feeds=no template=bare pages=use_case/alice]]</td>
+<td width="50%" align="top">[[!inline feeds=no template=bare pages=use_case/bob]]</td>
+<td width="50%" align="top">[[!inline feeds=no template=bare pages=use_case/alice]]</td>
 </tr>
 </table>
 
