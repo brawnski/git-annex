@@ -1,4 +1,4 @@
-### The Nomad
+### use case: The Nomad
 
 Alice is always on the move, often with her trusty netbook and a small
 handheld terabyte USB drive, or a smaller USB keydrive. She has a server

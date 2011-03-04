@@ -1,4 +1,4 @@
-### The Archivist
+### use case: The Archivist
 
 Bob has many drives to archive his data, most of them kept offline, in a
 safe place.
