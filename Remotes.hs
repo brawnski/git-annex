@@ -38,6 +38,7 @@ import qualified Content
 import Messages
 import CopyFile
 import RsyncFile
+import Ssh
 
 {- Human visible list of remotes. -}
 list :: [Git.Repo] -> String
@@ -314,9 +315,8 @@ git_annex_shell :: Git.Repo -> String -> [CommandParam] -> Annex (Maybe (FilePat
 git_annex_shell r command params
 	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
 	| Git.repoIsSsh r = do
-		sshoptions <- Annex.repoConfig r "ssh-options" ""
-		return $ Just ("ssh", map Param (words sshoptions) ++ 
-			[Param (Git.urlHostUser r), Param sshcmd])
+		sshparams <- sshToRepo r [Param sshcmd]
+		return $ Just ("ssh", sshparams)
 	| otherwise = return Nothing
 	where
 		dir = Git.workTree r

@@ -22,6 +22,7 @@ import Types
 import Utility
 import UUID
 import Trust
+import Ssh
 import qualified Dot
 
 -- a link from the first repository to the second (its remote)
@@ -204,13 +205,11 @@ tryScan r
 		configlist =
 			Remotes.onRemote r (pipedconfig, Nothing) "configlist" []
 		manualconfiglist = do
-			sshoptions <- Annex.repoConfig r "ssh-options" ""
 			let sshcmd =
 				"cd " ++ shellEscape(Git.workTree r) ++ " && " ++
 				"git config --list"
-			liftIO $ pipedconfig "ssh" $ map Param $ 
-					words sshoptions ++
-					[Git.urlAuthority r, sshcmd]
+			sshparams <- sshToRepo r [Param sshcmd]
+			liftIO $ pipedconfig "ssh" sshparams
 
 		-- First, try sshing and running git config manually,
 		-- only fall back to git-annex-shell configlist if that

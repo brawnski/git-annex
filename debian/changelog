@@ -1,3 +1,9 @@
+git-annex (0.23) UNRELEASED; urgency=low
+
+  * Support ssh remotes with a port specified.
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 05 Mar 2011 15:39:13 -0400
+
 git-annex (0.22) unstable; urgency=low
 
   * Git annexes can now be attached to bare git repositories.
