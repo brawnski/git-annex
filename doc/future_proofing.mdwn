@@ -11,6 +11,9 @@ problem:
   files from the repository; they are there on disk in the usual way,
   with just some symlinks pointing at the annexed file contents.
   Neither git-annex nor git is needed to get at the file contents.
+  
+  (Also, git-annex provides an "uninit" command that moves everything out
+  of the annex, if you should ever want to stop using it.)
 
 * What file formats are used? Will they still be readable? To deal with
   this, it's best to stick to plain text files, and the most common
