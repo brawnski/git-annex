@@ -216,7 +216,7 @@ paramPath = "PATH"
 paramKey :: String
 paramKey = "KEY"
 paramDesc :: String
-paramDesc = "DESCRIPTION"
+paramDesc = "DESC"
 paramNumber :: String
 paramNumber = "NUMBER"
 paramRemote :: String
