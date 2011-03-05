@@ -24,7 +24,9 @@ module GitRepo (
 	relative,
 	urlPath,
 	urlHost,
-	urlHostFull,
+	urlPort,
+	urlHostUser,
+	urlAuthority,
 	urlScheme,
 	configGet,
 	configMap,
@@ -131,7 +133,7 @@ localToUrl reference r
 	where
 		absurl =
 			urlScheme reference ++ "//" ++
-			urlHostFull reference ++
+			urlAuthority reference ++
 			workTree r
 
 {- User-visible description of a git repo. -}
@@ -235,29 +237,45 @@ relative repo@(Repo { location = Dir d }) file = do
 			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
 relative repo _ = assertLocal repo $ error "internal"
 
+{- Path of an URL repo. -}
+urlPath :: Repo -> String
+urlPath Repo { location = Url u } = uriPath u
+urlPath repo = assertUrl repo $ error "internal"
+
 {- Scheme of an URL repo. -}
 urlScheme :: Repo -> String
 urlScheme Repo { location = Url u } = uriScheme u
 urlScheme repo = assertUrl repo $ error "internal"
 
-{- Hostname of an URL repo. (May include a username and/or port too.) -}
+{- Hostname of an URL repo. -}
 urlHost :: Repo -> String
-urlHost Repo { location = Url u } = uriRegName a
+urlHost = urlAuthPart uriRegName
+
+{- Port of an URL repo, if it has a nonstandard one. -}
+urlPort :: Repo -> Maybe Integer
+urlPort r = 
+	case urlAuthPart uriPort r of
+		":" -> Nothing
+		(':':p) -> Just (read p)
+		_ -> Nothing
+
+{- Hostname of an URL repo, including any username (ie, "user@host") -}
+urlHostUser :: Repo -> String
+urlHostUser r = urlAuthPart uriUserInfo r ++ urlAuthPart uriRegName r
+
+{- The full authority portion an URL repo. (ie, "user@host:port") -}
+urlAuthority :: Repo -> String
+urlAuthority Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
 	where
 		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
-urlHost repo = assertUrl repo $ error "internal"
+urlAuthority repo = assertUrl repo $ error "internal"
 
-{- Full hostname of an URL repo. (May include a username and/or port too.) -}
-urlHostFull :: Repo -> String
-urlHostFull Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
+{- Applies a function to extract part of the uriAuthority of an URL repo. -}
+urlAuthPart :: (URIAuth -> a) -> Repo -> a
+urlAuthPart a Repo { location = Url u } = a auth
 	where
-		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
-urlHostFull repo = assertUrl repo $ error "internal"
-
-{- Path of an URL repo. -}
-urlPath :: Repo -> String
-urlPath Repo { location = Url u } = uriPath u
-urlPath repo = assertUrl repo $ error "internal"
+		auth = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
+urlAuthPart _ repo = assertUrl repo $ error "internal"
 
 {- Constructs a git command line operating on the specified repo. -}
 gitCommandLine :: Repo -> [CommandParam] -> [CommandParam]

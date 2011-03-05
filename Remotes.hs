@@ -318,7 +318,7 @@ git_annex_shell r command params
 	| Git.repoIsSsh r = do
 		sshoptions <- repoConfig r "ssh-options" ""
 		return $ Just ("ssh", map Param (words sshoptions) ++ 
-			[Param (Git.urlHostFull r), Param sshcmd])
+			[Param (Git.urlAuthority r), Param sshcmd])
 	| otherwise = return Nothing
 	where
 		dir = Git.workTree r

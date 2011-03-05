@@ -161,7 +161,7 @@ absRepo reference r
 {- Checks if two repos are the same. -}
 same :: Git.Repo -> Git.Repo -> Bool
 same a b
-	| both Git.repoIsSsh = matching Git.urlHostFull && matching Git.workTree
+	| both Git.repoIsSsh = matching Git.urlAuthority && matching Git.workTree
 	| both Git.repoIsUrl && neither Git.repoIsSsh = matching show
 	| neither Git.repoIsSsh = matching Git.workTree
 	| otherwise = False
@@ -210,7 +210,7 @@ tryScan r
 				"git config --list"
 			liftIO $ pipedconfig "ssh" $ map Param $ 
 					words sshoptions ++
-					[Git.urlHostFull r, sshcmd]
+					[Git.urlAuthority r, sshcmd]
 
 		-- First, try sshing and running git config manually,
 		-- only fall back to git-annex-shell configlist if that
