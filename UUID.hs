@@ -106,13 +106,17 @@ reposWithoutUUID repos uuids = filterM unmatch repos
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
+	g <- Annex.gitRepo
+	here <- getUUID g
 	m <- uuidMap
-	return $ unwords $ map (\u -> "\t" ++ prettify m u ++ "\n") uuids
+	return $ unwords $ map (\u -> "\t" ++ prettify m u here ++ "\n") uuids
 	where
-		prettify m u =
-			if not $ null $ findlog m u
-				then u ++ "  -- " ++ findlog m u
-				else u
+		prettify m u here = base ++ ishere
+			where
+				base = if not $ null $ findlog m u
+					then u ++ "  -- " ++ findlog m u
+					else u
+				ishere = if here == u then " <-- here" else ""
 		findlog m u = M.findWithDefault "" u m
 
 {- Records a description for a uuid in the uuidLog. -}
