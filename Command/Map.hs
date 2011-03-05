@@ -204,7 +204,7 @@ tryScan r
 		configlist =
 			Remotes.onRemote r (pipedconfig, Nothing) "configlist" []
 		manualconfiglist = do
-			sshoptions <- Remotes.repoConfig r "ssh-options" ""
+			sshoptions <- Annex.repoConfig r "ssh-options" ""
 			let sshcmd =
 				"cd " ++ shellEscape(Git.workTree r) ++ " && " ++
 				"git config --list"

@@ -15,8 +15,7 @@ module Remotes (
 	byName,
 	copyFromRemote,
 	copyToRemote,
-	onRemote,
-	repoConfig
+	onRemote
 ) where
 
 import Control.Exception.Extensible
@@ -26,7 +25,6 @@ import Data.String.Utils
 import System.Cmd.Utils
 import Data.List (intersect, sortBy)
 import Control.Monad (when, unless, filterM)
-import Data.Maybe
 
 import Types
 import qualified GitRepo as Git
@@ -182,7 +180,7 @@ reposByCost l = do
  -}
 repoCost :: Git.Repo -> Annex Int
 repoCost r = do
-	cost <- repoConfig r "cost" ""
+	cost <- Annex.repoConfig r "cost" ""
 	if not $ null cost
 		then return $ read cost
 		else if Git.repoIsUrl r
@@ -194,7 +192,7 @@ repoCost r = do
  - annex-ignore. -}
 repoNotIgnored :: Git.Repo -> Annex Bool
 repoNotIgnored r = do
-	ignored <- repoConfig r "ignore" "false"
+	ignored <- Annex.repoConfig r "ignore" "false"
 	to <- match Annex.toremote
 	from <- match Annex.fromremote
 	if to || from
@@ -282,7 +280,7 @@ rsyncParams r sending key file = do
 		]
 	-- Convert the ssh command into rsync command line.
 	let eparam = rsyncShell (Param shellcmd:shellparams)
-	o <- repoConfig r "rsync-options" ""
+	o <- Annex.repoConfig r "rsync-options" ""
 	let base = options ++ map Param (words o) ++ eparam
 	if sending
 		then return $ base ++ [dummy, File file]
@@ -316,9 +314,9 @@ git_annex_shell :: Git.Repo -> String -> [CommandParam] -> Annex (Maybe (FilePat
 git_annex_shell r command params
 	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
 	| Git.repoIsSsh r = do
-		sshoptions <- repoConfig r "ssh-options" ""
+		sshoptions <- Annex.repoConfig r "ssh-options" ""
 		return $ Just ("ssh", map Param (words sshoptions) ++ 
-			[Param (Git.urlAuthority r), Param sshcmd])
+			[Param (Git.urlHostUser r), Param sshcmd])
 	| otherwise = return Nothing
 	where
 		dir = Git.workTree r
@@ -326,14 +324,3 @@ git_annex_shell r command params
 		shellopts = (Param command):(File dir):params
 		sshcmd = shellcmd ++ " " ++ 
 			unwords (map shellEscape $ toCommand shellopts)
-
-{- Looks up a per-remote config option in git config.
- - Failing that, tries looking for a global config option. -}
-repoConfig :: Git.Repo -> String -> String -> Annex String
-repoConfig r key def = do
-	g <- Annex.gitRepo
-	let def' = Git.configGet g global def
-	return $ Git.configGet g local def'
-	where
-		local = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-" ++ key
-		global = "annex." ++ key
