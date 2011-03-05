@@ -1,6 +1,7 @@
 git-annex (0.23) UNRELEASED; urgency=low
 
   * Support ssh remotes with a port specified.
+  * whereis: New subcommand to show where a file's content has gotten to.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 05 Mar 2011 15:39:13 -0400
 

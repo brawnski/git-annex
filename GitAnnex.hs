@@ -34,6 +34,7 @@ import qualified Command.Unlock
 import qualified Command.Lock
 import qualified Command.PreCommit
 import qualified Command.Find
+import qualified Command.Whereis
 import qualified Command.Migrate
 import qualified Command.Uninit
 import qualified Command.Trust
@@ -66,6 +67,7 @@ cmds = concat
 	, Command.Unused.command
 	, Command.DropUnused.command
 	, Command.Find.command
+	, Command.Whereis.command
 	, Command.Migrate.command
 	, Command.Map.command
 	]

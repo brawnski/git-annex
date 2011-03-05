@@ -154,6 +154,11 @@ Many git-annex commands will stage changes for later `git commit` by you.
   With no parameters, defaults to finding all files in the current directory
   and its subdirectories.
 
+* whereis [path ...]
+
+  Displays a list of repositories known to contain the content of the
+  specified file or files.
+
 * migrate [path ...]
 
   Changes the specified annexed files to store their content in the
