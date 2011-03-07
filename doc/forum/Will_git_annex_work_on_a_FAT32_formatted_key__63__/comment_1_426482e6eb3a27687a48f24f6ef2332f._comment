@@ -4,5 +4,5 @@
  subject="comment 1"
  date="2011-03-07T19:13:14Z"
  content="""
-See [[fat_support]]. A bare git repo will have to be used to avoid symlink problems, at least for now. The other problem is that git-annex key files have colons in their filenames.
+See [[bugs/fat_support]]. A bare git repo will have to be used to avoid symlink problems, at least for now. The other problem is that git-annex key files have colons in their filenames.
 """]]
