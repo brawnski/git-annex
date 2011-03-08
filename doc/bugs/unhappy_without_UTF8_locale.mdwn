@@ -4,6 +4,12 @@ Try unsetting LANG and passing git-annex unicode filenames.
 	add add add add git-annex: <stdout>: commitAndReleaseBuffer: invalid
 	argument (Invalid or incomplete multibyte or wide character)
 
+> Interestingly, I can get the same crash in the de_DE.UTF-8 locale
+> with certian input filenames, while in en_US.UTF-8, it's ok.
+> The workaround below avoided the problem in de_DE.UTF-8. --[[Joey]]
+
+## underlying haskell problem and workaround
+
 The same problem can be seen with a simple haskell program:
 
 	import System.Environment
