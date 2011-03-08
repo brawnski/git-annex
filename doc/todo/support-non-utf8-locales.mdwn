@@ -2,8 +2,9 @@ Currenty, git-annex forces output, particularly of filenames, in a utf-8
 locale.
 
 Note that this does not mean it cannot be used with filenames in other
-encodings. It just displays their names always converted to utf-8, which 
-may not look right when you have a non-utf8 locale.
+encodings. git-annex is entirely encoding agnostic when it comes to 
+manipulating filenames. It just *displays* their names always converted to
+utf-8, which  may not look right when you have a non-utf8 locale.
 
 This had to be done to work around some bugs with haskell's handling
 of filename encodings. In particular,
