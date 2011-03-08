@@ -8,6 +8,8 @@ Try unsetting LANG and passing git-annex unicode filenames.
 > with certian input filenames, while in en_US.UTF-8, it's ok.
 > The workaround below avoided the problem in de_DE.UTF-8. --[[Joey]]
 
+> Put in the utf-8 forcing workaround for now. [[done]] --[[Joey]] 
+
 ## underlying haskell problem and workaround
 
 The same problem can be seen with a simple haskell program:

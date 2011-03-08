@@ -64,3 +64,12 @@ indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
  - non-decoded form. -}
 filePathToString :: FilePath -> String
 filePathToString = if SysConfig.unicodefilepath then id else UTF8.decodeString
+
+{- Workaround to avoid crashes displaying filenames containing
+ - characters > 255 in non-utf8 locales. Force encodings to utf-8,
+ - even though this may mean some characters in the encoding
+ - are mangled. -}
+forceUtf8 :: IO ()
+forceUtf8 = do
+	hSetEncoding stdout utf8
+	hSetEncoding stderr utf8

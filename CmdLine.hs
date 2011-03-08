@@ -11,6 +11,7 @@ module CmdLine (
 	shutdown
 ) where
 
+import System.IO
 import System.IO.Error (try)
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
@@ -30,6 +31,7 @@ import UUID
 {- Runs the passed command line. -}
 dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
 dispatch gitrepo args cmds options header = do
+	forceUtf8
 	state <- Annex.new gitrepo allBackends
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options
 	tryRun state' $ [startup, upgrade] ++ actions ++ [shutdown]

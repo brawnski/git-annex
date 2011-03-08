@@ -8,6 +8,7 @@
 import System.Environment
 
 import GitAnnex
+
 main :: IO ()
 main = do
 	args <- getArgs
