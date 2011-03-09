@@ -13,7 +13,7 @@ they're on, and easily make them available. Indeed, every drive knows what
 is on every other drive.  
 <small>[[more about location tracking|location_tracking]]</small>
 
-Bob thinks long-term, and so he's glad that git-annex uses a simple
+Bob thinks long-term, and so he appreciates that git-annex uses a simple
 repository format. He knows his files will be accessible in the future
 even if the world has forgotten about git-annex and git.  
 <small>[[more about future-proofing|future_proofing]]</small>
