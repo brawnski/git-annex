@@ -373,6 +373,8 @@ hostname: git-annex.branchable.com
 created: 1287531313
 # how many days to retain logs
 #log_period: 7
+# disable IPv6?
+ipv6_disabled: 1
 
 # parked plugin
 # An optional message explaining why this site is parked.
