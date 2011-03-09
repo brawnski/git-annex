@@ -25,3 +25,12 @@ problem:
 
 * What is the hardware interface of the drive? Will hardware still exist
   to talk to it?
+
+* What if some of the data is damaged? git-annex facilitates storing a
+  configurable number of [[copies]] of the file contents. The metadata
+  about your files is stored in git, and so every clone of the repository
+  means another copy of that is stored. Also, git-annex uses filenames
+  for the data that encode everything needed to match it back to the
+  metadata. So if a filesystem is badly corrupted and all your annexed
+  files end up in `lost+found`, they can easily be lifted back out into
+  another clone of the repository.
