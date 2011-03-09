@@ -23,4 +23,5 @@ A walkthrough of the basic features of git-annex.
 	backups
 	untrusted_repositories
 	what_to_do_when_you_lose_a_repository
+	recover_data_from_lost+found
 """]]
