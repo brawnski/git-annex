@@ -83,5 +83,5 @@ checkKeyChecksum size key = do
 				then return True
 				else do
 					dest <- moveBad key
-					warning $ "Bad file content; moved to " ++ filePathToString dest
+					warning $ "Bad file content; moved to " ++ dest
 					return False

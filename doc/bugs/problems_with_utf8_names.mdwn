@@ -63,6 +63,9 @@ It looks like the common latin1-to-UTF8 encoding. Functionality other than otupu
 >    One other possible
 >    issue would be that this could cause problems if git-annex were
 >    translated.
+>    > On second thought, I switched to this. Any decoding of a filename
+>    > is going to make someone unhappy; the previous approach broke
+>    > non-utf8 filenames.
 
 ----
 

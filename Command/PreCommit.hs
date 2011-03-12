@@ -34,7 +34,7 @@ perform pair@(file, _) = do
 	ok <- doCommand $ Command.Add.start pair
 	if ok
 		then return $ Just $ cleanup file
-		else error $ "failed to add " ++ filePathToString file ++ "; canceling commit"
+		else error $ "failed to add " ++ file ++ "; canceling commit"
 
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do

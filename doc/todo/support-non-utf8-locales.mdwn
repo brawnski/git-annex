@@ -18,3 +18,9 @@ of filename encodings. In particular,
 
 git-annex's behavior is unlikely to improve much until haskell's
 support for utf8 filenames improves. --[[Joey]]
+
+> [[done]] -- I just turned off all encoding handling on stdout and stderr,
+> which avoids these problems nicely. Git-annex now displays just what it
+> input, at least on platforms where haskell does not decode unicode in
+> FilePaths. This will later be a problem when it gets localized, but for
+> now works great. --[[Joey]]

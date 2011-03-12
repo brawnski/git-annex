@@ -11,11 +11,9 @@ import Control.Monad.State (liftIO)
 import System.IO
 import Control.Monad (unless)
 import Data.String.Utils
-import qualified Codec.Binary.UTF8.String as UTF8
 
 import Types
 import qualified Annex
-import qualified SysConfig
 
 verbose :: Annex () -> Annex ()
 verbose a = do
@@ -27,7 +25,7 @@ showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ ")"
 
 showStart :: String -> String -> Annex ()
 showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ filePathToString file ++ " "
+	liftIO $ putStr $ command ++ " " ++ file ++ " "
 	liftIO $ hFlush stdout
 
 showNote :: String -> Annex ()
@@ -59,17 +57,15 @@ warning w = do
 indent :: String -> String
 indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s
 
-{- Prepares a filename for display. This is needed because on many
- - platforms (eg, unix), FilePaths are internally stored in
- - non-decoded form. -}
-filePathToString :: FilePath -> String
-filePathToString = if SysConfig.unicodefilepath then id else UTF8.decodeString
-
-{- Workaround to avoid crashes displaying filenames containing
- - characters > 255 in non-utf8 locales. Force encodings to utf-8,
- - even though this may mean some characters in the encoding
- - are mangled. -}
-forceUtf8 :: IO ()
-forceUtf8 = do
-	hSetEncoding stdout utf8
-	hSetEncoding stderr utf8
+{- By default, haskell honors the user's locale in its output to stdout
+ - and stderr. While that's great for proper unicode support, for git-annex
+ - all that's really needed is the ability to display simple messages
+ - (currently untranslated), and importantly, to display filenames exactly
+ - as they are written on disk, no matter what their encoding. So, force
+ - raw mode. 
+ -
+ - NB: Once git-annex gets localized, this will need a rethink. -}
+setupConsole :: IO ()
+setupConsole = do
+	hSetBinaryMode stdout True
+	hSetBinaryMode stderr True
