@@ -1,0 +1,7 @@
+git-annex 0.23 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Support ssh remotes with a port specified.
+   * whereis: New subcommand to show where a file's content has gotten to.
+   * Rethink filename encoding handling for display. Since filename encoding
+     may or may not match locale settings, any attempt to decode filenames
+     will fail for some files. So instead, do all output in binary mode."""]]
