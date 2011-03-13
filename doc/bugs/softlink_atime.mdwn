@@ -1,3 +1,10 @@
 When adding files to git annex, softlinks are created with current atime (and ctime, etc). Instead, the atime of the added file should be used and added to the meta-data, restoring it everywhere an annex is cloned to.
 
 Optionally, editing the meta-data should change the times in all annexes.
+
+> Thing is, git does not preserve file timestamps much at all. 
+> It's not uncommon for a `git checkout` to or `git update` to
+> mess up timestamps. This is why things like metastore exist (and
+> metastore should work ok with git annexed files too). Trying to 
+> make annexed file symlinks have better timestamp handling than regular
+> files in git seems pointless. --[[Joey]]
