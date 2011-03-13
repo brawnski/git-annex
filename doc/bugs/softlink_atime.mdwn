@@ -1,0 +1,3 @@
+When adding files to git annex, softlinks are created with current atime (and ctime, etc). Instead, the atime of the added file should be used and added to the meta-data, restoring it everywhere an annex is cloned to.
+
+Optionally, editing the meta-data should change the times in all annexes.
