@@ -1,3 +1,9 @@
+git-annex (0.24) UNRELEASED; urgency=low
+
+  * Add Suggests on graphviz. Closes: #618039
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 13 Mar 2011 14:25:17 -0400
+
 git-annex (0.23) unstable; urgency=low
 
   * Support ssh remotes with a port specified.
