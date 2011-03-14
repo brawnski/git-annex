@@ -4,3 +4,5 @@ repository!
 This way, you know your annexed content is safe & versioned, but you only
 have to deal with the pain of git with large files in one place, and can
 use all of git-annex's features everywhere else.
+
+> Speaking as a future user, do very, very much want. -- RichiH
