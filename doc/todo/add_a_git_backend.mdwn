@@ -6,3 +6,7 @@ have to deal with the pain of git with large files in one place, and can
 use all of git-annex's features everywhere else.
 
 > Speaking as a future user, do very, very much want. -- RichiH
+
+>> Might also be interesting to use `bup` in the git backend, to work
+>> around git's big file issues there. So git-annex would pull data out
+>> of the git backend using bup. --[[Joey]] 
