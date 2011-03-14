@@ -15,3 +15,5 @@ or anything in between to a paranoid
  `.git/annex/objects/SHA1:123/456/789/abc/def/012/345/678/9ab/cde/f01/234/5678/SHA1:123456789abcdef0123456789abcdef012345678`
 
 Also the use of a colon specifically breaks FAT32 ([[bugs/fat_support]]), must it be a colon or could an extra directory be used? i.e. `.git/annex/objects/SHA1/*/...`
+
+`git annex init` could also create all but the last level directory on initialization. I'm thinking `SHA1/1/1, SHA1/1/2, ..., SHA256/f/f, ..., URL/f/f, ..., WORM/f/f`
