@@ -21,4 +21,8 @@ TODO:
 
 > Unless I am missing something: Make sure the data is correct (for SHA1 or other tracking) and restore locally. If that's not the case, delete and restore from remote. -- RichiH
 
-* Is 'unused' a good name? 'clean' and 'autoclean' would make more sense, imo. 'clean' deletes everything, whereas an optional 'autoclean' could try to be smart based on disk usage and/or SHA1, etc. -- RichiH
+----
+
+Is 'unused' a good name? 'clean' and 'autoclean' would make more sense, imo. 'clean' deletes everything, whereas an optional 'autoclean' could try to be smart based on disk usage and/or SHA1, etc. -- RichiH
+
+> Nah, `git annex unused/dropunused` already exist.  --[[Joey]] 
