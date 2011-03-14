@@ -1,4 +1,4 @@
-When adding files to git annex, softlinks are created with current atime (and ctime, etc). Instead, the atime of the added file should be used and added to the meta-data, restoring it everywhere an annex is cloned to.
+When adding files to git annex, softlinks are created with current atime (and ctime, etc). Instead, the atime of the added file should be used and added to the meta-data, restoring it everywhere an annex is cloned to. -- RichiH
 
 Optionally, editing the meta-data should change the times in all annexes.
 
@@ -8,3 +8,5 @@ Optionally, editing the meta-data should change the times in all annexes.
 > metastore should work ok with git annexed files too). Trying to 
 > make annexed file symlinks have better timestamp handling than regular
 > files in git seems pointless. --[[Joey]]
+
+> > Improving an area where git is (not yet?) good at still makes sense, imo. Photos and the like need absolute timestamps more than source code which is fine with relative timestamps (local builds & updates). Maintaining global timestamps for source code could even cause a lot of unwanted effects. As it is, this issue is the only, but a major, blocker for me before I can start adapting git-annex. As I have three different use cases for it, this is a shame. Unfortunately, I don't speak any Haskell so scratching my own itch isn't do-able (without major effort and not soon, at least). Is there a realistic chance that you will tackle this nonetheless or is this WONTFIX? -- RichiH
