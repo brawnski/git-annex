@@ -8,8 +8,5 @@ be VFAT formatted:
 - Use of ":" in filenames of object files, also not supported.
   Could easily be fixed by reorganizing the object directory.
 
-  (If the object directory is reorganized, should consider adding hashing
-  at the same time.)
-
 [[!tag wishlist]]
 
