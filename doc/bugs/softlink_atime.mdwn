@@ -35,3 +35,5 @@ Optionally, editing the meta-data should change the times in all annexes.
 	git annex pre-commit .
 	metastore --save
 	git add .metadata
+
+>>>>>> Thanks a lot. Doing this in a new git-annex repo from the start should at least ensure local consistency and I assume I can simply add a post-pull hook to restore the mtimes on all all other repositories? -- RichiH
