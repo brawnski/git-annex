@@ -60,19 +60,19 @@ instance Show Key where
 			field f = error $ "unknown key field" ++ show f
 
 instance Read Key where
-	readsPrec _ s = [(Key (meta s []), "")]
+	readsPrec _ s = [(Key (findfields s []), "")]
 		where
-			meta (c:r) m = findfield c r m
-			meta [] m = m
-
-			findfield 'n' v m = (KeyName, v):m -- rest is name
-			findfield c v m = let (v', _:r) = span (/= fieldSep) v in
-				meta r (field c v' m)
+			findfields ('n':v) m = (KeyName, v):m -- rest is name
+			findfields (c:v) m =
+				case span (/= fieldSep) v of
+					(v', _:r) -> findfields r (field c v' m)
+					_ -> m
+			findfields [] m = m
 			
 			field 'b' v m = (KeyBackend, v):m
 			field 's' v m = (KeySize, v):m
 			field 'm' v m = (KeyModTime, v):m
-			field _ _ m = m -- just ignore unparseable fields
+			field _ _ m = m
 
 -- for quickcheck
 instance Arbitrary Key where
