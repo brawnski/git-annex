@@ -254,7 +254,7 @@ virus_checker: clamdscan -
 
 # comments plugin
 # PageSpec of pages where comments are allowed
-comments_pagespec: '* and !*/Discussion and !ikiwiki/* and !index'
+comments_pagespec: page(*) and !*/Discussion and !ikiwiki/* and !index
 # PageSpec of pages where posting new comments is not allowed
 comments_closed_pagespec: ''
 # Base name for comments, e.g. "comment_" for pages like "sandbox/comment_12"
