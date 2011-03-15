@@ -38,6 +38,7 @@ import qualified Trust
 import qualified Remotes
 import qualified Content
 import qualified Command.DropUnused
+import qualified Key
 
 main :: IO ()
 main = do
@@ -55,7 +56,7 @@ quickcheck :: Test
 quickcheck = TestLabel "quickcheck" $ TestList
 	[ qctest "prop_idempotent_deencode" Git.prop_idempotent_deencode
 	, qctest "prop_idempotent_fileKey" Locations.prop_idempotent_fileKey
-	, qctest "prop_idempotent_key_read_show" BackendTypes.prop_idempotent_key_read_show
+	, qctest "prop_idempotent_key_read_show" Key.prop_idempotent_key_read_show
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
