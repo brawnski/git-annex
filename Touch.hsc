@@ -9,8 +9,8 @@
 
 module Touch (
 	TimeSpec(..),
-	now,
-	omit,
+	nowTime,
+	omitTime,
 	touchBoth,
 	touch
 ) where
@@ -28,8 +28,8 @@ instance Storable TimeSpec where
 	-- use the larger alignment of the two types in the struct
 	alignment _ = max sec_alignment nsec_alignment
 		where
-			sec_alignment = alignment $ undefined::CTime
-			nsec_alignment = alignment $ undefined::CLong
+			sec_alignment = alignment (undefined::CTime)
+			nsec_alignment = alignment (undefined::CLong)
 	sizeOf _ = #{size struct timespec}
 	peek ptr = do
 		sec <- #{peek struct timespec, tv_sec} ptr
@@ -40,10 +40,10 @@ instance Storable TimeSpec where
 		#{poke struct timespec, tv_nsec} ptr nsec
 
 {- special timespecs -}
-omit :: TimeSpec
-omit = TimeSpec 0 #const UTIME_OMIT
-now :: TimeSpec
-now = TimeSpec 0 #const UTIME_NOW
+omitTime :: TimeSpec
+omitTime = TimeSpec 0 #const UTIME_OMIT
+nowTime :: TimeSpec
+nowTime = TimeSpec 0 #const UTIME_NOW
 
 {- While its interface is beastly, utimensat is in recent
    POSIX standards, unlike futimes. -}
@@ -68,4 +68,4 @@ touchBoth file atime mtime follow =
 			else at_symlink_nofollow 
 
 touch :: FilePath -> TimeSpec -> Bool -> IO Bool
-touch file mtime follow = touchBoth file omit mtime follow
+touch file mtime follow = touchBoth file omitTime mtime follow
