@@ -26,6 +26,9 @@ module Locations (
 import System.FilePath
 import Data.String.Utils
 import Data.List
+import Bits
+import Word
+import Data.Hash.MD5
 
 import Types
 import qualified GitRepo as Git
@@ -128,3 +131,29 @@ fileKey file = read $
 prop_idempotent_fileKey :: String -> Bool
 prop_idempotent_fileKey s = k == fileKey (keyFile k)
 	where k = read $ "test:" ++ s
+
+{- Given a filename, generates a short directory name to put it in,
+ - to do hashing to protect against filesystems that dislike having
+ - many items in a single directory. -}
+hashDir :: FilePath -> FilePath
+hashDir s = take 2 $ abcd_to_dir $ md5 (Str s)
+
+abcd_to_dir :: ABCD -> String
+abcd_to_dir (ABCD (a,b,c,d)) = concat $ map display_32bits_as_dir [a,b,c,d]
+
+{- modified version of display_32bits_as_hex from Data.Hash.MD5
+ -   Copyright (C) 2001 Ian Lynagh 
+ -   License: Either BSD or GPL
+ -}
+display_32bits_as_dir :: Word32 -> String
+display_32bits_as_dir w = trim $ swap_pairs cs
+	where 
+		-- Need 32 characters to use. To avoid inaverdently making
+		-- a real word, use the alphabet without vowels.
+		chars = ['0'..'9'] ++ "bcdfghjklnmpqrstvwxyzZ"
+		cs = map (\x -> getc $ (shiftR w (6*x)) .&. 31) [0..7]
+		getc n = chars !! (fromIntegral n)
+		swap_pairs (x1:x2:xs) = x2:x1:swap_pairs xs
+		swap_pairs _ = []
+		-- Last 2 will always be 00, so omit.
+		trim s = take 6 s
