@@ -22,12 +22,14 @@ import Foreign.C
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#let alignment t = "%lu", (unsigned long)offsetof(struct {char x__; t (y__); }, y__)
-
 data TimeSpec = TimeSpec CTime CLong
 
 instance Storable TimeSpec where
-	alignment _ = #{alignment struct timespec}
+	-- use the larger alignment of the two types in the struct
+	alignment _ = max sec_alignment nsec_alignment
+		where
+			sec_alignment = alignment $ undefined::CTime
+			nsec_alignment = alignment $ undefined::CLong
 	sizeOf _ = #{size struct timespec}
 	peek ptr = do
 		sec <- #{peek struct timespec, tv_sec} ptr
