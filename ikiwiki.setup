@@ -74,7 +74,7 @@ prefix_directives: 1
 # use page/index.mdwn source files
 indexpages: 0
 # enable Discussion pages?
-discussion: 1
+discussion: 0
 # name of Discussion pages
 discussionpage: Discussion
 # generate HTML5? (experimental)
@@ -254,7 +254,7 @@ virus_checker: clamdscan -
 
 # comments plugin
 # PageSpec of pages where comments are allowed
-comments_pagespec: (forum/* or todo/* or bugs/*) and !*/Discussion
+comments_pagespec: '* and !*/Discussion and !ikiwiki/* and !index'
 # PageSpec of pages where posting new comments is not allowed
 comments_closed_pagespec: ''
 # Base name for comments, e.g. "comment_" for pages like "sandbox/comment_12"
