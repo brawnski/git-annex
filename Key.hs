@@ -7,39 +7,17 @@
 
 module Key where
 
-import Data.String.Utils
 import Test.QuickCheck
-import Data.Maybe
-import Data.List
+import Utility
 
 {- A Key has a unique name, is associated with a backend,
  - and may contain other metadata. -}
-data Field = KeyName | KeyBackend | KeySize | KeyModTime
-	deriving (Eq, Ord, Show)
-newtype Key = Key [(Field, String)]
-	deriving (Eq, Ord)
-
-{- Generates a Key given a name, a backend and a list of other metadata. -}
-keyGen :: String -> String -> [(Field, String)] -> Key
-keyGen name backend meta = Key $ (KeyName, name):(KeyBackend, backend):meta
-
-{- Gets the name of a Key. -}
-keyName :: Key -> String
-keyName key = fromJust $ keyField key KeyName
-
-{- Gets the backend associated with a Key. -}
-keyBackend :: Key -> String
-keyBackend key = fromJust $ keyField key KeyBackend
-
-{- Looks up a given Field of a Key's metadata. -}
-keyField :: Key -> Field -> Maybe String
-keyField (Key meta) field =
-	if null matches
-		then Nothing
-		else Just $ snd $ head matches
-	where
-		matches = filter match meta
-		match (f, _) = f == field
+data Key = Key {
+	keyName :: String,
+	keyBackend :: String,
+	keySize :: Maybe Int,
+	keyMtime :: Maybe Int
+} deriving (Eq, Ord)
 
 fieldSep :: Char
 fieldSep = ','
@@ -48,41 +26,47 @@ fieldSep = ','
  - The name field is always shown last, and is the only field
  - allowed to contain the fieldSep. -}
 instance Show Key where
-	show k@(Key meta) = join [fieldSep] $ map showp meta' ++ [name]
+	show Key { keyBackend = b, keySize = s, keyMtime = m, keyName = n } =
+		('b' : b) +++ ('s' ?: s) +++ ('m' ?: m) +++ ('n' : n)
 		where
-			name = 'n':keyName k
-			meta' = sort $ (filter (\(f, _) -> f /= KeyName)) meta
-			showp (f, v) = (field f) : v
+			"" +++ y = y
+			x +++ "" = x
+			x +++ y = x ++ fieldSep:y
+			c ?: (Just v) = c:(show v)
+			_ ?: _ = ""
 
-			field KeyBackend = 'b'
-			field KeySize = 's'
-			field KeyModTime = 'm'
-			field f = error $ "unknown key field" ++ show f
+readKey :: String -> Maybe Key
+readKey s = if key == stub then Nothing else key
+	where
+		key = findfields s stub
 
-instance Read Key where
-	readsPrec _ s = [(Key (findfields s []), "")]
-		where
-			findfields ('n':v) m = (KeyName, v):m -- rest is name
-			findfields (c:v) m =
-				case span (/= fieldSep) v of
-					(v', _:r) -> findfields r (field c v' m)
-					_ -> m
-			findfields [] m = m
-			
-			field 'b' v m = (KeyBackend, v):m
-			field 's' v m = (KeySize, v):m
-			field 'm' v m = (KeyModTime, v):m
-			field _ _ m = m
+		stub = Just Key {
+			keyName = "",
+			keyBackend = "",
+			keySize = Nothing,
+			keyMtime = Nothing
+		}
+
+		findfields ('n':v) (Just k) = Just $ k { keyName = v }
+		findfields (c:v) (Just k) =
+			case span (/= fieldSep) v of
+				(v', _:r) -> findfields r $ addfield k c v'
+				_ -> Nothing
+		findfields _ v = v
+		
+		addfield k 'b' v = Just k { keyBackend = v }
+		addfield k 's' v = Just k { keySize = readMaybe v }
+		addfield k 'm' v = Just k { keyMtime = readMaybe v }
+		addfield _ _ _ = Nothing
 
 -- for quickcheck
 instance Arbitrary Key where
 	arbitrary = do
-		backendname <- arbitrary
-		value <- arbitrary
-		return $ keyGen value backendname []
+		n <- arbitrary
+		b <- elements ['A'..'Z']
+		s <- arbitrary
+		m <- arbitrary
+		return $ Key { keyName = n, keyBackend = [b] , keySize = s, keyMtime = m }
 
 prop_idempotent_key_read_show :: Key -> Bool
-prop_idempotent_key_read_show k
-	-- backend names will never contain the fieldSep
-	| fieldSep `elem` (keyBackend k) = True
-	| otherwise = k == (read $ show k)
+prop_idempotent_key_read_show k = Just k == (readKey $ show k)
