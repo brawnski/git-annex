@@ -58,7 +58,6 @@ touchBoth file atime mtime follow =
 	withCString file $ \f -> do
 		pokeArray ptr [atime, mtime]
 		r <- c_utimensat at_fdcwd f ptr flags
-		putStrLn $ "ret " ++ (show r)
 		return (r == 0)
 	where
 		at_fdcwd = #const AT_FDCWD
