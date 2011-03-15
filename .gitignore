@@ -11,3 +11,4 @@ doc/.ikiwiki
 html
 *.tix
 .hpc
+Touch.hs

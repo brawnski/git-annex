@@ -11,7 +11,10 @@ SysConfig.hs: configure.hs TestConfig.hs
 	$(GHCMAKE) configure
 	./configure
 
-$(bins): SysConfig.hs
+Touch.hs: Touch.hsc
+	hsc2hs $<
+
+$(bins): SysConfig.hs Touch.hs
 	$(GHCMAKE) $@
 
 git-annex.1: doc/git-annex.mdwn
@@ -57,7 +60,7 @@ docs: $(mans)
 		--exclude='news/.*'
 
 clean:
-	rm -rf build $(bins) $(mans) test configure SysConfig.hs *.tix .hpc
+	rm -rf build $(bins) $(mans) test configure Touch.hs SysConfig.hs *.tix .hpc
 	rm -rf doc/.ikiwiki html
 	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 

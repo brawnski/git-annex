@@ -14,7 +14,6 @@ import qualified Annex
 import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
-import Messages
 import Utility
 
 command :: [Command]

@@ -21,3 +21,17 @@ Optionally, editing the meta-data should change the times in all annexes.
 >>> unlikely to do it better.
 
 >>>> OK, thanks for the clarification. Would it be acceptable for you to put the timestamps into the metastore with vanilla git? If such an option existed, everyone would be able to benefit and not just me. -- RichiH
+
+>>>>> I've now committed to git changes to make git-annex add make
+>>>>> symlinks that reflect the original file's mtime. (It's not possible
+>>>>> to set the ctime of a symlink; nor would you want to as messing with
+>>>>> ctimes can break backup software ... and atime doesn't much matter.)
+>>>>> 
+>>>>> So all you have to do is make the pre-commit hook call
+>>>>> [metastore](http://david.hardeman.nu/software.php). The hook
+>>>>> would look like this: ---[[Joey]] [[!tag done]]
+
+	#!/bin/sh
+	git annex pre-commit .
+	metastore --save
+	git add .metadata

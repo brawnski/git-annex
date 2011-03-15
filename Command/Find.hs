@@ -12,7 +12,6 @@ import Control.Monad.State (liftIO)
 
 import Command
 import Content
-import Messages
 
 command :: [Command]
 command = [Command "find" (paramOptional $ paramRepeating paramPath) seek

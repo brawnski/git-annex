@@ -18,6 +18,7 @@ import Types
 import Content
 import Messages
 import Utility
+import Touch
 
 command :: [Command]
 command = [Command "add" paramPath seek "add files to annex"]
@@ -53,5 +54,11 @@ cleanup file key = do
 
 	link <- calcGitLink file key
 	liftIO $ createSymbolicLink link file
+
+	-- touch the symlink to have the same mtime as the file it points to
+	s <- liftIO $ getFileStatus file
+	let mtime = modificationTime s
+	_ <- liftIO $ touch file (TimeSpec mtime 0) False
+
 	Annex.queue "add" [Param "--"] file
 	return True
