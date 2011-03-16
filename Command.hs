@@ -17,7 +17,6 @@ import Data.List
 
 import Types
 import qualified Backend
-import qualified BackendClass
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
@@ -230,20 +229,18 @@ paramName = "NAME"
 paramNothing :: String
 paramNothing = ""
 
-{- The Key specified by the --key and --backend parameters. -}
+{- The Key specified by the --key parameter. -}
 cmdlineKey :: Annex Key
 cmdlineKey  = do
 	k <- Annex.getState Annex.defaultkey
-	backends <- Backend.list
-	return $ stubKey {
-		keyName = kname k,
-		keyBackendName = BackendClass.name $ head backends
-	}
+	case k of
+		Nothing -> nokey
+		Just "" -> nokey
+		Just kstring -> case readKey kstring of
+			Nothing -> error "bad key"
+			Just key -> return key
 	where
-		kname Nothing = badkey
-		kname (Just "") = badkey
-		kname (Just n) = n
-		badkey = error "please specify the key with --key"
+		nokey = error "please specify the key with --key"
 
 {- Given an original list of files, and an expanded list derived from it,
  - ensures that the original list's ordering is preserved. 

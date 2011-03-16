@@ -8,12 +8,12 @@
 module Backend.URL (backends) where
 
 import Control.Monad.State (liftIO)
-import Data.String.Utils
 
 import Types
 import BackendClass
 import Utility
 import Messages
+import Key
 
 backends :: [Backend Annex]
 backends = [backend]
@@ -52,8 +52,8 @@ dummyOk _ = return True
 
 downloadUrl :: Key -> FilePath -> Annex Bool
 downloadUrl key file = do
-	showNote "downloading"
+	showNote $ "downloading"
 	showProgress -- make way for curl progress bar
 	liftIO $ boolSystem "curl" [Params "-# -o", File file, File url]
 	where
-		url = join ":" $ drop 1 $ split ":" $ show key 
+		url = keyName key
