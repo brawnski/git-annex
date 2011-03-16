@@ -26,6 +26,7 @@ import System.Path
 import Control.Monad (when, unless, filterM)
 import System.Posix.Files
 import System.FilePath
+import Data.Maybe
 
 import Types
 import Locations
@@ -162,7 +163,7 @@ getKeysPresent' dir = do
 		else do
 			contents <- liftIO $ getDirectoryContents dir
 			files <- liftIO $ filterM present contents
-			return $ map fileKey files
+			return $ catMaybes $ map fileKey files
 	where
 		present d = do
 			result <- try $

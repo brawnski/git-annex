@@ -10,9 +10,8 @@ module Backend.WORM (backends) where
 import Control.Monad.State
 import System.FilePath
 import System.Posix.Files
-import System.Posix.Types
 import System.Directory
-import Data.String.Utils
+import Data.Maybe
 
 import qualified Backend.File
 import BackendTypes
@@ -21,6 +20,7 @@ import qualified Annex
 import Content
 import Messages
 import Types
+import Key
 
 backends :: [Backend Annex]
 backends = [backend]
@@ -32,31 +32,25 @@ backend = Backend.File.backend {
 	fsckKey = Backend.File.checkKey checkKeySize
 }
 
--- The key is formed from the file size, modification time, and the
--- basename of the filename.
---
--- That allows multiple files with the same names to have different keys,
--- while also allowing a file to be moved around while retaining the
--- same key.
+{- The key includes the file size, modification time, and the
+ - basename of the filename.
+ -
+ - That allows multiple files with the same names to have different keys,
+ - while also allowing a file to be moved around while retaining the
+ - same key.
+ -}
 keyValue :: FilePath -> Annex (Maybe Key)
 keyValue file = do
 	stat <- liftIO $ getFileStatus file
-	return $ Just $ Key (name backend, key stat)
-	where
- 		key stat = uniqueid stat ++ sep ++ base
-		uniqueid stat = show (modificationTime stat) ++ sep ++
-			show (fileSize stat)
-		base = takeFileName file
-		sep = ":"
-
-{- Extracts the file size from a key. -}
-keySize :: Key -> FileOffset
-keySize key = read $ section !! 1
-	where
-		section = split ":" (keyName key)
+	return $ Just $ Key {
+		keyName = takeFileName file,
+		keyBackendName = name backend,
+		keySize = Just $ fromIntegral $ fileSize stat,
+		keyMtime = Just $ modificationTime stat
+	}
 
 {- The size of the data for a key is checked against the size encoded in
- - the key. Note that the modification time is not checked. -}
+ - the key's metadata. -}
 checkKeySize :: Key -> Annex Bool
 checkKeySize key = do
 	g <- Annex.gitRepo
@@ -66,7 +60,7 @@ checkKeySize key = do
 		then return True
 		else do
 			s <- liftIO $ getFileStatus file
-			if fileSize s == keySize key
+			if fromIntegral (fileSize s) == fromJust (keySize key)
 				then return True
 				else do
 					dest <- moveBad key

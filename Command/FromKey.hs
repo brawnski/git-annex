@@ -16,9 +16,9 @@ import Command
 import qualified Annex
 import Utility
 import qualified Backend
-import Types
 import Content
 import Messages
+import Key
 
 command :: [Command]
 command = [Command "fromkey" paramPath seek

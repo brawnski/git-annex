@@ -17,11 +17,13 @@ import Data.List
 
 import Types
 import qualified Backend
+import qualified BackendTypes
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
 import Locations
 import Utility
+import Key
 
 {- A command runs in four stages.
  -
@@ -233,11 +235,14 @@ cmdlineKey :: Annex Key
 cmdlineKey  = do
 	k <- Annex.getState Annex.defaultkey
 	backends <- Backend.list
-	return $ genKey (head backends) (keyname' k)
+	return $ stubKey {
+		keyName = kname k,
+		keyBackendName = BackendTypes.name $ head backends
+	}
 	where
-		keyname' Nothing = badkey
-		keyname' (Just "") = badkey
-		keyname' (Just n) = n
+		kname Nothing = badkey
+		kname (Just "") = badkey
+		kname (Just n) = n
 		badkey = error "please specify the key with --key"
 
 {- Given an original list of files, and an expanded list derived from it,

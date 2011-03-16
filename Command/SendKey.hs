@@ -28,6 +28,8 @@ seek = [withKeys start]
 
 start :: CommandStartString
 start keyname = do
+	error "BROKEN FIXME!"
+	{-
 	backends <- Backend.list
 	let key = genKey (head backends) keyname
 	present <- inAnnex key
@@ -36,3 +38,4 @@ start keyname = do
 	when present $
 		liftIO $ rsyncServerSend file
 	liftIO exitFailure
+	-}

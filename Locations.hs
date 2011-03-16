@@ -31,6 +31,7 @@ import Word
 import Data.Hash.MD5
 
 import Types
+import Key
 import qualified GitRepo as Git
 
 {- Conventions:
@@ -123,14 +124,14 @@ keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a"  $ show key
 
 {- Reverses keyFile, converting a filename fragment (ie, the basename of
  - the symlink target) into a key. -}
-fileKey :: FilePath -> Key
-fileKey file = read $
+fileKey :: FilePath -> Maybe Key
+fileKey file = readKey $
 	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
 
 {- for quickcheck -}
 prop_idempotent_fileKey :: String -> Bool
-prop_idempotent_fileKey s = k == fileKey (keyFile k)
-	where k = read $ "test:" ++ s
+prop_idempotent_fileKey s = Just k == fileKey (keyFile k)
+	where k = stubKey { keyName = s, keyBackendName = "test" }
 
 {- Given a filename, generates a short directory name to put it in,
  - to do hashing to protect against filesystems that dislike having

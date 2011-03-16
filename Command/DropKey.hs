@@ -26,8 +26,10 @@ seek = [withKeys start]
 start :: CommandStartString
 start keyname = do
 	backends <- Backend.list
-	let key = genKey (head backends) keyname
-	present <- inAnnex key
+	let key = error "fixme!!"
+	--let key = genKey (head backends) keyname --TODO FIXME
+	let present  = error "fixme!!"
+	--present <- inAnnex key
 	force <- Annex.getState Annex.force
 	if not present
 		then return Nothing

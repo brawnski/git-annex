@@ -126,4 +126,4 @@ tmpKeys = do
 			contents <- liftIO $ getDirectoryContents tmp
 			files <- liftIO $ filterM doesFileExist $
 				map (tmp </>) contents
-			return $ map (fileKey . takeFileName) files
+			return $ catMaybes $ map (fileKey . takeFileName) files

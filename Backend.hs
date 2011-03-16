@@ -39,6 +39,7 @@ import Locations
 import qualified GitRepo as Git
 import qualified Annex
 import Types
+import Key
 import qualified BackendTypes as B
 import Messages
 
@@ -135,18 +136,19 @@ lookupFile file = do
 		getsymlink = do
 			l <- readSymbolicLink file
 			return $ takeFileName l
-		makekey bs l = do
+		makekey bs l =
+			case fileKey l of
+				Just k -> makeret k l bs
+				Nothing -> return Nothing
+		makeret k l bs =
 			case maybeLookupBackendName bs bname of
-				Nothing -> do
-					unless (null kname || null bname ||
-					        not (isLinkToAnnex l)) $
-						warning skip
-					return Nothing
-				Just backend -> return $ Just (k, backend)
+					Just backend -> return $ Just (k, backend)
+					Nothing -> do
+						when (isLinkToAnnex l) $
+							warning skip
+						return Nothing
 			where
-				k = fileKey l
-				bname = backendName k
-				kname = keyName k
+				bname = keyBackendName k
 				skip = "skipping " ++ file ++ 
 					" (unknown backend " ++ bname ++ ")"
 
@@ -164,4 +166,4 @@ chooseBackends fs = do
 keyBackend :: Key -> Annex (Backend Annex)
 keyBackend key = do
 	bs <- Annex.getState Annex.supportedBackends
-	return $ lookupBackendName bs $ backendName key
+	return $ lookupBackendName bs $ keyBackendName key

@@ -13,6 +13,7 @@ import System.Cmd.Utils
 import System.IO
 import System.Directory
 import Data.Maybe
+import System.Posix.Files
 
 import qualified Backend.File
 import BackendTypes
@@ -23,6 +24,7 @@ import Content
 import Types
 import Utility
 import qualified SysConfig
+import Key
 
 type SHASize = Int
 
@@ -63,11 +65,16 @@ shaN size file = do
 	where
 		command = "sha" ++ (show size) ++ "sum"
 
--- A key is a checksum of its contents.
+{- A key is a checksum of its contents. -}
 keyValue :: SHASize -> FilePath -> Annex (Maybe Key)
 keyValue size file = do
 	s <- shaN size file	
-	return $ Just $ Key (shaName size, s)
+	stat <- liftIO $ getFileStatus file
+	return $ Just $ stubKey {
+		keyName = s,
+		keyBackendName = shaName size,
+		keySize = Just $ fromIntegral $ fileSize stat
+	}
 
 -- A key's checksum is checked during fsck.
 checkKeyChecksum :: SHASize -> Key -> Annex Bool

@@ -27,6 +27,7 @@ import Data.List (intersect, sortBy)
 import Control.Monad (when, unless, filterM)
 
 import Types
+import Key
 import qualified GitRepo as Git
 import qualified Annex
 import LocationLog
@@ -153,7 +154,7 @@ inAnnex r key = if Git.repoIsUrl r
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
 			inannex <- onRemote r (boolSystem, False) "inannex" 
-				[Param ("--backend=" ++ backendName key), Param (keyName key)]
+				[Param ("--backend=" ++ keyBackendName key), Param (keyName key)]
 			return $ Right inannex
 
 {- Cost Ordered list of remotes. -}
@@ -272,7 +273,7 @@ rsyncParams :: Git.Repo -> Bool -> Key -> FilePath -> Annex [CommandParam]
 rsyncParams r sending key file = do
 	Just (shellcmd, shellparams) <- git_annex_shell r
 		(if sending then "sendkey" else "recvkey")
-		[ Param $ "--backend=" ++ backendName key
+		[ Param $ "--backend=" ++ keyBackendName key
 		, Param $ keyName key
 		-- Command is terminated with "--", because
 		-- rsync will tack on its own options afterwards,

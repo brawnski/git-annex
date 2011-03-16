@@ -11,9 +11,10 @@ import Control.Monad.State (liftIO)
 import System.Exit
 
 import Command
-import Types
 import Content
 import qualified Backend
+import qualified BackendTypes
+import Key
 
 command :: [Command]
 command = [Command "inannex" (paramRepeating paramKey) seek
@@ -25,7 +26,11 @@ seek = [withKeys start]
 start :: CommandStartString
 start keyname = do
 	backends <- Backend.list
-	let key = genKey (head backends) keyname
+	let key = stubKey {
+		keyName = keyname,
+		keyBackendName = BackendTypes.name (head backends)
+	}
+	error "BROKEN. fixme!"
 	present <- inAnnex key
 	if present
 		then return Nothing

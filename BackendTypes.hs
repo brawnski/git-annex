@@ -1,4 +1,4 @@
-{- git-annex key/value backend data types
+{- git-annex key/value backend data type
  -
  - Most things should not need this, using Types instead
  -
@@ -9,12 +9,7 @@
 
 module BackendTypes where
 
-import Data.String.Utils
-import Test.QuickCheck
-
-type KeyName = String
-type BackendName = String
-newtype Key = Key (BackendName, KeyName) deriving (Eq, Ord)
+import Key
 
 data Backend a = Backend {
 	-- name of this backend
@@ -42,38 +37,3 @@ instance Show (Backend a) where
 
 instance Eq (Backend a) where
 	a == b = name a == name b
-
--- accessors for the parts of a key
-keyName :: Key -> KeyName
-keyName (Key (_,k)) = k
-backendName :: Key -> BackendName
-backendName (Key (b,_)) = b
-
--- constructs a key in a backend
-genKey :: Backend a -> KeyName -> Key
-genKey b f = Key (name b,f)
-
--- show a key to convert it to a string; the string includes the
--- name of the backend to avoid collisions between key strings
-instance Show Key where
-	show (Key (b, k)) = b ++ ":" ++ k
-
-instance Read Key where
-	readsPrec _ s = [(Key (b,k), "")]
-		where
-			l = split ":" s
-			b = if null l then "" else head l
-			k = join ":" $ drop 1 l
-
--- for quickcheck
-instance Arbitrary Key where
-	arbitrary = do
-		backendname <- arbitrary
-		keyname <- arbitrary
-		return $ Key (backendname, keyname)
-
-prop_idempotent_key_read_show :: Key -> Bool
-prop_idempotent_key_read_show k
-	-- backend names will never contain colons
-	| ':' `elem` (backendName k) = True
-	| otherwise = k == (read $ show k)

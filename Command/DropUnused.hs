@@ -11,6 +11,7 @@ import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Directory
+import Data.Maybe
 
 import Command
 import Types
@@ -19,6 +20,7 @@ import Locations
 import qualified Annex
 import qualified Command.Drop
 import Backend
+import Key
 
 command :: [Command]
 command = [Command "dropunused" (paramRepeating paramNumber) seek
@@ -55,7 +57,6 @@ readUnusedLog = do
 			return $ M.fromList $ map parse $ lines l
 		else return $ M.empty
 	where
-		parse line = (head ws, tokey $ unwords $ tail ws)
+		parse line = (head ws, fromJust $ readKey $ unwords $ tail ws)
 			where
 				ws = words line
-				tokey s = read s :: Key

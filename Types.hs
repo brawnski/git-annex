@@ -8,11 +8,9 @@
 module Types (
 	Annex,
 	Backend,
-	Key,
-	genKey,
-	backendName,
-	keyName
+	Key
 ) where
 
 import BackendTypes
 import Annex
+import Key

@@ -20,7 +20,8 @@ import qualified Remotes
 import UUID
 import Messages
 import Utility
-	
+import Key
+
 command :: [Command]
 command = [Command "move" paramPath seek
 	"move content of files to/from another repository"]
@@ -136,7 +137,7 @@ fromCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
 fromCleanup src True key = do
 	ok <- Remotes.onRemote src (boolSystem, False) "dropkey" 
 		[ Params "--quiet --force"
-		, Param $ "--backend=" ++ backendName key
+		, Param $ "--backend=" ++ keyBackendName key
 		, Param $ keyName key
 		]
 	-- better safe than sorry: assume the src dropped the key

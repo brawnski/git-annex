@@ -13,6 +13,7 @@ import Control.Monad.State (liftIO)
 import Control.Monad (filterM, forM_)
 import System.Posix.Files
 import System.FilePath
+import Data.Maybe
 
 import Content
 import Types
@@ -74,7 +75,7 @@ getKeysPresent0' dir = do
 		else do
 			contents <- liftIO $ getDirectoryContents dir
 			files <- liftIO $ filterM present contents
-			return $ map fileKey files
+			return $ catMaybes $ map fileKey files
 	where
 		present d = do
 			result <- try $
