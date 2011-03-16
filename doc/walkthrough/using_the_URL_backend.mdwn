@@ -5,7 +5,7 @@ Another handy backend is the URL backend, which can fetch file's content
 from remote URLs. Here's how to set up some files in your repository
 that use this backend:
 
-	# git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+	# git annex fromkey --key=URL--http://www.archive.org/somefile somefile
 	fromkey somefile ok
 	# git commit -m "added a file from the Internet Archive"
 

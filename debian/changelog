@@ -1,5 +1,8 @@
 git-annex (0.24) UNRELEASED; urgency=low
 
+  * Reorganized annexed object store. annex.version=2
+  * The setkey, fromkey, and dropkey subcommands have changed how
+    the key is specified. --backend is no longer used with these.
   * Add Suggests on graphviz. Closes: #618039
   * When adding files to the annex, the symlinks pointing at the annexed
     content are made to have the same mtime as the original file.

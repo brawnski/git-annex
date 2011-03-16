@@ -12,8 +12,8 @@ eliminate it to save space.
 	unused  (checking for unused data...) 
 	  Some annexed data is no longer pointed to by any files in the repository.
 	    NUMBER  KEY
-	    1       WORM:1289672605:3:file
-	    2       WORM:1289672605:14:file
+	    1       WORM-s3-m1289672605--file
+	    2       WORM-s14-m1289672605--file
 	  (To see where data was previously used, try: git log --stat -S'KEY')
 	  (To remove unwanted data: git-annex dropunused NUMBER)
 	ok

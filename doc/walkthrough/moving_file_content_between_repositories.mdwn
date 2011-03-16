@@ -9,5 +9,5 @@ makes it very easy.
 	move my_cool_big_file (moving to usbdrive...) ok
 	# git annex move video/hackity_hack_and_kaxxt.mov --from fileserver
 	move video/hackity_hack_and_kaxxt.mov (moving from fileserver...)
-	WORM:1274316523:86050597:hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
+	WORM-s86050597-m1274316523--hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
 	ok

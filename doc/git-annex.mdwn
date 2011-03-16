@@ -234,11 +234,11 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
   This can be used to manually set up a file to link to a specified key
   in the key-value backend. How you determine an existing key in the backend
-  varies. For the URL backend, the key is just a URL to the content.
+  varies. For the URL backend, the key is based on an URL to the content.
 
   Example:
 
-	git annex fromkey --backend=URL --key=http://www.archive.org/somefile somefile
+	git annex fromkey --key=URL--http://www.archive.org/somefile somefile
 
 * dropkey [key ...]
 
@@ -248,24 +248,18 @@ Many git-annex commands will stage changes for later `git commit` by you.
   This can be used to drop content for arbitrary keys, which do not need
   to have a file in the git repository pointing at them.
 
-  A backend will typically need to be specified with --backend. If none
-  is specified, the first configured backend is used.
-
   Example:
 
-	git annex dropkey --backend=SHA1 7da006579dd64330eb2456001fd01948430572f2
+	git annex dropkey --key=SHA1-s10-7da006579dd64330eb2456001fd01948430572f2
 
 * setkey file
 
   This plumbing-level command sets the annexed data for a key to the content of
   the specified file, and then removes the file.
 
-  A backend will typically need to be specified with --backend. If none
-  is specified, the first configured backend is used.
-
   Example:
 
-	git annex setkey --backend=WORM --key=1287765018:3 /tmp/file
+	git annex setkey --key=WORM-s3-m1287765018--file /tmp/file
 
 # OPTIONS
 
