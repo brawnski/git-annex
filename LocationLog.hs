@@ -24,6 +24,8 @@ module LocationLog (
 	LogStatus(..),
 	logChange,
 	logFile,
+	readLog,
+	writeLog,
 	keyLocations
 ) where
 

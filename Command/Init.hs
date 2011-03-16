@@ -8,7 +8,7 @@
 module Command.Init where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import System.Directory
 import System.FilePath
 
@@ -74,12 +74,14 @@ gitAttributesWrite repo = do
 	exists <- doesFileExist attributes
 	if not exists
 		then do
-			safeWriteFile attributes $ attrLine ++ "\n"
+			safeWriteFile attributes $ unlines attrLines
 			commit
 		else do
 			content <- readFile attributes
-			when (all (/= attrLine) (lines content)) $ do
-				appendFile attributes $ attrLine ++ "\n"
+			let present = lines content
+			let missing = filter (\l -> not $ l `elem` present) attrLines
+			unless (null missing) $ do
+				appendFile attributes $ unlines missing
 				commit
 	where
 		attributes = Git.attributes repo
@@ -91,8 +93,11 @@ gitAttributesWrite repo = do
 				, Param attributes
 				]
 
-attrLine :: String		
-attrLine = stateDir </> "*.log merge=union"
+attrLines :: [String]
+attrLines =
+	[ stateDir </> "*.log merge=union"
+	, stateDir </> "*/*/*.log merge=union"
+	]
 
 {- set up a git pre-commit hook, if one is not already present -}
 gitPreCommitHookWrite :: Git.Repo -> Annex ()

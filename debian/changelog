@@ -1,12 +1,9 @@
 git-annex (0.20110316) UNRELEASED; urgency=low
 
-  * Reorganized .git/annex/objects and .git-annex/; annex.version=2
+  * New repository format, annex.version=2.
   * The first time git-annex is run in an old format repository, it
     will automatically upgrade it to the new format, staging all
     necessary changes to git.
-  * Note that remotes must be running this version of git-annex,
-    and must also have been upgraded, in order for git-annex to
-    communicate with them.
   * Colons are now avoided in filenames, so bare clones of git repos
     can be put on USB thumb drives formatted with vFAT or similar
     filesystems.

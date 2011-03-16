@@ -21,13 +21,15 @@ import Key
 import Content
 import Types
 import Locations
+import LocationLog
 import qualified Annex
 import qualified GitRepo as Git
 import Backend
 import Messages
 import Version
 import Utility
-	
+import qualified Command.Init
+
 -- v2 adds hashing of filenames of content and location log files.
 -- Key information is encoded in filenames differently, so
 -- both content and location log files move around, and symlinks
@@ -61,6 +63,12 @@ upgrade = do
 
 	Annex.queueRun
 	setVersion
+	
+	-- add new line to auto-merge hashed location logs
+	-- this commits, so has to come after the upgrade
+	g <- Annex.gitRepo
+	liftIO $ Command.Init.gitAttributesWrite g
+
 	return True
 
 moveContent :: Annex ()
@@ -110,8 +118,12 @@ moveLocationLogs = do
 				let f = dir </> l
 				liftIO $ createDirectoryIfMissing True (parentDir dest)
 				-- could just git mv, but this way deals with
-				-- log files that are not checked into git
-				liftIO $ copyFile f dest
+				-- log files that are not checked into git,
+				-- as well as merging with already upgraded
+				-- logs that have been pulled from elsewhere
+				old <- liftIO $ readLog f
+				new <- liftIO $ readLog dest
+				liftIO $ writeLog dest (old++new)
 				Annex.queue "add" [Param "--"] dest
 				Annex.queue "add" [Param "--"] f
 				Annex.queue "rm" [Param "--quiet", Param "-f", Param "--"] f
