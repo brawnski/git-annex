@@ -3,8 +3,7 @@ git-annex (0.20110316) experimental; urgency=low
   * New repository format, annex.version=2.
   * The first time git-annex is run in an old format repository, it
     will automatically upgrade it to the new format, staging all
-    necessary changes to git. See <http://git-annex.branchable.com/upgrades/>
-    for details.
+    necessary changes to git. Also added a "git annex upgrade" command.
   * Colons are now avoided in filenames, so bare clones of git repos
     can be put on USB thumb drives formatted with vFAT or similar
     filesystems.
