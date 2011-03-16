@@ -14,9 +14,10 @@ import Control.Monad (filterM, forM_, unless)
 import System.Posix.Files
 import System.FilePath
 import Data.String.Utils
-import Key
 import System.Posix.Types
+import Data.Maybe
 
+import Key
 import Content
 import Types
 import Locations
@@ -94,7 +95,36 @@ updateSymlinks = do
 
 moveLocationLogs :: Annex ()
 moveLocationLogs = do
-	warning "TODO location log move"
+	logkeys <- oldlocationlogs
+	forM_ logkeys move
+		where
+			oldlocationlogs = do
+				g <- Annex.gitRepo
+				let dir = gitStateDir g
+				contents <- liftIO $ getDirectoryContents dir
+				return $ catMaybes $ map oldlog2key contents
+			move (l, k) = do
+				g <- Annex.gitRepo
+				let dest = logFile g k
+				let dir = gitStateDir g
+				let f = dir </> l
+				liftIO $ createDirectoryIfMissing True (parentDir dest)
+				-- could just git mv, but this way deals with
+				-- log files that are not checked into git
+				liftIO $ copyFile f dest
+				Annex.queue "add" [Param "--"] dest
+				Annex.queue "add" [Param "--"] f
+				Annex.queue "rm" [Param "--quiet", Param "-f", Param "--"] f
+		
+oldlog2key :: FilePath -> Maybe (FilePath, Key)
+oldlog2key l = 
+	let len = length l - 4 in
+		if drop len l == ".log"
+		then let k = readKey1 (take len l) in
+			if null (keyName k) || null (keyBackendName k)
+			then Nothing
+			else Just (l, k)
+		else Nothing
 
 -- WORM backend keys: "WORM:mtime:size:filename"
 -- all the rest: "backend:key"
