@@ -6,6 +6,8 @@ all users, so this should be the *last* reorg in the forseeable future.
 
 2. Add hashing, since some filesystems do suck (like er, fat at least :)
    [[forum/hashing_objects_directories]]
+   (Also, may as well hash .git-annex/* while at it -- that's what
+   really gets big.)
 
 3. Add filesize metadata for [[bugs/free_space_checking]]. (Currently only
    present in WORM, and in an ad-hoc way.)

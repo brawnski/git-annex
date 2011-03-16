@@ -10,6 +10,7 @@ To get a feel for it, see the [[walkthrough]].
 * [[bugs]]
 * [[todo]]
 * [[forum]]
+* [[comments]]
 * [[contact]]
 
 [[News]]:
