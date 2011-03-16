@@ -171,7 +171,6 @@ getKeysPresent' dir = do
 		present d = do
 			result <- try $
 				getFileStatus $ d </> takeFileName d
-			liftIO $ putStrLn $ "trying " ++ (d </> takeFileName d)
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
