@@ -35,14 +35,14 @@ stubKey = Key {
 }
 
 fieldSep :: Char
-fieldSep = ','
+fieldSep = '-'
 
 {- Keys show as strings that are suitable for use as filenames.
- - The name field is always shown last, and is the only field
- - allowed to contain the fieldSep. -}
+ - The name field is always shown last, separated by doubled fieldSeps,
+ - and is the only field allowed to contain the fieldSep. -}
 instance Show Key where
 	show Key { keyBackendName = b, keySize = s, keyMtime = m, keyName = n } =
-		('b' : b) +++ ('s' ?: s) +++ ('m' ?: m) +++ ('n' : n)
+		b +++ ('s' ?: s) +++ ('m' ?: m) +++ (fieldSep : n)
 		where
 			"" +++ y = y
 			x +++ "" = x
@@ -53,18 +53,22 @@ instance Show Key where
 readKey :: String -> Maybe Key
 readKey s = if key == Just stubKey then Nothing else key
 	where
-		key = findfields s $ Just stubKey
+		key = startbackend stubKey s
 
-		findfields ('n':v) (Just k) = Just $ k { keyName = v }
-		findfields (c:v) (Just k) =
-			case span (/= fieldSep) v of
-				(v', _:r) -> findfields r $ addfield k c v'
-				_ -> Nothing
-		findfields _ v = v
+		startbackend k v = sepfield k v addbackend
 		
-		addfield k 'b' v = Just k { keyBackendName = v }
-		addfield k 's' v = Just k { keySize = readMaybe v }
-		addfield k 'm' v = Just k { keyMtime = readMaybe v }
+		sepfield k v a = case span (/= fieldSep) v of
+			(v', _:r) -> findfields r $ a k v'
+			_ -> Nothing
+
+		findfields (c:v) (Just k)
+			| c == fieldSep = Just $ k { keyName = v }
+			| otherwise = sepfield k v $ addfield c
+		findfields _ v = v
+
+		addbackend k v = Just k { keyBackendName = v }
+		addfield 's' k v = Just k { keySize = readMaybe v }
+		addfield 'm' k v = Just k { keyMtime = readMaybe v }
 		addfield _ _ _ = Nothing
 
 -- for quickcheck
@@ -73,7 +77,12 @@ instance Arbitrary Key where
 		n <- arbitrary
 		b <- elements ['A'..'Z']
 		s <- arbitrary
-		return $ Key { keyName = n, keyBackendName = [b] , keySize = s }
+		return $ Key {
+			keyName = n,
+			keyBackendName = [b],
+			keySize = s,
+			keyMtime = Nothing
+		}
 
 prop_idempotent_key_read_show :: Key -> Bool
 prop_idempotent_key_read_show k = Just k == (readKey $ show k)
