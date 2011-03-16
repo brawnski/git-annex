@@ -18,6 +18,7 @@ git-annex (0.20110316) UNRELEASED; urgency=low
     content are made to have the same mtime as the original file.
     While git does not preserve that information, this allows a tool
     like metastore to be used with annexed files.
+    (Currently this is only done on systems supporting POSIX 200809.)
 
  -- Joey Hess <joeyh@debian.org>  Sun, 13 Mar 2011 14:25:17 -0400
 
