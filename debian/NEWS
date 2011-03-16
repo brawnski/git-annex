@@ -1,4 +1,4 @@
-git-annex (0.20110316) unstable; urgency=low
+git-annex (0.20110316) experimental; urgency=low
 
   This version reorganises the layout of git-annex's files in your repository.
   There is an upgrade process to convert a repository from the old git-annex

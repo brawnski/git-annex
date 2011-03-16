@@ -1,4 +1,4 @@
-git-annex (0.20110316) UNRELEASED; urgency=low
+git-annex (0.20110316) experimental; urgency=low
 
   * New repository format, annex.version=2.
   * The first time git-annex is run in an old format repository, it
@@ -21,7 +21,7 @@ git-annex (0.20110316) UNRELEASED; urgency=low
     like metastore to be used with annexed files.
     (Currently this is only done on systems supporting POSIX 200809.)
 
- -- Joey Hess <joeyh@debian.org>  Sun, 13 Mar 2011 14:25:17 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 16 Mar 2011 16:20:23 -0400
 
 git-annex (0.23) unstable; urgency=low
 
