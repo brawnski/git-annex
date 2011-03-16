@@ -22,6 +22,10 @@ import Foreign.C
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE >= 200809L
+#endif
+
 data TimeSpec = TimeSpec CTime CLong
 
 instance Storable TimeSpec where
