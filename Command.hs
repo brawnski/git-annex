@@ -14,7 +14,6 @@ import Control.Monad (filterM, liftM, when)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
-import Data.Maybe
 
 import Types
 import qualified Backend
@@ -171,7 +170,11 @@ withFilesUnlocked' typechanged a params = do
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
 withKeys :: CommandSeekKeys
-withKeys a params = return $ map a $ catMaybes $ map readKey params
+withKeys a params = return $ map a $ map parse params
+	where
+		parse p = case readKey p of
+			Just k -> k
+			Nothing -> error "bad key"
 withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing

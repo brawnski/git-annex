@@ -9,12 +9,10 @@ module Command.DropKey where
 
 import Command
 import qualified Annex
-import qualified Backend
 import LocationLog
 import Types
 import Content
 import Messages
-import Key
 
 command :: [Command]
 command = [Command "dropkey" (paramRepeating paramKey) seek
