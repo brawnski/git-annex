@@ -14,9 +14,7 @@ import System.Exit
 import Locations
 import qualified Annex
 import Command
-import Types
 import Content
-import qualified Backend
 import RsyncFile
 
 command :: [Command]
@@ -26,16 +24,11 @@ command = [Command "sendkey" paramKey seek
 seek :: [CommandSeek]
 seek = [withKeys start]
 
-start :: CommandStartString
-start keyname = do
-	error "BROKEN FIXME!"
-	{-
-	backends <- Backend.list
-	let key = genKey (head backends) keyname
+start :: CommandStartKey
+start key = do
 	present <- inAnnex key
 	g <- Annex.gitRepo
 	let file = gitAnnexLocation g key
 	when present $
 		liftIO $ rsyncServerSend file
 	liftIO exitFailure
-	-}

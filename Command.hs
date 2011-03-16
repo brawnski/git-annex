@@ -14,6 +14,7 @@ import Control.Monad (filterM, liftM, when)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
+import Data.Maybe
 
 import Types
 import qualified Backend
@@ -46,6 +47,8 @@ type CommandCleanup = Annex Bool
  - functions. -}
 type CommandSeekStrings = CommandStartString -> CommandSeek
 type CommandStartString = String -> CommandStart
+type CommandSeekKeys = CommandStartKey -> CommandSeek
+type CommandStartKey = Key -> CommandStart
 type BackendFile = (FilePath, Maybe (Backend Annex))
 type CommandSeekBackendFiles = CommandStartBackendFile -> CommandSeek
 type CommandStartBackendFile = BackendFile -> CommandStart
@@ -167,8 +170,8 @@ withFilesUnlocked' typechanged a params = do
 		map (\f -> Git.workTree repo ++ "/" ++ f) typechangedfiles
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
-withKeys :: CommandSeekStrings
-withKeys a params = return $ map a params
+withKeys :: CommandSeekKeys
+withKeys a params = return $ map a $ catMaybes $ map readKey params
 withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing

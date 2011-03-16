@@ -12,9 +12,6 @@ import System.Exit
 
 import Command
 import Content
-import qualified Backend
-import qualified BackendClass
-import Key
 
 command :: [Command]
 command = [Command "inannex" (paramRepeating paramKey) seek
@@ -23,14 +20,8 @@ command = [Command "inannex" (paramRepeating paramKey) seek
 seek :: [CommandSeek]
 seek = [withKeys start]
 
-start :: CommandStartString
-start keyname = do
-	backends <- Backend.list
-	let key = stubKey {
-		keyName = keyname,
-		keyBackendName = BackendClass.name (head backends)
-	}
-	error "BROKEN. fixme!"
+start :: CommandStartKey
+start key = do
 	present <- inAnnex key
 	if present
 		then return Nothing

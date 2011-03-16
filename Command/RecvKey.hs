@@ -12,10 +12,8 @@ import Control.Monad.State (liftIO)
 import System.Exit
 
 import Command
-import Types
 import CmdLine
 import Content
-import qualified Backend
 import RsyncFile
 
 command :: [Command]
@@ -25,12 +23,8 @@ command = [Command "recvkey" paramKey seek
 seek :: [CommandSeek]
 seek = [withKeys start]
 
-start :: CommandStartString
-start keyname = do
-	error "BROKEN FIXME!"
-	{-
-	backends <- Backend.list
-	let key = genKey (head backends) keyname
+start :: CommandStartKey
+start key = do
 	present <- inAnnex key
 	when present $
 		error "key is already present in annex"
@@ -43,4 +37,3 @@ start keyname = do
 			_ <- shutdown
 			liftIO exitSuccess
 		else liftIO exitFailure
-	-}

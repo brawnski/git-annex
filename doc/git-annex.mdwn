@@ -250,7 +250,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
   Example:
 
-	git annex dropkey --key=SHA1-s10-7da006579dd64330eb2456001fd01948430572f2
+	git annex dropkey SHA1-s10-7da006579dd64330eb2456001fd01948430572f2
 
 * setkey file
 

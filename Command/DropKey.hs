@@ -14,6 +14,7 @@ import LocationLog
 import Types
 import Content
 import Messages
+import Key
 
 command :: [Command]
 command = [Command "dropkey" (paramRepeating paramKey) seek
@@ -22,21 +23,16 @@ command = [Command "dropkey" (paramRepeating paramKey) seek
 seek :: [CommandSeek]
 seek = [withKeys start]
 
-{- Drops cached content for a key. -}
-start :: CommandStartString
-start keyname = do
-	backends <- Backend.list
-	let key = error "fixme!!"
-	--let key = genKey (head backends) keyname --TODO FIXME
-	let present  = error "fixme!!"
-	--present <- inAnnex key
+start :: CommandStartKey
+start key = do
+	present <- inAnnex key
 	force <- Annex.getState Annex.force
 	if not present
 		then return Nothing
 		else if not force
 			then error "dropkey is can cause data loss; use --force if you're sure you want to do this"
 			else do
-				showStart "dropkey" keyname
+				showStart "dropkey" (show key)
 				return $ Just $ perform key
 
 perform :: Key -> CommandPerform
