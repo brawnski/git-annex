@@ -21,21 +21,28 @@ currentVersion = "2"
 versionField :: String
 versionField = "annex.version"
 
-getVersion :: Annex (Maybe String)
+getVersion :: Annex String
 getVersion = do
 	g <- Annex.gitRepo
 	let v = Git.configGet g versionField ""
 	if not $ null v
-		then return $ Just v
+		then return v
 		else do
 			-- version 0 was not recorded in .git/config;
 			-- such a repo should have an gitAnnexDir but no
-			-- gitAnnexObjectDir
+			-- gitAnnexObjectDir.
+			--
+			-- version 1 may not be recorded if the user
+			-- forgot to init. Such a repo should have a
+			-- gitAnnexObjectDir already.
 			d <- liftIO $ doesDirectoryExist $ gitAnnexDir g
 			o <- liftIO $ doesDirectoryExist $ gitAnnexObjectDir g
-			if d && not o
-				then return $ Just "0"
-				else return Nothing -- no version yet
+			case (d, o) of
+				(True, False) -> return "0"
+				(True, True) -> return "1"
+				_ -> do
+					setVersion
+					return currentVersion
 
 setVersion :: Annex ()
 setVersion = Annex.setConfig versionField currentVersion

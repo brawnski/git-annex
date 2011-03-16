@@ -17,8 +17,7 @@ upgrade :: Annex Bool
 upgrade = do
 	version <- getVersion
 	case version of
-		Just "0" -> Upgrade.V0.upgrade
-		Just "1" -> Upgrade.V1.upgrade
-		Nothing -> return True -- repo not initted yet, no version
-		Just v | v == currentVersion -> return True
-		Just _ -> error "this version of git-annex is too old for this git repository!"
+		"0" -> Upgrade.V0.upgrade
+		"1" -> Upgrade.V1.upgrade
+		v | v == currentVersion -> return True
+		_ -> error "this version of git-annex is too old for this git repository!"
