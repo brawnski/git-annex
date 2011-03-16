@@ -17,10 +17,8 @@ import System.FilePath
 import Content
 import Types
 import Locations
-import qualified GitRepo as Git
 import qualified Annex
 import Messages
-import Utility
 import qualified Upgrade.V1
 
 upgrade :: Annex Bool
@@ -34,25 +32,10 @@ upgrade = do
 	forM_ keys $ \k -> moveAnnex k $ olddir </> keyFile0 k
 
 	-- update the symlinks to the key files
-	files <- liftIO $ Git.inRepo g [Git.workTree g]
-	fixlinks files
-	Annex.queueRun
+	-- No longer needed here; V1.upgrade does the same thing
 
 	-- Few people had v0 repos, so go the long way around from 0 -> 1 -> 2
 	Upgrade.V1.upgrade
-
-	where
-		fixlinks [] = return ()
-		fixlinks (f:fs) = do
-			r <- lookupFile0 f
-			case r of
-				Nothing -> return ()
-				Just (k, _) -> do
-					link <- calcGitLink f k
-					liftIO $ removeFile f
-					liftIO $ createSymbolicLink link f
-					Annex.queue "add" [Param "--"] f
-			fixlinks fs
 
 -- these stayed unchanged between v0 and v1
 keyFile0 :: Key -> FilePath

@@ -1,4 +1,4 @@
-git-annex (0.24) UNRELEASED; urgency=low
+git-annex (0.20110316) UNRELEASED; urgency=low
 
   * TODO: upgrade v1 -> v2
   * Reorganized annexed object store. annex.version=2

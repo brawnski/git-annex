@@ -21,78 +21,83 @@ import Content
 import Types
 import Locations
 import qualified Annex
+import qualified GitRepo as Git
 import Backend
 import Messages
 import Version
+import Utility
+	
+-- v2 adds hashing of filenames of content and location log files.
+-- Key information is encoded in filenames differently, so
+-- both content and location log files move around, and symlinks
+-- to content need to be changed.
+-- 
+-- When upgrading a v1 key to v2, file size metadata ought to be
+-- added to the key (unless it is a WORM key, which encoded
+-- mtime:size in v1). This can only be done when the file content
+-- is present. Since upgrades need to happen consistently, 
+-- (so that two repos get changed the same way by the upgrade, and
+-- will merge), that metadata cannot be added on upgrade.
+--
+-- Note that file size metadata
+-- will only be used for detecting situations where git-annex
+-- would run out of disk space, so if some keys don't have it,
+-- the impact is minor. At least initially. It could be used in the
+-- future by smart auto-repo balancing code, etc.
+--
+-- Anyway, since v2 plans ahead for other metadata being included
+-- in keys, there should probably be a way to update a key.
+-- Something similar to the migrate subcommand could be used,
+-- and users could then run that at their leisure.
 
 upgrade :: Annex Bool
 upgrade = do
 	showSideAction "Upgrading object directory layout v1 to v2..."
-	error "upgradeFrom1 TODO FIXME"
 
-	-- v2 adds hashing of filenames of content and location log files.
-	-- 
-	-- Key information is encoded in filenames differently.
-	-- 
-	-- When upgrading a v1 key to v2, file size metadata needs to be
-	-- added to the key (unless it is a WORM key, which encoded
-	-- mtime:size in v1). This can only be done when the file content
-	-- is present. 
-	--
-	-- So there are two approaches -- either upgrade
-	-- everything, leaving out file size information for files not
-	-- present in the current repo; or upgrade peicemeil, only
-	-- upgrading keys whose content is present.
-	--
-	-- The latter approach would mean that, until every clone of an
-	-- annex is upgraded, git annex would refuse to operate on annexed
-	-- files that had not yet been committed. Unless it were taught to
-	-- work with both v1 and v2 keys in the same repo.
-	--
-	-- Another problem with the latter approach might involve content
-	-- being moved between repos while the conversion is still
-	-- incomplete. If repo A has already upgraded, and B has not, and B
-	-- has K, moving K from B -> A would result in it lurking
-	-- unconverted on A. Unless A upgraded it in passing. But that's
-	-- getting really complex, and would mean a constant trickle of
-	-- upgrade commits, which users would find annoying.
-	--
-	-- So, the former option it is! Note that file size metadata
-	-- will only be used for detecting situations where git-annex
-	-- would run out of disk space, so if some keys don't have it,
-	-- the impact is small. At least initially. It could be used in the
-	-- future by smart auto-repo balancing code, etc.
-	--
-	-- Anyway, since v2 plans ahead for other metadata being included
-	-- in keys, there should probably be a way to update a key.
-	-- Something similar to the migrate subcommand could be used,
-	-- and users could then run that at their leisure. Or, this upgrade
-	-- could to that key update for all keys that have been converted
-	-- and have content in the repo.
-	
-	-- do the reorganisation of the log files
-	
-	-- do the reorganisation of the key files
-	g <- Annex.gitRepo
-	let olddir = gitAnnexDir g
-	keys <- getKeysPresent1
-	forM_ keys $ \k -> moveAnnex k $ olddir </> keyFile1 k
-	
-	-- update the symlinks to the key files
+	moveContent
+	updateSymlinks
+	moveLocationLogs
 
 	Annex.queueRun
-	
 	setVersion
-
 	return True
 
-keyFile1 :: Key -> FilePath
-keyFile1 key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a"  $ show key
+moveContent :: Annex ()
+moveContent = do
+	keys <- getKeysPresent1
+	forM_ keys move
+	where
+		move k = do
+			g <- Annex.gitRepo
+			let f = gitAnnexObjectDir g </> keyFile1 k </> keyFile1 k
+			let d = parentDir f
+			liftIO $ allowWrite d
+			liftIO $ allowWrite f
+			moveAnnex k f
+			liftIO $ removeDirectory d
 
-fileKey1 :: FilePath -> Key
-fileKey1 file = readKey1 $
-	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
+updateSymlinks :: Annex ()
+updateSymlinks = do
+	g <- Annex.gitRepo
+	files <- liftIO $ Git.inRepo g [Git.workTree g]
+	forM_ files $ fixlink
+	where
+		fixlink f = do
+			r <- lookupFile1 f
+			case r of
+				Nothing -> return ()
+				Just (k, _) -> do
+					link <- calcGitLink f k
+					liftIO $ removeFile f
+					liftIO $ createSymbolicLink link f
+					Annex.queue "add" [Param "--"] f
 
+moveLocationLogs :: Annex ()
+moveLocationLogs = do
+	warning "TODO location log move"
+
+-- WORM backend keys: "WORM:mtime:size:filename"
+-- all the rest: "backend:key"
 readKey1 :: String -> Key
 readKey1 v = Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t }
 	where
@@ -106,6 +111,23 @@ readKey1 v = Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t }
 			then Just (read (bits !! 2) :: Integer)
 			else Nothing
 		wormy = b == "WORM"
+
+showKey1 :: Key -> String
+showKey1 Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t } =
+	join ":" $ filter (not . null) [b, showifhere t, showifhere s, n]
+		where
+			showifhere Nothing = ""
+			showifhere (Just v) = show v
+
+keyFile1 :: Key -> FilePath
+keyFile1 key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a"  $ showKey1 key
+
+fileKey1 :: FilePath -> Key
+fileKey1 file = readKey1 $
+	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
+
+logFile1 :: Git.Repo -> Key -> String
+logFile1 repo key = gitStateDir repo ++ keyFile1 key ++ ".log"
 
 lookupFile1 :: FilePath -> Annex (Maybe (Key, Backend Annex))
 lookupFile1 file = do
