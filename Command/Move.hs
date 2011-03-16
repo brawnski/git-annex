@@ -20,7 +20,6 @@ import qualified Remotes
 import UUID
 import Messages
 import Utility
-import Key
 
 command :: [Command]
 command = [Command "move" paramPath seek
@@ -137,8 +136,7 @@ fromCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
 fromCleanup src True key = do
 	ok <- Remotes.onRemote src (boolSystem, False) "dropkey" 
 		[ Params "--quiet --force"
-		, Param $ "--backend=" ++ keyBackendName key
-		, Param $ keyName key
+		, Param $ show key
 		]
 	-- better safe than sorry: assume the src dropped the key
 	-- even if it seemed to fail; the failure could have occurred

@@ -121,9 +121,9 @@ test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	writeFile tmp $ content sha1annexedfile
 	r <- annexeval $ BackendClass.getKey backendSHA1 tmp
-	let sha1 = Key.keyName $ fromJust r
-	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
-	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
+	let key = show $ fromJust r
+	git_annex "setkey" ["-q", "--key", key, tmp] @? "setkey failed"
+	git_annex "fromkey" ["-q", "--key", key, sha1annexedfile] @? "fromkey failed"
 	Utility.boolSystem "git" [Utility.Params "commit -q -a -m commit"] @? "git commit failed"
 	annexed_present sha1annexedfile
 	where
@@ -439,7 +439,7 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	checkunused [annexedfilekey, sha1annexedfilekey]
 
 	-- good opportunity to test dropkey also
-	git_annex "dropkey" ["-q", "--force", Key.keyName annexedfilekey]
+	git_annex "dropkey" ["-q", "--force", show annexedfilekey]
 		@? "dropkey failed"
 	checkunused [sha1annexedfilekey]
 
