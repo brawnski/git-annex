@@ -28,6 +28,25 @@ import Foreign.C
 
 data TimeSpec = TimeSpec CTime CLong
 
+touch :: FilePath -> TimeSpec -> Bool -> IO ()
+touch file mtime follow = touchBoth file omitTime mtime follow
+
+touchBoth :: FilePath -> TimeSpec -> TimeSpec -> Bool -> IO ()
+
+omitTime :: TimeSpec
+nowTime :: TimeSpec
+
+#if (defined UTIME_OMIT && defined UTIME_NOW && defined AT_FDCWD && defined AT_SYMLINK_NOFOLLOW)
+
+at_fdcwd :: CInt
+at_fdcwd = #const AT_FDCWD
+
+at_symlink_nofollow :: CInt
+at_symlink_nofollow = #const AT_SYMLINK_NOFOLLOW
+
+omitTime = TimeSpec 0 #const UTIME_OMIT
+nowTime = TimeSpec 0 #const UTIME_NOW
+
 instance Storable TimeSpec where
 	-- use the larger alignment of the two types in the struct
 	alignment _ = max sec_alignment nsec_alignment
@@ -43,12 +62,6 @@ instance Storable TimeSpec where
 		#{poke struct timespec, tv_sec} ptr sec
 		#{poke struct timespec, tv_nsec} ptr nsec
 
-{- special timespecs -}
-omitTime :: TimeSpec
-omitTime = TimeSpec 0 #const UTIME_OMIT
-nowTime :: TimeSpec
-nowTime = TimeSpec 0 #const UTIME_NOW
-
 {- While its interface is beastly, utimensat is in recent
    POSIX standards, unlike futimes. -}
 foreign import ccall "utimensat" 
@@ -56,7 +69,6 @@ foreign import ccall "utimensat"
 
 {- Changes the access and/or modification times of an existing file.
    Can follow symlinks, or not. Throws IO error on failure. -}
-touchBoth :: FilePath -> TimeSpec -> TimeSpec -> Bool -> IO ()
 touchBoth file atime mtime follow = 
 	allocaArray 2 $ \ptr ->
 	withCString file $ \f -> do
@@ -66,12 +78,13 @@ touchBoth file atime mtime follow =
 			then throwErrno "touchBoth"
 			else return ()
 	where
-		at_fdcwd = #const AT_FDCWD
-		at_symlink_nofollow = #const AT_SYMLINK_NOFOLLOW
-
 		flags = if follow
 			then 0
 			else at_symlink_nofollow 
 
-touch :: FilePath -> TimeSpec -> Bool -> IO ()
-touch file mtime follow = touchBoth file omitTime mtime follow
+#else
+#warning "utimensat not available; building without symlink timestamp preservation support"
+omitTime = TimeSpec 0 (-1)
+nowTime = TimeSpec 0 (-2)
+touchBoth _ _ _ _ = return ()
+#endif
