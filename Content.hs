@@ -161,13 +161,21 @@ getKeysPresent' dir = do
 	if (not exists)
 		then return []
 		else do
-			contents <- liftIO $ getDirectoryContents dir
-			files <- liftIO $ filterM present contents
-			return $ catMaybes $ map fileKey files
+			-- 2 levels of hashing
+			levela <- liftIO $ subdirContent dir
+			levelb <- liftIO $ mapM subdirContent levela
+			contents <- liftIO $ mapM subdirContent (concat levelb)
+			files <- liftIO $ filterM present (concat contents)
+			return $ catMaybes $ map (fileKey . takeFileName) files
 	where
 		present d = do
 			result <- try $
-				getFileStatus $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
+				getFileStatus $ d </> takeFileName d
+			liftIO $ putStrLn $ "trying " ++ (d </> takeFileName d)
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
+		subdirContent d = do
+			c <- getDirectoryContents d
+			return $ map (d </>) $ filter notcruft c
+		notcruft f = f /= "." && f /= ".."
