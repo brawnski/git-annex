@@ -35,7 +35,7 @@ Example upgrade process:
 	git pull
 	git annex upgrade
 	(Upgrading object directory layout v1 to v2...)
-	git commit -a -m "upgrade v1 to v2"
+	git commit -m "upgrade v1 to v2"
 	git push
 
 	ssh remote
