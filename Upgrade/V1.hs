@@ -57,17 +57,21 @@ upgrade :: Annex Bool
 upgrade = do
 	showSideAction "Upgrading object directory layout v1 to v2..."
 
-	moveContent
-	updateSymlinks
-	moveLocationLogs
+	g <- Annex.gitRepo
+	if Git.repoIsLocalBare g
+		then do
+			moveContent
+		else do
+			moveContent
+			updateSymlinks
+			moveLocationLogs
+	
+			-- add new line to auto-merge hashed location logs
+			-- this commits, so has to come after the upgrade
+			g <- Annex.gitRepo
+			liftIO $ Command.Init.gitAttributesWrite g
 
 	setVersion
-	
-	-- add new line to auto-merge hashed location logs
-	-- this commits, so has to come after the upgrade
-	g <- Annex.gitRepo
-	liftIO $ Command.Init.gitAttributesWrite g
-
 	return True
 
 moveContent :: Annex ()
