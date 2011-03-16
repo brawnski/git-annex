@@ -13,6 +13,15 @@ git-annex (0.20110316) experimental; urgency=low
     directory would contain fewer than 1024 files.)
   * The setkey, fromkey, and dropkey subcommands have changed how
     the key is specified. --backend is no longer used with these.
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 16 Mar 2011 16:20:23 -0400
+
+git-annex (0.24) unstable; urgency=low
+
+  Branched the 0.24 series, which will be maintained for a while to
+  support v1 git-annex repos, while main development moves to the 0.2011
+  series, with v2 git-annex repos.
+
   * Add Suggests on graphviz. Closes: #618039
   * When adding files to the annex, the symlinks pointing at the annexed
     content are made to have the same mtime as the original file.
@@ -20,7 +29,7 @@ git-annex (0.20110316) experimental; urgency=low
     like metastore to be used with annexed files.
     (Currently this is only done on systems supporting POSIX 200809.)
 
- -- Joey Hess <joeyh@debian.org>  Wed, 16 Mar 2011 16:20:23 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 16 Mar 2011 18:35:13 -0400
 
 git-annex (0.23) unstable; urgency=low
 
