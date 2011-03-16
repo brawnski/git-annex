@@ -1,5 +1,6 @@
 git-annex (0.24) UNRELEASED; urgency=low
 
+  * TODO: upgrade v1 -> v2
   * Reorganized annexed object store. annex.version=2
   * Colons are now avoided in filenames, so bare clones of git repos
     can be put on USB thumb drives formatted with vFAT or similar
