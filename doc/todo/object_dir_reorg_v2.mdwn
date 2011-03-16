@@ -19,3 +19,7 @@ all users, so this should be the *last* reorg in the forseeable future.
    (Probably everything after ",k" should be part of the key, even if it
    contains the "," separator character. Otherwise an escaping mechanism
    would be needed.)
+
+[[done]] now! 
+
+Although [[bugs/free_space_checking]] is not quite there --[[Joey]] 
