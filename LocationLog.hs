@@ -123,11 +123,6 @@ logNow s u = do
 	now <- getPOSIXTime
 	return $ LogLine now s u
 
-{- Returns the filename of the log file for a given key. -}
-logFile :: Git.Repo -> Key -> String
-logFile repo key = 
-	gitStateDir repo ++ keyFile key ++ ".log"
-
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
 keyLocations :: Git.Repo -> Key -> IO [UUID]

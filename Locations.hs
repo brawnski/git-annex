@@ -19,6 +19,7 @@ module Locations (
 	gitAnnexBadDir,
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
+	logFile,
 
 	prop_idempotent_fileKey
 ) where
@@ -66,7 +67,7 @@ objectDir = addTrailingPathSeparator $ annexDir </> "objects"
 
 {- Annexed file's location relative to the .git directory. -}
 annexLocation :: Key -> FilePath
-annexLocation key = objectDir </> f </> f
+annexLocation key = objectDir </> hashDir key </> f </> f
 	where
 		f = keyFile key
 
@@ -109,6 +110,11 @@ gitAnnexUnusedLog r = gitAnnexDir r </> "unused"
 isLinkToAnnex :: FilePath -> Bool
 isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
 
+{- The filename of the log file for a given key. -}
+logFile :: Git.Repo -> Key -> String
+logFile repo key = 
+	gitStateDir repo ++ hashDir key ++ keyFile key ++ ".log"
+
 {- Converts a key into a filename fragment.
  -
  - Escape "/" in the key name, to keep a flat tree of files and avoid
@@ -137,11 +143,13 @@ prop_idempotent_fileKey :: String -> Bool
 prop_idempotent_fileKey s = Just k == fileKey (keyFile k)
 	where k = stubKey { keyName = s, keyBackendName = "test" }
 
-{- Given a filename, generates a short directory name to put it in,
+{- Given a key, generates a short directory name to put it in,
  - to do hashing to protect against filesystems that dislike having
  - many items in a single directory. -}
-hashDir :: FilePath -> FilePath
-hashDir s = take 2 $ abcd_to_dir $ md5 (Str s)
+hashDir :: Key -> FilePath
+hashDir k = addTrailingPathSeparator $ take 2 dir </> drop 2 dir
+	where
+		dir = take 4 $ abcd_to_dir $ md5 $ Str $ show k
 
 abcd_to_dir :: ABCD -> String
 abcd_to_dir (ABCD (a,b,c,d)) = concat $ map display_32bits_as_dir [a,b,c,d]
