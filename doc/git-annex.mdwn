@@ -261,6 +261,12 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 	git annex setkey --key=WORM-s3-m1287765018--file /tmp/file
 
+* upgrade
+
+  Upgrades the repository to current layout. Upgrades are done automatically
+  whenever a newer git annex encounters an old repository; this command
+  allows explcitly starting an upgrade.
+
 # OPTIONS
 
 * --force

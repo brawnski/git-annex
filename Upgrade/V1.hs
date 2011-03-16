@@ -104,7 +104,7 @@ updateSymlinks = do
 					liftIO $ removeFile f
 					liftIO $ createSymbolicLink link f
 					Annex.queue "add" [Param "--"] f
-					Annex.queueRunAt 1024
+					Annex.queueRunAt 10240
 
 moveLocationLogs :: Annex ()
 moveLocationLogs = do
@@ -132,7 +132,7 @@ moveLocationLogs = do
 				Annex.queue "add" [Param "--"] dest
 				Annex.queue "add" [Param "--"] f
 				Annex.queue "rm" [Param "--quiet", Param "-f", Param "--"] f
-				Annex.queueRunAt 1024
+				Annex.queueRunAt 10240
 		
 oldlog2key :: FilePath -> Maybe (FilePath, Key)
 oldlog2key l = 
