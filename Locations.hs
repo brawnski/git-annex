@@ -118,15 +118,19 @@ isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
  -     a slash
  - "%" is escaped to "&s", and "&" to "&a"; this ensures that the mapping
  -     is one to one.
+ - ":" is escaped to "&c", because despite it being 2011, people still care
+ -     about FAT.
  - -}
 keyFile :: Key -> FilePath
-keyFile key = replace "/" "%" $ replace "%" "&s" $ replace "&" "&a"  $ show key
+keyFile key = replace "/" "%" $ replace ":" "&c" $
+	replace "%" "&s" $ replace "&" "&a"  $ show key
 
 {- Reverses keyFile, converting a filename fragment (ie, the basename of
  - the symlink target) into a key. -}
 fileKey :: FilePath -> Maybe Key
 fileKey file = readKey $
-	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
+	replace "&a" "&" $ replace "&s" "%" $
+		replace "&c" ":" $ replace "%" "/" file
 
 {- for quickcheck -}
 prop_idempotent_fileKey :: String -> Bool
