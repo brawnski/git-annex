@@ -1,0 +1,11 @@
+git-annex (0.20110316) unstable; urgency=low
+
+  This version reorganises the layout of git-annex's files in your repository.
+  There is an upgrade process to convert a repository from the old git-annex
+  to this version. While git-annex will attempt to transparently handle
+  upgrades, you may want to drive the upgrade process by hand.
+
+  See <http://git-annex.branchable.com/upgrades/> or
+  /usr/share/doc/git-annex/html/upgrades.html
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 16 Mar 2011 15:49:15 -0400
