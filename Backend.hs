@@ -27,7 +27,8 @@ module Backend (
 	lookupFile,
 	chooseBackends,
 	keyBackend,
-	lookupBackendName
+	lookupBackendName,
+	maybeLookupBackendName
 ) where
 
 import Control.Monad.State
