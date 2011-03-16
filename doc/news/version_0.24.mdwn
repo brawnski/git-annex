@@ -1,11 +1,12 @@
+Branched the 0.24 series, which will be maintained for a while to
+support v1 git-annex repos, while main development moves to the 0.2011
+series, with v2 git-annex repos.
+
 git-annex 0.24 released with [[!toggle text="these changes"]]
 [[!toggleable text="""
-   Branched the 0.24 series, which will be maintained for a while to
-   support v1 git-annex repos, while main development moves to the 0.2011
-   series, with v2 git-annex repos.
-   * Add Suggests on graphviz. Closes: #[618039](http://bugs.debian.org/618039)
-   * When adding files to the annex, the symlinks pointing at the annexed
-     content are made to have the same mtime as the original file.
-     While git does not preserve that information, this allows a tool
-     like metastore to be used with annexed files.
-     (Currently this is only done on systems supporting POSIX 200809.)"""]]
+* Add Suggests on graphviz. Closes: #[618039](http://bugs.debian.org/618039)
+* When adding files to the annex, the symlinks pointing at the annexed
+  content are made to have the same mtime as the original file.
+  While git does not preserve that information, this allows a tool
+  like metastore to be used with annexed files.
+  (Currently this is only done on systems supporting POSIX 200809.)"""]]
