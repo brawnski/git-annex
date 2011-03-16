@@ -31,9 +31,15 @@ upgrade = do
 	version <- getVersion
 	case version of
 		Just "0" -> upgradeFrom0
+		Just "1" -> upgradeFrom1
 		Nothing -> return True -- repo not initted yet, no version
 		Just v | v == currentVersion -> return True
 		Just _ -> error "this version of git-annex is too old for this git repository!"
+
+upgradeFrom1 :: Annex Bool
+upgradeFrom1 = do
+	showSideAction "Upgrading object directory layout..."
+	error "upgradeFrom1 TODO FIXME"
 
 upgradeFrom0 :: Annex Bool
 upgradeFrom0 = do

@@ -16,7 +16,7 @@ import qualified GitRepo as Git
 import Locations
 
 currentVersion :: String
-currentVersion = "1"
+currentVersion = "2"
 
 versionField :: String
 versionField = "annex.version"
