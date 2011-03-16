@@ -13,7 +13,7 @@ import System.Exit
 import Command
 import Content
 import qualified Backend
-import qualified BackendTypes
+import qualified BackendClass
 import Key
 
 command :: [Command]
@@ -28,7 +28,7 @@ start keyname = do
 	backends <- Backend.list
 	let key = stubKey {
 		keyName = keyname,
-		keyBackendName = BackendTypes.name (head backends)
+		keyBackendName = BackendClass.name (head backends)
 	}
 	error "BROKEN. fixme!"
 	present <- inAnnex key

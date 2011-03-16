@@ -14,7 +14,7 @@ import System.Directory
 import Data.Maybe
 
 import qualified Backend.File
-import BackendTypes
+import BackendClass
 import Locations
 import qualified Annex
 import Content

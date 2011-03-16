@@ -16,7 +16,7 @@ import Data.Maybe
 import System.Posix.Files
 
 import qualified Backend.File
-import BackendTypes
+import BackendClass
 import Messages
 import qualified Annex
 import Locations

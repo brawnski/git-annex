@@ -29,7 +29,7 @@ import qualified Backend
 import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
-import qualified BackendTypes
+import qualified BackendClass
 import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
@@ -120,8 +120,8 @@ test_add = "git-annex add" ~: TestList [basic, sha1dup]
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	writeFile tmp $ content sha1annexedfile
-	r <- annexeval $ BackendTypes.getKey backendSHA1 tmp
-	let sha1 = BackendTypes.keyName $ fromJust r
+	r <- annexeval $ BackendClass.getKey backendSHA1 tmp
+	let sha1 = Key.keyName $ fromJust r
 	git_annex "setkey" ["-q", "--backend", "SHA1", "--key", sha1, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--backend", "SHA1", "--key", sha1, sha1annexedfile] @? "fromkey failed"
 	Utility.boolSystem "git" [Utility.Params "commit -q -a -m commit"] @? "git commit failed"
@@ -439,7 +439,7 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	checkunused [annexedfilekey, sha1annexedfilekey]
 
 	-- good opportunity to test dropkey also
-	git_annex "dropkey" ["-q", "--force", BackendTypes.keyName annexedfilekey]
+	git_annex "dropkey" ["-q", "--force", Key.keyName annexedfilekey]
 		@? "dropkey failed"
 	checkunused [sha1annexedfilekey]
 

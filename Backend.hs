@@ -40,7 +40,7 @@ import qualified GitRepo as Git
 import qualified Annex
 import Types
 import Key
-import qualified BackendTypes as B
+import qualified BackendClass as B
 import Messages
 
 {- List of backends in the order to try them when storing a new key. -}

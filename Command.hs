@@ -17,7 +17,7 @@ import Data.List
 
 import Types
 import qualified Backend
-import qualified BackendTypes
+import qualified BackendClass
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
@@ -237,7 +237,7 @@ cmdlineKey  = do
 	backends <- Backend.list
 	return $ stubKey {
 		keyName = kname k,
-		keyBackendName = BackendTypes.name $ head backends
+		keyBackendName = BackendClass.name $ head backends
 	}
 	where
 		kname Nothing = badkey

@@ -18,7 +18,7 @@ import Control.Monad.State
 import System.Directory
 import Data.List
 
-import BackendTypes
+import BackendClass
 import LocationLog
 import Locations
 import qualified Remotes

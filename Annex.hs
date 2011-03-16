@@ -25,7 +25,7 @@ import Data.Maybe
 
 import qualified GitRepo as Git
 import qualified GitQueue
-import qualified BackendTypes
+import qualified BackendClass
 import Utility
 
 -- git-annex's monad
@@ -34,8 +34,8 @@ type Annex = StateT AnnexState IO
 -- internal state storage
 data AnnexState = AnnexState
 	{ repo :: Git.Repo
-	, backends :: [BackendTypes.Backend Annex]
-	, supportedBackends :: [BackendTypes.Backend Annex]
+	, backends :: [BackendClass.Backend Annex]
+	, supportedBackends :: [BackendClass.Backend Annex]
 	, repoqueue :: GitQueue.Queue
 	, quiet :: Bool
 	, force :: Bool
@@ -47,7 +47,7 @@ data AnnexState = AnnexState
 	, remotesread :: Bool
 	} deriving (Show)
 
-newState :: Git.Repo -> [BackendTypes.Backend Annex] -> AnnexState
+newState :: Git.Repo -> [BackendClass.Backend Annex] -> AnnexState
 newState gitrepo allbackends = AnnexState
 	{ repo = gitrepo
 	, backends = []
@@ -64,7 +64,7 @@ newState gitrepo allbackends = AnnexState
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [BackendTypes.Backend Annex] -> IO AnnexState
+new :: Git.Repo -> [BackendClass.Backend Annex] -> IO AnnexState
 new gitrepo allbackends = do
 	gitrepo' <- liftIO $ Git.configRead gitrepo
 	return $ newState gitrepo' allbackends

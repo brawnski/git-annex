@@ -76,11 +76,10 @@ instance Arbitrary Key where
 	arbitrary = do
 		n <- arbitrary
 		b <- elements ['A'..'Z']
-		s <- arbitrary
 		return $ Key {
 			keyName = n,
 			keyBackendName = [b],
-			keySize = s,
+			keySize = Nothing,
 			keyMtime = Nothing
 		}
 
