@@ -9,6 +9,7 @@ module GitQueue (
 	Queue,
 	empty,
 	add,
+	size,
 	run
 ) where
 
@@ -31,22 +32,28 @@ data Action = Action {
 {- A queue of actions to perform (in any order) on a git repository,
  - with lists of files to perform them on. This allows coalescing 
  - similar git commands. -}
-type Queue = M.Map Action [FilePath]
+data Queue = Queue Integer (M.Map Action [FilePath])
+	deriving (Show, Eq)
 
 {- Constructor for empty queue. -}
 empty :: Queue
-empty = M.empty
+empty = Queue 0 M.empty
 
 {- Adds an action to a queue. -}
 add :: Queue -> String -> [CommandParam] -> FilePath -> Queue
-add queue subcommand params file = M.insertWith (++) action [file] queue
+add (Queue n m) subcommand params file = Queue (n + 1) m'
 	where
 		action = Action subcommand params
+		m' = M.insertWith' (++) action [file] m
+
+{- Number of items in a queue. -}
+size :: Queue -> Integer
+size (Queue n _) = n
 
 {- Runs a queue on a git repository. -}
 run :: Git.Repo -> Queue -> IO ()
-run repo queue = do
-	forM_ (M.toList queue) $ uncurry $ runAction repo
+run repo (Queue _ m) = do
+	forM_ (M.toList m) $ uncurry $ runAction repo
 	return ()
 
 {- Runs an Action on a list of files in a git repository.

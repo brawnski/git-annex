@@ -66,9 +66,10 @@ upgrade = do
 			updateSymlinks
 			moveLocationLogs
 	
+			Annex.queueRun
+
 			-- add new line to auto-merge hashed location logs
 			-- this commits, so has to come after the upgrade
-			g <- Annex.gitRepo
 			liftIO $ Command.Init.gitAttributesWrite g
 
 	setVersion
@@ -92,18 +93,18 @@ updateSymlinks :: Annex ()
 updateSymlinks = do
 	g <- Annex.gitRepo
 	files <- liftIO $ Git.inRepo g [Git.workTree g]
-	forM_ files $ (fixlink g)
+	forM_ files $ fixlink
 	where
-		fixlink g f = do
+		fixlink f = do
 			r <- lookupFile1 f
 			case r of
 				Nothing -> return ()
 				Just (k, _) -> do
 					link <- calcGitLink f k
-					liftIO $ do
-						removeFile f
-						createSymbolicLink link f
-						Git.run g "add" [Param "--", File f]
+					liftIO $ removeFile f
+					liftIO $ createSymbolicLink link f
+					Annex.queue "add" [Param "--"] f
+					Annex.queueRunAt 1024
 
 moveLocationLogs :: Annex ()
 moveLocationLogs = do
@@ -127,11 +128,11 @@ moveLocationLogs = do
 				-- logs that have been pulled from elsewhere
 				old <- liftIO $ readLog f
 				new <- liftIO $ readLog dest
-				liftIO $ do
-					writeLog dest (old++new)
-					Git.run g "add" [Param "--", File dest]
-					Git.run g "add" [Param "--", File f]
-					Git.run g "rm" [Param "--quiet", Param "-f", Param "--", File f]
+				liftIO $ writeLog dest (old++new)
+				Annex.queue "add" [Param "--"] dest
+				Annex.queue "add" [Param "--"] f
+				Annex.queue "rm" [Param "--quiet", Param "-f", Param "--"] f
+				Annex.queueRunAt 1024
 		
 oldlog2key :: FilePath -> Maybe (FilePath, Key)
 oldlog2key l = 

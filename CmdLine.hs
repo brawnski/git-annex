@@ -99,7 +99,7 @@ startup = do
 shutdown :: Annex Bool
 shutdown = do
 	q <- Annex.getState Annex.repoqueue
-	unless (q == GitQueue.empty) $ do
+	unless (0 == GitQueue.size q) $ do
 		showSideAction "Recording state in git..."
 		Annex.queueRun
 

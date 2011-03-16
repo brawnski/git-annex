@@ -16,6 +16,7 @@ module Annex (
 	gitRepo,
 	queue,
 	queueRun,
+	queueRunAt,
 	setConfig,
 	repoConfig
 ) where
@@ -108,6 +109,13 @@ queueRun = do
 	g <- gitRepo
 	liftIO $ GitQueue.run g q
 	put state { repoqueue = GitQueue.empty }
+
+{- Runs the queue if the specified number of items have been queued. -}
+queueRunAt :: Integer -> Annex ()
+queueRunAt n = do
+	state <- get
+	let q = repoqueue state
+	when (GitQueue.size q >= n) queueRun
 
 {- Changes a git config setting in both internal state and .git/config -}
 setConfig :: String -> String -> Annex ()
