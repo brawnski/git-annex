@@ -61,18 +61,19 @@ upgrade = do
 	if Git.repoIsLocalBare g
 		then do
 			moveContent
+			setVersion
 		else do
 			moveContent
 			updateSymlinks
 			moveLocationLogs
 	
 			Annex.queueRun
+			setVersion
 
 			-- add new line to auto-merge hashed location logs
 			-- this commits, so has to come after the upgrade
 			liftIO $ Command.Init.gitAttributesWrite g
 
-	setVersion
 	return True
 
 moveContent :: Annex ()
