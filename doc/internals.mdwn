@@ -2,11 +2,14 @@ In the world of git, we're not scared about internal implementation
 details, and sometimes we like to dive in and tweak things by hand. Here's
 some documentation to that end.
 
-## `.git/annex/objects/*/*`
+## `.git/annex/objects/aa/bb/*/*`
 
 This is where locally available file contents are actually stored.
 Files added to the annex get a symlink checked into git that points
 to the file content.
+
+First there are two levels of directories used for hashing, to prevent
+too many things ending up in any one directory.
 
 Each subdirectory has the name of a key in one of the
 [[key-value_backends|backends]]. The file inside also has the name of the key.
@@ -41,10 +44,11 @@ Example:
 	e605dca6-446a-11e0-8b2a-002170d25c55 1
 	26339d22-446b-11e0-9101-002170d25c55 ?
 
-## `.git-annex/*.log`
+## `.git-annex/aa/bb/*.log`
 
 The remainder of the log files record [[location_tracking]] information
-for file contents. The name of the key is the filename, and the content
+for file contents. Again these are placed in two levels of subdirectories
+for hashing. The name of the key is the filename, and the content
 consists of a timestamp, either 1 (present) or 0 (not present), and
 the UUID of the repository that has or lacks the file content.
 

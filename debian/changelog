@@ -1,6 +1,13 @@
 git-annex (0.24) UNRELEASED; urgency=low
 
   * Reorganized annexed object store. annex.version=2
+  * Colons are now avoided in filenames, so bare clones of git repos
+    can be put on USB thumb drives formatted with vFAT or similar
+    filesystems.
+  * Added two levels of hashing to object directory and .git-annex logs,
+    to improve scalability with enormous numbers of annexed
+    objects. (With one hundred million annexed objects, each
+    directory would contain fewer than 1024 files.)
   * The setkey, fromkey, and dropkey subcommands have changed how
     the key is specified. --backend is no longer used with these.
   * Add Suggests on graphviz. Closes: #618039

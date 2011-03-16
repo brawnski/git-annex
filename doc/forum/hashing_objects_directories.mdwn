@@ -17,3 +17,11 @@ or anything in between to a paranoid
 Also the use of a colon specifically breaks FAT32 ([[bugs/fat_support]]), must it be a colon or could an extra directory be used? i.e. `.git/annex/objects/SHA1/*/...`
 
 `git annex init` could also create all but the last level directory on initialization. I'm thinking `SHA1/1/1, SHA1/1/2, ..., SHA256/f/f, ..., URL/f/f, ..., WORM/f/f`
+
+> This is done now with a 2-level hash. It also hashes .git-annex/ log
+> files which were the worse problem really. Scales to hundreds of millions
+> of files with each dir having 1024 or fewer contents. Example:
+>
+> `me -> .git/annex/objects/71/9t/WORM-s3-m1300247299--me/WORM-s3-m1300247299--me`
+>
+> --[[Joey]]
