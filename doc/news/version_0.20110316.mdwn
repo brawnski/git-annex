@@ -1,11 +1,8 @@
-News for git-annex 0.20110316:
-
-   This version reorganises the layout of git-annex's files in your repository.
-   There is an upgrade process to convert a repository from the old git-annex
-   to this version. While git-annex will attempt to transparently handle
-   upgrades, you may want to drive the upgrade process by hand.
-   See &lt;http://git-annex.branchable.com/upgrades/&gt; or
-   /usr/share/doc/git-annex/html/upgrades.html
+This version reorganises the layout of git-annex's files in your repository.
+There is an upgrade process to convert a repository from the old git-annex
+to this version. While git-annex will attempt to transparently handle
+upgrades, you may want to drive the upgrade process by hand.
+See [[upgrades]] for details.
 
 git-annex 0.20110316 released with [[!toggle text="these changes"]]
 [[!toggleable text="""
