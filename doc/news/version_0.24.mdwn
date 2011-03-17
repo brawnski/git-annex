@@ -1,6 +1,6 @@
-Branched the 0.24 series, which will be maintained for a while to
-support v1 git-annex repos, while main development moves to the 0.2011
-series, with v2 git-annex repos.
+Branched the 0.24 series, which will be maintained for a while (in the
+stable branch in git) to support v1 git-annex repos, while main development
+moves to the 0.2011 series, with v2 git-annex repos.
 
 git-annex 0.24 released with [[!toggle text="these changes"]]
 [[!toggleable text="""
