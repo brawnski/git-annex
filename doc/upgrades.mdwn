@@ -58,10 +58,10 @@ Handled transparently.
 
 ### v0 -> v1 (git-annex version 0.03 to version 0.04)
 
-Involved a reogranisation of the layout of .git/annex/. Symlinks changed.
+Involved a reorganisation of the layout of .git/annex/. Symlinks changed.
 
 Handled more or less transparently, although git-annex was just 2 weeks
 old at the time, and had few users other than Joey.
 
-This upgrade is belived to still be supported, but has not been tested
+This upgrade is believed to still be supported, but has not been tested
 lately.
