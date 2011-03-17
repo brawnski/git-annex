@@ -1,3 +1,9 @@
+git-annex (0.20110317) UNRELEASED; urgency=low
+
+  * Fix dropping of files using the URL backend.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 17 Mar 2011 11:46:53 -0400
+
 git-annex (0.20110316) experimental; urgency=low
 
   * New repository format, annex.version=2.

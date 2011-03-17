@@ -9,3 +9,5 @@ git-annex: 1 failed
 </pre>
 
 At first I thought it was just my OSX machine not having the coreutils stuff load up before the BSD utils, but I then tried the same thing on my archlinux machine and it showed the same behaviour, that is I could not drop a file with the URL backend as shown in the walkthrough.
+
+> Whoops, got some logic backwards. [[fixed|done]]! --[[Joey]] 
