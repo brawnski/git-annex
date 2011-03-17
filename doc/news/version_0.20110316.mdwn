@@ -1,0 +1,24 @@
+News for git-annex 0.20110316:
+
+   This version reorganises the layout of git-annex's files in your repository.
+   There is an upgrade process to convert a repository from the old git-annex
+   to this version. While git-annex will attempt to transparently handle
+   upgrades, you may want to drive the upgrade process by hand.
+   See &lt;http://git-annex.branchable.com/upgrades/&gt; or
+   /usr/share/doc/git-annex/html/upgrades.html
+
+git-annex 0.20110316 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * New repository format, annex.version=2.
+   * The first time git-annex is run in an old format repository, it
+     will automatically upgrade it to the new format, staging all
+     necessary changes to git. Also added a "git annex upgrade" command.
+   * Colons are now avoided in filenames, so bare clones of git repos
+     can be put on USB thumb drives formatted with vFAT or similar
+     filesystems.
+   * Added two levels of hashing to object directory and .git-annex logs,
+     to improve scalability with enormous numbers of annexed
+     objects. (With one hundred million annexed objects, each
+     directory would contain fewer than 1024 files.)
+   * The setkey, fromkey, and dropkey subcommands have changed how
+     the key is specified. --backend is no longer used with these."""]]
