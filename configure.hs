@@ -13,6 +13,7 @@ tests = [
 	, TestCase "uuid generator" $ selectCmd "uuid" ["uuid", "uuidgen"]
 	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0 </dev/null"
 	, TestCase "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
+	, TestCase "curl" $ testCmd "curl" "curl --version >/dev/null"
 	, TestCase "unicode FilePath support" $ unicodeFilePath
 	] ++ shaTestCases [1, 256, 512, 224, 384]
 

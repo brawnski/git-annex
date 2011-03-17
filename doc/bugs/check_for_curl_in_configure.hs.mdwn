@@ -14,7 +14,20 @@ index 772ba54..1a563e0 100644
         ] ++ shaTestCases [1, 256, 512, 224, 384]
 </pre>
 
+> Well, curl is an optional extra, so requireCmd is too strong. Changed
+> to testCmd and applied, thank you!
+>
+> I thought about actually *using* the resulting SysConfig.curl
+> to disable the URL backend if False.. but probably it's better
+> to just let it fail if curl is not available. Although, if we wanted
+> to add a check for wget or something and use it when curl was not
+> available, that might be worth doing. --[[Joey]] 
+
 also in Backend/URL.hs is it worth making a minor change to the way curl is called (I'm not sure if the following is correct or not)
+
+> It's correct, typewise, but I don't see any real reason to bother
+> with the change. But I do appreciate patches, which have been rare
+> so far, probaby because of Haskell.. :) --[[Joey]] 
 
 <pre>
 diff --git a/Backend/URL.hs b/Backend/URL.hs
