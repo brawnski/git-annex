@@ -23,11 +23,22 @@ index 772ba54..1a563e0 100644
 > to add a check for wget or something and use it when curl was not
 > available, that might be worth doing. --[[Joey]] 
 
+>> I was thinking that is it worth doing a generic "stat", "delete", "get" 
+>> and "put" options, I do like the idea of having the possibility of 
+>> being about to use completely arbitrary storage systems or arbitrary 
+>> transfer systems. If there was the capability of doing so it would be 
+>> interesting to see possibilities of using aria2 for using something 
+>> like bittorrent as backend, or using something like irods or some 
+>> grid storage system as the storage archive. It's just an idea as 
+>> I have seen it implemented quite well in irods.
+
 also in Backend/URL.hs is it worth making a minor change to the way curl is called (I'm not sure if the following is correct or not)
 
 > It's correct, typewise, but I don't see any real reason to bother
 > with the change. But I do appreciate patches, which have been rare
 > so far, probaby because of Haskell.. :) --[[Joey]] 
+
+>> heh agreed
 
 <pre>
 diff --git a/Backend/URL.hs b/Backend/URL.hs
