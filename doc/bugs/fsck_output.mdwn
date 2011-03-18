@@ -1,16 +1,28 @@
 When you check several files and the fsck fails, you get confusing output:
 
 <pre>
-fsck test1 (checksum...) 
-  Only 1 of 2 trustworthy copies of test1 exist.
-  Back it up with git-annex copy.
-
-failed
-fsck test2 (checksum...) 
-  Only 1 of 2 trustworthy copies of test2 exist.
-  Back it up with git-annex copy.
-
-failed
+O fsck test1 (checksum...) 
+E  Only 1 of 2 trustworthy copies of test1 exist.
+E  Back it up with git-annex copy.
+O
+O failed
+O fsck test2 (checksum...) 
+E  Only 1 of 2 trustworthy copies of test2 exist.
+E  Back it up with git-annex copy.
+O 
+O failed
 </pre>
 
 The newline is in the wrong place and confuses the user. It should be printed _after_ "failed".
+
+> This is a consequence of part of the output being printed to stderr, and
+> part to stdout. I've marked the lines above with E and O.
+> 
+> Normally a "failed" is preceeded by a message output to stdout desribing
+> the problem; such a message will not be "\n" terminated, so a newline
+> is always displayed before "failed". In this case, since the message
+> is sent to stderr, it is newline terminated.
+> 
+> Fixing this properly would involve storing state, or rethinking 
+> when git-annex displays newlines (and I rather like its behavior
+> otherwise). --[[Joey]]
