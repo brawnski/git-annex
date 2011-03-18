@@ -20,3 +20,9 @@ to
 
 
 Unless I am misunderstanding something, git annex gets confused about what the name of the remote it supposed to be, truncates at the dot for some operations and uses the full name for others.
+
+> I've fixed this bug. [[done]]
+> 
+> However, using "/" in a remote name seems likely to me to confuse 
+> git's own remote branch handling. Although I've never tried it.
+> --[[Joey]] 
