@@ -17,3 +17,5 @@ of the new repository created on the USB drive.
 Notice that both repos are set up as remotes of one another. This lets
 either get annexed files from the other. You'll want to do that even
 if you are using git in a more centralized fashion.
+
+Note that you need to pull from the new remote at least once to make your local annex aware of the remote annex.
