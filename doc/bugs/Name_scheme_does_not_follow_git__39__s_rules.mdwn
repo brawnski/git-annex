@@ -1,1 +1,6 @@
 I can create an annex remote named 'test:/test'. git itself does not allow colons in names, though. The name scheme for an annex should be the same as for git repos themselves.
+
+> What do you mean by "an annex remote"? git-annex uses the same
+> remotes configuration as does git. If you put invalid
+> stuff in .git/config it might handle it slightly different than 
+> git, I don't know. Examples needed. --[[Joey]] 
