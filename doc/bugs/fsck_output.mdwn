@@ -1,0 +1,16 @@
+When you check several files and the fsck fails, you get confusing output:
+
+<pre>
+fsck test1 (checksum...) 
+  Only 1 of 2 trustworthy copies of test1 exist.
+  Back it up with git-annex copy.
+
+failed
+fsck test2 (checksum...) 
+  Only 1 of 2 trustworthy copies of test2 exist.
+  Back it up with git-annex copy.
+
+failed
+</pre>
+
+The newline is in the wrong place and confuses the user. It should be printed _after_ "failed".
