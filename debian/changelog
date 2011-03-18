@@ -1,6 +1,7 @@
 git-annex (0.20110317) UNRELEASED; urgency=low
 
   * Fix dropping of files using the URL backend.
+  * Fix support for remotes with '.' in their names.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 17 Mar 2011 11:46:53 -0400
 
