@@ -404,7 +404,7 @@ configRemotes repo = mapM construct remotepairs
 		remotepairs = Map.toList $ filterremotes $ config repo
 		filterremotes = Map.filterWithKey (\k _ -> isremote k)
 		isremote k = startswith "remote." k && endswith ".url" k
-		remotename k = split "." k !! 1
+		remotename k = join "." $ reverse $ drop 1 $ reverse $ drop 1 $ split "." k
 		construct (k,v) = do
 			r <- gen v
 			return $ r { remoteName = Just $ remotename k }
