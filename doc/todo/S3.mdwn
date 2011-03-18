@@ -1,1 +1,38 @@
 Support Amazon S3 as a file storage backend.
+
+There's a haskell library that looks good. Not yet in Debian.
+
+Multiple ways of using S3 are possible. Current plan is to have a S3BUCKET
+backend, that is derived from Backend.File, so it caches files locally and
+can transfer files between systems too, without involving S3.
+
+get will try to get it from S3 or from a remote. A annex.s3.cost can
+configure the cost of S3 vs the cost of other remotes.
+
+add will always upload a copy to S3.
+
+Each file in the S3 bucket is assumed to be in the annex. So unused
+will show files in the bucket that nothing points to, and dropunused remove
+them.
+
+For numcopies counting, S3 will count as 1 copy (or maybe more?), so if
+numcopies=2, then you don't fully trust S3 and request git-annex assure
+one other copy.
+
+drop will remove a file locally, but keep it in S3. drop --force *might*
+remove it from S3. TBD.
+
+annex.s3.bucket would configure the bucket the use. (And an env var or
+something configure the password.) Although the bucket
+would also be encoded in the keys. So, the configured bucket would be used
+when adding new files. A system could move from one bucket to another over
+time while still having legacy files in an earlier one; 
+perhaps you move to Europe and want new files to be put in that region.
+
+And git annex `migrate --backend=S3BUCKET --force` could move files
+between datacenters!
+
+Problem: Then the only way for unused to know what buckets are in use
+is to see what keys point to them -- but if the last file from a bucket is
+deleted, it would then not be able to say that the files in that bucket are
+all unused. Need cached list of recently seen S3 buckets?
