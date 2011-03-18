@@ -36,3 +36,17 @@ Problem: Then the only way for unused to know what buckets are in use
 is to see what keys point to them -- but if the last file from a bucket is
 deleted, it would then not be able to say that the files in that bucket are
 all unused. Need cached list of recently seen S3 buckets?
+
+-----
+
+One problem with this is what key metadata to include. Should it be like
+WORM? Or like SHA1? Or just a new unique identifier for each file? It might
+be worth having S3 variants of *all* the Backend.File derived backends.
+
+More blue-sky, it might be nice to be able to union or stack together
+multiple backends, so S3BUCKET+SHA1 or S3BUCKET+WORM. That would likely
+be hard to get right.
+
+Less blue-sky, if the S3 capability were added directly to Backend.File,
+and bucket name was configured by annex.s3.bucket, then any existing
+annexed file could be upgraded to also store on S3.
