@@ -1,3 +1,9 @@
+[[!meta title="arbitrary/configurable backends"]]
+
+(Retitling as this has drifted..)
+
+---
+
 I thought this might be useful, since curl is being used for the URL backend, it might be worth checking for it's existence.
 
 <pre>
@@ -31,6 +37,21 @@ index 772ba54..1a563e0 100644
 >> like bittorrent as backend, or using something like irods or some 
 >> grid storage system as the storage archive. It's just an idea as 
 >> I have seen it implemented quite well in irods.
+
+>>> I'm unsure about the idea of having a backend where that is
+>>> parameterized. It would mean that one annex's GENERIC-foo key
+>>> might be entirely different from another's key with the same backend
+>>> and details. And a misconfiguration could get data the wrong
+>>> way and get the wrong data, etc.
+>>>
+>>> I mostly look at the URL backend as an example that can be modified to
+>>> make this kind of custom backend. You already probably know enough to
+>>> make a TORRENT backend where keys are the urls to torrents to download
+>>> with `aria2c --follow-torrent=mem`.
+>>>
+>>> I am also interested in doing backends that use eg, cloud storage.
+>>> A S3 backend that could upload files to S3 in addition to downloading
+>>> them, for example, would be handy. --[[Joey]]
 
 also in Backend/URL.hs is it worth making a minor change to the way curl is called (I'm not sure if the following is correct or not)
 
