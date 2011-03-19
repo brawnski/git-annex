@@ -7,7 +7,8 @@ import TestConfig
 
 tests :: [TestCase]
 tests = [
-	  testCp "cp_a" "-a"
+	  TestCase "version" $ getVersion
+	, testCp "cp_a" "-a"
 	, testCp "cp_p" "-p"
 	, testCp "cp_reflink_auto" "--reflink=auto"
 	, TestCase "uuid generator" $ selectCmd "uuid" ["uuid", "uuidgen"]
@@ -47,6 +48,16 @@ unicodeFilePath = do
 	fs <- getDirectoryContents "testdata"
 	let file = head $ filter (isInfixOf "unicode-test") fs
 	return $ Config "unicodefilepath" (BoolConfig $ isInfixOf "ü" file)
+
+{- Pulls package version out of the changelog. -}
+getVersion :: Test
+getVersion = do
+	changelog <- readFile "debian/changelog"
+	let verline = head $ lines changelog
+	let version = middle (words verline !! 1)
+	return $ Config "packageversion" (StringConfig version)
+	where
+		middle s = drop 1 $ take (length s - 1) s
 
 setup :: IO ()
 setup = do

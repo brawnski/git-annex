@@ -2,6 +2,8 @@ git-annex (0.25) UNRELEASED; urgency=low
 
   * Fix dropping of files using the URL backend.
   * Fix support for remotes with '.' in their names.
+  * Add version command to show git-annex version as well as repository
+    version information.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 17 Mar 2011 11:46:53 -0400
 

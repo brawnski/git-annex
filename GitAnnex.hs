@@ -41,6 +41,7 @@ import qualified Command.Trust
 import qualified Command.Untrust
 import qualified Command.Semitrust
 import qualified Command.Map
+import qualified Command.Version
 
 cmds :: [Command]
 cmds = concat
@@ -70,6 +71,7 @@ cmds = concat
 	, Command.Whereis.command
 	, Command.Migrate.command
 	, Command.Map.command
+	, Command.Version.command
 	]
 
 options :: [Option]

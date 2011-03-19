@@ -15,13 +15,18 @@ import qualified Annex
 import qualified GitRepo as Git
 import Locations
 
-currentVersion :: String
-currentVersion = "1"
+type Version = String
+
+defaultVersion :: Version
+defaultVersion = "1"
+
+supportedVersions :: [Version]
+supportedVersions = [defaultVersion]
 
 versionField :: String
 versionField = "annex.version"
 
-getVersion :: Annex (Maybe String)
+getVersion :: Annex (Maybe Version)
 getVersion = do
 	g <- Annex.gitRepo
 	let v = Git.configGet g versionField ""
@@ -38,4 +43,4 @@ getVersion = do
 				else return Nothing -- no version yet
 
 setVersion :: Annex ()
-setVersion = Annex.setConfig versionField currentVersion
+setVersion = Annex.setConfig versionField defaultVersion

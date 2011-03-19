@@ -24,6 +24,9 @@ import Messages
 import Version
 import Utility
 
+upgradableVersions :: [Version]
+upgradableVersions = ["0"]
+
 {- Uses the annex.version git config setting to automate upgrades. -}
 upgrade :: Annex Bool
 upgrade = do
@@ -31,7 +34,7 @@ upgrade = do
 	case version of
 		Just "0" -> upgradeFrom0
 		Nothing -> return True -- repo not initted yet, no version
-		Just v | v == currentVersion -> return True
+		Just v | v `elem` supportedVersions -> return True
 		Just _ -> error "this version of git-annex is too old for this git repository!"
 
 upgradeFrom0 :: Annex Bool

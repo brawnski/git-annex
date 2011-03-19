@@ -267,6 +267,10 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 	git annex setkey --backend=WORM --key=1287765018:3 /tmp/file
 
+* version
+
+  Shows the version of git-annex, as well as repository version information.
+
 # OPTIONS
 
 * --force
