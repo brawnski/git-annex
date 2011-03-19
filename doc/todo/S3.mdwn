@@ -50,3 +50,24 @@ be hard to get right.
 Less blue-sky, if the S3 capability were added directly to Backend.File,
 and bucket name was configured by annex.s3.bucket, then any existing
 annexed file could be upgraded to also store on S3.
+
+## alternate approach
+
+The above assumes S3 should be a separate backend somehow. What if,
+instead a S3 bucket is treated as a separate **remote**.
+
+* Could "git annex add" while offline, and "git annex push --to S3" when
+  online.
+* No need to choose whether a file goes to S3 at add time; no need to
+  migrate to move files there.
+* numcopies counting Just Works
+* Could have multiple S3 buckets as desired.
+
+The bucket name could 1:1 map with its annex.uuid, so not much
+configuration would be needed when cloning a repo to get it using S3 --
+just configure the S3 access token(s) to use for various UUIDs.
+
+Implementing this might not be as conceptually nice as making S3 a separate
+backend. It would need some changes to the remotes code, perhaps lifting
+some of it into backend-specific hooks. Then the S3 backend could be
+implicitly stacked in front of a backend like WORM.
