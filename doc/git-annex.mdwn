@@ -267,6 +267,10 @@ Many git-annex commands will stage changes for later `git commit` by you.
   whenever a newer git annex encounters an old repository; this command
   allows explcitly starting an upgrade.
 
+* version
+
+  Shows the version of git-annex, as well as repository version information.
+
 # OPTIONS
 
 * --force

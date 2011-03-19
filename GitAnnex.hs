@@ -42,6 +42,7 @@ import qualified Command.Untrust
 import qualified Command.Semitrust
 import qualified Command.Map
 import qualified Command.Upgrade
+import qualified Command.Version
 
 cmds :: [Command]
 cmds = concat
@@ -72,6 +73,7 @@ cmds = concat
 	, Command.Migrate.command
 	, Command.Map.command
 	, Command.Upgrade.command
+	, Command.Version.command
 	]
 
 options :: [Option]
