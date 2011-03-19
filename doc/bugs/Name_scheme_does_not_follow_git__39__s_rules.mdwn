@@ -18,3 +18,9 @@ I can create an annex remote named 'test:/test'. git itself does not allow colon
     fatal: 'my:colon' is not a valid remote name
 
 >> -- RichiH
+
+>>> I see.. Git annex init does not specifiy a remote's name, it specifies
+>>> an arbitrary human-readable description of the repository, which will
+>>> be displayed when there is no configured remote corresponding to the
+>>> repository. So this is not a bug unless some documentation of that is
+>>> unclear. --[[Joey]] 
