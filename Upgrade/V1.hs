@@ -115,8 +115,12 @@ moveLocationLogs = do
 			oldlocationlogs = do
 				g <- Annex.gitRepo
 				let dir = gitStateDir g
-				contents <- liftIO $ getDirectoryContents dir
-				return $ catMaybes $ map oldlog2key contents
+				exists <- liftIO $ doesDirectoryExist dir
+				if exists
+					then do
+						contents <- liftIO $ getDirectoryContents dir
+						return $ catMaybes $ map oldlog2key contents
+					else return []
 			move (l, k) = do
 				g <- Annex.gitRepo
 				let dest = logFile g k
