@@ -21,7 +21,7 @@ import Messages
 import qualified Command.Add
 
 command :: [Command]
-command = [Command "migrate" paramPath seek "switch data to different backend"]
+command = [repoCommand "migrate" paramPath seek "switch data to different backend"]
 
 seek :: [CommandSeek]
 seek = [withBackendFilesInGit start]

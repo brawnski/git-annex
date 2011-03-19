@@ -20,7 +20,7 @@ import Content
 import LocationLog
 
 command :: [Command]
-command = [Command "fsck" (paramOptional $ paramRepeating paramPath) seek
+command = [repoCommand "fsck" (paramOptional $ paramRepeating paramPath) seek
 	"check for problems"]
 
 seek :: [CommandSeek]

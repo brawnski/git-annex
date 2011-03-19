@@ -11,7 +11,7 @@ import Command
 import qualified Command.Move
 
 command :: [Command]
-command = [Command "copy" paramPath seek
+command = [repoCommand "copy" paramPath seek
 	"copy content of files to/from another repository"]
 
 -- A copy is just a move that does not delete the source file.

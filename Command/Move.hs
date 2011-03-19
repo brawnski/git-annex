@@ -22,7 +22,7 @@ import Messages
 import Utility
 
 command :: [Command]
-command = [Command "move" paramPath seek
+command = [repoCommand "move" paramPath seek
 	"move content of files to/from another repository"]
 
 seek :: [CommandSeek]

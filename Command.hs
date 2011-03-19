@@ -61,13 +61,20 @@ data Command = Command {
 	cmdname :: String,
 	cmdparams :: String,
 	cmdseek :: [CommandSeek],
-	cmddesc :: String
+	cmddesc :: String,
+	cmdusesrepo :: Bool
 }
+
+repoCommand :: String -> String -> [CommandSeek] -> String -> Command
+repoCommand n p s d = Command n p s d True
+
+standaloneCommand :: String -> String -> [CommandSeek] -> String -> Command
+standaloneCommand n p s d = Command n p s d False
 
 {- Prepares a list of actions to run to perform a command, based on
  - the parameters passed to it. -}
-prepCmd :: Command -> [String] -> Annex [Annex Bool]
-prepCmd Command { cmdseek = seek } params = do
+prepCommand :: Command -> [String] -> Annex [Annex Bool]
+prepCommand Command { cmdseek = seek } params = do
 	lists <- mapM (\s -> s params) seek
 	return $ map doCommand $ concat lists
 

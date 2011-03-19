@@ -45,7 +45,9 @@ parseCmd argv header cmds options = do
 		[] -> error $ "unknown command" ++ usagemsg
 		[command] -> do
 			_ <- sequence flags
-			prepCmd command (drop 1 params)
+			when (cmdusesrepo command) $
+				checkVersion
+			prepCommand command (drop 1 params)
 		_ -> error "internal error: multiple matching commands"
 	where
 		getopt = case getOpt Permute options argv of
@@ -93,7 +95,6 @@ tryRun' _ errnum [] = do
 startup :: Annex Bool
 startup = do
 	prepUUID
-	checkVersion
 	return True
 
 {- Cleanup actions. -}

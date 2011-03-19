@@ -17,7 +17,7 @@ import UUID
 import Types
 
 command :: [Command]
-command = [Command "whereis" (paramOptional $ paramRepeating paramPath) seek
+command = [repoCommand "whereis" (paramOptional $ paramRepeating paramPath) seek
 	"lists repositories that have file content"]
 
 seek :: [CommandSeek]

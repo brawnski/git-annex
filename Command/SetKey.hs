@@ -16,7 +16,7 @@ import Content
 import Messages
 
 command :: [Command]
-command = [Command "setkey" (paramRepeating paramKey) seek
+command = [repoCommand "setkey" (paramRepeating paramKey) seek
 	"sets annexed content for a key using a temp file"]
 
 seek :: [CommandSeek]

@@ -22,8 +22,8 @@ import CopyFile
 
 command :: [Command]
 command =
-	[ Command "unlock" paramPath seek "unlock files for modification"
-	, Command "edit" paramPath seek "same as unlock"
+	[ repoCommand "unlock" paramPath seek "unlock files for modification"
+	, repoCommand "edit" paramPath seek "same as unlock"
 	]
 
 seek :: [CommandSeek]

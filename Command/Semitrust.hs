@@ -15,7 +15,7 @@ import Trust
 import Messages
 
 command :: [Command]
-command = [Command "semitrust" (paramRepeating paramRemote) seek
+command = [repoCommand "semitrust" (paramRepeating paramRemote) seek
 	"return repository to default trust level"]
 
 seek :: [CommandSeek]

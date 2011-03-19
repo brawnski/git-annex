@@ -16,7 +16,7 @@ import Messages
 import qualified Command.Init
 
 command :: [Command]
-command = [Command "describe" (paramPair paramRemote paramDesc) seek
+command = [repoCommand "describe" (paramPair paramRemote paramDesc) seek
 	"change description of a repository"]
 
 seek :: [CommandSeek]

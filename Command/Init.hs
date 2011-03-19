@@ -23,7 +23,7 @@ import Types
 import Utility
 	
 command :: [Command]
-command = [Command "init" paramDesc seek
+command = [repoCommand "init" paramDesc seek
 		"initialize git-annex with repository description"]
 
 seek :: [CommandSeek]

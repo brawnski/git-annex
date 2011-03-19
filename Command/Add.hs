@@ -21,7 +21,7 @@ import Utility
 import Touch
 
 command :: [Command]
-command = [Command "add" paramPath seek "add files to annex"]
+command = [repoCommand "add" paramPath seek "add files to annex"]
 
 {- Add acts on both files not checked into git yet, and unlocked files. -}
 seek :: [CommandSeek]

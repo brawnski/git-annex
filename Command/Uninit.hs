@@ -21,7 +21,7 @@ import qualified Command.Unannex
 import qualified Command.Init
 
 command :: [Command]
-command = [Command "uninit" paramPath seek 
+command = [repoCommand "uninit" paramPath seek 
         "de-initialize git-annex and clean out repository"]
 
 seek :: [CommandSeek]

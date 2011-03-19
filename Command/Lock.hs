@@ -17,7 +17,7 @@ import qualified GitRepo as Git
 import Utility
 	
 command :: [Command]
-command = [Command "lock" paramPath seek "undo unlock command"]
+command = [repoCommand "lock" paramPath seek "undo unlock command"]
 
 seek :: [CommandSeek]
 seek = [withFilesUnlocked start]

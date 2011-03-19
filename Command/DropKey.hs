@@ -15,7 +15,7 @@ import Content
 import Messages
 
 command :: [Command]
-command = [Command "dropkey" (paramRepeating paramKey) seek
+command = [repoCommand "dropkey" (paramRepeating paramKey) seek
 	"drops annexed content for specified keys"] 
 
 seek :: [CommandSeek]

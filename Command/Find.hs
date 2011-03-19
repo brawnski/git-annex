@@ -14,7 +14,7 @@ import Command
 import Content
 
 command :: [Command]
-command = [Command "find" (paramOptional $ paramRepeating paramPath) seek
+command = [repoCommand "find" (paramOptional $ paramRepeating paramPath) seek
 	"lists available files"]
 
 seek :: [CommandSeek]

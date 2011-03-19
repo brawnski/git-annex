@@ -14,7 +14,7 @@ import Content
 import Messages
 
 command :: [Command]
-command = [Command "get" paramPath seek
+command = [repoCommand "get" paramPath seek
 		"make content of annexed files available"]
 
 seek :: [CommandSeek]

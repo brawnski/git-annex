@@ -18,7 +18,7 @@ import Messages
 import Utility
 
 command :: [Command]
-command = [Command "drop" paramPath seek
+command = [repoCommand "drop" paramPath seek
 	"indicate content of files not currently wanted"]
 
 seek :: [CommandSeek]

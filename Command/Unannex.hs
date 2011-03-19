@@ -22,7 +22,7 @@ import qualified GitRepo as Git
 import Messages
 
 command :: [Command]
-command = [Command "unannex" paramPath seek "undo accidential add command"]
+command = [repoCommand "unannex" paramPath seek "undo accidential add command"]
 
 seek :: [CommandSeek]
 seek = [withFilesInGit start]

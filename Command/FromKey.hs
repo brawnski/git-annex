@@ -21,7 +21,7 @@ import Messages
 import Key
 
 command :: [Command]
-command = [Command "fromkey" paramPath seek
+command = [repoCommand "fromkey" paramPath seek
 	"adds a file using a specific key"]
 
 seek :: [CommandSeek]

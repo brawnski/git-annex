@@ -15,7 +15,7 @@ import Trust
 import Messages
 
 command :: [Command]
-command = [Command "untrust" (paramRepeating paramRemote) seek
+command = [repoCommand "untrust" (paramRepeating paramRemote) seek
 	"do not trust a repository"]
 
 seek :: [CommandSeek]

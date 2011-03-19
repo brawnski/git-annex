@@ -14,7 +14,7 @@ import Command
 import Content
 
 command :: [Command]
-command = [Command "inannex" (paramRepeating paramKey) seek
+command = [repoCommand "inannex" (paramRepeating paramKey) seek
 		"checks if keys are present in the annex"]
 
 seek :: [CommandSeek]

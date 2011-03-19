@@ -17,7 +17,7 @@ import Content
 import RsyncFile
 
 command :: [Command]
-command = [Command "recvkey" paramKey seek
+command = [repoCommand "recvkey" paramKey seek
 	"runs rsync in server mode to receive content"]
 
 seek :: [CommandSeek]

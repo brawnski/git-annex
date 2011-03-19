@@ -15,7 +15,7 @@ import qualified SysConfig
 import Version
 
 command :: [Command]
-command = [Command "version" paramNothing seek "show versions"]
+command = [standaloneCommand "version" paramNothing seek "show version info"]
 
 seek :: [CommandSeek]
 seek = [withNothing start]

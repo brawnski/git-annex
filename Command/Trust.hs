@@ -15,7 +15,7 @@ import UUID
 import Messages
 
 command :: [Command]
-command = [Command "trust" (paramRepeating paramRemote) seek
+command = [repoCommand "trust" (paramRepeating paramRemote) seek
 	"trust a repository"]
 
 seek :: [CommandSeek]

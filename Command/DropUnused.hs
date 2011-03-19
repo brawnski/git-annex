@@ -23,7 +23,7 @@ import Backend
 import Key
 
 command :: [Command]
-command = [Command "dropunused" (paramRepeating paramNumber) seek
+command = [repoCommand "dropunused" (paramRepeating paramNumber) seek
 	"drop unused file content"]
 
 seek :: [CommandSeek]

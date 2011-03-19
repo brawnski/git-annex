@@ -25,7 +25,8 @@ import qualified GitRepo as Git
 import qualified Backend
 
 command :: [Command]
-command = [Command "unused" paramNothing seek "look for unused file content"]
+command = [repoCommand "unused" paramNothing seek
+	"look for unused file content"]
 
 seek :: [CommandSeek]
 seek = [withNothing start]
