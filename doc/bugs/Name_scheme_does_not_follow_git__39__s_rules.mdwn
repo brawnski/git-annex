@@ -4,3 +4,17 @@ I can create an annex remote named 'test:/test'. git itself does not allow colon
 > remotes configuration as does git. If you put invalid
 > stuff in .git/config it might handle it slightly different than 
 > git, I don't know. Examples needed. --[[Joey]] 
+
+>> What I mean is this:
+
+    % cd 1
+    % git init
+    % git annex init "my:colon"
+    % [...]
+    % cd ../2
+    % git init
+    % git annex init "second"
+    % git remote add "my:colon" ../1
+    fatal: 'my:colon' is not a valid remote name
+
+>> -- RichiH
