@@ -1,1 +1,0 @@
-I can create an annex remote named 'test:/test'. git itself does not allow colons in remote names, though. Name schemes for an annex should be the same as for git remotes themselves.
