@@ -9,4 +9,4 @@ One solution is to enable *PermitUserEnvironment yes* in `/etc/sshd_config` and 
 
     PATH=/Users/jtang/bin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/usr/X11/bin:/Users/jtang/.cabal/bin:/opt/local/libexec/gnubin
 
-If the above is not done, cloning from the OSX host will fail if git is not installed isn't /usr/bin (which it probably won't be).
+If the above is not done, cloning from the OSX host will fail if git is not installed in /usr/bin (which it probably won't be).
