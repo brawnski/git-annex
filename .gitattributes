@@ -1,1 +1,3 @@
 debian/changelog merge=dpkg-mergechangelogs
+.git-annex/*.log merge=union
+.git-annex/*/*/*.log merge=union
