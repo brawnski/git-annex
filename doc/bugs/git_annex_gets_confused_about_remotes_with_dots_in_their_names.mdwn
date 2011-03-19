@@ -26,3 +26,9 @@ Unless I am misunderstanding something, git annex gets confused about what the n
 > However, using "/" in a remote name seems likely to me to confuse 
 > git's own remote branch handling. Although I've never tried it.
 > --[[Joey]] 
+
+>> From what I can see, git handles / just fine, but would get upset about : which is why it's not allowed in a remote's name.
+>> My naming scheme is host//path/to/annex. It sorts nicely and gives all important information left to right with the most specific parts at the beginning and end.
+>> If you have any other ideas or scheme, I am all ears :)
+>> Either way, thanks for fixing this so quickly.
+>> -- RichiH
