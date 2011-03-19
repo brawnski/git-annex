@@ -9,15 +9,14 @@ git-annex, and might want to use them with a newer git-annex.
 
 ## Upgrade process
 
-git-annex will automatically notice if it is run in a repository that
-needs an upgrade, and perform the upgrade before running whatever it
-was asked to do. Or you can use the "git annex upgrade" command to
-explicitly do an upgrade. The upgrade can tend to take a while,
-if you have a lot of files.
+git-annex will notice if it is run in a repository that
+needs an upgrade, and refuse to do anything. To upgrade,
+use the "git annex upgrade" command. The upgrade can tend
+to take a while, if you have a lot of files.
 
 Each clone of a repository should be individually upgraded.
 Until a repository's remotes have been upgraded, git-annex
-may refuse to communicate with them.
+will refuse to communicate with them.
 
 Generally, start by upgrading one repository, and then you can commit
 the changes git-annex staged during upgrade, and push them out to other
@@ -53,8 +52,6 @@ Symlinks changed.
 
 Also, hashing was added to location log files in .git-annex/.
 And .gitattributes needed to have another line added to it.
-
-Handled transparently.
 
 ### v0 -> v1 (git-annex version 0.03 to version 0.04)
 

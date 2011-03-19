@@ -4,6 +4,9 @@ git-annex (0.20110317) UNRELEASED; urgency=low
   * Fix support for remotes with '.' in their names.
   * Add version command to show git-annex version as well as repository
     version information.
+  * No longer auto-upgrade to repository format 2, to avoid accidental
+    upgrades, etc. Use git-annex upgrade when you're ready to run this
+    version.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 17 Mar 2011 11:46:53 -0400
 

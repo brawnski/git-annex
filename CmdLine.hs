@@ -22,7 +22,7 @@ import qualified GitQueue
 import Types
 import Command
 import BackendList
-import Upgrade
+import Version
 import Options
 import Messages
 import UUID
@@ -33,7 +33,7 @@ dispatch gitrepo args cmds options header = do
 	setupConsole
 	state <- Annex.new gitrepo allBackends
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options
-	tryRun state' $ [startup, upgrade] ++ actions ++ [shutdown]
+	tryRun state' $ [startup] ++ actions ++ [shutdown]
 
 {- Parses command line, stores configure flags, and returns a 
  - list of actions to be run in the Annex monad. -}
@@ -93,6 +93,7 @@ tryRun' _ errnum [] = do
 startup :: Annex Bool
 startup = do
 	prepUUID
+	checkVersion
 	return True
 
 {- Cleanup actions. -}

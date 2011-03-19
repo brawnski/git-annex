@@ -8,6 +8,7 @@
 module Version where
 
 import Control.Monad.State (liftIO)
+import Control.Monad (unless)
 import System.Directory
 
 import Types
@@ -22,6 +23,9 @@ defaultVersion = "2"
 
 supportedVersions :: [Version]
 supportedVersions = [defaultVersion]
+
+upgradableVersions :: [Version]
+upgradableVersions = ["0", "1"]
 
 versionField :: String
 versionField = "annex.version"
@@ -51,3 +55,15 @@ getVersion = do
 
 setVersion :: Annex ()
 setVersion = Annex.setConfig versionField defaultVersion
+
+checkVersion :: Annex ()
+checkVersion = do
+	v <- getVersion
+	unless (v `elem` supportedVersions) $ do
+		error $ "Repository version " ++ v ++ 
+			" is not supported. " ++
+			msg v
+	where
+		msg v
+			| v `elem` upgradableVersions = "Upgrade this repository: git-annex upgrade"
+			| otherwise = "Upgrade git-annex."

@@ -13,7 +13,6 @@ import Data.String.Utils
 import Command
 import qualified SysConfig
 import Version
-import Upgrade
 
 command :: [Command]
 command = [Command "version" paramNothing seek "show versions"]
