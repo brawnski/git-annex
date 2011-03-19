@@ -18,3 +18,8 @@ sudo make install
 </pre>
 
 Originally posted by Jon at <https://gist.github.com/671785> --[[Joey]]
+
+See also:
+
+* [[forum/OSX__39__s_haskell-platform_statically_links_things]]
+* [[forum/OSX__39__s_default_sshd_behaviour_has_limited_paths_set]]
