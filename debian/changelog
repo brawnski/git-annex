@@ -1,11 +1,11 @@
-git-annex (0.25) UNRELEASED; urgency=low
+git-annex (0.25) unstable; urgency=low
 
   * Fix dropping of files using the URL backend.
   * Fix support for remotes with '.' in their names.
   * Add version command to show git-annex version as well as repository
     version information.
 
- -- Joey Hess <joeyh@debian.org>  Thu, 17 Mar 2011 11:46:53 -0400
+ -- Joey Hess <joeyh@debian.org>  Sun, 20 Mar 2011 16:30:36 -0400
 
 git-annex (0.24) unstable; urgency=low
 
