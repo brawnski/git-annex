@@ -81,7 +81,7 @@ touchBoth file atime mtime follow =
  - TODO: test if lutimes is available. May have to do it in configure.
  - TODO: TimeSpec uses a CTime, while tv_sec is a CLong. It is implementation
  - dependent whether these are the same; need to find a cast that works.
- - (The cast below fails.. without the cast it works on linux i386, but
+ - (Without the cast it works on linux i386, but
  - maybe not elsewhere.)
  -}
 
@@ -92,7 +92,7 @@ instance Storable TimeSpec where
 		sec <- #{peek struct timeval, tv_sec} ptr
 		return $ TimeSpec sec
 	poke ptr (TimeSpec sec) = do
-		#{poke struct timeval, tv_sec} ptr (sec :: CLong)
+		#{poke struct timeval, tv_sec} ptr sec
 		#{poke struct timeval, tv_usec} ptr (0 :: CLong) 
 
 foreign import ccall "utimes" 
@@ -114,7 +114,7 @@ touchBoth file atime mtime follow =
 			else c_utimes
 
 #else
-warning "utimensat and lutimes not available; building without symlink timestamp preservation support"
+#warning "utimensat and lutimes not available; building without symlink timestamp preservation support"
 touchBoth _ _ _ _ = return ()
 #endif
 #endif
