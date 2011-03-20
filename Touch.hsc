@@ -9,8 +9,6 @@
 
 module Touch (
 	TimeSpec(..),
-	nowTime,
-	omitTime,
 	touchBoth,
 	touch
 ) where
@@ -18,23 +16,23 @@ module Touch (
 import Foreign
 import Foreign.C
 
+data TimeSpec = TimeSpec CTime
+
+{- Changes the access and modification times of an existing file.
+   Can follow symlinks, or not. Throws IO error on failure. -}
+touchBoth :: FilePath -> TimeSpec -> TimeSpec -> Bool -> IO ()
+
+touch :: FilePath -> TimeSpec -> Bool -> IO ()
+touch file mtime follow = touchBoth file mtime mtime follow
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/time.h>
 
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE >= 200809L
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
 #endif
-
-data TimeSpec = TimeSpec CTime CLong
-
-touch :: FilePath -> TimeSpec -> Bool -> IO ()
-touch file mtime follow = touchBoth file omitTime mtime follow
-
-touchBoth :: FilePath -> TimeSpec -> TimeSpec -> Bool -> IO ()
-
-omitTime :: TimeSpec
-nowTime :: TimeSpec
 
 #if (defined UTIME_OMIT && defined UTIME_NOW && defined AT_FDCWD && defined AT_SYMLINK_NOFOLLOW)
 
@@ -43,9 +41,6 @@ at_fdcwd = #const AT_FDCWD
 
 at_symlink_nofollow :: CInt
 at_symlink_nofollow = #const AT_SYMLINK_NOFOLLOW
-
-omitTime = TimeSpec 0 #const UTIME_OMIT
-nowTime = TimeSpec 0 #const UTIME_NOW
 
 instance Storable TimeSpec where
 	-- use the larger alignment of the two types in the struct
@@ -56,19 +51,16 @@ instance Storable TimeSpec where
 	sizeOf _ = #{size struct timespec}
 	peek ptr = do
 		sec <- #{peek struct timespec, tv_sec} ptr
-		nsec <- #{peek struct timespec, tv_nsec} ptr
-		return $ TimeSpec sec nsec
-	poke ptr (TimeSpec sec nsec) = do
+		return $ TimeSpec sec
+	poke ptr (TimeSpec sec) = do
 		#{poke struct timespec, tv_sec} ptr sec
-		#{poke struct timespec, tv_nsec} ptr nsec
+		#{poke struct timespec, tv_nsec} ptr (0 :: CLong)
 
 {- While its interface is beastly, utimensat is in recent
-   POSIX standards, unlike futimes. -}
+   POSIX standards, unlike lutimes. -}
 foreign import ccall "utimensat" 
 	c_utimensat :: CInt -> CString -> Ptr TimeSpec -> CInt -> IO CInt
 
-{- Changes the access and/or modification times of an existing file.
-   Can follow symlinks, or not. Throws IO error on failure. -}
 touchBoth file atime mtime follow = 
 	allocaArray 2 $ \ptr ->
 	withCString file $ \f -> do
@@ -83,8 +75,46 @@ touchBoth file atime mtime follow =
 			else at_symlink_nofollow 
 
 #else
-#warning "utimensat not available; building without symlink timestamp preservation support"
-omitTime = TimeSpec 0 (-1)
-nowTime = TimeSpec 0 (-2)
+#if 0
+{- Using lutimes is needed for BSD.
+ - 
+ - TODO: test if lutimes is available. May have to do it in configure.
+ - TODO: TimeSpec uses a CTime, while tv_sec is a CLong. It is implementation
+ - dependent whether these are the same; need to find a cast that works.
+ - (The cast below fails.. without the cast it works on linux i386, but
+ - maybe not elsewhere.)
+ -}
+
+instance Storable TimeSpec where
+	alignment _ = alignment (undefined::CLong)
+	sizeOf _ = #{size struct timeval}
+	peek ptr = do
+		sec <- #{peek struct timeval, tv_sec} ptr
+		return $ TimeSpec sec
+	poke ptr (TimeSpec sec) = do
+		#{poke struct timeval, tv_sec} ptr (sec :: CLong)
+		#{poke struct timeval, tv_usec} ptr (0 :: CLong) 
+
+foreign import ccall "utimes" 
+	c_utimes :: CString -> Ptr TimeSpec -> IO CInt
+foreign import ccall "lutimes" 
+	c_lutimes :: CString -> Ptr TimeSpec -> IO CInt
+
+touchBoth file atime mtime follow = 
+	allocaArray 2 $ \ptr ->
+	withCString file $ \f -> do
+		pokeArray ptr [atime, mtime]
+		r <- syscall f ptr
+		if (r /= 0)
+			then throwErrno "touchBoth"
+			else return ()
+	where
+		syscall = if follow
+			then c_lutimes
+			else c_utimes
+
+#else
+warning "utimensat and lutimes not available; building without symlink timestamp preservation support"
 touchBoth _ _ _ _ = return ()
+#endif
 #endif

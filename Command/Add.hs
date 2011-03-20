@@ -58,7 +58,7 @@ cleanup file key = do
 	-- touch the symlink to have the same mtime as the file it points to
 	s <- liftIO $ getFileStatus file
 	let mtime = modificationTime s
-	liftIO $ touch file (TimeSpec mtime 0) False
+	liftIO $ touch file (TimeSpec mtime) False
 
 	Annex.queue "add" [Param "--"] file
 	return True
