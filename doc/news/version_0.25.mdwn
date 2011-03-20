@@ -1,0 +1,6 @@
+git-annex 0.25 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Fix dropping of files using the URL backend.
+   * Fix support for remotes with '.' in their names.
+   * Add version command to show git-annex version as well as repository
+     version information."""]]
