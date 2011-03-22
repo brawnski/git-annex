@@ -22,6 +22,8 @@ commonOptions :: [Option]
 commonOptions =
 	[ Option ['f'] ["force"] (NoArg (setforce True))
 		"allow actions that may lose annexed data"
+	, Option ['F'] ["fast"] (NoArg (setfast True))
+		"avoid slow operations"
 	, Option ['q'] ["quiet"] (NoArg (setquiet True))
 		"avoid verbose output"
 	, Option ['v'] ["verbose"] (NoArg (setquiet False))
@@ -31,5 +33,6 @@ commonOptions =
 	]
 	where
 		setforce v = Annex.changeState $ \s -> s { Annex.force = v }
+		setfast v = Annex.changeState $ \s -> s { Annex.fast = v }
 		setquiet v = Annex.changeState $ \s -> s { Annex.quiet = v }
 		setdefaultbackend v = Annex.changeState $ \s -> s { Annex.defaultbackend = Just v }

@@ -5,6 +5,11 @@ git-annex (0.20110321) UNRELEASED; urgency=low
     with git-annex 0.24 or earlier.) The code is believed to work on
     Linux, FreeBSD, and OSX; check compile-time messages to see if it
     is not enabled for your OS.
+  * Add --fast flag, that can enable less expensive, but also less thurough
+    versions of some commands.
+  * fsck: In fast mode, avoid checking checksums.
+  * unused: In fast mode, just show all existing temp files as unused,
+    and avoid expensive scan for other unused content.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 22 Mar 2011 16:52:00 -0400
 

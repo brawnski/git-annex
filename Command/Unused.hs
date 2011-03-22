@@ -44,7 +44,6 @@ perform = do
 
 checkUnused :: Annex Bool
 checkUnused = do
-	showNote "checking for unused data..."
 	(unused, staletmp) <- unusedKeys
 	let unusedlist = number 0 unused
 	let staletmplist = number (length unused) staletmp
@@ -81,17 +80,27 @@ number n (x:xs) = (n+1, x):(number (n+1) xs)
 unusedKeys :: Annex ([Key], [Key])
 unusedKeys = do
 	g <- Annex.gitRepo
-	present <- getKeysPresent
-	referenced <- getKeysReferenced
-	tmps <- tmpKeys
 	
-	let (unused, staletmp, duptmp) = calcUnusedKeys present referenced tmps
+	fast <- Annex.getState Annex.fast
+	if fast
+		then do
+			showNote "fast mode enabled; assuming all temporary files are unused"
+			tmps <- tmpKeys
+			return ([], tmps)
+		else do
+			showNote "checking for unused data..."
+			present <- getKeysPresent
+			referenced <- getKeysReferenced
+			tmps <- tmpKeys
+	
+			let (unused, staletmp, duptmp) = calcUnusedKeys present referenced tmps
 
-	-- Tmp files that are dups of content already present can simply
-	-- be removed.
-	liftIO $ forM_ duptmp $ \t -> removeFile $ gitAnnexTmpLocation g t
+			-- Tmp files that are dups of content already present
+			-- can simply be removed.
+			liftIO $ forM_ duptmp $ \t -> removeFile $
+				gitAnnexTmpLocation g t
 
-	return (unused, staletmp)
+			return (unused, staletmp)
 
 calcUnusedKeys :: [Key] -> [Key] -> [Key] -> ([Key], [Key], [Key])
 calcUnusedKeys present referenced tmps = (unused, staletmp, duptmp)

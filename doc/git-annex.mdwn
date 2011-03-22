@@ -278,6 +278,12 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Force unsafe actions, such as dropping a file's content when no other
   source of it can be verified to still exist. Use with care.
 
+* --fast
+
+  Enables less expensive, but also less thorough versions of some commands.
+  What is avoided depends on the command. A fast fsck avoids calculating
+  checksums; a fast unused only shows temp files and not other unused files.
+
 * --quiet
 
   Avoid the default verbose logging of what is done; only show errors

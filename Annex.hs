@@ -40,6 +40,7 @@ data AnnexState = AnnexState
 	, repoqueue :: GitQueue.Queue
 	, quiet :: Bool
 	, force :: Bool
+	, fast :: Bool
 	, defaultbackend :: Maybe String
 	, defaultkey :: Maybe String
 	, toremote :: Maybe String
@@ -56,6 +57,7 @@ newState gitrepo allbackends = AnnexState
 	, repoqueue = GitQueue.empty
 	, quiet = False
 	, force = False
+	, fast = False
 	, defaultbackend = Nothing
 	, defaultkey = Nothing
 	, toremote = Nothing
