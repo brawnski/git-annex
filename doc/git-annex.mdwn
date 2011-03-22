@@ -377,6 +377,14 @@ Here are all the supported configuration settings.
   Default ssh and rsync options to use if a remote does not have
   specific options.
 
+* `annex.diskreserve`
+
+  Amount of disk space to reserve. Disk space is checked when transferring
+  content to avoid running out, and additional free space can be reserved
+  via this option, to make space for more important content (such as git
+  commit logs). The units are bytes.
+  The default reserve is 1048576 (1 megabyte).
+
 * `annex.version`
 
   Automatically maintained, and used to automate upgrades between versions.

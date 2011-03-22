@@ -119,24 +119,23 @@ checkDiskSpace = checkDiskSpace' 0
 
 checkDiskSpace' :: Integer -> Key -> Annex ()
 checkDiskSpace' adjustment key = do
-	liftIO $ putStrLn $ "adjust " ++ show adjustment
 	g <- Annex.gitRepo
+	r <- Annex.repoConfig g "diskreserve" ""
+	let reserve = if null r then megabyte else (read r :: Integer)
 	stats <- liftIO $ getFileSystemStats (gitAnnexDir g)
 	case (stats, keySize key) of
 		(Nothing, _) -> return ()
 		(_, Nothing) -> return ()
 		(Just (FileSystemStats { fsStatBytesAvailable = have }), Just need) ->
-			if (need + overhead >= have + adjustment)
+			if (need + reserve > have + adjustment)
 				then error $ "not enough free space (have " ++ 
 					showsize (have + adjustment) ++ "; need " ++
-					showsize (need + overhead) ++ ")"
+					showsize (need + reserve) ++ ")"
 				else return ()
 	where
 		showsize i = show i
-		-- Adding a file to the annex requires some overhead beyond
-		-- just the file size; the git index must be updated, etc. 
-		-- This is an arbitrary value.
-		overhead = 1024 * 1024 -- 1 mb
+		megabyte :: Integer
+		megabyte = 1024 * 1024
 
 {- Removes the write bits from a file. -}
 preventWrite :: FilePath -> IO ()
