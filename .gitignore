@@ -12,3 +12,4 @@ html
 *.tix
 .hpc
 Touch.hs
+StatFS.hs
