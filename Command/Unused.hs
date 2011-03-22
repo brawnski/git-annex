@@ -84,7 +84,7 @@ unusedKeys = do
 	fast <- Annex.getState Annex.fast
 	if fast
 		then do
-			showNote "fast mode enabled; assuming all temporary files are unused"
+			showNote "fast mode enabled; only finding temporary files"
 			tmps <- tmpKeys
 			return ([], tmps)
 		else do
