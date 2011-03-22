@@ -55,7 +55,7 @@ import qualified Command.Init
 
 upgrade :: Annex Bool
 upgrade = do
-	showSideAction "Upgrading object directory layout v1 to v2..."
+	showNote "v1 to v2"
 
 	g <- Annex.gitRepo
 	if Git.repoIsLocalBare g
@@ -78,6 +78,7 @@ upgrade = do
 
 moveContent :: Annex ()
 moveContent = do
+	showNote "moving content..."
 	keys <- getKeysPresent1
 	forM_ keys move
 	where
@@ -92,6 +93,7 @@ moveContent = do
 
 updateSymlinks :: Annex ()
 updateSymlinks = do
+	showNote "updating symlinks content..."
 	g <- Annex.gitRepo
 	files <- liftIO $ Git.inRepo g [Git.workTree g]
 	forM_ files $ fixlink
@@ -109,6 +111,7 @@ updateSymlinks = do
 
 moveLocationLogs :: Annex ()
 moveLocationLogs = do
+	showNote "moving location logs..."
 	logkeys <- oldlocationlogs
 	forM_ logkeys move
 		where

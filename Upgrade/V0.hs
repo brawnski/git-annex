@@ -23,7 +23,7 @@ import qualified Upgrade.V1
 
 upgrade :: Annex Bool
 upgrade = do
-	showSideAction "Upgrading object directory layout v0 to v1..."
+	showNote "v0 to v1..."
 	g <- Annex.gitRepo
 
 	-- do the reorganisation of the key files

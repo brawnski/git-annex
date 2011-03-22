@@ -10,6 +10,7 @@ module Command.Upgrade where
 import Command
 import Upgrade
 import Version
+import Messages
 
 command :: [Command]
 command = [standaloneCommand "upgrade" paramNothing seek
@@ -20,6 +21,7 @@ seek = [withNothing start]
 
 start :: CommandStartNothing
 start = do
+	showStart "upgrade" ""
 	r <- upgrade
 	checkVersion
 	return $ Just $ return $ Just $ return r
