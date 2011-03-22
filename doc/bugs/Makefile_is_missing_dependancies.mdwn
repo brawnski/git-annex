@@ -29,3 +29,6 @@ index 08e2f59..4ae8392 100644
 
 
 StatFS.hs never gets depended on and compiled, the makefile was just missing something
+
+> Thanks, [done]]! Interested to hear if StatFS.hs works on OSX (no warning) or
+> is a no-op (with warning). --[[Joey]] 
