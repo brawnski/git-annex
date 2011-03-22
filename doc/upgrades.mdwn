@@ -53,6 +53,13 @@ Symlinks changed.
 Also, hashing was added to location log files in .git-annex/.
 And .gitattributes needed to have another line added to it.
 
+Previously, files added to the SHA [[backends]] did not have their file
+size tracked, while files added to the WORM backend did. Files added to
+the SHA backends after the conversion will have their file size tracked,
+and that information will be used by git-annex for disk space checking.
+There is not yet a way to add file size tracking information to old files
+in the SHA backend.
+
 ### v0 -> v1 (git-annex version 0.03 to version 0.04)
 
 Involved a reorganisation of the layout of .git/annex/. Symlinks changed.
