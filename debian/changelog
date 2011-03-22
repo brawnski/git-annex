@@ -7,7 +7,7 @@ git-annex (0.20110321) UNRELEASED; urgency=low
     is not enabled for your OS.
   * Add annex.diskreserve config setting, to control how much free space
     to reserve for other purposes and avoid using (defaults to 1 mb).
-  * Add --fast flag, that can enable less expensive, but also less thurough
+  * Add --fast flag, that can enable less expensive, but also less thorough
     versions of some commands.
   * fsck: In fast mode, avoid checking checksums.
   * unused: In fast mode, just show all existing temp files as unused,
