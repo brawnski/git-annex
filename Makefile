@@ -11,7 +11,7 @@ SysConfig.hs: configure.hs TestConfig.hs
 	$(GHCMAKE) configure
 	./configure
 
-Touch.hs: Touch.hsc
+%.hs: %.hsc
 	hsc2hs $<
 	perl -i -pe 's/^{-# INCLUDE.*//' $@
 
