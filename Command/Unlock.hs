@@ -41,6 +41,8 @@ perform dest key = do
 	inbackend <- Backend.hasKey key
 	when (not inbackend) $
 		error "content not present"
+	
+	checkDiskSpace key
 
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g key

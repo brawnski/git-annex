@@ -55,7 +55,7 @@ perform file oldkey newbackend = do
 	case stored of
 		Nothing -> return Nothing
 		Just (newkey, _) -> do
-			ok <- getViaTmp newkey $ \t -> do
+			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
 				-- cached key, to avoid wasting disk space.
 				liftIO $ createLink src t

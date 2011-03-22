@@ -32,7 +32,8 @@ perform :: FilePath -> CommandPerform
 perform file = do
 	key <- cmdlineKey
 	-- the file might be on a different filesystem, so mv is used
-	-- rather than simply calling moveToObjectDir
+	-- rather than simply calling moveToObjectDir; disk space is also
+	-- checked this way.
 	ok <- getViaTmp key $ \dest -> do
 		if dest /= file
 			then liftIO $

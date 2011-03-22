@@ -16,3 +16,6 @@ file around.
   find files that lack size info, and rename their keys to add the size
   info. Users with old repos can run this on them, to get the missing
   info recorded.
+
+> [[done]]; no migtation process for old SHA1 keys from v1 repo though.
+> --[[Joey]] 

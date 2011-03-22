@@ -10,6 +10,8 @@ module Content (
 	calcGitLink,
 	logStatus,
 	getViaTmp,
+	getViaTmpUnchecked,
+	checkDiskSpace,
 	preventWrite,
 	allowWrite,
 	moveAnnex,
@@ -35,6 +37,8 @@ import UUID
 import qualified GitRepo as Git
 import qualified Annex
 import Utility
+import StatFS
+import Key
 
 {- Checks if a given key is currently present in the gitAnnexLocation. -}
 inAnnex :: Key -> Annex Bool
@@ -75,6 +79,27 @@ getViaTmp :: Key -> (FilePath -> Annex Bool) -> Annex Bool
 getViaTmp key action = do
 	g <- Annex.gitRepo
 	let tmp = gitAnnexTmpLocation g key
+
+	-- Check that there is enough free disk space.
+	-- When the temp file already exists, count the space
+	-- it is using as free.
+	e <- liftIO $ doesFileExist tmp
+	if e
+		then do
+			stat <- liftIO $ getFileStatus tmp
+			checkDiskSpace' (fromIntegral $ fileSize stat) key
+		else checkDiskSpace key
+
+	getViaTmpUnchecked key action
+
+{- Like getViaTmp, but does not check that there is enough disk space
+ - for the incoming key. For use when the key content is already on disk
+ - and not being copied into place. -}
+getViaTmpUnchecked :: Key -> (FilePath -> Annex Bool) -> Annex Bool
+getViaTmpUnchecked key action = do
+	g <- Annex.gitRepo
+	let tmp = gitAnnexTmpLocation g key
+
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	success <- action tmp
 	if success
@@ -86,6 +111,32 @@ getViaTmp key action = do
 			-- the tmp file is left behind, in case caller wants
 			-- to resume its transfer
 			return False
+
+{- Checks that there is disk space available to store a given key,
+ - throwing an error if not. -}
+checkDiskSpace :: Key -> Annex ()
+checkDiskSpace = checkDiskSpace' 0
+
+checkDiskSpace' :: Integer -> Key -> Annex ()
+checkDiskSpace' adjustment key = do
+	liftIO $ putStrLn $ "adjust " ++ show adjustment
+	g <- Annex.gitRepo
+	stats <- liftIO $ getFileSystemStats (gitAnnexDir g)
+	case (stats, keySize key) of
+		(Nothing, _) -> return ()
+		(_, Nothing) -> return ()
+		(Just (FileSystemStats { fsStatBytesAvailable = have }), Just need) ->
+			if (need + overhead >= have + adjustment)
+				then error $ "not enough free space (have " ++ 
+					showsize (have + adjustment) ++ "; need " ++
+					showsize (need + overhead) ++ ")"
+				else return ()
+	where
+		showsize i = show i
+		-- Adding a file to the annex requires some overhead beyond
+		-- just the file size; the git index must be updated, etc. 
+		-- This is an arbitrary value.
+		overhead = 1024 * 1024 -- 1 mb
 
 {- Removes the write bits from a file. -}
 preventWrite :: FilePath -> IO ()
