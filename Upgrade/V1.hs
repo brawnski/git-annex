@@ -93,7 +93,7 @@ moveContent = do
 
 updateSymlinks :: Annex ()
 updateSymlinks = do
-	showNote "updating symlinks content..."
+	showNote "updating symlinks..."
 	g <- Annex.gitRepo
 	files <- liftIO $ Git.inRepo g [Git.workTree g]
 	forM_ files $ fixlink
