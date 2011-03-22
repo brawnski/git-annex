@@ -133,7 +133,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 * fsck [path ...]
 
   With no parameters, this command checks the whole annex for consistency,
-  and warns about any problems found.
+  and warns about or fixes any problems found.
 
   With parameters, only the specified files are checked.
 
