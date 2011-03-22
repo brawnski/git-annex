@@ -61,7 +61,8 @@ docs: $(mans)
 		--exclude='news/.*'
 
 clean:
-	rm -rf build $(bins) $(mans) test configure Touch.hs SysConfig.hs *.tix .hpc
+	rm -rf build $(bins) $(mans) test configure \
+		StatFS.hs Touch.hs SysConfig.hs *.tix .hpc
 	rm -rf doc/.ikiwiki html
 	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 
