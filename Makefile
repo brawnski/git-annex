@@ -15,7 +15,7 @@ SysConfig.hs: configure.hs TestConfig.hs
 	hsc2hs $<
 	perl -i -pe 's/^{-# INCLUDE.*//' $@
 
-$(bins): SysConfig.hs Touch.hs
+$(bins): SysConfig.hs Touch.hs StatFS.hs
 	$(GHCMAKE) $@
 
 git-annex.1: doc/git-annex.mdwn
