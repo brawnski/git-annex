@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------------
 -- |
 --
--- (This code comes from xmobar)
+-- (This code originally comes from xmobar)
 -- 
 -- Module      :  StatFS
 -- Copyright   :  (c) Jose A Ortega Ruiz
@@ -57,7 +57,11 @@ import Data.ByteString.Char8 (pack)
 # include <sys/param.h>
 # include <sys/mount.h>
 #else
+#if defined (__linux__)
 #include <sys/vfs.h>
+#else
+#define UNKNOWN
+#endif
 #endif
 
 data FileSystemStats = FileSystemStats {
@@ -77,18 +81,25 @@ data FileSystemStats = FileSystemStats {
 
 data CStatfs
 
+#ifdef UNKNOWN
+#warning free space checking code not available for this OS
+#else
 #if defined(__FreeBSD__)
 foreign import ccall unsafe "sys/mount.h statfs"
 #else
 foreign import ccall unsafe "sys/vfs.h statfs64"
 #endif
   c_statfs :: CString -> Ptr CStatfs -> IO CInt
+#endif
 
 toI :: CLong -> Integer
 toI = toInteger
 
 getFileSystemStats :: String -> IO (Maybe FileSystemStats)
 getFileSystemStats path =
+#ifdef UNKNOWN
+  return Nothing
+#else
   allocaBytes (#size struct statfs) $ \vfs ->
   useAsCString (pack path) $ \cpath -> do
     res <- c_statfs cpath vfs
@@ -107,3 +118,4 @@ getFileSystemStats path =
                        , fsStatBytesAvailable = toI bavail * bpb
                        , fsStatBytesUsed = toI (bcount - bfree) * bpb
                        }
+#endif
