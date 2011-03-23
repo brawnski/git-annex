@@ -39,6 +39,7 @@ import qualified Annex
 import Utility
 import StatFS
 import Key
+import DataUnits
 
 {- Checks if a given key is currently present in the gitAnnexLocation. -}
 inAnnex :: Key -> Annex Bool
@@ -129,11 +130,10 @@ checkDiskSpace' adjustment key = do
 		(Just (FileSystemStats { fsStatBytesAvailable = have }), Just need) ->
 			if (need + reserve > have + adjustment)
 				then error $ "not enough free space (have " ++ 
-					showsize (have + adjustment) ++ "; need " ++
-					showsize (need + reserve) ++ ")"
+					roughSize True (have + adjustment) ++ "; need " ++
+					roughSize True (need + reserve) ++ ")"
 				else return ()
 	where
-		showsize i = show i
 		megabyte :: Integer
 		megabyte = 1024 * 1024
 
