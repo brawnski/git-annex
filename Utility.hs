@@ -12,6 +12,7 @@ module Utility (
 	readFileStrict,
 	parentDir,
 	absPath,
+	absPathFrom,
 	relPathCwdToDir,
 	relPathDirToDir,
 	boolSystem,
@@ -165,8 +166,14 @@ dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
 absPath :: FilePath -> IO FilePath
 absPath file = do
 	cwd <- getCurrentDirectory
+	return $ absPathFrom cwd file
+
+{- Converts a filename into a normalized, absolute path
+ - from the specified cwd. -}
+absPathFrom :: FilePath -> FilePath -> FilePath
+absPathFrom cwd file =
 	case absNormPath cwd file of
-		Just f -> return f
+		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
 
 {- Constructs a relative path from the CWD to a directory.

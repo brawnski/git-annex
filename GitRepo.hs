@@ -449,9 +449,9 @@ checkAttr repo attr files = do
 	-- top of the repo). But we're passed files relative to the current
 	-- directory. Convert to absolute, and then convert the filenames
 	-- in its output back to relative.
-	absfiles <- mapM absPath files
-	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
 	cwd <- getCurrentDirectory
+	let absfiles = map  (absPathFrom cwd) files
+	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
 	return $ map (topair $ cwd++"/") $ lines s
 	where
 		params = gitCommandLine repo [Param "check-attr", Param attr, Params "-z --stdin"]

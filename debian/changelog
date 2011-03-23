@@ -12,6 +12,7 @@ git-annex (0.20110321) UNRELEASED; urgency=low
   * fsck: In fast mode, avoid checking checksums.
   * unused: In fast mode, just show all existing temp files as unused,
     and avoid expensive scan for other unused content.
+  * Fix space leak in fsck and drop commands.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 22 Mar 2011 16:52:00 -0400
 
