@@ -202,5 +202,5 @@ badsizeNote dest expected got = "Bad file size (" ++ aside ++ "); moved to " ++ 
 		got' = roughSize True got
 		aside = 
 			if expected' == got'
-				then show expected ++ " not " ++ show got
-				else expected' ++ " not " ++ got'
+				then show got ++ " not " ++ show expected
+				else got' ++ " not " ++ expected'
