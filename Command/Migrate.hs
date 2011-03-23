@@ -31,8 +31,8 @@ start :: CommandStartBackendFile
 start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 	exists <- inAnnex key
 	newbackend <- choosebackend b
-	force <- Annex.getState Annex.force
-	if (newbackend /= oldbackend || force) && exists
+	upgradable <- Backend.upgradableKey oldbackend key
+	if (newbackend /= oldbackend || upgradable) && exists
 		then do
 			showStart "migrate" file
 			return $ Just $ perform file key newbackend

@@ -12,6 +12,8 @@ git-annex (0.20110321) UNRELEASED; urgency=low
   * fsck: In fast mode, avoid checking checksums.
   * unused: In fast mode, just show all existing temp files as unused,
     and avoid expensive scan for other unused content.
+  * migrate: Support migrating v1 SHA keys to v2 SHA keys with
+    size information that can be used for free space checking.
   * Fix space leak in fsck and drop commands.
   * migrate: Bugfix for case when migrating a file results in a key that
     is already present in .git/annex/objects.

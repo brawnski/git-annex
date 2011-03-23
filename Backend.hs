@@ -24,6 +24,7 @@ module Backend (
 	removeKey,
 	hasKey,
 	fsckKey,
+	upgradableKey,
 	lookupFile,
 	chooseBackends,
 	keyBackend,
@@ -129,6 +130,10 @@ fsckKey backend key file numcopies = do
 	size_ok <- checkKeySize key
 	backend_ok <-(B.fsckKey backend) key file numcopies
 	return $ size_ok && backend_ok
+
+{- Checks if a key is upgradable to a newer representation. -}
+upgradableKey :: Backend Annex -> Key -> Annex Bool
+upgradableKey backend key = (B.upgradableKey backend) key
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}

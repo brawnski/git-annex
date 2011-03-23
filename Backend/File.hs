@@ -29,6 +29,7 @@ import Types
 import UUID
 import Messages
 import Trust
+import Key
 
 backend :: Backend Annex
 backend = Backend {
@@ -38,7 +39,8 @@ backend = Backend {
 	retrieveKeyFile = copyKeyFile,
 	removeKey = checkRemoveKey,
 	hasKey = inAnnex,
-	fsckKey = checkKeyOnly
+	fsckKey = checkKeyOnly,
+	upgradableKey = checkUpgradableKey
 }
 
 mustProvide :: a
@@ -158,6 +160,12 @@ getNumCopies Nothing = do
 	return $ read $ Git.configGet g config "1"
 	where
 		config = "annex.numcopies"
+
+{- Ideally, all keys have file size metadata. Old keys may not. -}
+checkUpgradableKey :: Key -> Annex Bool
+checkUpgradableKey key
+	| keySize key == Nothing = return True
+	| otherwise = return False
 
 {- This is used to check that numcopies is satisfied for the key on fsck.
  - This trusts data in the the location log, and so can check all keys, even

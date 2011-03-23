@@ -29,7 +29,9 @@ data Backend a = Backend {
 	-- (second parameter may be the filename associated with it)
 	-- (third parameter may be the number of copies that there should
 	-- be of the key)
-	fsckKey :: Key -> Maybe FilePath -> Maybe Int -> a Bool
+	fsckKey :: Key -> Maybe FilePath -> Maybe Int -> a Bool,
+	-- Is a newer repesentation possible for a key?
+	upgradableKey :: Key -> a Bool
 }
 
 instance Show (Backend a) where

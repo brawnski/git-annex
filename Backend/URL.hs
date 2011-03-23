@@ -30,7 +30,9 @@ backend = Backend {
 	-- similarly, keys are always assumed to be out there on the web
 	hasKey = dummyOk,
 	-- and nothing needed to fsck
-	fsckKey = dummyFsck
+	fsckKey = dummyFsck,
+	-- and key upgrade not needed
+	upgradableKey = \_ -> return False
 }
 
 -- cannot generate url from filename
