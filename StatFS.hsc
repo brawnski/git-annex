@@ -53,7 +53,7 @@ import Foreign.C.String
 import Data.ByteString (useAsCString)
 import Data.ByteString.Char8 (pack)
 
-#if defined (__FreeBSD__)
+#if defined (__FreeBSD__) || defined(__APPLE__)
 # include <sys/param.h>
 # include <sys/mount.h>
 #else
@@ -84,7 +84,7 @@ data CStatfs
 #ifdef UNKNOWN
 #warning free space checking code not available for this OS
 #else
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__APPLE__)
 foreign import ccall unsafe "sys/mount.h statfs"
 #else
 foreign import ccall unsafe "sys/vfs.h statfs64"
