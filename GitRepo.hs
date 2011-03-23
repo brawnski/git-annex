@@ -450,7 +450,7 @@ checkAttr repo attr files = do
 	-- directory. Convert to absolute, and then convert the filenames
 	-- in its output back to relative.
 	cwd <- getCurrentDirectory
-	let absfiles = map  (absPathFrom cwd) files
+	let absfiles = map (absPathFrom cwd) files
 	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
 	return $ map (topair $ cwd++"/") $ lines s
 	where

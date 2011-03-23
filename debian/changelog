@@ -2,7 +2,7 @@ git-annex (0.20110321) UNRELEASED; urgency=low
 
   * Free space checking is now done, for transfers of data for keys
     that have free space metadata. (Notably, not for SHA* keys generated
-    with git-annex 0.24 or earlier.) The code is believed to work on
+    with git-annex 0.2x or earlier.) The code is believed to work on
     Linux, FreeBSD, and OSX; check compile-time messages to see if it
     is not enabled for your OS.
   * Add annex.diskreserve config setting, to control how much free space
