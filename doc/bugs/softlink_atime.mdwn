@@ -41,8 +41,8 @@ Optionally, editing the meta-data should change the times in all annexes.
 >>>>>>> This is even better:
 
     #!/bin/sh
+    if ! type metastore >/dev/null; then echo "$0: metastore is not installed; exiting"; exit 1; fi
     git annex pre-commit .
-    which metastore || echo "$0: metastore is not installed; exiting"; exit 99
     metastore --save
     git add .metadata
 
