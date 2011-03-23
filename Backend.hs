@@ -192,15 +192,7 @@ checkKeySize key = do
 				then return True
 				else do
 					dest <- moveBad key
-					warning $ badsizeNote dest size size'
+					warning $ "Bad file size (" ++
+						compareSizes True size size' ++ 
+						"); moved to " ++ dest
 					return False
-
-badsizeNote :: FilePath -> Integer -> Integer -> String
-badsizeNote dest expected got = "Bad file size (" ++ aside ++ "); moved to " ++ dest
-	where
-		expected' = roughSize True expected
-		got' = roughSize True got
-		aside = 
-			if expected' == got'
-				then show got ++ " not " ++ show expected
-				else got' ++ " not " ++ expected'

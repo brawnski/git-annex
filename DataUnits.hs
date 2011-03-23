@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module DataUnits (roughSize) where
+module DataUnits (roughSize, compareSizes) where
 
 {- And now a rant: 
  -
@@ -63,3 +63,9 @@ roughSize short i
 		plural n u
 			| n == 1 = u
 			| otherwise = u ++ "s"
+
+compareSizes :: Bool -> Integer -> Integer -> String
+compareSizes short old new
+	| old > new = roughSize short (old - new) ++ " smaller"
+	| old < new = roughSize short (new - old) ++ " larger"
+	| otherwise = "same"
