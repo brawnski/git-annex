@@ -129,13 +129,17 @@ checkDiskSpace' adjustment key = do
 		(_, Nothing) -> return ()
 		(Just (FileSystemStats { fsStatBytesAvailable = have }), Just need) ->
 			if (need + reserve > have + adjustment)
-				then error $ "not enough free space, need " ++ 
-					roughSize True (need + reserve - have - adjustment) ++
-					" more"
+				then needmorespace (need + reserve - have - adjustment)
 				else return ()
 	where
 		megabyte :: Integer
 		megabyte = 1024 * 1024
+		needmorespace n = do
+			force <- Annex.getState Annex.force
+			unless force $ 
+				error $ "not enough free space, need " ++ 
+					roughSize True n ++
+					" more (use --force to override this check or adjust annex.diskreserve)"
 
 {- Removes the write bits from a file. -}
 preventWrite :: FilePath -> IO ()
