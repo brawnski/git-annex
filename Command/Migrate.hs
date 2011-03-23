@@ -8,6 +8,7 @@
 module Command.Migrate where
 
 import Control.Monad.State (liftIO)
+import Control.Monad (unless)
 import System.Posix.Files
 import System.Directory
 
@@ -58,7 +59,8 @@ perform file oldkey newbackend = do
 			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
 				-- cached key, to avoid wasting disk space.
-				liftIO $ createLink src t
+				exists <- liftIO $ doesFileExist t
+				unless exists $ liftIO $ createLink src t
 				return True
 			if ok
 				then do
