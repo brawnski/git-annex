@@ -129,9 +129,9 @@ checkDiskSpace' adjustment key = do
 		(_, Nothing) -> return ()
 		(Just (FileSystemStats { fsStatBytesAvailable = have }), Just need) ->
 			if (need + reserve > have + adjustment)
-				then error $ "not enough free space (have " ++ 
-					roughSize True (have + adjustment) ++ "; need " ++
-					roughSize True (need + reserve) ++ ")"
+				then error $ "not enough free space, need " ++ 
+					roughSize True (need + reserve - have - adjustment) ++
+					" more"
 				else return ()
 	where
 		megabyte :: Integer
