@@ -29,7 +29,7 @@ Optionally, editing the meta-data should change the times in all annexes.
 >>>>> 
 >>>>> So all you have to do is make the pre-commit hook call
 >>>>> [metastore](http://david.hardeman.nu/software.php). The hook
->>>>> would look like this: ---[[Joey]] [[!tag done]]
+>>>>> would look like this: ---[[Joey]]
 
 	#!/bin/sh
 	git annex pre-commit .
@@ -47,3 +47,5 @@ Optionally, editing the meta-data should change the times in all annexes.
     git add .metadata
 
 >>>>>>> -- RichiH
+
+>>>>>>>> After getting to actually play with this from different machines with a bare git as central instance for several distributed repos, the metastore trick does not work. The .metadata is causing merge conflicts for every pull. I removed the "done" tag from this issue. -- RichiH
