@@ -31,7 +31,8 @@ start :: CommandStartBackendFile
 start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 	exists <- inAnnex key
 	newbackend <- choosebackend b
-	if (newbackend /= oldbackend) && exists
+	force <- Annex.getState Annex.force
+	if (newbackend /= oldbackend || force) && exists
 		then do
 			showStart "migrate" file
 			return $ Just $ perform file key newbackend
@@ -59,8 +60,9 @@ perform file oldkey newbackend = do
 			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
 				-- cached key, to avoid wasting disk space.
-				exists <- liftIO $ doesFileExist t
-				unless exists $ liftIO $ createLink src t
+				liftIO $ do
+					exists <- doesFileExist t
+					unless exists $ createLink src t
 				return True
 			if ok
 				then do
