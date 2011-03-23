@@ -54,9 +54,8 @@ roughSize short i
 		at n = 1000^n
 
 		chop :: Integer -> Integer
-		chop d = round ((fromInteger i :: Double) / fromInteger (at d))
+		chop d = round $ (fromInteger i :: Double) / fromInteger (at d)
 
-		units :: Integer -> String -> String -> String
 		units d u u' = let num = chop d in
 			show num ++ " " ++
 			(if short then u' else plural num u)
