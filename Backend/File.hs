@@ -38,7 +38,7 @@ backend = Backend {
 	retrieveKeyFile = copyKeyFile,
 	removeKey = checkRemoveKey,
 	hasKey = inAnnex,
-	fsckKey = mustProvide
+	fsckKey = checkKeyOnly
 }
 
 mustProvide :: a
@@ -171,6 +171,9 @@ checkKey a key file numcopies = do
 	a_ok <- a key
 	copies_ok <- checkKeyNumCopies key file numcopies
 	return $ a_ok && copies_ok
+
+checkKeyOnly :: Key -> Maybe FilePath -> Maybe Int -> Annex Bool
+checkKeyOnly = checkKey (\_ -> return True)
 
 checkKeyNumCopies :: Key -> Maybe FilePath -> Maybe Int -> Annex Bool
 checkKeyNumCopies key file numcopies = do

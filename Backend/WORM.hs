@@ -10,15 +10,9 @@ module Backend.WORM (backends) where
 import Control.Monad.State
 import System.FilePath
 import System.Posix.Files
-import System.Directory
-import Data.Maybe
 
 import qualified Backend.File
 import BackendClass
-import Locations
-import qualified Annex
-import Content
-import Messages
 import Types
 import Key
 
@@ -28,8 +22,7 @@ backends = [backend]
 backend :: Backend Annex
 backend = Backend.File.backend {
 	name = "WORM",
-	getKey = keyValue,
-	fsckKey = Backend.File.checkKey checkKeySize
+	getKey = keyValue
 }
 
 {- The key includes the file size, modification time, and the
@@ -48,21 +41,3 @@ keyValue file = do
 		keySize = Just $ fromIntegral $ fileSize stat,
 		keyMtime = Just $ modificationTime stat
 	}
-
-{- The size of the data for a key is checked against the size encoded in
- - the key's metadata. -}
-checkKeySize :: Key -> Annex Bool
-checkKeySize key = do
-	g <- Annex.gitRepo
-	let file = gitAnnexLocation g key
-	present <- liftIO $ doesFileExist file
-	if not present
-		then return True
-		else do
-			s <- liftIO $ getFileStatus file
-			if fromIntegral (fileSize s) == fromJust (keySize key)
-				then return True
-				else do
-					dest <- moveBad key
-					warning $ "Bad file size; moved to " ++ dest
-					return False

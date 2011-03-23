@@ -35,6 +35,7 @@ import Control.Monad.State
 import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files
+import System.Directory
 
 import Locations
 import qualified GitRepo as Git
@@ -43,6 +44,8 @@ import Types
 import Key
 import qualified BackendClass as B
 import Messages
+import Content
+import DataUnits
 
 {- List of backends in the order to try them when storing a new key. -}
 list :: Annex [Backend Annex]
@@ -120,9 +123,12 @@ hasKey key = do
 	backend <- keyBackend key
 	(B.hasKey backend) key
 
-{- Checks a key's backend for problems. -}
+{- Checks a key for problems. -}
 fsckKey :: Backend Annex -> Key -> Maybe FilePath -> Maybe Int -> Annex Bool
-fsckKey backend key file numcopies = (B.fsckKey backend) key file numcopies
+fsckKey backend key file numcopies = do
+	size_ok <- checkKeySize key
+	backend_ok <-(B.fsckKey backend) key file numcopies
+	return $ size_ok && backend_ok
 
 {- Looks up the key and backend corresponding to an annexed file,
  - by examining what the file symlinks to. -}
@@ -168,3 +174,33 @@ keyBackend :: Key -> Annex (Backend Annex)
 keyBackend key = do
 	bs <- Annex.getState Annex.supportedBackends
 	return $ lookupBackendName bs $ keyBackendName key
+
+{- The size of the data for a key is checked against the size encoded in
+ - the key's metadata, if available. -}
+checkKeySize :: Key -> Annex Bool
+checkKeySize key = do
+	g <- Annex.gitRepo
+	let file = gitAnnexLocation g key
+	present <- liftIO $ doesFileExist file
+	case (present, keySize key) of
+		(_, Nothing) -> return True
+		(False, _) -> return True
+		(True, Just size) -> do
+			stat <- liftIO $ getFileStatus file
+			let size' = fromIntegral (fileSize stat)
+			if size == size'
+				then return True
+				else do
+					dest <- moveBad key
+					warning $ badsizeNote dest size size'
+					return False
+
+badsizeNote :: FilePath -> Integer -> Integer -> String
+badsizeNote dest expected got = "Bad file size (" ++ aside ++ "); moved to " ++ dest
+	where
+		expected' = roughSize True expected
+		got' = roughSize True got
+		aside = 
+			if expected' == got'
+				then show expected ++ " not " ++ show got
+				else expected' ++ " not " ++ got'
