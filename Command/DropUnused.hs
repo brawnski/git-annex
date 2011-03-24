@@ -27,12 +27,16 @@ command = [repoCommand "dropunused" (paramRepeating paramNumber) seek
 	"drop unused file content"]
 
 seek :: [CommandSeek]
-seek = [withStrings start]
+seek = [withUnusedMap]
 
-{- Drops unused content by number. -} 
-start :: CommandStartString
-start s = notBareRepo $ do
+{- Read unusedlog once, and pass the map to each start action. -}
+withUnusedMap :: CommandSeek
+withUnusedMap params = do
 	m <- readUnusedLog
+	return $ map (start m) params
+
+start :: M.Map String Key -> CommandStartString
+start m s = notBareRepo $ do
 	case M.lookup s m of
 		Nothing -> return Nothing
 		Just key -> do

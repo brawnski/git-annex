@@ -17,6 +17,7 @@ git-annex (0.20110321) UNRELEASED; urgency=low
   * Fix space leak in fsck and drop commands.
   * migrate: Bugfix for case when migrating a file results in a key that
     is already present in .git/annex/objects.
+  * dropunused: Significantly sped up; only read unused log file once.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 22 Mar 2011 16:52:00 -0400
 
