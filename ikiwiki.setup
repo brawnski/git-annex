@@ -103,6 +103,8 @@ hardlink: 1
 libdir: /home/b-git-annex/.ikiwiki
 # environment variables
 ENV: {}
+# time zone name
+timezone: GMT
 # regexp of normally excluded files to include
 #include: '^\.htaccess$'
 # regexp of files that should be skipped
@@ -343,7 +345,8 @@ directive_description_dir: ikiwiki/directive
 #    flattr, goodstuff, htmlbalance, ikiwikihosting, localstyle,
 #    missingsite, pagetemplate, parked, pingee, pinger, prettydate,
 #    recentchanges, recentchangesdiff, relativedate, rsync, sidebar,
-#    smiley, sortnaturally, tag, testpagespec, typography, underlay)
+#    smiley, sortnaturally, tag, testpagespec, transient, typography,
+#    underlay)
 ######################################################################
 
 # aggregate plugin
@@ -351,6 +354,13 @@ directive_description_dir: ikiwiki/directive
 aggregateinternal: 1
 # allow aggregation to be triggered via the web?
 #aggregate_webtrigger: 0
+# cookie control
+cookiejar:
+  file: /home/b-git-annex/.ikiwiki/cookies
+
+# autoindex plugin
+# commit autocreated index pages
+autoindex_commit: 1
 
 # camelcase plugin
 # list of words to not turn into links
@@ -407,6 +417,8 @@ recentchangesnum: 100
 #tagbase: tag
 # autocreate new tag pages?
 #tag_autocreate: 1
+# commit autocreated tag pages
+tag_autocreate_commit: 1
 
 # typography plugin
 # Text::Typography attributes value
