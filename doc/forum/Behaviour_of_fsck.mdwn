@@ -1,4 +1,4 @@
-The current behaviour of 'fsck' is a bit verbose. I have an annex'd directory of tarballs for my own build system for "science" applications, there's about ~600 or blobs in my repo, I do occassionally like to run fsck across all my data to see what files don't meet the min num copies requirement that I have set.
+The current behaviour of 'fsck' is a bit verbose. I have an annex'd directory of tarballs for my own build system for "science" applications, there's about ~600 or so blobs in my repo, I do occassionally like to run fsck across all my data to see what files don't meet the min num copies requirement that I have set.
 
 Would it be better for the default behaviour of fsck when it has not been given a path to only output errors and not bother to show that a file is ok for every single file in a repo. i.e.
 
