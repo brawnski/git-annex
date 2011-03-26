@@ -11,6 +11,7 @@ module DataUnits (
 	memoryUnits,
 	bandwidthUnits,
 	oldSchoolUnits,
+
 	roughSize,
 	compareSizes,
 	readSize
@@ -142,11 +143,10 @@ readSize units input
 	where
 		(number, rest) = head parsednum
 		multiplier = head $ parsedunit
+		unitname = takeWhile isAlpha $ dropWhile isSpace rest
 
 		parsednum = reads input :: [(Double, String)]
-		parsedunit = lookupUnit units unit
-
-		unit = takeWhile isAlpha $ dropWhile isSpace rest
+		parsedunit = lookupUnit units unitname
 
 		lookupUnit _ [] = [1] -- no unit given, assume bytes
 		lookupUnit [] _ = []
