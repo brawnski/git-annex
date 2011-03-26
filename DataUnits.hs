@@ -9,6 +9,7 @@ module DataUnits (
 	dataUnits,
 	storageUnits,
 	memoryUnits,
+	bandwidthUnits,
 	oldSchoolUnits,
 	roughSize,
 	compareSizes,
