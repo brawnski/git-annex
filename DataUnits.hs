@@ -1,11 +1,27 @@
-{- data size display
+{- data size display and parsing
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module DataUnits (roughSize, compareSizes) where
+module DataUnits (
+	dataUnits,
+	storageUnits,
+	memoryUnits,
+	oldSchoolUnits,
+	roughSize,
+	compareSizes
+) where
+
+import Data.List
+import Data.Char
+
+type ByteSize = Integer
+type Name = String
+type Abbrev = String
+data Unit = Unit ByteSize Abbrev Name
+	deriving (Ord, Show, Eq)
 
 {- And now a rant: 
  -
@@ -28,7 +44,8 @@ module DataUnits (roughSize, compareSizes) where
  -
  - And the drive manufacturers happily continued selling drives that are
  - increasingly smaller than you'd expect, if you don't count on your
- - fingers. But that are increasingly bigger.
+ - fingers. But that are increasingly too big for anyone to much notice.
+ - This caused me to need git-annex.
  -
  - Thus, I use units here that I loathe. Because if I didn't, people would
  - be confused that their drives seem the wrong size, and other people would
@@ -36,36 +53,99 @@ module DataUnits (roughSize, compareSizes) where
  - progress?
  -}
 
-{- approximate display of a particular number of bytes -}
-roughSize :: Bool -> Integer -> String
-roughSize short i
-	| i < 0 = "-" ++ roughSize short (negate i)
-	| i >= at 8 = units 8 "yottabyte" "YB"
-	| i >= at 7 = units 7 "zettabyte" "ZB"
-	| i >= at 6 = units 6 "exabyte" "EB"
-	| i >= at 5 = units 5 "petabyte" "PB"
-	| i >= at 4 = units 4 "terabyte" "TB"
-	| i >= at 3 = units 3 "gigabyte" "GB"
-	| i >= at 2 = units 2 "megabyte" "MB"
-	| i >= at 1 = units 1 "kilobyte" "kB"
-	| otherwise = units 0 "byte" "B"
+dataUnits = storageUnits ++ memoryUnits
+
+{- Storage units are (stupidly) powers of ten. -}
+storageUnits :: [Unit]
+storageUnits =
+	[ Unit (p 8) "YB" "yottabyte"
+	, Unit (p 7) "ZB" "zettabyte"
+	, Unit (p 6) "EB" "exabyte"
+	, Unit (p 5) "PB" "petabyte"
+	, Unit (p 4) "TB" "terabyte"
+	, Unit (p 3) "GB" "gigabyte"
+	, Unit (p 2) "MB" "megabyte"
+	, Unit (p 1) "kB" "kilobyte" -- weird capitalization thanks to committe
+	, Unit (p 0) "B" "byte"
+	]
 	where
-		at :: Integer -> Integer
-		at n = 1000^n
+		p n = 1000^n
 
-		chop :: Integer -> Integer
-		chop d = round $ (fromInteger i :: Double) / fromInteger (at d)
+{- Memory units are (stupidly named) powers of 2. -}
+memoryUnits :: [Unit]
+memoryUnits =
+	[ Unit (p 8) "YiB" "yobibyte"
+	, Unit (p 7) "ZiB" "zebibyte"
+	, Unit (p 6) "EiB" "exbibyte"
+	, Unit (p 5) "PiB" "pebibyte"
+	, Unit (p 4) "TiB" "tebibyte"
+	, Unit (p 3) "GiB" "gigabyte"
+	, Unit (p 2) "MiB" "mebibyte"
+	, Unit (p 1) "kiB" "kibibyte"
+	, Unit (p 0) "B" "byte"
+	]
+	where
+		p n = 2^(n*10)
 
-		units d u u' = let num = chop d in
+{- Do you yearn for the days when men were men and megabytes were megabytes? -}
+oldSchoolUnits = map mingle $ zip storageUnits memoryUnits
+	where
+		mingle (Unit s a n, Unit s' a' n') = Unit s' a n
+
+{- approximate display of a particular number of bytes -}
+roughSize :: [Unit] -> Bool -> ByteSize -> String
+roughSize units abbrev i
+	| i < 0 = "-" ++ findUnit units' (negate i)
+	| otherwise = findUnit units' i
+	where
+		units' = reverse $ sort units -- largest first
+
+		findUnit (u@(Unit s _ _):us) i'
+			| i' >= s = showUnit i' u
+			| otherwise = findUnit us i'
+		findUnit [] i' = showUnit i' (last units') -- bytes
+
+		showUnit i' (Unit s a n) = let num = chop i' s in
 			show num ++ " " ++
-			(if short then u' else plural num u)
+			(if abbrev then a else plural num n)
+
+		chop :: Integer -> Integer -> Integer
+		chop i' d = round $ (fromInteger i' :: Double) / fromInteger d
 
 		plural n u
 			| n == 1 = u
 			| otherwise = u ++ "s"
 
-compareSizes :: Bool -> Integer -> Integer -> String
-compareSizes short old new
-	| old > new = roughSize short (old - new) ++ " smaller"
-	| old < new = roughSize short (new - old) ++ " larger"
+{- displays comparison of two sizes -}
+compareSizes :: [Unit] -> Bool -> ByteSize -> ByteSize -> String
+compareSizes units abbrev old new
+	| old > new = roughSize units abbrev (old - new) ++ " smaller"
+	| old < new = roughSize units abbrev (new - old) ++ " larger"
 	| otherwise = "same"
+
+{- Parses strings like "10 kilobytes" or "0.5tb". -}
+readSize :: String -> [Unit] -> Maybe ByteSize
+readSize s units
+	| null parsednum = Nothing
+	| null parsedunit = Nothing
+	| otherwise = Just $ round $ number * (fromIntegral multiplier)
+	where
+		(number, rest) = head parsednum
+		multiplier = head $ parsedunit
+
+		parsednum = reads s :: [(Double, String)]
+		parsedunit = lookupUnit units unit
+
+		unit = takeWhile isAlpha $ dropWhile isSpace rest
+
+		lookupUnit _ [] = [1] -- no unit given, assume bytes
+		lookupUnit [] _ = []
+		lookupUnit (u@(Unit s a n):us) v
+			| a ~~ v || n ~~ v = [s]
+			| plural n ~~ v || a ~~ byteabbrev v = [s]
+			| otherwise = lookupUnit us v
+		
+		a ~~ b = map toLower a == map toLower b
+		
+		plural n = n ++ "s"
+		byteabbrev a = a ++ "b"
