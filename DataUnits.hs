@@ -85,7 +85,7 @@ memoryUnits =
 	, Unit (p 4) "TiB" "tebibyte"
 	, Unit (p 3) "GiB" "gigabyte"
 	, Unit (p 2) "MiB" "mebibyte"
-	, Unit (p 1) "kiB" "kibibyte"
+	, Unit (p 1) "KiB" "kibibyte"
 	, Unit (p 0) "B" "byte"
 	]
 	where
