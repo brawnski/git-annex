@@ -91,6 +91,10 @@ memoryUnits =
 		p :: Integer -> Integer
 		p n = 2^(n*10)
 
+{- Bandwidth units are only measured in bits if you're some crazy telco. -}
+bandwidthUnits :: [Unit]
+bandwidthUnits = error "stop trying to rip people off"
+
 {- Do you yearn for the days when men were men and megabytes were megabytes? -}
 oldSchoolUnits :: [Unit]
 oldSchoolUnits = map mingle $ zip storageUnits memoryUnits
