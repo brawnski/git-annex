@@ -71,3 +71,21 @@ Implementing this might not be as conceptually nice as making S3 a separate
 backend. It would need some changes to the remotes code, perhaps lifting
 some of it into backend-specific hooks. Then the S3 backend could be
 implicitly stacked in front of a backend like WORM.
+
+---
+
+Maybe the right way to look at this is that a list of Stores
+should be a property of the Backend. Backend.File is a Backend, that
+uses various Stores, which can be of different types (the local
+git repo, remote git repos, S3, etc). Backend.URL is a backend that uses
+other Stores (the local git repo, and the web).
+
+Operations on Stores are:
+
+* uuid -- each store has a unique uuid value
+* cost -- each store has a use cost value
+* getConfig -- attempts to look up values (uuid, possibly cost)
+* copyToStore -- store a file's contents to a key
+* copyFromStore -- retrieve a key's contents to a file
+* removeFromStore -- removes a key's contents from the store
+* hasKey -- checks if the key's content is available
