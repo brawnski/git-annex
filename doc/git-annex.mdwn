@@ -387,8 +387,10 @@ Here are all the supported configuration settings.
   Amount of disk space to reserve. Disk space is checked when transferring
   content to avoid running out, and additional free space can be reserved
   via this option, to make space for more important content (such as git
-  commit logs). The units are bytes.
-  The default reserve is 1048576 (1 megabyte).
+  commit logs). Can be specified with any commonly used units, for example,
+  "0.5 gb" or "100 KiloBytes"
+
+  The default reserve is 1 megabyte.
 
 * `annex.version`
 

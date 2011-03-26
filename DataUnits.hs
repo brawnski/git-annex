@@ -11,7 +11,8 @@ module DataUnits (
 	memoryUnits,
 	oldSchoolUnits,
 	roughSize,
-	compareSizes
+	compareSizes,
+	readSize
 ) where
 
 import Data.List
@@ -53,6 +54,7 @@ data Unit = Unit ByteSize Abbrev Name
  - progress?
  -}
 
+dataUnits :: [Unit]
 dataUnits = storageUnits ++ memoryUnits
 
 {- Storage units are (stupidly) powers of ten. -}
@@ -69,6 +71,7 @@ storageUnits =
 	, Unit (p 0) "B" "byte"
 	]
 	where
+		p :: Integer -> Integer
 		p n = 1000^n
 
 {- Memory units are (stupidly named) powers of 2. -}
@@ -85,12 +88,14 @@ memoryUnits =
 	, Unit (p 0) "B" "byte"
 	]
 	where
+		p :: Integer -> Integer
 		p n = 2^(n*10)
 
 {- Do you yearn for the days when men were men and megabytes were megabytes? -}
+oldSchoolUnits :: [Unit]
 oldSchoolUnits = map mingle $ zip storageUnits memoryUnits
 	where
-		mingle (Unit s a n, Unit s' a' n') = Unit s' a n
+		mingle (Unit _ a n, Unit s' _ _) = Unit s' a n
 
 {- approximate display of a particular number of bytes -}
 roughSize :: [Unit] -> Bool -> ByteSize -> String
@@ -124,8 +129,8 @@ compareSizes units abbrev old new
 	| otherwise = "same"
 
 {- Parses strings like "10 kilobytes" or "0.5tb". -}
-readSize :: String -> [Unit] -> Maybe ByteSize
-readSize s units
+readSize :: [Unit] -> String -> Maybe ByteSize
+readSize units input
 	| null parsednum = Nothing
 	| null parsedunit = Nothing
 	| otherwise = Just $ round $ number * (fromIntegral multiplier)
@@ -133,14 +138,14 @@ readSize s units
 		(number, rest) = head parsednum
 		multiplier = head $ parsedunit
 
-		parsednum = reads s :: [(Double, String)]
+		parsednum = reads input :: [(Double, String)]
 		parsedunit = lookupUnit units unit
 
 		unit = takeWhile isAlpha $ dropWhile isSpace rest
 
 		lookupUnit _ [] = [1] -- no unit given, assume bytes
 		lookupUnit [] _ = []
-		lookupUnit (u@(Unit s a n):us) v
+		lookupUnit (Unit s a n:us) v
 			| a ~~ v || n ~~ v = [s]
 			| plural n ~~ v || a ~~ byteabbrev v = [s]
 			| otherwise = lookupUnit us v

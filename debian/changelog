@@ -1,3 +1,9 @@
+git-annex (0.20110326) UNRELEASED; urgency=low
+
+  * annex.diskreserve can be given in arbitrary units (ie "0.5 gigabytes")
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 26 Mar 2011 14:36:16 -0400
+
 git-annex (0.20110325) experimental; urgency=low
 
   * Free space checking is now done, for transfers of data for keys

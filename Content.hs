@@ -122,7 +122,9 @@ checkDiskSpace' :: Integer -> Key -> Annex ()
 checkDiskSpace' adjustment key = do
 	g <- Annex.gitRepo
 	r <- Annex.repoConfig g "diskreserve" ""
-	let reserve = if null r then megabyte else (read r :: Integer)
+	let reserve = case readSize dataUnits r of
+		Nothing -> megabyte
+		Just v -> v
 	stats <- liftIO $ getFileSystemStats (gitAnnexDir g)
 	case (stats, keySize key) of
 		(Nothing, _) -> return ()
@@ -133,12 +135,12 @@ checkDiskSpace' adjustment key = do
 				else return ()
 	where
 		megabyte :: Integer
-		megabyte = 1024 * 1024
+		megabyte = 1000000
 		needmorespace n = do
 			force <- Annex.getState Annex.force
 			unless force $ 
 				error $ "not enough free space, need " ++ 
-					roughSize True n ++
+					roughSize storageUnits True n ++
 					" more (use --force to override this check or adjust annex.diskreserve)"
 
 {- Removes the write bits from a file. -}

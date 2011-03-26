@@ -198,6 +198,6 @@ checkKeySize key = do
 				else do
 					dest <- moveBad key
 					warning $ "Bad file size (" ++
-						compareSizes True size size' ++ 
+						compareSizes storageUnits True size size' ++ 
 						"); moved to " ++ dest
 					return False
