@@ -9,3 +9,5 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 > If git-annex runs concurrently with another git command that locks
 > the repository its git add of log files can fail.
 > --[[Joey]] 
+
+>> It "got wedged" as in git doesn't let me commit anything, even though it tells me that there is stuff to be committed in the staging area.
