@@ -1,0 +1,5 @@
+After a series of pretty convoluted copying files around between annex'd repos and pulling changes around between repos. I noticed that occassionally when git-annex tries to stage files (the `.git-annex/*/*/*logs`) git some times gets wedged and doing a "git commit -a" doesn't seem to work or files might not get added thus leaving a bunch of untracked files or modified files that aren't staged for a commit.
+
+I tried running a *git add -u .git-annex/* and also just the usual *git add* then a commit fixes things for me. If I don't do that then my subsequent merges/pulls will fail and result in *no known copies of files* I suspect git-annex might have just touched some file modes and git picked up the changes but got confused since there was no content change. It might also just be a git on OSX thing and it doesn't affect linux/bsd users.
+
+For now it's just a bit of extra work for me when it does occur but it does not seem to occur often.
