@@ -35,7 +35,7 @@ import qualified GitAnnex
 import qualified LocationLog
 import qualified UUID
 import qualified Trust
-import qualified Remotes
+import qualified Remote
 import qualified Content
 import qualified Command.DropUnused
 import qualified Key
@@ -337,10 +337,8 @@ test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
 		repo = "origin"
 		trustcheck expected msg = do
 			present <- annexeval $ do
-				Remotes.readConfigs
 				l <- Trust.trustGet expected
-				r <- Remotes.byName repo
-				u <- UUID.getUUID r
+				u <- Remote.nameToUUID repo
 				return $ u `elem` l
 			assertBool msg present
 
