@@ -11,3 +11,6 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 > --[[Joey]] 
 
 >> It "got wedged" as in git doesn't let me commit anything, even though it tells me that there is stuff to be committed in the staging area.
+
+>>> I've never seen git refuse to commit staged files. There would have to
+>>> be some error message? --[[Joey]] 
