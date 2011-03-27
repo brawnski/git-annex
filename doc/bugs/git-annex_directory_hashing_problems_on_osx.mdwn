@@ -26,6 +26,8 @@ this has somewhat confused git when it tries to stage/merge files, I didn't noti
 > .git-annex manually?) I don't understand how you get to this state.
 > --[[Joey]]
 
+>> I think I got myself into this situation when I copied some files over from a HFS+ partition to a GPFS network share (which is pretty posix compliant) over samba. It probably is related to the [[git-annex_has_issues_with_git_when_staging__47__commiting_logs]]. I thought they were unique enough to have two bug reports logged as one is a git behavioural thing and the other is git-annex specific.
+
 Also I came across this when I accidentally annexed some files in the .git-annex directory and it cause git-annex/git to be very unhappy when i pulled the repo to somewhere else. It might be worth teaching git-annex to disallow annex'ing of files inside the .git-annex/.git directories.
 
 > There is a guard against `git annex add .git-annex/foo`, but it doesn't
