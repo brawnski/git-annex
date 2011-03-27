@@ -27,6 +27,7 @@ import Data.Maybe
 import qualified GitRepo as Git
 import qualified GitQueue
 import qualified BackendClass
+import qualified RemoteClass
 import Utility
 
 -- git-annex's monad
@@ -37,6 +38,7 @@ data AnnexState = AnnexState
 	{ repo :: Git.Repo
 	, backends :: [BackendClass.Backend Annex]
 	, supportedBackends :: [BackendClass.Backend Annex]
+	, remotes :: [RemoteClass.Remote Annex]
 	, repoqueue :: GitQueue.Queue
 	, quiet :: Bool
 	, force :: Bool
@@ -46,13 +48,13 @@ data AnnexState = AnnexState
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
 	, exclude :: [String]
-	, remotesread :: Bool
 	} deriving (Show)
 
 newState :: Git.Repo -> [BackendClass.Backend Annex] -> AnnexState
 newState gitrepo allbackends = AnnexState
 	{ repo = gitrepo
 	, backends = []
+	, remotes = []
 	, supportedBackends = allbackends
 	, repoqueue = GitQueue.empty
 	, quiet = False
@@ -63,7 +65,6 @@ newState gitrepo allbackends = AnnexState
 	, toremote = Nothing
 	, fromremote = Nothing
 	, exclude = []
-	, remotesread = False
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}

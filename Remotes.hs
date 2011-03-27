@@ -91,7 +91,8 @@ tryGitConfigRead r
  - -}
 readConfigs :: Annex ()
 readConfigs = do
-	remotesread <- Annex.getState Annex.remotesread
+--	remotesread <- Annex.getState Annex.remotesread
+	let remotesread = False
 	unless remotesread $ do
 		g <- Annex.gitRepo
 		allremotes <- filterM repoNotIgnored $ Git.remotes g
@@ -104,7 +105,7 @@ readConfigs = do
 		let todo = cheap ++ doexpensive
 		unless (null todo) $ do
 			mapM_ tryGitConfigRead todo
-			Annex.changeState $ \s -> s { Annex.remotesread = True }
+--			Annex.changeState $ \s -> s { Annex.remotesread = True }
 	where
 		cachedUUID r = do
 			u <- getUUID r

@@ -27,14 +27,14 @@ import CopyFile
 import RsyncFile
 import Ssh
 
-generate :: Annex [Remote]
+generate :: Annex [Remote Annex]
 generate = do
 	readConfigs
 	g <- Annex.gitRepo
 	rs <- filterM repoNotIgnored (Git.remotes g)
 	mapM genRemote rs
 	
-genRemote :: Git.Repo -> Annex Remote
+genRemote :: Git.Repo -> Annex (Remote Annex)
 genRemote r = do
 	u <- getUUID r
 	c <- repoCost r
@@ -49,31 +49,26 @@ genRemote r = do
 		hasKeyCheap = not (Git.repoIsUrl r)
 	}
 
-{- Reads the configs of all remotes.
+{- Reads the configs of git remotes.
  -
- - As reading the config of remotes can be expensive, this
- - function will only read configs once per git-annex run. It's
- - assumed to be cheap to read the config of non-URL remotes,
+ - It's assumed to be cheap to read the config of non-URL remotes,
  - so this is done each time git-annex is run. Conversely,
  - the config of an URL remote is only read when there is no
  - cached UUID value.
- - -}
+ -}
 readConfigs :: Annex ()
 readConfigs = do
-	remotesread <- Annex.getState Annex.remotesread
-	unless remotesread $ do
-		g <- Annex.gitRepo
-		allremotes <- filterM repoNotIgnored $ Git.remotes g
-		let cheap = filter (not . Git.repoIsUrl) allremotes
-		let expensive = filter Git.repoIsUrl allremotes
-		doexpensive <- filterM cachedUUID expensive
-		unless (null doexpensive) $
-			showNote $ "getting UUID for " ++
-				list doexpensive ++ "..."
-		let todo = cheap ++ doexpensive
-		unless (null todo) $ do
-			mapM_ tryGitConfigRead todo
-			Annex.changeState $ \s -> s { Annex.remotesread = True }
+	g <- Annex.gitRepo
+	allremotes <- filterM repoNotIgnored $ Git.remotes g
+	let cheap = filter (not . Git.repoIsUrl) allremotes
+	let expensive = filter Git.repoIsUrl allremotes
+	doexpensive <- filterM cachedUUID expensive
+	unless (null doexpensive) $
+		showNote $ "getting UUID for " ++
+			list doexpensive ++ "..."
+	let todo = cheap ++ doexpensive
+	unless (null todo) $ do
+		mapM_ tryGitConfigRead todo
 	where
 		cachedUUID r = do
 			u <- getUUID r

@@ -147,7 +147,7 @@ showLocations key exclude = do
 		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
 		message rs us = message rs [] ++ message [] us
 
-showTriedRemotes :: [RemoteClass.Remote] -> Annex ()
+showTriedRemotes :: [RemoteClass.Remote Annex] -> Annex ()
 showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
 	showLongNote $ "Unable to access these remotes: " ++

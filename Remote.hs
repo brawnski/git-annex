@@ -24,21 +24,21 @@ import Trust
 import LocationLog
 
 {- add generators for new Remotes here -}
-generators :: [Annex [Remote]]
+generators :: [Annex [Remote Annex]]
 generators = [Remote.GitRemote.generate]
 
 {- generates a list of all available Remotes -}
-generate :: Annex [Remote]
+generate :: Annex [Remote Annex]
 generate = do
 	lists <- sequence generators
 	return $ concat lists
 
 {- Filters a list of remotes to ones that have the listed uuids. -}
-remotesWithUUID :: [Remote] -> [UUID] -> [Remote]
+remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
 remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
 
 {- Filters a list of remotes to ones that do not have the listed uuids. -}
-remotesWithoutUUID :: [Remote] -> [UUID] -> [Remote]
+remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
 remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
@@ -46,7 +46,7 @@ remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
  - Also returns a list of UUIDs that are trusted to have the key
  - (some may not have configured remotes).
  -}
-keyPossibilities :: Key -> Annex ([Remote], [UUID])
+keyPossibilities :: Key -> Annex ([Remote Annex], [UUID])
 keyPossibilities key = do
 	g <- Annex.gitRepo
 	u <- getUUID g

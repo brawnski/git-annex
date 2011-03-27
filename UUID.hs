@@ -36,7 +36,7 @@ import qualified SysConfig
 type UUID = String
 
 configkey :: String
-configkey="annex.uuid"
+configkey = "annex.uuid"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}
@@ -74,7 +74,7 @@ getUUID r = do
 		cachekey = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-uuid"
 
 getUncachedUUID :: Git.Repo -> UUID
-getUncachedUUID r = Git.configGet r "annex.uuid" ""
+getUncachedUUID r = Git.configGet r configkey ""
 
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
