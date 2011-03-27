@@ -26,3 +26,8 @@ Running the copy job again, I am still getting the same error as above (as expec
 
 
 -- RichiH
+
+> Upgrading bare repos to v2 generally works fine, so I actually need
+> to see the full content of annex/, not a fragment, in order to debug this.
+> (Filename contents I don't need to see.) Feel free to email me the details at
+> joey@kitenet.net if you don't want to post them here. --[[Joey]]

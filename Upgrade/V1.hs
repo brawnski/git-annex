@@ -226,6 +226,7 @@ getKeysPresent1' dir = do
 			return $ map fileKey1 files
 	where
 		present d = do
+			liftIO $ putStrLn $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
 			result <- try $
 				getFileStatus $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
 			case result of
