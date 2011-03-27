@@ -28,6 +28,29 @@ this has somewhat confused git when it tries to stage/merge files, I didn't noti
 
 >> I think I got myself into this situation when I copied some files over from a HFS+ partition to a GPFS network share (which is pretty posix compliant) over samba. It probably is related to the [[git-annex_has_issues_with_git_when_staging__47__commiting_logs]]. I thought they were unique enough to have two bug reports logged as one is a git behavioural thing and the other is git-annex specific.
 
+>>> If you copied `.git/` over, perhaps you got a git repo without
+>>> core.ignorecase set right for the filesystem it landed on?
+>>> 
+>>> Something like this might reproduce it:
+
+<pre>
+# mkdir test; cd test; git init
+# git config core.ignorecase false
+# mkdir Foo
+# touch Foo/bar
+# git add Foo/bar
+# git add foo/bar
+# git add fOo/bar
+# git status
+# touch foo/other
+# git add fOo/other
+# git status
+</pre>
+
+>>>> And then either git commit or git clone would probably get confused
+>>>> if it thought 3 distinct files had been committed.
+>>>> --[[Joey]]
+
 Also I came across this when I accidentally annexed some files in the .git-annex directory and it cause git-annex/git to be very unhappy when i pulled the repo to somewhere else. It might be worth teaching git-annex to disallow annex'ing of files inside the .git-annex/.git directories.
 
 > There is a guard against `git annex add .git-annex/foo`, but it doesn't
