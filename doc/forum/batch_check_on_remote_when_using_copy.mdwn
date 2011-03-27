@@ -1,0 +1,8 @@
+When I copy my local repository with SHA* to a remote repo with SHA*, every single file is checked by itself which seems rather inefficient. When my remote is accessed via ssh, git-annex opens a new connections for every check. If you are not using a ssh key or key agent, this gets tedious...
+
+For all locked files, either git's built-in mechanisms should be used or, if that's not possible, a few hundred checksums (assuming SHA* backend) should be transfered at once and then checked locally before deciding that to transfer.
+
+Once all checks are done, one single transfer session should be started. Creating new sessions and waiting for TCP's slowstart to get going is a lot less than efficient.
+
+
+-- RichiH

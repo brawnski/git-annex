@@ -14,3 +14,5 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 
 >>> I've never seen git refuse to commit staged files. There would have to
 >>> be some error message? --[[Joey]] 
+
+>>>> there were no error messages at all

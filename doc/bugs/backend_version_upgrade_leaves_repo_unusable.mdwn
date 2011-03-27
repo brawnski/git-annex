@@ -1,0 +1,28 @@
+foo is a local repo, bar is a bare remote.
+
+I upgraded foo's git-annex to 0.20110325 and upgraded a local repo backend to version 2. I then ran `git annex copy . --to bar` and checked the remote. This created WORM:SHA512--123123 files in annex/objects. Understandable but unwanted. So I upgraded git-annex on bar's machine, as well.
+
+    % git annex copy . --to bar
+    copy quux (checking bar) git-annex-shell: Repository version 1 is not supported. Upgrade this repository: git-annex upgrade (to bar)
+    git-annex-shell: Repository version 1 is not supported. Upgrade this repository: git-annex upgrade
+    rsync: connection unexpectedly closed (0 bytes received so far) [sender]
+    rsync error: error in rsync protocol data stream (code 12) at io.c(601) [sender=3.0.7]
+    
+      rsync failed -- run git annex again to resume file transfer
+    failed
+
+Running `git annex upgrade` on bar's machine I get:
+
+    % git annex upgrade
+    upgrade  (v1 to v2) (moving content...) git-annex: Prelude.read: no parse
+
+Again, bar is a bare repo.
+Running the copy job again, I am still getting the same error as above (as expected). Partial contents of annex/objects on bar:
+
+    [...]
+    SHA512:123
+    WORM:SHA512--234
+    [...]
+
+
+-- RichiH
