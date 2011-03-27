@@ -14,14 +14,14 @@
 
 module Backend.File (backend, checkKey) where
 
-import Control.Monad.State
-import System.Directory
+import Control.Monad.State (liftIO)
 import Data.List
+import Data.String.Utils
 
 import BackendClass
 import LocationLog
-import Locations
-import qualified Remotes
+import qualified Remote
+import qualified RemoteClass
 import qualified GitRepo as Git
 import Content
 import qualified Annex
@@ -51,10 +51,10 @@ dummyStore :: FilePath -> Key -> Annex Bool
 dummyStore _ _ = return True
 
 {- Try to find a copy of the file in one of the remotes,
- - and copy it over to this one. -}
+ - and copy it to here. -}
 copyKeyFile :: Key -> FilePath -> Annex Bool
 copyKeyFile key file = do
-	(remotes, _) <- Remotes.keyPossibilities key
+	(remotes, _) <- Remote.keyPossibilities key
 	if null remotes
 		then do
 			showNote "not available"
@@ -72,18 +72,18 @@ copyKeyFile key file = do
 				then docopy r (trycopy full rs)
 				else trycopy full rs
 		-- This check is to avoid an ugly message if a remote is a
-		-- drive that is not mounted. Avoid checking inAnnex for ssh
-		-- remotes because that is unnecessarily slow, and the
-		-- locationlog should be trusted. (If the ssh remote is down
-		-- or really lacks the file, it's ok to show an ugly message
-		-- before going on to the next remote.)
+		-- drive that is not mounted.
 		probablyPresent r =
-			if not $ Git.repoIsUrl r
-				then liftIO $ doesFileExist $ gitAnnexLocation r key
+			if RemoteClass.hasKeyCheap r
+				then do
+					res <- RemoteClass.hasKey r key
+					case res of
+						Right b -> return b
+						Left _ -> return False
 				else return True
 		docopy r continue = do
-			showNote $ "copying from " ++ Git.repoDescribe r ++ "..."
-			copied <- Remotes.copyFromRemote r key file
+			showNote $ "copying from " ++ RemoteClass.name r ++ "..."
+			copied <- RemoteClass.retrieveKeyFile r key file
 			if copied
 				then return True
 				else continue
@@ -97,9 +97,9 @@ checkRemoveKey key numcopiesM = do
 	if force || numcopiesM == Just 0
 		then return True
 		else do
-			(remotes, trusteduuids) <- Remotes.keyPossibilities key
+			(remotes, trusteduuids) <- Remote.keyPossibilities key
 			untrusteduuids <- trustGet UnTrusted
-			tocheck <- reposWithoutUUID remotes (trusteduuids++untrusteduuids)
+			let tocheck = Remote.remotesWithoutUUID remotes (trusteduuids++untrusteduuids)
 			numcopies <- getNumCopies numcopiesM
 			findcopies numcopies trusteduuids tocheck []
 	where
@@ -109,9 +109,9 @@ checkRemoveKey key numcopiesM = do
 		findcopies need have (r:rs) bad
 			| length have >= need = return True
 			| otherwise = do
-				u <- getUUID r
+				let u = RemoteClass.uuid r
 				let dup = u `elem` have
-				haskey <- Remotes.inAnnex r key
+				haskey <- (RemoteClass.hasKey r) key
 				case (dup, haskey) of
 					(False, Right True)	-> findcopies need (u:have) rs bad
 					(False, Left _)		-> findcopies need have rs (r:bad)
@@ -147,11 +147,11 @@ showLocations key exclude = do
 		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
 		message rs us = message rs [] ++ message [] us
 
-showTriedRemotes :: [Git.Repo] -> Annex ()
+showTriedRemotes :: [RemoteClass.Remote] -> Annex ()
 showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
 	showLongNote $ "Unable to access these remotes: " ++
-		Remotes.list remotes
+		(join ", " $ map RemoteClass.name remotes)
 
 getNumCopies :: Maybe Int -> Annex Int
 getNumCopies (Just n) = return n

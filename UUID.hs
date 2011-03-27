@@ -14,8 +14,6 @@ module UUID (
 	getUncachedUUID,
 	prepUUID,
 	genUUID,
-	reposByUUID,
-	reposWithoutUUID,
 	prettyPrintUUIDs,
 	describeUUID,
 	uuidLog,
@@ -86,22 +84,6 @@ prepUUID = do
 	when ("" == u) $ do
 		uuid <- liftIO $ genUUID
 		Annex.setConfig configkey uuid
-
-{- Filters a list of repos to ones that have listed UUIDs. -}
-reposByUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
-reposByUUID repos uuids = filterM match repos
-	where
-		match r = do
-			u <- getUUID r
-			return $ u `elem` uuids
-
-{- Filters a list of repos to ones that do not have the listed UUIDs. -}
-reposWithoutUUID :: [Git.Repo] -> [UUID] -> Annex [Git.Repo]
-reposWithoutUUID repos uuids = filterM unmatch repos
-	where
-		unmatch r = do
-			u <- getUUID r
-			return $ u `notElem` uuids
 
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
