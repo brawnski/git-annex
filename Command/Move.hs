@@ -84,8 +84,14 @@ toStart dest move file = isAnnexed file $ \(key, _) -> do
 			return $ Just $ toPerform dest move key
 toPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 toPerform dest move key = do
-	-- checking the remote is expensive, so not done in the start step
-	isthere <- Remote.hasKey dest key
+	-- Checking the remote is expensive, so not done in the start step.
+	-- In fast mode, location tracking is assumed to be correct,
+	-- and an explicit check is not done, when copying. When moving,
+	-- it has to be done, to avoid inaverdent data loss.
+	fast <- Annex.getState Annex.fast
+	isthere <- if fast && not move
+		then return $ Right True
+		else Remote.hasKey dest key
 	case isthere of
 		Left err -> do
 			showNote $ show err

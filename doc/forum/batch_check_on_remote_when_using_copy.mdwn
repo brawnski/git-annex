@@ -6,3 +6,22 @@ Once all checks are done, one single transfer session should be started. Creatin
 
 
 -- RichiH
+
+> (Use of SHA is irrelevant here, copy does not checksum anything.)
+> 
+> I think what you're seeing is
+> that `git annex copy --to remote` is slow, going to the remote repository
+> every time to see if it has the file, while `git annex copy --from remote`
+> is fast, since it looks at what files are locally present.
+> 
+> That is something I mean to improve. At least `git annex copy --fast --to remote`
+> could easily do a fast copy of all files that are known to be missing from
+> the remote repository. When local and remote git repos are not 100% in sync,
+> relying on that data could miss some files that the remote doesn't have anymore,
+> but local doesn't know it dropped. That's why it's a candidate for `--fast`.
+> 
+> I've just implemented that.
+> 
+> While I do hope to improve ssh usage so that it sshs once, and feeds
+> `git-annex-shell` a series of commands to run, that is a much longer-term
+> thing. --[[Joey]]
