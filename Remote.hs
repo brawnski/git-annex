@@ -6,7 +6,6 @@
  -}
 
 module Remote (
-	generate,
 	keyPossibilities,
 	remotesWithUUID,
 	remotesWithoutUUID
@@ -27,11 +26,19 @@ import LocationLog
 generators :: [Annex [Remote Annex]]
 generators = [Remote.GitRemote.generate]
 
-{- generates a list of all available Remotes -}
-generate :: Annex [Remote Annex]
-generate = do
-	lists <- sequence generators
-	return $ concat lists
+{- Builds a list of all available Remotes.
+ - Since doing so can be expensive, the list is cached in the Annex. -}
+genList :: Annex [Remote Annex]
+genList = do
+	liftIO $ putStrLn "Remote.genList"
+	rs <- Annex.getState Annex.remotes
+	if null rs
+		then do
+			lists <- sequence generators
+			let rs' = concat lists
+			Annex.changeState $ \s -> s { Annex.remotes = rs' }
+			return rs'
+		else return rs
 
 {- Filters a list of remotes to ones that have the listed uuids. -}
 remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
@@ -60,7 +67,7 @@ keyPossibilities key = do
 	let validtrusteduuids = intersect validuuids trusted
 
 	-- remotes that match uuids that have the key
-	allremotes <- generate
+	allremotes <- genList
 	let validremotes = remotesWithUUID allremotes validuuids
 
 	return (sort validremotes, validtrusteduuids)
