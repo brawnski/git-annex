@@ -27,7 +27,8 @@ import Control.Monad (when, liftM)
 import Data.List
 
 import RemoteClass
-import qualified Remote.GitRemote
+import qualified Remote.Git
+import qualified Remote.S3
 import Types
 import UUID
 import qualified Annex
@@ -36,7 +37,7 @@ import LocationLog
 
 {- add generators for new Remotes here -}
 generators :: [Annex [Remote Annex]]
-generators = [Remote.GitRemote.generate]
+generators = [Remote.Git.generate]
 
 {- Builds a list of all available Remotes.
  - Since doing so can be expensive, the list is cached in the Annex. -}
