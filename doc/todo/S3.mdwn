@@ -2,90 +2,37 @@ Support Amazon S3 as a file storage backend.
 
 There's a haskell library that looks good. Not yet in Debian.
 
-Multiple ways of using S3 are possible. Current plan is to have a S3BUCKET
-backend, that is derived from Backend.File, so it caches files locally and
-can transfer files between systems too, without involving S3.
+Multiple ways of using S3 are possible. Current plan is to 
+have a special type of git remote (though git won't know how to use it;
+only git-annex will) that uses a S3 bucket.
 
-get will try to get it from S3 or from a remote. A annex.s3.cost can
-configure the cost of S3 vs the cost of other remotes.
+Something like:
 
-add will always upload a copy to S3.
+	[remote "s3"]
+		annex-s3bucket = mybucket
+		annex-s3datacenter = Europe
+		annex-uuid = 1a586cf6-45e9-11e0-ba9c-3b0a3397aec2
+		annex-cost = 500
 
-Each file in the S3 bucket is assumed to be in the annex. So unused
-will show files in the bucket that nothing points to, and dropunused remove
-them.
+The UUID will be stored as a special file in the S3 bucket.
 
-For numcopies counting, S3 will count as 1 copy (or maybe more?), so if
-numcopies=2, then you don't fully trust S3 and request git-annex assure
-one other copy.
+Using a different type of remote like this will allow S3 to be used
+anywhere a regular remote would be used. `git annex get` will transparently
+download a file from S3 if S3 has it and is the cheapest remote.
 
-drop will remove a file locally, but keep it in S3. drop --force *might*
-remove it from S3. TBD.
+	git annex copy --to s3
+	git annex move --from s3
+	git annex drop --from s3 # not currently allowed, will need adding
 
-annex.s3.bucket would configure the bucket the use. (And an env var or
-something configure the password.) Although the bucket
-would also be encoded in the keys. So, the configured bucket would be used
-when adding new files. A system could move from one bucket to another over
-time while still having legacy files in an earlier one; 
-perhaps you move to Europe and want new files to be put in that region.
+Each s3 remote will count as one copy for numcopies handling, just like
+any other remote.
 
-And git annex `migrate --backend=S3BUCKET --force` could move files
-between datacenters!
+## unused checking
 
-Problem: Then the only way for unused to know what buckets are in use
-is to see what keys point to them -- but if the last file from a bucket is
-deleted, it would then not be able to say that the files in that bucket are
-all unused. Need cached list of recently seen S3 buckets?
+One problem is `git annex unused`. Currently it only looks at the local
+repository, not remotes. But if something is dropped from the local repo,
+and you forget to drop it from S3, cruft can build up there.
 
------
-
-One problem with this is what key metadata to include. Should it be like
-WORM? Or like SHA1? Or just a new unique identifier for each file? It might
-be worth having S3 variants of *all* the Backend.File derived backends.
-
-More blue-sky, it might be nice to be able to union or stack together
-multiple backends, so S3BUCKET+SHA1 or S3BUCKET+WORM. That would likely
-be hard to get right.
-
-Less blue-sky, if the S3 capability were added directly to Backend.File,
-and bucket name was configured by annex.s3.bucket, then any existing
-annexed file could be upgraded to also store on S3.
-
-## alternate approach
-
-The above assumes S3 should be a separate backend somehow. What if,
-instead a S3 bucket is treated as a separate **remote**.
-
-* Could "git annex add" while offline, and "git annex push --to S3" when
-  online.
-* No need to choose whether a file goes to S3 at add time; no need to
-  migrate to move files there.
-* numcopies counting Just Works
-* Could have multiple S3 buckets as desired.
-
-The bucket name could 1:1 map with its annex.uuid, so not much
-configuration would be needed when cloning a repo to get it using S3 --
-just configure the S3 access token(s) to use for various UUIDs.
-
-Implementing this might not be as conceptually nice as making S3 a separate
-backend. It would need some changes to the remotes code, perhaps lifting
-some of it into backend-specific hooks. Then the S3 backend could be
-implicitly stacked in front of a backend like WORM.
-
----
-
-Maybe the right way to look at this is that a list of Stores
-should be a property of the Backend. Backend.File is a Backend, that
-uses various Stores, which can be of different types (the local
-git repo, remote git repos, S3, etc). Backend.URL is a backend that uses
-other Stores (the local git repo, and the web).
-
-Operations on Stores are:
-
-* uuid -- each store has a unique uuid value
-* cost -- each store has a use cost value
-* getConfig -- attempts to look up values (uuid, possibly cost)
-* copyToStore -- store a file's contents to a key
-* copyFromStore -- retrieve a key's contents to a file
-* removeFromStore -- removes a key's contents from the store
-* hasKey -- checks if the key's content is available
+This could be fixed by adding a hook to list all keys present in a remote.
+Then unused could scan remotes for keys, and if they were not used locally,
+offer the possibility to drop them from the remote.
