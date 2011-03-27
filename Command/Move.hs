@@ -15,8 +15,7 @@ import qualified Annex
 import LocationLog
 import Types
 import Content
-import qualified GitRepo as Git
-import qualified Remotes
+import qualified Remote
 import UUID
 import Messages
 import Utility
@@ -34,16 +33,15 @@ seek = [withFilesInGit $ start True]
  - moving data in the key-value backend. -}
 start :: Bool -> CommandStartString
 start move file = do
-	Remotes.readConfigs
 	to <- Annex.getState Annex.toremote
 	from <- Annex.getState Annex.fromremote
 	case (from, to) of
 		(Nothing, Nothing) -> error "specify either --from or --to"
 		(Nothing, Just name) -> do
-			dest <- Remotes.byName name
+			dest <- Remote.byName name
 			toStart dest move file
 		(Just name, Nothing) -> do
-			src <- Remotes.byName name
+			src <- Remote.byName name
 			fromStart src move file
 		(_ ,  _) -> error "only one of --from or --to can be specified"
 
@@ -56,88 +54,86 @@ showAction False file = showStart "copy" file
  - key to the remote, or removing the key from it *may* log the change
  - on the remote, but this cannot be relied on. For example, it's not done
  - for bare repos. -}
-remoteHasKey :: Git.Repo -> Key -> Bool -> Annex ()
+remoteHasKey :: Remote.Remote Annex -> Key -> Bool -> Annex ()
 remoteHasKey remote key present	= do
 	g <- Annex.gitRepo
-	remoteuuid <- getUUID remote
+	let remoteuuid = Remote.uuid remote
 	logfile <- liftIO $ logChange g key remoteuuid status
 	Annex.queue "add" [Param "--"] logfile
 	where
 		status = if present then ValuePresent else ValueMissing
 
-{- Moves (or copies) the content of an annexed file to another repository,
- - and updates locationlog information on both.
+{- Moves (or copies) the content of an annexed file to a remote.
  -
- - When moving, if the destination already has the content, it is
- - still removed from the current repository.
+ - If the remote already has the content, it is still removed from
+ - the current repository.
  -
  - Note that unlike drop, this does not honor annex.numcopies.
  - A file's content can be moved even if there are insufficient copies to
  - allow it to be dropped.
  -}
-toStart :: Git.Repo -> Bool -> CommandStartString
+toStart :: Remote.Remote Annex -> Bool -> CommandStartString
 toStart dest move file = isAnnexed file $ \(key, _) -> do
 	g <- Annex.gitRepo
+	u <- getUUID g
 	ishere <- inAnnex key
-	if not ishere || g == dest
+	if not ishere || u == Remote.uuid dest
 		then return Nothing -- not here, so nothing to do
 		else do
 			showAction move file
 			return $ Just $ toPerform dest move key
-toPerform :: Git.Repo -> Bool -> Key -> CommandPerform
+toPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 toPerform dest move key = do
 	-- checking the remote is expensive, so not done in the start step
-	isthere <- Remotes.inAnnex dest key
+	isthere <- Remote.hasKey dest key
 	case isthere of
 		Left err -> do
 			showNote $ show err
 			return Nothing
 		Right False -> do
-			showNote $ "to " ++ Git.repoDescribe dest ++ "..."
-			ok <- Remotes.copyToRemote dest key
+			showNote $ "to " ++ Remote.name dest ++ "..."
+			ok <- Remote.storeKey dest key
 			if ok
 				then return $ Just $ toCleanup dest move key
 				else return Nothing -- failed
 		Right True -> return $ Just $ toCleanup dest move key
-toCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
+toCleanup :: Remote.Remote Annex -> Bool -> Key -> CommandCleanup
 toCleanup dest move key = do
 	remoteHasKey dest key True
 	if move
 		then Command.Drop.cleanup key
 		else return True
 
-{- Moves (or copies) the content of an annexed file from another repository
- - to the current repository and updates locationlog information on both.
+{- Moves (or copies) the content of an annexed file from a remote
+ - to the current repository.
  -
  - If the current repository already has the content, it is still removed
- - from the other repository when moving.
+ - from the remote.
  -}
-fromStart :: Git.Repo -> Bool -> CommandStartString
+fromStart :: Remote.Remote Annex -> Bool -> CommandStartString
 fromStart src move file = isAnnexed file $ \(key, _) -> do
 	g <- Annex.gitRepo
-	(remotes, _) <- Remotes.keyPossibilities key
-	if (g == src) || (null $ filter (\r -> Remotes.same r src) remotes)
+	u <- getUUID g
+	(remotes, _) <- Remote.keyPossibilities key
+	if (u == Remote.uuid src) || (null $ filter (== src) remotes)
 		then return Nothing
 		else do
 			showAction move file
 			return $ Just $ fromPerform src move key
-fromPerform :: Git.Repo -> Bool -> Key -> CommandPerform
+fromPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 fromPerform src move key = do
 	ishere <- inAnnex key
 	if ishere
 		then return $ Just $ fromCleanup src move key
 		else do
-			showNote $ "from " ++ Git.repoDescribe src ++ "..."
-			ok <- getViaTmp key $ Remotes.copyFromRemote src key
+			showNote $ "from " ++ Remote.name src ++ "..."
+			ok <- getViaTmp key $ Remote.retrieveKeyFile src key
 			if ok
 				then return $ Just $ fromCleanup src move key
 				else return Nothing -- fail
-fromCleanup :: Git.Repo -> Bool -> Key -> CommandCleanup
+fromCleanup :: Remote.Remote Annex -> Bool -> Key -> CommandCleanup
 fromCleanup src True key = do
-	ok <- Remotes.onRemote src (boolSystem, False) "dropkey" 
-		[ Params "--quiet --force"
-		, Param $ show key
-		]
+	ok <- Remote.removeKey src key
 	-- better safe than sorry: assume the src dropped the key
 	-- even if it seemed to fail; the failure could have occurred
 	-- after it really dropped it

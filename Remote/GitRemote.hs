@@ -47,7 +47,7 @@ genRemote r = do
 		name = Git.repoDescribe r,
 		storeKey = copyToRemote r,
 		retrieveKeyFile = copyFromRemote r,
-		removeKey = error "TODO Remote.GitRemote.removeKey",
+		removeKey = dropKey r,
 		hasKey = inAnnex r,
 		hasKeyCheap = not (Git.repoIsUrl r)
 	}
@@ -159,6 +159,13 @@ inAnnex r key = if Git.repoIsUrl r
 			inannex <- onRemote r (boolSystem, False) "inannex" 
 				[Param (show key)]
 			return $ Right inannex
+	
+dropKey :: Git.Repo -> Key -> Annex Bool
+dropKey r key = 
+	onRemote r (boolSystem, False) "dropkey"
+		[ Params "--quiet --force"
+		, Param $ show key
+		]
 
 {- Tries to copy a key's content from a remote's annex to a file. -}
 copyFromRemote :: Git.Repo -> Key -> FilePath -> Annex Bool
