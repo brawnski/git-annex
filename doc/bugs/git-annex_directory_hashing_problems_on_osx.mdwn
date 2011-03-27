@@ -30,6 +30,9 @@ this has somewhat confused git when it tries to stage/merge files, I didn't noti
 
 >>> If you copied `.git/` over, perhaps you got a git repo without
 >>> core.ignorecase set right for the filesystem it landed on?
+
+>>>> I usually git clone or do a fresh repository and pull things in, I was also unaware of this ignorecase setting as well.
+
 >>> 
 >>> Something like this might reproduce it:
 
@@ -50,6 +53,47 @@ this has somewhat confused git when it tries to stage/merge files, I didn't noti
 >>>> And then either git commit or git clone would probably get confused
 >>>> if it thought 3 distinct files had been committed.
 >>>> --[[Joey]]
+
+>>>>> Doing the above test on a HFS+ partition yields this
+
+<pre>
+## with ignorecase=false
+commit bb024c6fd7482b2d10f60ae899cb7a949aca1ad8
+Author: Jimmy Tang <jtang@exia>
+Date:   Sun Mar 27 18:40:24 2011 +0100
+
+    commit
+
+diff --git a/Foo/bar b/Foo/bar
+new file mode 100644
+index 0000000..e69de29
+diff --git a/fOo/bar b/fOo/bar
+new file mode 100644
+index 0000000..e69de29
+diff --git a/fOo/other b/fOo/other
+new file mode 100644
+index 0000000..e69de29
+diff --git a/foo/bar b/foo/bar
+new file mode 100644
+index 0000000..e69de29
+</pre>
+
+>>>>> and without changing ignorecase
+
+<pre>
+commit 909a089158ffb98f8e91f98905e2bfdc7234666f
+Author: Jimmy Tang <jtang@exia>
+Date:   Sun Mar 27 18:46:57 2011 +0100
+
+    commit
+
+diff --git a/Foo/bar b/Foo/bar
+new file mode 100644
+index 0000000..e69de29
+diff --git a/Foo/other b/Foo/other
+new file mode 100644
+index 0000000..e69de29
+</pre>
 
 Also I came across this when I accidentally annexed some files in the .git-annex directory and it cause git-annex/git to be very unhappy when i pulled the repo to somewhere else. It might be worth teaching git-annex to disallow annex'ing of files inside the .git-annex/.git directories.
 
