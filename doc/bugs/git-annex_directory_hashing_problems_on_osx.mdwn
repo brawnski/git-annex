@@ -1,0 +1,13 @@
+Currently the hashed directories in .git-annex allow for upper and lower case directory names... on linux (or any case sensitive filesystem) the directory names such as 'Gg' and 'GG' are different and unique. However on systems like OSX (and probably windows if it is ever supported) the directory names 'Gg' is the same as 'GG'
+
+In one of the annex'd repos that I have this has occured...
+
+<pre>
+$ git add -i                                                                                          
+           staged     unstaged path
+  1:    unchanged        +1/-1 .git-annex/GM/GV/WORM-s183630166-m1301072171--somefile.log
+  2:    unchanged        +1/-1 .git-annex/Gm/GV/WORM-s183630166-m1301072171--somefile.log
+</pre>
+
+
+this has somewhat confused git when it tries to stage/merge files, I didn't notice this at first, but it is definately a problem for someone using case insensitive filesystems  like the default OSX HFS+ formats or vfat/fat32.
