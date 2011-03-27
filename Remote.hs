@@ -6,6 +6,15 @@
  -}
 
 module Remote (
+	Remote,
+	uuid,
+	name,
+	storeKey,
+	retrieveKeyFile,
+	removeKey,
+	hasKey,
+	hasKeyCheap,
+
 	byName,
 	nameToUUID,
 	keyPossibilities,

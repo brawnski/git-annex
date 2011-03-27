@@ -21,7 +21,6 @@ import Data.String.Utils
 import BackendClass
 import LocationLog
 import qualified Remote
-import qualified RemoteClass
 import qualified GitRepo as Git
 import Content
 import qualified Annex
@@ -74,16 +73,16 @@ copyKeyFile key file = do
 		-- This check is to avoid an ugly message if a remote is a
 		-- drive that is not mounted.
 		probablyPresent r =
-			if RemoteClass.hasKeyCheap r
+			if Remote.hasKeyCheap r
 				then do
-					res <- RemoteClass.hasKey r key
+					res <- Remote.hasKey r key
 					case res of
 						Right b -> return b
 						Left _ -> return False
 				else return True
 		docopy r continue = do
-			showNote $ "copying from " ++ RemoteClass.name r ++ "..."
-			copied <- RemoteClass.retrieveKeyFile r key file
+			showNote $ "copying from " ++ Remote.name r ++ "..."
+			copied <- Remote.retrieveKeyFile r key file
 			if copied
 				then return True
 				else continue
@@ -109,9 +108,9 @@ checkRemoveKey key numcopiesM = do
 		findcopies need have (r:rs) bad
 			| length have >= need = return True
 			| otherwise = do
-				let u = RemoteClass.uuid r
+				let u = Remote.uuid r
 				let dup = u `elem` have
-				haskey <- (RemoteClass.hasKey r) key
+				haskey <- Remote.hasKey r key
 				case (dup, haskey) of
 					(False, Right True)	-> findcopies need (u:have) rs bad
 					(False, Left _)		-> findcopies need have rs (r:bad)
@@ -147,11 +146,11 @@ showLocations key exclude = do
 		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
 		message rs us = message rs [] ++ message [] us
 
-showTriedRemotes :: [RemoteClass.Remote Annex] -> Annex ()
+showTriedRemotes :: [Remote.Remote Annex] -> Annex ()
 showTriedRemotes [] = return ()	
 showTriedRemotes remotes =
 	showLongNote $ "Unable to access these remotes: " ++
-		(join ", " $ map RemoteClass.name remotes)
+		(join ", " $ map Remote.name remotes)
 
 getNumCopies :: Maybe Int -> Annex Int
 getNumCopies (Just n) = return n
