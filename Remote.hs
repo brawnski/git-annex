@@ -33,7 +33,6 @@ import UUID
 import qualified Annex
 import Trust
 import LocationLog
-import Messages
 
 {- add generators for new Remotes here -}
 generators :: [Annex [Remote Annex]]
@@ -43,9 +42,6 @@ generators = [Remote.GitRemote.generate]
  - Since doing so can be expensive, the list is cached in the Annex. -}
 genList :: Annex [Remote Annex]
 genList = do
-	g <- Annex.gitRepo
-	u <- getUUID g
-	showNote $ "Remote.genList " ++ u
 	rs <- Annex.getState Annex.remotes
 	if null rs
 		then do
