@@ -5,7 +5,10 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Remote.GitRemote (generate) where
+module Remote.GitRemote (
+	generate,
+	onRemote
+) where
 
 import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
