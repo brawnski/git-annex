@@ -8,8 +8,7 @@
 module Command.Semitrust where
 
 import Command
-import qualified GitRepo as Git
-import qualified Remotes
+import qualified Remote
 import UUID
 import Trust
 import Messages
@@ -24,12 +23,10 @@ seek = [withString start]
 start :: CommandStartString
 start name = notBareRepo $ do
 	showStart "semitrust" name
-	Remotes.readConfigs
-	r <- Remotes.byName name
-	return $ Just $ perform r
+	u <- Remote.nameToUUID name
+	return $ Just $ perform u
 
-perform :: Git.Repo -> CommandPerform
-perform repo = do
-	uuid <- getUUID repo
+perform :: UUID -> CommandPerform
+perform uuid = do
 	trustSet uuid SemiTrusted
 	return $ Just $ return True

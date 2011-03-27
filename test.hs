@@ -334,6 +334,7 @@ test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
 	git_annex "semitrust" ["-q", repo] @? "semitrust of semitrusted failed"
 	trustcheck Trust.SemiTrusted "semitrusted 2"
 	where
+		repo = "origin"
 		trustcheck expected msg = do
 			present <- annexeval $ do
 				Remotes.readConfigs
@@ -342,7 +343,6 @@ test_trust = "git-annex trust/untrust/semitrust" ~: intmpclonerepo $ do
 				u <- UUID.getUUID r
 				return $ u `elem` l
 			assertBool msg present
-		repo = "origin"
 
 test_fsck :: Test
 test_fsck = "git-annex fsck" ~: TestList [basicfsck, withlocaluntrusted, withremoteuntrusted]

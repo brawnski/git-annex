@@ -6,12 +6,15 @@
  -}
 
 module Remote (
+	byName,
+	nameToUUID,
 	keyPossibilities,
 	remotesWithUUID,
 	remotesWithoutUUID
 ) where
 
 import Control.Monad.State (liftIO)
+import Control.Monad (when, liftM)
 import Data.List
 
 import RemoteClass
@@ -21,6 +24,7 @@ import UUID
 import qualified Annex
 import Trust
 import LocationLog
+import Messages
 
 {- add generators for new Remotes here -}
 generators :: [Annex [Remote Annex]]
@@ -30,7 +34,9 @@ generators = [Remote.GitRemote.generate]
  - Since doing so can be expensive, the list is cached in the Annex. -}
 genList :: Annex [Remote Annex]
 genList = do
-	liftIO $ putStrLn "Remote.genList"
+	g <- Annex.gitRepo
+	u <- getUUID g
+	showNote $ "Remote.genList " ++ u
 	rs <- Annex.getState Annex.remotes
 	if null rs
 		then do
@@ -40,13 +46,24 @@ genList = do
 			return rs'
 		else return rs
 
-{- Filters a list of remotes to ones that have the listed uuids. -}
-remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
-remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
+{- Looks up a remote by name. (Or by UUID.) -}
+byName :: String -> Annex (Remote Annex)
+byName "" = error "no remote specified"
+byName n = do
+	allremotes <- genList
+	let match = filter matching allremotes
+	when (null match) $ error $
+		"there is no git remote named \"" ++ n ++ "\""
+	return $ head match
+	where
+		matching r = n == name r || n == uuid r
 
-{- Filters a list of remotes to ones that do not have the listed uuids. -}
-remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
-remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
+{- Looks up a remote by name (or by UUID), and returns its UUID. -}
+nameToUUID :: String -> Annex UUID
+nameToUUID "." = do -- special case for current repo
+	g <- Annex.gitRepo
+	getUUID g
+nameToUUID n = liftM uuid (byName n)
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
  -
@@ -71,3 +88,12 @@ keyPossibilities key = do
 	let validremotes = remotesWithUUID allremotes validuuids
 
 	return (sort validremotes, validtrusteduuids)
+
+{- Filters a list of remotes to ones that have the listed uuids. -}
+remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
+remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
+
+{- Filters a list of remotes to ones that do not have the listed uuids. -}
+remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
+remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
+

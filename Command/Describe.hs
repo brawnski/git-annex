@@ -7,10 +7,8 @@
 
 module Command.Describe where
 
-
 import Command
-import qualified GitRepo as Git
-import qualified Remotes
+import qualified Remote
 import UUID
 import Messages
 import qualified Command.Init
@@ -30,12 +28,10 @@ start params = notBareRepo $ do
 			_ -> error "Specify a repository and a description."
 	
 	showStart "describe" name
-	Remotes.readConfigs
-	r <- Remotes.byName name
-	return $ Just $ perform r description
+	u <- Remote.nameToUUID name
+	return $ Just $ perform u description
 
-perform :: Git.Repo -> String -> CommandPerform
-perform repo description = do
-	u <- getUUID repo
+perform :: UUID -> String -> CommandPerform
+perform u description = do
 	describeUUID u description
 	return $ Just $ Command.Init.cleanup

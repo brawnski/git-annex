@@ -3,6 +3,9 @@
  - Each git repository used by git-annex has an annex.uuid setting that
  - uniquely identifies that repository.
  -
+ - UUIDs of remotes are cached in git config, using keys named
+ - remote.<name>.annex-uuid
+ -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
@@ -51,11 +54,7 @@ genUUID = liftIO $ pOpen ReadFromPipe command params $ \h -> hGetLine h
 			else []
 
 {- Looks up a repo's UUID. May return "" if none is known.
- -
- - UUIDs of remotes are cached in git config, using keys named
- - remote.<name>.annex-uuid
- -
- - -}
+ -}
 getUUID :: Git.Repo -> Annex UUID
 getUUID r = do
 	g <- Annex.gitRepo
