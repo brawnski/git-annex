@@ -7,6 +7,7 @@
 
 module Command.Fsck where
 
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import Command
@@ -18,6 +19,7 @@ import Messages
 import Utility
 import Content
 import LocationLog
+import Locations
 
 command :: [Command]
 command = [repoCommand "fsck" (paramOptional $ paramRepeating paramPath) seek
@@ -47,9 +49,16 @@ perform key file backend numcopies = do
    in this repository only. -}
 verifyLocationLog :: Key -> FilePath -> Annex Bool
 verifyLocationLog key file = do
+	g <- Annex.gitRepo
 	present <- inAnnex key
 	
-	g <- Annex.gitRepo
+	-- Since we're checking that a key's file is present, throw
+	-- in a permission fixup here too.
+	when present $ liftIO $ do
+		let f = gitAnnexLocation g key
+		preventWrite f
+		preventWrite (parentDir f)
+
 	u <- getUUID g
         uuids <- liftIO $ keyLocations g key
 
