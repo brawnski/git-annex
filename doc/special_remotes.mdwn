@@ -1,0 +1,38 @@
+Most [[backends]] can transfer data to and from configured git remotes.
+Normally those remotes are normal git repositories (bare and non-bare),
+that store the file contents in their own git annex directory.
+
+But, git-annex also extends git's concept of remotes, with these special
+types of remotes. These can be used just like any normal remote by git-annex.
+They cannot be used by other git commands though.
+
+## Amazon S3
+
+Stores file contents in a bucket in Amazon S3 or a similar service.
+
+Example of configuring such a remote:
+
+	git config remote.mys3.annex-s3-bucket myannex
+	export ANNEX_S3_ACCESS_KEY_ID="08TJMT99S3511WOZEP91"
+	export ANNEX_S3_SECRET_ACCESS_KEY="s3kr1t"
+
+That creates a remote named "mys3" using the bucket named "myannex",
+which will be created if it doesn't already exist.
+
+Here is the full set of configurable settings for Amazon S3.
+Each setting can be configured on a per-remote basis in git-config,
+or globally in an environment variable.
+
+* `remote.$name.annex-s3-secret-access-key` `ANNEX_S3_SECRET_ACCESS_KEY` 
+  Your S3 password. Usually stored in the environment variable
+  to avoid it being exposed.
+* `remote.$name.annex-s3-access-key-id` `ANNEX_S3_ACCESS_KEY_ID` 
+  Your S3 access key. For example, "". Does not need to be kept
+  private.
+* `remote.$name.annex-s3-host` `ANNEX_S3_HOST` 
+  Host to connect to. Default is s3.amazonaws.com.
+* `remote.$name.annex-s3-port` `ANNEX_S3_PORT` 
+  Port to connect to. Default is 80.
+* `remote.$name.annex-s3-datacenter` `ANNEX_S3_DATACENTER` 
+  Name of the datacenter to use. Default is "US";
+  other valid values include "EU", "us-west-1", and "ap-southeast-1".

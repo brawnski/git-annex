@@ -14,6 +14,7 @@ A walkthrough of the basic features of git-annex.
 	modifying_annexed_files
 	using_ssh_remotes
 	moving_file_content_between_repositories
+	using_Amazon_S3
 	using_the_URL_backend
 	using_the_SHA1_backend
 	migrating_data_to_a_new_backend

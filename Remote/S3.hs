@@ -45,7 +45,7 @@ genRemote r = do
 		hasKeyCheap = False
 	}
 
-{- S3 remotes have a remote.<name>.annex-s3bucket config setting.
+{- S3 remotes have a remote.<name>.annex-s3-bucket config setting.
  - Git.Repo does not normally generate remotes for things that
  - have no configured url, so the Git.Repo objects have to be
  - constructed as coming from an unknown location. -}
@@ -55,7 +55,7 @@ findS3Remotes r = map construct remotepairs
 		remotepairs = Map.toList $ filterremotes $ Git.configMap r
 		filterremotes = Map.filterWithKey (\k _ -> s3remote k)
 		construct (k,_) = Git.repoRemoteNameSet Git.repoFromUnknown k
-		s3remote k = startswith "remote." k && endswith ".annex-s3bucket" k
+		s3remote k = startswith "remote." k && endswith ".annex-s3-bucket" k
 
 tryS3ConfigRead :: Git.Repo -> Annex Git.Repo
 tryS3ConfigRead r = error "TODO"

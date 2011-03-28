@@ -6,8 +6,8 @@ server to your laptop. Doing that by hand (by using `git annex get` and
 makes it very easy.
 
 	# git annex move my_cool_big_file --to usbdrive
-	move my_cool_big_file (moving to usbdrive...) ok
+	move my_cool_big_file (to usbdrive...) ok
 	# git annex move video/hackity_hack_and_kaxxt.mov --from fileserver
-	move video/hackity_hack_and_kaxxt.mov (moving from fileserver...)
+	move video/hackity_hack_and_kaxxt.mov (from fileserver...)
 	WORM-s86050597-m1274316523--hackity_hack_and_kax 100%   82MB 199.1KB/s   07:02
 	ok
