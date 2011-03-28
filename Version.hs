@@ -15,6 +15,7 @@ import Types
 import qualified Annex
 import qualified GitRepo as Git
 import Locations
+import Config
 
 type Version = String
 
@@ -54,7 +55,7 @@ getVersion = do
 					return defaultVersion
 
 setVersion :: Annex ()
-setVersion = Annex.setConfig versionField defaultVersion
+setVersion = setConfig versionField defaultVersion
 
 checkVersion :: Annex ()
 checkVersion = do

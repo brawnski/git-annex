@@ -35,6 +35,7 @@ import Locations
 import qualified Annex
 import Utility
 import qualified SysConfig
+import Config
 
 type UUID = String
 
@@ -69,7 +70,7 @@ getUUID r = do
 		else return c
 	where
 		cached g = Git.configGet g cachekey ""
-		updatecache g u = when (g /= r) $ Annex.setConfig cachekey u
+		updatecache g u = when (g /= r) $ setConfig cachekey u
 		cachekey = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-uuid"
 
 getUncachedUUID :: Git.Repo -> UUID
@@ -82,7 +83,7 @@ prepUUID = do
 	u <- getUUID g
 	when ("" == u) $ do
 		uuid <- liftIO $ genUUID
-		Annex.setConfig configkey uuid
+		setConfig configkey uuid
 
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String

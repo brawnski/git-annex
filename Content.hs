@@ -40,6 +40,7 @@ import Utility
 import StatFS
 import Key
 import DataUnits
+import Config
 
 {- Checks if a given key is currently present in the gitAnnexLocation. -}
 inAnnex :: Key -> Annex Bool
@@ -121,7 +122,7 @@ checkDiskSpace = checkDiskSpace' 0
 checkDiskSpace' :: Integer -> Key -> Annex ()
 checkDiskSpace' adjustment key = do
 	g <- Annex.gitRepo
-	r <- Annex.repoConfig g "diskreserve" ""
+	r <- getConfig g "diskreserve" ""
 	let reserve = case readSize dataUnits r of
 		Nothing -> megabyte
 		Just v -> v

@@ -25,19 +25,34 @@ module Remote (
 import Control.Monad.State (liftIO)
 import Control.Monad (when, liftM)
 import Data.List
+import Data.String.Utils
 
 import RemoteClass
 import qualified Remote.Git
-import qualified Remote.S3
+--import qualified Remote.S3
 import Types
 import UUID
 import qualified Annex
 import Trust
 import LocationLog
+import Messages
 
-{- add generators for new Remotes here -}
-generators :: [Annex [Remote Annex]]
+{- Add generators for new Remotes here. -}
+generators :: [Annex (RemoteGenerator Annex)]
 generators = [Remote.Git.generate]
+
+{- Runs a list of generators. -}
+runGenerators :: [Annex (RemoteGenerator Annex)] -> Annex [Remote Annex]
+runGenerators gs = do
+	(actions, expensive) <- collect ([], []) gs
+	when (not $ null expensive) $
+		showNote $ "getting UUID for " ++ join ", " expensive
+	sequence actions
+	where
+		collect v [] = return v
+		collect (actions, expensive) (x:xs) = do
+			(a, e) <- x
+			collect (a++actions, e++expensive) xs
 
 {- Builds a list of all available Remotes.
  - Since doing so can be expensive, the list is cached in the Annex. -}
@@ -46,8 +61,7 @@ genList = do
 	rs <- Annex.getState Annex.remotes
 	if null rs
 		then do
-			lists <- sequence generators
-			let rs' = concat lists
+			rs' <- runGenerators generators
 			Annex.changeState $ \s -> s { Annex.remotes = rs' }
 			return rs'
 		else return rs

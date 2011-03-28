@@ -7,17 +7,17 @@
 
 module Ssh where
 
-import qualified Annex
 import qualified GitRepo as Git
 import Utility
 import Types
+import Config
 
 {- Generates parameters to ssh to a repository's host and run a command.
  - Caller is responsible for doing any neccessary shellEscaping of the
  - passed command. -}
 sshToRepo :: Git.Repo -> [CommandParam] -> Annex [CommandParam]
 sshToRepo repo sshcmd = do
-	s <- Annex.repoConfig repo "ssh-options" ""
+	s <- getConfig repo "ssh-options" ""
 	let sshoptions = map Param (words s)
 	let sshport = case Git.urlPort repo of
 		Nothing -> []

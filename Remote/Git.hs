@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Remote.GitRemote (
+module Remote.Git (
 	generate,
 	onRemote
 ) where
@@ -13,9 +13,8 @@ module Remote.GitRemote (
 import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
 import qualified Data.Map as Map
-import Data.String.Utils
 import System.Cmd.Utils
-import Control.Monad (unless, filterM)
+import Control.Monad (filterM, liftM)
 
 import RemoteClass
 import Types
@@ -29,18 +28,34 @@ import Messages
 import CopyFile
 import RsyncFile
 import Ssh
+import Config
 
-generate :: Annex [Remote Annex]
+generate :: Annex (RemoteGenerator Annex)
 generate = do
-	readConfigs
 	g <- Annex.gitRepo
-	rs <- filterM repoNotIgnored (Git.remotes g)
-	mapM genRemote rs
+	allremotes <- filterM remoteNotIgnored $ Git.remotes g
+
+ 	{- It's assumed to be cheap to read the config of non-URL remotes,
+	 - so this is done each time git-annex is run. Conversely,
+	 - the config of an URL remote is only read when there is no
+	 - cached UUID value. -}
+	let cheap = filter (not . Git.repoIsUrl) allremotes
+	let expensive = filter Git.repoIsUrl allremotes
+	expensive_todo <- filterM cachedUUID expensive
+	let skip = filter (`notElem` expensive_todo) expensive
+	let todo = cheap++expensive_todo
+
+	let actions = map genRemote skip ++ 
+		map (\r -> genRemote =<< tryGitConfigRead r) todo
+	return (actions, map Git.repoDescribe expensive_todo)
+
+	where
+		cachedUUID r = liftM null $ getUUID r
 	
 genRemote :: Git.Repo -> Annex (Remote Annex)
 genRemote r = do
 	u <- getUUID r
-	c <- repoCost r
+	c <- remoteCost r
 	return Remote {
 		uuid = u,
 		cost = c,
@@ -52,40 +67,13 @@ genRemote r = do
 		hasKeyCheap = not (Git.repoIsUrl r)
 	}
 
-{- Reads the configs of git remotes.
- -
- - It's assumed to be cheap to read the config of non-URL remotes,
- - so this is done each time git-annex is run. Conversely,
- - the config of an URL remote is only read when there is no
- - cached UUID value.
- -}
-readConfigs :: Annex ()
-readConfigs = do
-	g <- Annex.gitRepo
-	allremotes <- filterM repoNotIgnored $ Git.remotes g
-	let cheap = filter (not . Git.repoIsUrl) allremotes
-	let expensive = filter Git.repoIsUrl allremotes
-	doexpensive <- filterM cachedUUID expensive
-	unless (null doexpensive) $
-		showNote $ "getting UUID for " ++
-			list doexpensive ++ "..."
-	let todo = cheap ++ doexpensive
-	unless (null todo) $ do
-		mapM_ tryGitConfigRead todo
-	where
-		cachedUUID r = do
-			u <- getUUID r
-			return $ null u
-
-{- The git configs for the git repo's remotes is not read on startup
- - because reading it may be expensive. This function tries to read the
- - config for a specified remote, and updates state. If successful, it
- - returns the updated git repo. -}
-tryGitConfigRead :: Git.Repo -> Annex (Either Git.Repo Git.Repo)
+{- Tries to read the config for a specified remote, updates state, and
+ - returns the updated repo. -}
+tryGitConfigRead :: Git.Repo -> Annex Git.Repo
 tryGitConfigRead r 
-	| not $ Map.null $ Git.configMap r = return $ Right r -- already read
+	| not $ Map.null $ Git.configMap r = return r -- already read
 	| Git.repoIsSsh r = store $ onRemote r (pipedconfig, r) "configlist" []
-	| Git.repoIsUrl r = return $ Left r
+	| Git.repoIsUrl r = return r
 	| otherwise = store $ safely $ Git.configRead r
 	where
 		-- Reading config can fail due to IO error or
@@ -104,42 +92,12 @@ tryGitConfigRead r
 			let l = Git.remotes g
 			let g' = Git.remotesAdd g $ exchange l r'
 			Annex.changeState $ \s -> s { Annex.repo = g' }
-			return $ Right r'
+			return r'
 		exchange [] _ = []
 		exchange (old:ls) new =
 			if Git.repoRemoteName old == Git.repoRemoteName new
 				then new : exchange ls new
 				else old : exchange ls new
-
-{- Calculates cost for a repo.
- -
- - The default cost is 100 for local repositories, and 200 for remote
- - repositories; it can also be configured by remote.<name>.annex-cost
- -}
-repoCost :: Git.Repo -> Annex Int
-repoCost r = do
-	c <- Annex.repoConfig r "cost" ""
-	if not $ null c
-		then return $ read c
-		else if Git.repoIsUrl r
-			then return 200
-			else return 100
-
-{- Checks if a repo should be ignored, based either on annex-ignore
- - setting, or on command-line options. Allows command-line to override
- - annex-ignore. -}
-repoNotIgnored :: Git.Repo -> Annex Bool
-repoNotIgnored r = do
-	ignored <- Annex.repoConfig r "ignore" "false"
-	to <- match Annex.toremote
-	from <- match Annex.fromremote
-	if to || from
-		then return True
-		else return $ not $ Git.configTrue ignored
-	where
-		match a = do
-			n <- Annex.getState a
-			return $ n == Git.repoRemoteName r
 
 {- Checks if a given remote has the content for a key inAnnex.
  - If the remote cannot be accessed, returns a Left error.
@@ -219,7 +177,7 @@ rsyncParams r sending key file = do
 		]
 	-- Convert the ssh command into rsync command line.
 	let eparam = rsyncShell (Param shellcmd:shellparams)
-	o <- Annex.repoConfig r "rsync-options" ""
+	o <- getConfig r "rsync-options" ""
 	let base = options ++ map Param (words o) ++ eparam
 	if sending
 		then return $ base ++ [dummy, File file]
@@ -262,7 +220,3 @@ git_annex_shell r command params
 		shellopts = (Param command):(File dir):params
 		sshcmd = shellcmd ++ " " ++ 
 			unwords (map shellEscape $ toCommand shellopts)
-
-{- Human visible list of remotes. -}
-list :: [Git.Repo] -> String
-list remotes = join ", " $ map Git.repoDescribe remotes

@@ -17,12 +17,9 @@ module Annex (
 	queue,
 	queueRun,
 	queueRunAt,
-	setConfig,
-	repoConfig
 ) where
 
 import Control.Monad.State
-import Data.Maybe
 
 import qualified GitRepo as Git
 import qualified GitQueue
@@ -119,23 +116,3 @@ queueRunAt n = do
 	state <- get
 	let q = repoqueue state
 	when (GitQueue.size q >= n) queueRun
-
-{- Changes a git config setting in both internal state and .git/config -}
-setConfig :: String -> String -> Annex ()
-setConfig k value = do
-	g <- Annex.gitRepo
-	liftIO $ Git.run g "config" [Param k, Param value]
-	-- re-read git config and update the repo's state
-	g' <- liftIO $ Git.configRead g
-	Annex.changeState $ \s -> s { Annex.repo = g' }
-
-{- Looks up a per-remote config option in git config.
- - Failing that, tries looking for a global config option. -}
-repoConfig :: Git.Repo -> String -> String -> Annex String
-repoConfig r key def = do
-	g <- Annex.gitRepo
-	let def' = Git.configGet g global def
-	return $ Git.configGet g local def'
-	where
-		local = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-" ++ key
-		global = "annex." ++ key

@@ -13,6 +13,11 @@ import Control.Exception
 
 import Key
 
+{- A remote generator identifies configured remotes, and returns an action
+ - that can be run to set up each remote, and a list of names of remotes
+ - that are not cheap to set up. -}
+type RemoteGenerator a = ([a (Remote a)], [String])
+
 data Remote a = Remote {
 	-- each Remote has a unique uuid
 	uuid :: String,

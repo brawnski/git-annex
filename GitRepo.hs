@@ -12,6 +12,7 @@ module GitRepo (
 	Repo,
 	repoFromCwd,
 	repoFromAbsPath,
+	repoFromUnknown,
 	repoFromUrl,
 	localToUrl,
 	repoIsUrl,
@@ -41,6 +42,7 @@ module GitRepo (
 	remotes,
 	remotesAdd,
 	repoRemoteName,
+	repoRemoteNameSet,
 	inRepo,
 	notInRepo,
 	stagedFiles,
@@ -81,7 +83,7 @@ import Utility
 
 {- There are two types of repositories; those on local disk and those
  - accessed via an URL. -}
-data RepoLocation = Dir FilePath | Url URI
+data RepoLocation = Dir FilePath | Url URI | Unknown
 	deriving (Show, Eq)
 
 data Repo = Repo {
@@ -123,6 +125,10 @@ repoFromUrl url
 				Just v -> v
 				Nothing -> error $ "bad url " ++ url
 
+{- Creates a repo that has an unknown location. -}
+repoFromUnknown :: Repo
+repoFromUnknown = newFrom Unknown
+
 {- Converts a Local Repo into a remote repo, using the reference repo
  - which is assumed to be on the same host. -}
 localToUrl :: Repo -> Repo -> Repo
@@ -141,11 +147,13 @@ repoDescribe :: Repo -> String
 repoDescribe Repo { remoteName = Just name } = name
 repoDescribe Repo { location = Url url } = show url
 repoDescribe Repo { location = Dir dir } = dir
+repoDescribe Repo { location = Unknown } = "UNKNOWN"
 
 {- Location of the repo, either as a path or url. -}
 repoLocation :: Repo -> String
 repoLocation Repo { location = Url url } = show url
 repoLocation Repo { location = Dir dir } = dir
+repoLocation Repo { location = Unknown } = undefined
 
 {- Constructs and returns an updated version of a repo with
  - different remotes list. -}
@@ -157,6 +165,14 @@ remotesAdd repo rs = repo { remotes = rs }
 repoRemoteName :: Repo -> Maybe String
 repoRemoteName Repo { remoteName = Just name } = Just name
 repoRemoteName _ = Nothing
+
+{- Sets the name of a remote based on the git config key, such as
+   "remote.foo.url". -}
+repoRemoteNameSet :: Repo -> String -> Repo
+repoRemoteNameSet r k = r { remoteName = Just basename }
+	where
+		basename = join "." $ reverse $ drop 1 $
+				reverse $ drop 1 $ split "." k
 
 {- Some code needs to vary between URL and normal repos,
  - or bare and non-bare, these functions help with that. -}
@@ -218,6 +234,7 @@ gitDir repo
 workTree :: Repo -> FilePath
 workTree r@(Repo { location = Url _ }) = urlPath r
 workTree (Repo { location = Dir d }) = d
+workTree Repo { location = Unknown } = undefined
 
 {- Given a relative or absolute filename in a repository, calculates the
  - name to use to refer to the file relative to a git repository's top.
@@ -393,10 +410,6 @@ configStore repo s = do
 	where
 		r = repo { config = configParse s }
 
-{- Checks if a string from git config is a true value. -}
-configTrue :: String -> Bool
-configTrue s = map toLower s == "true"
-
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
 configRemotes :: Repo -> IO [Repo]
 configRemotes repo = mapM construct remotepairs
@@ -404,10 +417,9 @@ configRemotes repo = mapM construct remotepairs
 		remotepairs = Map.toList $ filterremotes $ config repo
 		filterremotes = Map.filterWithKey (\k _ -> isremote k)
 		isremote k = startswith "remote." k && endswith ".url" k
-		remotename k = join "." $ reverse $ drop 1 $ reverse $ drop 1 $ split "." k
 		construct (k,v) = do
 			r <- gen v
-			return $ r { remoteName = Just $ remotename k }
+			return $ repoRemoteNameSet r k
 		gen v	| scpstyle v = repoFromUrl $ scptourl v
 			| isURI v = repoFromUrl v
 			| otherwise = repoFromRemotePath v repo
@@ -422,6 +434,10 @@ configRemotes repo = mapM construct remotepairs
 					| d !! 0 == '/' = dir
 					| d !! 0 == '~' = '/':dir
 					| otherwise = "/~/" ++ dir
+
+{- Checks if a string from git config is a true value. -}
+configTrue :: String -> Bool
+configTrue s = map toLower s == "true"
 
 {- Parses git config --list output into a config map. -}
 configParse :: String -> Map.Map String String
