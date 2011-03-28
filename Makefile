@@ -58,6 +58,7 @@ docs: $(mans)
 		--no-usedirs --disable-plugin=openid --plugin=sidebar \
 		--underlaydir=/dev/null --disable-plugin=shortcut \
 		--disable-plugin=smiley \
+		--plugin=comments --set comments_pagespec="*" \
 		--exclude='news/.*'
 
 clean:

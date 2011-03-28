@@ -16,6 +16,7 @@ import System.FilePath
 import Data.String.Utils
 import System.Posix.Types
 import Data.Maybe
+import Data.Char
 
 import Key
 import Content
@@ -79,12 +80,11 @@ upgrade = do
 moveContent :: Annex ()
 moveContent = do
 	showNote "moving content..."
-	keys <- getKeysPresent1
-	forM_ keys move
+	files <- getKeyFilesPresent1
+	forM_ files move
 	where
-		move k = do
-			g <- Annex.gitRepo
-			let f = gitAnnexObjectDir g </> keyFile1 k </> keyFile1 k
+		move f = do
+			let k = fileKey1 (takeFileName f)
 			let d = parentDir f
 			liftIO $ allowWrite d
 			liftIO $ allowWrite f
@@ -154,8 +154,15 @@ oldlog2key l =
 
 -- WORM backend keys: "WORM:mtime:size:filename"
 -- all the rest: "backend:key"
+--
+-- If the file looks like "WORM:XXX-...", then it was created by mixing
+-- v2 and v1; that infelicity is worked around by treating the value
+-- as the v2 key that it is.
 readKey1 :: String -> Key
-readKey1 v = Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t }
+readKey1 v = 
+	if mixup
+		then fromJust $ readKey $ join ":" $ tail bits
+		else Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t }
 	where
 		bits = split ":" v
 		b = head bits
@@ -166,7 +173,8 @@ readKey1 v = Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t }
 		s = if wormy
 			then Just (read (bits !! 2) :: Integer)
 			else Nothing
-		wormy = b == "WORM"
+		wormy = head bits == "WORM"
+		mixup = wormy && (isUpper $ head $ bits !! 1)
 
 showKey1 :: Key -> String
 showKey1 Key { keyName = n , keyBackendName = b, keySize = s, keyMtime = t } =
@@ -211,24 +219,22 @@ lookupFile1 file = do
 				skip = "skipping " ++ file ++ 
 					" (unknown backend " ++ bname ++ ")"
 
-getKeysPresent1 :: Annex [Key]
-getKeysPresent1  = do
+getKeyFilesPresent1 :: Annex [FilePath]
+getKeyFilesPresent1  = do
 	g <- Annex.gitRepo
-	getKeysPresent1' $ gitAnnexObjectDir g
-getKeysPresent1' :: FilePath -> Annex [Key]
-getKeysPresent1' dir = do
+	getKeyFilesPresent1' $ gitAnnexObjectDir g
+getKeyFilesPresent1' :: FilePath -> Annex [FilePath]
+getKeyFilesPresent1' dir = do
 	exists <- liftIO $ doesDirectoryExist dir
 	if (not exists)
 		then return []
 		else do
-			contents <- liftIO $ getDirectoryContents dir
-			files <- liftIO $ filterM present contents
-			return $ map fileKey1 files
+			dirs <- liftIO $ getDirectoryContents dir
+			let files = map (\d -> dir ++ "/" ++ d ++ "/" ++ takeFileName d) dirs
+			liftIO $ filterM present files
 	where
-		present d = do
-			liftIO $ putStrLn $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
-			result <- try $
-				getFileStatus $ dir ++ "/" ++ d ++ "/"  ++ takeFileName d
+		present f = do
+			result <- try $ getFileStatus f
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
