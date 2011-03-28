@@ -23,16 +23,20 @@ Here is the full set of configurable settings for Amazon S3.
 Each setting can be configured on a per-remote basis in git-config,
 or globally in an environment variable.
 
-* `remote.$name.annex-s3-secret-access-key` `ANNEX_S3_SECRET_ACCESS_KEY` 
-  Your S3 password. Usually stored in the environment variable
-  to avoid it being exposed.
 * `remote.$name.annex-s3-access-key-id` `ANNEX_S3_ACCESS_KEY_ID` 
-  Your S3 access key. For example, "". Does not need to be kept
-  private.
+  Your S3 Access Key ID. Does not need to be kept private.
+* `remote.$name.annex-s3-secret-access-key` `ANNEX_S3_SECRET_ACCESS_KEY` 
+  Your S3 Secret Access Key. This is a password. Usually stored in the
+  environment variable to avoid it being exposed.
 * `remote.$name.annex-s3-host` `ANNEX_S3_HOST` 
   Host to connect to. Default is s3.amazonaws.com.
 * `remote.$name.annex-s3-port` `ANNEX_S3_PORT` 
   Port to connect to. Default is 80.
 * `remote.$name.annex-s3-datacenter` `ANNEX_S3_DATACENTER` 
-  Name of the datacenter to use. Default is "US";
+  Name of the datacenter to use when creating a new bucket. Default is "US";
   other valid values include "EU", "us-west-1", and "ap-southeast-1".
+* `remote.$name.annex-s3-storageclass` `ANNEX_S3_STORAGECLASS` 
+  Name of storage class to use when adding new content to the bucket.
+  Default is "STANDARD". If you have configured git-annex to preserve
+  multiple [[copies]], consider setting this to "REDUCED_REDUNDANCY" to
+  save money.
