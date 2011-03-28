@@ -31,11 +31,11 @@ setConfig k value = do
 getConfig :: Git.Repo -> ConfigKey -> String -> Annex String
 getConfig r key def = do
 	g <- Annex.gitRepo
-	let def' = Git.configGet g global def
-	return $ Git.configGet g local def'
-	where
-		local = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-" ++ key
-		global = "annex." ++ key
+	let def' = Git.configGet g ("annex." ++ key) def
+	return $ Git.configGet g (remoteConfig r key) def'
+
+remoteConfig :: Git.Repo -> ConfigKey -> String
+remoteConfig r key = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex-" ++ key
 
 {- Calculates cost for a remote.
  -

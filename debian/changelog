@@ -1,11 +1,12 @@
 git-annex (0.20110326) UNRELEASED; urgency=low
 
-  * annex.diskreserve can be given in arbitrary units (ie "0.5 gigabytes")
+  * Amazon is S3 now supported as a special type of remote.
   * Generalized remotes handling, laying groundwork for remotes that are
     not regular git remotes.
   * Provide a less expensive version of `git annex copy --to`, enabled
     via --fast. This assumes that location tracking information is correct,
     rather than contacting the remote for every file.
+  * annex.diskreserve can be given in arbitrary units (ie "0.5 gigabytes")
 
  -- Joey Hess <joeyh@debian.org>  Sat, 26 Mar 2011 14:36:16 -0400
 
