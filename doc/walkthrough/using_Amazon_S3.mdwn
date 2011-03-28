@@ -9,8 +9,11 @@ First, export your S3 credentials:
 
 Next, create a bucket, giving it a name and a description:
 
-	git annex s3bucket mybucket "my Amazon S3 bucket"
-	s3bucket (creating mybucket...) ok
+	git annex s3bucket mybucket unencrypted
+	s3bucket (creating mybucket...) (no encryption!) ok
+
+**Note that encrypted buckets are not (yet) supported. Data sent to S3
+is susceptible to snooping.**
 
 Finally, configure a git remote to use the bucket you created:
 
@@ -23,7 +26,4 @@ Now the remote can be used like any other remote.
 	# git annex move video/hackity_hack_and_kaxxt.mov --to mys3
 	move video/hackity_hack_and_kaxxt.mov (to mys3...) ok
 
-An Amazon S3 remote works just like a ssh remote, except it does not have
-a git repository at the other end, and it costs you money. :) In particular,
-all data is stored encrypted with gpg, so neither Amazon nor anyone in
-between can see it.
+See [[special_remotes/Amazon_S3]] for details.

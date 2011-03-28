@@ -6,8 +6,4 @@ But, git-annex also extends git's concept of remotes, with these special
 types of remotes. These can be used just like any normal remote by git-annex.
 They cannot be used by other git commands though.
 
-## Amazon S3
-
-Stores file contents in a bucket in Amazon S3 or a similar service.
-Content is stored encrypted by gpg.
-See [[walkthrough/using_Amazon_S3]] for examples.
+* [[Amazon_S3]]

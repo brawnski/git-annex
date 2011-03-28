@@ -132,19 +132,21 @@ Many git-annex commands will stage changes for later `git commit` by you.
   by uuid. To change the description of the current repository, use
   "."
 
-* s3bucket name description [datacenter host port] [--key=gpgkey]
+* s3bucket name gpgkey [datacenter host port]
 
-  Creates a bucket in Amazon S3. The bucket's name can be used
-  to configure git remote using the bucket.
+  Create or updates the key of a bucket in Amazon S3. The bucket's
+  name can be used to configure git remote using the bucket.
+
+  The gpgkey is a value that can be looked up (using gpg -k) to
+  find a gpg encryption key that will be given access to the bucket.
+  To disable encryption, specify "unencrypted". Note that additional gpg
+  keys can be given access to a bucket by running s3bucket on an existing
+  bucket, with a new key.
 
   The datacenter defaults to "US". Other values include "EU",
   "us-west-1", and "ap-southeast-1".
 
   To use a different, S3-compatable service, specify a host and port.
-
-  By default, data (including filenames) is encrypted using gpg.
-  To use a key other than the default gpg key, specify it with
-  the --key option. To disable encryption, specify "none".
 
 * fsck [path ...]
 
