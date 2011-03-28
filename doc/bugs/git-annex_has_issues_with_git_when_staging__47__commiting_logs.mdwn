@@ -16,3 +16,8 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 >>> be some error message? --[[Joey]] 
 
 >>>> there were no error messages at all
+
+>>>>> Can I see a transcript? I'm having difficulty getting my head around
+>>>>> what git is doing. Sounds like the files could just not be `git
+>>>>> added` yet, but I get the impression from other things that you say
+>>>>> that it's not so simple. --[[Joey]] 
