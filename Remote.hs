@@ -29,7 +29,7 @@ import Data.String.Utils
 
 import RemoteClass
 import qualified Remote.Git
---import qualified Remote.S3
+import qualified Remote.S3
 import Types
 import UUID
 import qualified Annex
@@ -39,7 +39,10 @@ import Messages
 
 {- Add generators for new Remotes here. -}
 generators :: [Annex (RemoteGenerator Annex)]
-generators = [Remote.Git.generate]
+generators =
+	[ Remote.Git.generate
+	, Remote.S3.generate
+	]
 
 {- Runs a list of generators. -}
 runGenerators :: [Annex (RemoteGenerator Annex)] -> Annex [Remote Annex]
