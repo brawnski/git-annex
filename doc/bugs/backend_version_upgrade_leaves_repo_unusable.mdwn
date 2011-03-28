@@ -56,3 +56,6 @@ Running the copy job again, I am still getting the same error as above (as expec
 >>> you shouldn't delete anything. I'll simply make the v2 upgrade
 >>> detect and work around this bug.
 >>> --[[Joey]]
+
+>>>> This should be fixed in current git. The scambled keys will be 
+>>>> fixed up on upgrade. Thanks for your patience! [[done]] --[[Joey]]
