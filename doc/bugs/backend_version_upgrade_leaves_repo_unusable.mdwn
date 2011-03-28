@@ -56,4 +56,7 @@ Running the copy job again, I am still getting the same error as above (as expec
 >>> it even makes sense to fix the crash. I should probably focus
 >>> on fixing what let these mixed keys be created by the mixed-version
 >>> copy.
+>>>
+>>> On second thought, you shouldn't delete anything. I'll simply
+>>> make the v2 upgrade detect and work around this bug.
 >>> --[[Joey]]
