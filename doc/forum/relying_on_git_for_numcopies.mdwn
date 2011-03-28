@@ -1,3 +1,5 @@
+**&lt;out-of-date-warning&gt;**The main problems this is supposed to solve are addressed in a different way with [[todo/hidden files]] and the `--fast` option introduced in [[batch check on remote when using copy]], so while this is not technically obsolete, the main reasons for it are gone. --[[chrysn]]**&lt;/out-of-date-warning&gt;**
+
 This is a rough sketch of a modification of git-annex to rely more on git commit semantics. It might be flawed due to my lack of understanding of git-annex internals. --[[chrysn]]
 
 Summary
