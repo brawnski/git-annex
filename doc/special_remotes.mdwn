@@ -9,4 +9,5 @@ They cannot be used by other git commands though.
 ## Amazon S3
 
 Stores file contents in a bucket in Amazon S3 or a similar service.
+Content is stored encrypted by gpg.
 See [[walkthrough/using_Amazon_S3]] for examples.

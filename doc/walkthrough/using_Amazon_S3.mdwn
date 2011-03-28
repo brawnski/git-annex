@@ -24,4 +24,6 @@ Now the remote can be used like any other remote.
 	move video/hackity_hack_and_kaxxt.mov (to mys3...) ok
 
 An Amazon S3 remote works just like a ssh remote, except it does not have
-a git repository at the other end, and it costs you money. :)
+a git repository at the other end, and it costs you money. :) In particular,
+all data is stored encrypted with gpg, so neither Amazon nor anyone in
+between can see it.
