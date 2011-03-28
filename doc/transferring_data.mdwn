@@ -1,7 +1,8 @@
 git-annex can transfer data to or from any of a repository's git remotes.
 Depending on where the remote is, the data transfer is done using rsync
 (over ssh, with automatic resume), or plain cp (with copy-on-write
-optimisations on supported filesystems).
+optimisations on supported filesystems). Some [[special_remotes]]
+are also supported that are not traditional git remotes.
 
 It's equally easy to transfer a single file to or from a repository,
 or to launch a retrievel of a massive pile of files from whatever
