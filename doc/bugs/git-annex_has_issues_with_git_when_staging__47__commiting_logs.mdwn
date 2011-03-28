@@ -7,7 +7,13 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 > What do you mean when you say that git "got wedged"? It hung somehow?
 >
 > If git-annex runs concurrently with another git command that locks
-> the repository its git add of log files can fail.
+> the repository, its git add of log files can fail.
+> 
+> Update: Also, of course, if you are running a "got annex get" or
+> similar, and ctrl-c it after it has gotten some files, it can
+> end up with unstaged or in some cases un-added log files that git-annex
+> wrote -- since git-annex only stages log files in git on shutdown, and
+> ctrl-c bypasses that.
 > --[[Joey]] 
 
 >> It "got wedged" as in git doesn't let me commit anything, even though it tells me that there is stuff to be committed in the staging area.
