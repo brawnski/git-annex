@@ -34,10 +34,8 @@ The data stored in S3 is encrypted by gpg with a symmetric cipher. The
 passphrase of the cipher is itself checked into your git repository,
 encrypted using one or more gpg public keys. This scheme allows new private
 keys to be given access to a bucket's content, after the bucket is created
-and is in use. It also allows revoking compromised private keys without
-having to throw out the contents of the bucket. The symmetric cipher
-is also hashed together with filenames used in the bucket, obfuscate
-the filenames.
+and is in use. The symmetric cipher is also hashed together with filenames
+used in the bucket, in order to obfuscate the filenames.
 
 To add a new gpg key to an existing bucket, just re-run `git annex
 s3bucket`, specifying the new key id. For example:
