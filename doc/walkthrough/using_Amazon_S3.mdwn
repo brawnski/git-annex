@@ -7,17 +7,13 @@ First, export your S3 credentials:
 	export ANNEX_S3_ACCESS_KEY_ID="08TJMT99S3511WOZEP91"
 	export ANNEX_S3_SECRET_ACCESS_KEY="s3kr1t"
 
-Next, create a bucket, giving it a name and a description:
+Next, create the remote.
 
-	git annex s3bucket mybucket unencrypted
-	s3bucket (creating mybucket...) (no encryption!) ok
+	git annex initremote mys3 encryption=none
+	initremote (creating bucket mys3-291d2fdc-5990-11e0-909a-002170d25c55...) ok
 
 **Note that encrypted buckets are not (yet) supported. Data sent to S3
 is susceptible to snooping.**
-
-Finally, configure a git remote to use the bucket you created:
-
-	git config remote.mys3.annex-s3-bucket mybucket
 
 Now the remote can be used like any other remote.
 

@@ -3,24 +3,36 @@ or a similar service.
 
 See [[walkthrough/using_Amazon_S3]] for usage examples.
 
-## bucket names
+## initremote parameters
 
-When `git annex s3bucket` is used to create a new bucket, it generates a
-UUID, and the name of the bucket includes that UUID, as well as the name
-specified by the user. This makes for some unweidly bucket names, but
-since S3 requires that bucket names be globally unique, it avoids needing
-to hunt for a unused bucket name.
+A number of parameters can be passed to `git annex initremote` to configure
+the S3 remote.
+
+* `encryption` - Either "none" to disable encryption,
+  or a value that can be looked up (using gpg -k) to find a gpg encryption
+  key that will be given access to the remote. Note that additional gpg
+  keys can be given access to a remote by rerunning initremote with
+  the new key id.
+
+* `datacenter` - Defaults to "US". Other values include "EU",
+  "us-west-1", and "ap-southeast-1".
+
+* `storageclass` - Default is "STANDARD". If you have configured git-annex
+  to preserve multiple [[copies]], consider setting this to "REDUCED_REDUNDANCY"
+  to save money.
+
+* `host` and `port` - Specify in order to use a different, S3 compatable
+  service.
 
 ## data security
 
-When `git annex s3bucket` is used to create an unencrypted bucket,
-there is **no** protection against your data being read as it is sent
-to/from S3, or by Amazon when it is stored in S3. This should only be used
-for public data.
+When encryption=none, there is **no** protection against your data being read
+as it is sent to/from S3, or by Amazon when it is stored in S3. This should
+only be used for public data.
 
 ** Encryption is not yet supported. **
 
-When an encrypted bucket is created, all files stored in the bucket are
+When encryption is enabled, all files stored in the bucket are
 encrypted with gpg. Additionally, the filenames themselves are hashed
 to obfuscate them. The size of the encrypted files, and access patterns of
 the data, should be the only clues to what type of data you are storing in
@@ -36,9 +48,3 @@ encrypted using one or more gpg public keys. This scheme allows new private
 keys to be given access to a bucket's content, after the bucket is created
 and is in use. The symmetric cipher is also hashed together with filenames
 used in the bucket, in order to obfuscate the filenames.
-
-To add a new gpg key to an existing bucket, just re-run `git annex
-s3bucket`, specifying the new key id. For example:
-
-	# git annex s3bucket mybucket 16D0B8EF
-	s3bucket (adding gpg key 16D0B8EF) ok

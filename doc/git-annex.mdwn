@@ -132,21 +132,17 @@ Many git-annex commands will stage changes for later `git commit` by you.
   by uuid. To change the description of the current repository, use
   "."
 
-* s3bucket name gpgkey [datacenter host port]
+* initremote name [type=value param=value ...]
 
-  Create or updates the key of a bucket in Amazon S3. The bucket's
-  name can be used to configure git remote using the bucket.
+  Sets up a [[special_remote|special_remotes]] of some type. The remote's
+  type and configuration is specified by the parameters. If a remote
+  with the specified name has already been configured, its configuration
+  is modified by any values specified. In either case, the remote will be
+  added added to `.git/config`.
 
-  The gpgkey is a value that can be looked up (using gpg -k) to
-  find a gpg encryption key that will be given access to the bucket.
-  To disable encryption, specify "unencrypted". Note that additional gpg
-  keys can be given access to a bucket by running s3bucket on an existing
-  bucket, with a new key.
+  Example Amazon S3 remote:
 
-  The datacenter defaults to "US". Other values include "EU",
-  "us-west-1", and "ap-southeast-1".
-
-  To use a different, S3-compatable service, specify a host and port.
+	initremote mys3 type=S3 encryption=none datacenter=EU
 
 * fsck [path ...]
 
@@ -402,25 +398,6 @@ Here are all the supported configuration settings.
 
   Default ssh and rsync options to use if a remote does not have
   specific options.
-
-* `remote.<name>.annex-s3-access-key-id`
-
-  Your S3 Access Key ID. Does not need to be kept private.
-  If not set, the environment variable `AWS_ACCESS_KEY_ID`
-  will be used.
-
-* `remote.<name>.annex-s3-secret-access-key`
-
-  Your S3 Secret Access Key. This is a password.
-  If not set, the environment variable `AWS_SECRET_ACCESS_KEY`
-  will be used.
-
-* `remote.<name>.annex-s3-storageclass`
-
-  Storage class to use when adding new content to S3. The default
-  is "STANDARD". If you have configured git-annex to preserve
-  multiple [[copies]], consider setting this to "REDUCED_REDUNDANCY"
-  to save money.
 
 * `annex.diskreserve`
 
