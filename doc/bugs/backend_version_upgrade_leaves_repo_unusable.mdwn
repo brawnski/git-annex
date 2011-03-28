@@ -59,3 +59,14 @@ Running the copy job again, I am still getting the same error as above (as expec
 
 >>>> This should be fixed in current git. The scambled keys will be 
 >>>> fixed up on upgrade. Thanks for your patience! [[done]] --[[Joey]]
+
+>>>>> I should stop reading your answers via git; by the time I got to
+>>>>> "second thoughts", I had already deleted the files & directories
+>>>>> in question, upgraded the bare repo and was busy uploading from my
+>>>>> local repo. I agree that taking care of this in the upgrade code
+>>>>> is the cleanest approach, by the way.
+>>>>> No need to thank me for my patience; thank you for your quickness!
+>>>>> RichiH
+>>>>> 
+>>>>> PS: If I get a handle on the mtime issue in the SHA backend, git
+>>>>> annex will be pretty much perfect :)
