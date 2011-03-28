@@ -132,6 +132,16 @@ Many git-annex commands will stage changes for later `git commit` by you.
   by uuid. To change the description of the current repository, use
   "."
 
+* s3bucket name description [datacenter host port]
+
+  Creates a bucket in Amazon S3. The bucket's name can be used
+  to configure git remote using the bucket.
+
+  The datacenter defaults to "US". Other values include "EU",
+  "us-west-1", and "ap-southeast-1".
+
+  To use a different, S3-compatable service, specify a host and port.
+
 * fsck [path ...]
 
   With no parameters, this command checks the whole annex for consistency,
@@ -387,6 +397,25 @@ Here are all the supported configuration settings.
   Default ssh and rsync options to use if a remote does not have
   specific options.
 
+* `remote.<name>.annex-s3-access-key-id`
+
+  Your S3 Access Key ID. Does not need to be kept private.
+  If not set, the environment variable `AWS_ACCESS_KEY_ID`
+  will be used.
+
+* `remote.<name>.annex-s3-secret-access-key`
+
+  Your S3 Secret Access Key. This is a password.
+  If not set, the environment variable `AWS_SECRET_ACCESS_KEY`
+  will be used.
+
+* `remote.<name>.annex-s3-storageclass`
+
+  Storage class to use when adding new content to S3. The default
+  is "STANDARD". If you have configured git-annex to preserve
+  multiple [[copies]], consider setting this to "REDUCED_REDUNDANCY"
+  to save money.
+
 * `annex.diskreserve`
 
   Amount of disk space to reserve. Disk space is checked when transferring
@@ -400,6 +429,8 @@ Here are all the supported configuration settings.
 * `annex.version`
 
   Automatically maintained, and used to automate upgrades between versions.
+
+  
 
 # CONFIGURATION VIA .gitattributes
 

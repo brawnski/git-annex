@@ -30,6 +30,17 @@ space and then the description through to the end of the line. Example:
 	e605dca6-446a-11e0-8b2a-002170d25c55 laptop
 	26339d22-446b-11e0-9101-002170d25c55 usb disk
 
+## `git-annex/s3.log`
+
+Associates the UUIDs of Amazon S3 buckets with a bucket nickname and connection
+information. Example:
+
+	be72acb8-5901-11e0-b600-002170d25c55 mybucket s3.amazonaws.com 80
+
+Note that the actual bucket name used on S3 in the above example 
+is "mybucket-be72acb8-5901-11e0-b600-002170d25c55". The UUID is included
+in the bucket name to ensure it is globally unique.
+
 ## `.git-annex/trust.log`
 
 Records the [[trust]] information for repositories. Does not exist unless
