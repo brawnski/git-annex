@@ -37,10 +37,10 @@ only be used for public data.
 ** Encryption is not yet supported. **
 
 When encryption is enabled, all files stored in the bucket are
-encrypted with gpg. Additionally, the filenames themselves are hashed
-to obfuscate them. The size of the encrypted files, and access patterns of
-the data, should be the only clues to what type of data you are storing in
-S3.
+encrypted with gpg. Additionally, the filenames themselves are encrypted
+(using HMAC). The size of the encrypted files, and
+access patterns of the data, should be the only clues to what type of
+data you are storing in S3.
 
 [[!template id=note text="""
 This scheme was originally developed by Lars Wirzenius at al
