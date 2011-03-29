@@ -14,17 +14,12 @@ import Data.Map as M
 
 import Key
 
-{- A remote generator identifies configured remotes, and returns an action
- - that can be run to set up each remote, and a list of names of remotes
- - that are not cheap to set up. -}
-type RemoteGenerator a = ([a (Remote a)], [String])
-
 {- There are different types of remotes. -}
 data RemoteType a = RemoteType {
 	-- human visible type name
 	typename :: String,
 	-- generates remotes of this type
-	generator :: a (RemoteGenerator a),
+	generator :: a [Remote a],
 	-- initializes or changes a remote
 	setup :: String -> M.Map String String -> a (M.Map String String)
 }

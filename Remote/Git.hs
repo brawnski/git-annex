@@ -15,6 +15,8 @@ import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Cmd.Utils
 import Control.Monad (filterM, liftM)
+import Data.String.Utils
+import Maybe
 
 import RemoteClass
 import Types
@@ -37,7 +39,7 @@ remote = RemoteType {
 	setup = error "not supported"
 }
 
-gen :: Annex (RemoteGenerator Annex)
+gen :: Annex [Remote Annex]
 gen = do
 	g <- Annex.gitRepo
 	allremotes <- filterM remoteNotIgnored $ Git.remotes g
@@ -52,18 +54,20 @@ gen = do
 	let skip = filter (`notElem` expensive_todo) expensive
 	let todo = cheap++expensive_todo
 
-	let actions = map genRemote skip ++ 
-		map (\r -> genRemote =<< tryGitConfigRead r) todo
-	return (actions, map Git.repoDescribe expensive_todo)
+	showNote $ "getting UUID for " ++ (join ", " $
+		map Git.repoDescribe expensive_todo)
+	done <- mapM tryGitConfigRead todo
 
+	generated <- mapM genRemote $ skip ++ done
+	return $ catMaybes generated
 	where
 		cachedUUID r = liftM null $ getUUID r
 	
-genRemote :: Git.Repo -> Annex (Remote Annex)
+genRemote :: Git.Repo -> Annex (Maybe (Remote Annex))
 genRemote r = do
 	u <- getUUID r
 	c <- remoteCost r
-	return Remote {
+	return $ Just $ Remote {
 		uuid = u,
 		cost = c,
 		name = Git.repoDescribe r,
