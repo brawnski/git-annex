@@ -8,7 +8,7 @@ See [[walkthrough/using_Amazon_S3]] for usage examples.
 A number of parameters can be passed to `git annex initremote` to configure
 the S3 remote.
 
-* `encryption` - Either "none" to disable encryption,
+* `encryption` - Required. Either "none" to disable encryption,
   or a value that can be looked up (using gpg -k) to find a gpg encryption
   key that will be given access to the remote. Note that additional gpg
   keys can be given access to a remote by rerunning initremote with
@@ -23,6 +23,10 @@ the S3 remote.
 
 * `host` and `port` - Specify in order to use a different, S3 compatable
   service.
+
+* `bucket` - S3 requires that buckets have a globally unique name, 
+  so by default, a bucket name is chosen based on the remote name
+  and UUID. This can be specified to pick a bucket name.
 
 ## data security
 
