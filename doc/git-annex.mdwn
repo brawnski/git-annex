@@ -126,23 +126,23 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * describe repository description
 
-  Changes the description of a git repository.
+  Changes the description of a repository.
 
   The repository to describe can be specified by git remote name or
   by uuid. To change the description of the current repository, use
   "."
 
-* initremote name [type=value param=value ...]
+* initremote type name [param=value ...]
 
   Sets up a [[special_remote|special_remotes]] of some type. The remote's
-  type and configuration is specified by the parameters. If a remote
+  configuration is configured by the parameters. If a remote
   with the specified name has already been configured, its configuration
   is modified by any values specified. In either case, the remote will be
   added added to `.git/config`.
 
   Example Amazon S3 remote:
 
-	initremote mys3 type=S3 encryption=none datacenter=EU
+	initremote s3 mys3 type=S3 encryption=none datacenter=EU
 
 * fsck [path ...]
 
@@ -318,12 +318,12 @@ Many git-annex commands will stage changes for later `git commit` by you.
 * --from=repository
 
   Specifies a repository that content will be retrieved from.
-  It should be specified using the name of a configured git remote.
+  It should be specified using the name of a configured remote.
 
 * --to=repository
 
-  Specifies a git repository that content will be sent to. 
-  It should be specified using the name of a configured git remote.
+  Specifies a repository that content will be sent to. 
+  It should be specified using the name of a configured remote.
 
 * --exclude=glob
 
@@ -382,16 +382,16 @@ Here are all the supported configuration settings.
 
 * `remote.<name>.annex-uuid`
 
-  git-annex caches UUIDs of repositories here.
+  git-annex caches UUIDs of remote repositories here.
 
 * `remote.<name>.annex-ssh-options`
 
-  Options to use when using ssh to talk to this repository.
+  Options to use when using ssh to talk to this remote.
 
 * `remote.<name>.annex-rsync-options`
 
   Options to use when using rsync
-  to or from this repository. For example, to force ipv6, and limit
+  to or from this remote. For example, to force ipv6, and limit
   the bandwidth to 100Kbyte/s, set it to "-6 --bwlimit 100"
 
 * `annex.ssh-options`, `annex.rsync-options`

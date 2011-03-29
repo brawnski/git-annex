@@ -9,11 +9,11 @@ First, export your S3 credentials:
 
 Next, create the remote.
 
-	git annex initremote mys3 encryption=none
+	git annex initremote s3 mys3 encryption=none
 	initremote (creating bucket mys3-291d2fdc-5990-11e0-909a-002170d25c55...) ok
 
 **Note that encrypted buckets are not (yet) supported. Data sent to S3
-is susceptible to snooping.**
+is without encryption susceptible to snooping.**
 
 Now the remote can be used like any other remote.
 
