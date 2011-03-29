@@ -19,13 +19,19 @@ module Remote (
 	nameToUUID,
 	keyPossibilities,
 	remotesWithUUID,
-	remotesWithoutUUID
+	remotesWithoutUUID,
+
+	configGet,
+	configSet,
+	keyValToMap
 ) where
 
 import Control.Monad.State (liftIO)
 import Control.Monad (when, liftM)
 import Data.List
 import Data.String.Utils
+import qualified Data.Map as M
+import Data.Maybe
 
 import RemoteClass
 import qualified Remote.Git
@@ -35,6 +41,7 @@ import UUID
 import qualified Annex
 import Trust
 import LocationLog
+import Locations
 import Messages
 
 {- Add generators for new Remotes here. -}
@@ -120,3 +127,68 @@ remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
 remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
 remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
 
+{- Filename of remote.log. -}
+remoteLog :: Annex FilePath
+remoteLog = do
+	g <- Annex.gitRepo
+	return $ gitStateDir g ++ "remote.log"
+
+{- Reads the uuid and config of the specified remote from the remoteLog. -}
+configGet :: String -> Annex (Maybe (UUID, M.Map String String))
+configGet n = do
+	rs <- readRemoteLog
+	let matches = filter (matchName n) rs
+	case matches of
+		[] -> return Nothing
+		((u, _, c):_) -> return $ Just (u, c)
+
+{- Changes or adds a remote's config in the remoteLog. -}
+configSet :: String -> UUID -> M.Map String String -> Annex ()
+configSet n u c = do
+	rs <- readRemoteLog
+	let others = filter (not . matchName n) rs
+	writeRemoteLog $ (u, n, c):others
+
+matchName :: String -> (UUID, String, M.Map String String) -> Bool
+matchName n (_, n', _) = n == n'
+
+readRemoteLog :: Annex [(UUID, String, M.Map String String)]
+readRemoteLog = do
+	l <- remoteLog
+	s <- liftIO $ catch (readFile l) ignoreerror
+	return $ remoteLogParse s
+	where
+		ignoreerror _ = return []
+
+writeRemoteLog :: [(UUID, String, M.Map String String)] -> Annex ()
+writeRemoteLog rs = do
+	l <- remoteLog
+	liftIO $ writeFile l $ unlines $ map toline rs
+	where
+		toline (u, n, c) = u ++ " " ++ n ++ (unwords $ mapToKeyVal c)
+
+remoteLogParse :: String -> [(UUID, String, M.Map String String)]
+remoteLogParse s = catMaybes $ map parseline $ filter (not . null) $ lines s
+	where
+		parseline l
+			| length w > 2 = Just (u, n, c)
+			| otherwise = Nothing
+			where
+				w = words l
+				u = w !! 0
+				n = w !! 1
+				c = keyValToMap $ drop 2 w
+
+{- Given Strings like "key=value", generates a Map. -}
+keyValToMap :: [String] -> M.Map String String
+keyValToMap ws = M.fromList $ map (/=/) ws
+	where
+		(/=/) s = (k, v)
+			where
+				k = takeWhile (/= '=') s
+				v = drop (1 + length k) s
+
+mapToKeyVal :: M.Map String String -> [String]
+mapToKeyVal m = map toword $ M.toList m
+	where
+		toword (k, v) = k ++ "=" ++ v

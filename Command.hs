@@ -238,6 +238,10 @@ paramGlob :: String
 paramGlob = "GLOB"
 paramName :: String
 paramName = "NAME"
+paramType :: String
+paramType = "TYPE"
+paramKeyValue :: String
+paramKeyValue = "K=V"
 paramNothing :: String
 paramNothing = ""
 
