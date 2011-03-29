@@ -28,7 +28,11 @@ import UUID
 import Config
 
 remote :: RemoteType Annex
-remote = RemoteType { typename = "S3", generator = gen }
+remote = RemoteType {
+	typename = "S3",
+	generator = gen,
+	setup = s3Setup
+}
 
 gen :: Annex (RemoteGenerator Annex)
 gen = do
@@ -68,8 +72,7 @@ genRemote r u = do
 		removeKey = error "TODO",
 		hasKey = error "TODO",
 		hasKeyCheap = False,
-		config = Nothing,
-		setup = \_ -> return ()
+		config = Nothing
 	}
 
 s3Connection :: Git.Repo -> Annex (Maybe AWSConnection)
@@ -101,6 +104,10 @@ getS3Config r s def = do
 	return v
 	where
 		envvar = "ANNEX_" ++ map (\c -> if c == '-' then '_' else toUpper c) s
+
+s3Setup :: UUID -> M.Map String String -> Annex (M.Map String String)
+s3Setup u c = do
+	return c
 
 {- The UUID of a S3 bucket is stored in a file "git-annex-uuid" in the
  - bucket. Gets the UUID, or if there is none, sets a new UUID, possibly

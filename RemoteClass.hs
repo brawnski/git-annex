@@ -24,7 +24,9 @@ data RemoteType a = RemoteType {
 	-- human visible type name
 	typename :: String,
 	-- generates remotes of this type
-	generator :: a (RemoteGenerator a)
+	generator :: a (RemoteGenerator a),
+	-- initializes or changes a remote
+	setup :: String -> M.Map String String -> a (M.Map String String)
 }
 
 {- An individual remote. -}
@@ -48,9 +50,7 @@ data Remote a = Remote {
 	-- operation.
 	hasKeyCheap :: Bool,
 	-- a Remote can have a persistent configuration store
-	config :: Maybe (M.Map String String),
-	-- initializes or changes the config of a remote
-	setup :: M.Map String String -> a ()
+	config :: Maybe (M.Map String String)
 }
 
 instance Show (Remote a) where

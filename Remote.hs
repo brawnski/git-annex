@@ -15,12 +15,14 @@ module Remote (
 	hasKey,
 	hasKeyCheap,
 
+	remoteTypes,
 	byName,
 	nameToUUID,
 	keyPossibilities,
 	remotesWithUUID,
 	remotesWithoutUUID,
 
+	remoteLog,
 	readRemoteLog,
 	configSet,
 	keyValToMap
@@ -34,8 +36,6 @@ import qualified Data.Map as M
 import Data.Maybe
 
 import RemoteClass
-import qualified Remote.Git
-import qualified Remote.S3
 import Types
 import UUID
 import qualified Annex
@@ -43,6 +43,10 @@ import Trust
 import LocationLog
 import Locations
 import Messages
+import Utility
+
+import qualified Remote.Git
+import qualified Remote.S3
 
 remoteTypes :: [RemoteType Annex]
 remoteTypes =
@@ -150,7 +154,8 @@ configSet :: UUID -> M.Map String String -> Annex ()
 configSet u c = do
 	m <- readRemoteLog
 	l <- remoteLog
-	liftIO $ writeFile l $ unlines $ map toline $ M.toList $ M.insert u c m
+	liftIO $ safeWriteFile l $ unlines $ sort $
+		map toline $ M.toList $ M.insert u c m
 	where
 		toline (u', c') = u' ++ " " ++ (unwords $ mapToKeyVal c')
 
@@ -185,6 +190,6 @@ keyValToMap ws = M.fromList $ map (/=/) ws
 				v = drop (1 + length k) s
 
 mapToKeyVal :: M.Map String String -> [String]
-mapToKeyVal m = map toword $ M.toList m
+mapToKeyVal m = map toword $ sort $ M.toList m
 	where
 		toword (k, v) = k ++ "=" ++ v

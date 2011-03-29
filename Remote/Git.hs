@@ -31,7 +31,11 @@ import Ssh
 import Config
 
 remote :: RemoteType Annex
-remote = RemoteType { typename = "git", generator = gen }
+remote = RemoteType {
+	typename = "git",
+	generator = gen,
+	setup = error "not supported"
+}
 
 gen :: Annex (RemoteGenerator Annex)
 gen = do
@@ -68,8 +72,7 @@ genRemote r = do
 		removeKey = dropKey r,
 		hasKey = inAnnex r,
 		hasKeyCheap = not (Git.repoIsUrl r),
-		config = Nothing,
-		setup = \_ -> return ()
+		config = Nothing
 	}
 
 {- Tries to read the config for a specified remote, updates state, and
