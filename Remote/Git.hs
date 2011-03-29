@@ -14,7 +14,6 @@ import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Cmd.Utils
-import Control.Monad (filterM)
 
 import RemoteClass
 import Types
@@ -41,7 +40,7 @@ remote = RemoteType {
 list :: Annex [Git.Repo]
 list = do
 	g <- Annex.gitRepo
-	filterM remoteNotIgnored $ Git.remotes g
+	return $ Git.remotes g
 
 gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen repo _ = do

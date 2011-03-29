@@ -29,7 +29,7 @@ module Remote (
 ) where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when, liftM)
+import Control.Monad (when, liftM, filterM)
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -42,6 +42,7 @@ import Trust
 import LocationLog
 import Locations
 import Utility
+import Config
 
 import qualified Remote.Git
 import qualified Remote.S3
@@ -68,7 +69,8 @@ genList = do
 	where
 		process m t = do
 			l <- enumerate t
-			mapM (gen m t) l
+			l' <- filterM remoteNotIgnored l
+			mapM (gen m t) l'
 		gen m t r = do
 			u <- getUUID r
 			generate t r (M.lookup u m)

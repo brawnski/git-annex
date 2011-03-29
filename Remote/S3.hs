@@ -16,7 +16,7 @@ import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Data.Maybe
 import Data.String.Utils
-import Control.Monad (filterM, when)
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
 
@@ -41,7 +41,7 @@ remote = RemoteType {
 s3List :: Annex [Git.Repo]
 s3List = do
 	g <- Annex.gitRepo
-	filterM remoteNotIgnored $ findS3Remotes g
+	return $ findS3Remotes g
 
 {- S3 remotes have a remote.<name>.annex-s3 config setting.
  - Git.Repo does not normally generate remotes for things that
