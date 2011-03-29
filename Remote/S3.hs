@@ -28,20 +28,20 @@ import UUID
 import Config
 import Utility
 import Messages
+import Locations
 
 remote :: RemoteType Annex
 remote = RemoteType {
 	typename = "S3",
-	generator = gen,
+	enumerate = s3List,
+	generate = s3Gen,
 	setup = s3Setup
 }
 
-gen :: Annex [Remote Annex]
-gen = do
+s3List :: Annex [Git.Repo]
+s3List = do
 	g <- Annex.gitRepo
-	l <- filterM remoteNotIgnored $ findS3Remotes g
-	generated <- mapM genRemote l
-	return $ catMaybes generated
+	filterM remoteNotIgnored $ findS3Remotes g
 
 {- S3 remotes have a remote.<name>.annex-s3 config setting.
  - Git.Repo does not normally generate remotes for things that
@@ -55,28 +55,27 @@ findS3Remotes r = map construct remotepairs
 		construct (k,_) = Git.repoRemoteNameSet Git.repoFromUnknown k
 		s3remote k = startswith "remote." k && endswith ".annex-s3" k
 
-genRemote :: Git.Repo -> Annex (Maybe (Remote Annex))
-genRemote r = do
+s3Gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
+s3Gen r c = do
 	u <- getUUID r
-	if (u == "")
-		then return Nothing
-		else do
-			c <- remoteCost r
-			return $ Just $ newremote u c
+	cst <- remoteCost r
+	return $ genRemote r u c cst
 	where
-		newremote u c = this
-			where
-				this = Remote {
-					uuid = u,
-					cost = c,
-					name = Git.repoDescribe r,
-			 		storeKey = s3Store this,
-					retrieveKeyFile = error "TODO retrievekey",
-					removeKey = error "TODO removekey",
-					hasKey = s3CheckPresent this,
-					hasKeyCheap = False,
-					config = Nothing
-				}
+
+genRemote :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Int -> Remote Annex
+genRemote r u c cst = this
+	where
+		this = Remote {
+			uuid = u,
+			cost = cst,
+			name = Git.repoDescribe r,
+	 		storeKey = s3Store this,
+			retrieveKeyFile = error "TODO retrievekey",
+			removeKey = error "TODO removekey",
+			hasKey = s3CheckPresent this,
+			hasKeyCheap = False,
+			config = c
+		}
 
 s3Connection :: M.Map String String -> IO AWSConnection
 s3Connection c = do
@@ -155,8 +154,10 @@ s3CheckPresent r k = s3Action r $ \(conn, bucket) -> do
 
 s3Store :: Remote Annex -> Key -> Annex Bool
 s3Store r k = s3Action r $ \(conn, bucket) -> do
+	g <- Annex.gitRepo
+	content <- liftIO $ L.readFile $ gitAnnexLocation g k
 	let object = setStorageClass storageclass $
-		S3Object bucket (s3File k) "" [] (error "read content here")
+		S3Object bucket (s3File k) "" [] content
 	res <- liftIO $ sendObject conn object
 	case res of
 		Right _ -> return True

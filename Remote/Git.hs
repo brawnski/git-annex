@@ -14,9 +14,7 @@ import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Cmd.Utils
-import Control.Monad (filterM, liftM, when)
-import Data.String.Utils
-import Maybe
+import Control.Monad (filterM)
 
 import RemoteClass
 import Types
@@ -35,40 +33,35 @@ import Config
 remote :: RemoteType Annex
 remote = RemoteType {
 	typename = "git",
-	generator = gen,
+	enumerate = list,
+	generate = gen,
 	setup = error "not supported"
 }
 
-gen :: Annex [Remote Annex]
-gen = do
+list :: Annex [Git.Repo]
+list = do
 	g <- Annex.gitRepo
-	allremotes <- filterM remoteNotIgnored $ Git.remotes g
+	filterM remoteNotIgnored $ Git.remotes g
 
+gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen repo _ = do
  	{- It's assumed to be cheap to read the config of non-URL remotes,
 	 - so this is done each time git-annex is run. Conversely,
 	 - the config of an URL remote is only read when there is no
 	 - cached UUID value. -}
-	let cheap = filter (not . Git.repoIsUrl) allremotes
-	let expensive = filter Git.repoIsUrl allremotes
-	expensive_todo <- filterM noCachedUUID expensive
-	let skip = filter (`notElem` expensive_todo) expensive
-	let todo = cheap++expensive_todo
-
-	when (not $ null expensive_todo) $
-		showNote $ "getting UUID for " ++ (join ", " $
-			map Git.repoDescribe expensive_todo)
-	done <- mapM tryGitConfigRead todo
-
-	generated <- mapM genRemote $ skip ++ done
-	return $ catMaybes generated
-	where
-		noCachedUUID r = liftM null $ getUUID r
+	let cheap = not $ Git.repoIsUrl repo
+	u <- getUUID repo
+	repo' <- case (cheap, u) of
+		(True, _) -> tryGitConfigRead repo
+		(False, "") -> tryGitConfigRead repo
+		_ -> return repo
+	genRemote repo'
 	
-genRemote :: Git.Repo -> Annex (Maybe (Remote Annex))
+genRemote :: Git.Repo -> Annex (Remote Annex)
 genRemote r = do
 	u <- getUUID r
 	c <- remoteCost r
-	return $ Just $ Remote {
+	return $ Remote {
 		uuid = u,
 		cost = c,
 		name = Git.repoDescribe r,

@@ -12,14 +12,17 @@ module RemoteClass where
 import Control.Exception
 import Data.Map as M
 
+import qualified GitRepo as Git
 import Key
 
 {- There are different types of remotes. -}
 data RemoteType a = RemoteType {
 	-- human visible type name
 	typename :: String,
-	-- generates remotes of this type
-	generator :: a [Remote a],
+	-- enumerates remotes of this type
+	enumerate :: a [Git.Repo],
+	-- generates a remote of this type
+	generate :: Git.Repo -> Maybe (M.Map String String) -> a (Remote a),
 	-- initializes or changes a remote
 	setup :: String -> M.Map String String -> a (M.Map String String)
 }

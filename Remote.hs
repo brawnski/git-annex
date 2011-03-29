@@ -59,11 +59,19 @@ genList = do
 	rs <- Annex.getState Annex.remotes
 	if null rs
 		then do
-			l <- mapM generator remoteTypes
-			rs' <- getConfigs (concat l)
+			m <- readRemoteLog
+			l <- mapM (process m) remoteTypes
+			let rs' = concat l
 			Annex.changeState $ \s -> s { Annex.remotes = rs' }
 			return rs'
 		else return rs
+	where
+		process m t = do
+			l <- enumerate t
+			mapM (gen m t) l
+		gen m t r = do
+			u <- getUUID r
+			generate t r (M.lookup u m)
 
 {- Looks up a remote by name. (Or by UUID.) -}
 byName :: String -> Annex (Remote Annex)
@@ -121,18 +129,6 @@ remoteLog :: Annex FilePath
 remoteLog = do
 	g <- Annex.gitRepo
 	return $ gitStateDir g ++ "remote.log"
-
-{- Load stored config into remotes.
- -
- - This way, the log is read once, lazily, so if no remotes access
- - their config, no work is done.
- -}
-getConfigs :: [Remote Annex] -> Annex [Remote Annex]
-getConfigs rs = do
-	m <- readRemoteLog
-	return $ map (get m) rs
-	where
-		get m r = r { config = M.lookup (uuid r) m }
 
 {- Adds or updates a remote's config in the log. -}
 configSet :: UUID -> M.Map String String -> Annex ()
