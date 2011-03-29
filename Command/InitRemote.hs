@@ -29,12 +29,12 @@ start :: CommandStartString
 start params = notBareRepo $ do
 	when (null ws) $ error "Specify a name for the remote"
 	showStart "initremote" name
-	r <- Remote.configGet name
-	(u, c) <- case r of
+	m <- Remote.readRemoteLog
+	(u, c) <- case findByName name m of
 		Just t -> return t
 		Nothing -> do
 			uuid <- liftIO $ genUUID
-			return $ (uuid, M.empty)
+			return $ (uuid, M.insert nameKey name M.empty)
 	return $ Just $ perform name u $ M.union config c
 
 	where
@@ -46,3 +46,17 @@ perform :: String -> UUID -> M.Map String String -> CommandPerform
 perform name uuid config = do
 	liftIO $ putStrLn $ show $ (uuid, config)
 	return Nothing
+
+findByName :: String ->  M.Map UUID (M.Map String String) -> Maybe (UUID, M.Map String String)
+findByName n m = if null matches then Nothing else Just $ head matches
+	where
+		matches = filter (matching . snd) $ M.toList m
+		matching c = case M.lookup nameKey c of
+			Nothing -> False
+			Just n'
+				| n' == n -> True
+				| otherwise -> False
+
+{- The name of a configured remote is stored in its config using this key. -}
+nameKey :: String
+nameKey = "name"

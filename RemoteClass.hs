@@ -47,8 +47,7 @@ data Remote a = Remote {
 	-- Some remotes can check hasKey without an expensive network
 	-- operation.
 	hasKeyCheap :: Bool,
-	-- a Remote may have a persistent configuration store
-	hasConfig :: Bool,
+	-- a Remote can have a persistent configuration store
 	config :: Maybe (M.Map String String),
 	-- initializes or changes the config of a remote
 	setup :: M.Map String String -> a ()

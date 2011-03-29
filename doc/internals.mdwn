@@ -36,8 +36,8 @@ Holds persistent configuration settings for [[special_remotes]] such as
 Amazon S3.
 
 The file format is one line per remote, starting with the uuid of the
-remote, followed by a space, the name of the remote, a space, and then
-a series of key=value pairs, each separated by whitespace.
+remote, followed by a space, and then a series of key=value pairs,
+each separated by whitespace.
 
 ## `.git-annex/trust.log`
 

@@ -12,7 +12,7 @@ import Network.AWS.S3Object
 import Network.AWS.S3Bucket
 import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
-import qualified Data.Map as Map
+import qualified Data.Map as M
 import Data.String.Utils
 import Control.Monad (filterM, liftM, when)
 import Control.Monad.State (liftIO)
@@ -51,8 +51,8 @@ gen = do
 findS3Remotes :: Git.Repo -> [Git.Repo]
 findS3Remotes r = map construct remotepairs
 	where
-		remotepairs = Map.toList $ filterremotes $ Git.configMap r
-		filterremotes = Map.filterWithKey (\k _ -> s3remote k)
+		remotepairs = M.toList $ filterremotes $ Git.configMap r
+		filterremotes = M.filterWithKey (\k _ -> s3remote k)
 		construct (k,_) = Git.repoRemoteNameSet Git.repoFromUnknown k
 		s3remote k = startswith "remote." k && endswith ".annex-s3-bucket" k
 
@@ -68,7 +68,6 @@ genRemote r u = do
 		removeKey = error "TODO",
 		hasKey = error "TODO",
 		hasKeyCheap = False,
-		hasConfig = True,
 		config = Nothing,
 		setup = \_ -> return ()
 	}

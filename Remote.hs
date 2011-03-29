@@ -21,7 +21,7 @@ module Remote (
 	remotesWithUUID,
 	remotesWithoutUUID,
 
-	configGet,
+	readRemoteLog,
 	configSet,
 	keyValToMap
 ) where
@@ -71,7 +71,8 @@ genList = do
 	if null rs
 		then do
 			rs' <- runGenerators
-			Annex.changeState $ \s -> s { Annex.remotes = rs' }
+			rs'' <- getConfigs rs'
+			Annex.changeState $ \s -> s { Annex.remotes = rs'' }
 			return rs'
 		else return rs
 
@@ -132,51 +133,47 @@ remoteLog = do
 	g <- Annex.gitRepo
 	return $ gitStateDir g ++ "remote.log"
 
-{- Reads the uuid and config of the specified remote from the remoteLog. -}
-configGet :: String -> Annex (Maybe (UUID, M.Map String String))
-configGet n = do
-	rs <- readRemoteLog
-	let matches = filter (matchName n) rs
-	case matches of
-		[] -> return Nothing
-		((u, _, c):_) -> return $ Just (u, c)
+{- Load stored config into remotes.
+ -
+ - This way, the log is read once, lazily, so if no remotes access
+ - their config, no work is done.
+ -}
+getConfigs :: [Remote Annex] -> Annex [Remote Annex]
+getConfigs rs = do
+	m <- readRemoteLog
+	return $ map (get m) rs	
+	where
+		get m r = r { config = M.lookup (uuid r) m }
 
-{- Changes or adds a remote's config in the remoteLog. -}
-configSet :: String -> UUID -> M.Map String String -> Annex ()
-configSet n u c = do
-	rs <- readRemoteLog
-	let others = filter (not . matchName n) rs
-	writeRemoteLog $ (u, n, c):others
+{- Adds or updates a remote's config in the log. -}
+configSet :: UUID -> M.Map String String -> Annex ()
+configSet u c = do
+	m <- readRemoteLog
+	l <- remoteLog
+	liftIO $ writeFile l $ unlines $ map toline $ M.toList $ M.insert u c m
+	where
+		toline (u', c') = u' ++ " " ++ (unwords $ mapToKeyVal c')
 
-matchName :: String -> (UUID, String, M.Map String String) -> Bool
-matchName n (_, n', _) = n == n'
-
-readRemoteLog :: Annex [(UUID, String, M.Map String String)]
+{- Map of remotes by uuid containing key/value config maps. -}
+readRemoteLog :: Annex (M.Map UUID (M.Map String String))
 readRemoteLog = do
 	l <- remoteLog
 	s <- liftIO $ catch (readFile l) ignoreerror
 	return $ remoteLogParse s
 	where
-		ignoreerror _ = return []
+		ignoreerror _ = return ""
 
-writeRemoteLog :: [(UUID, String, M.Map String String)] -> Annex ()
-writeRemoteLog rs = do
-	l <- remoteLog
-	liftIO $ writeFile l $ unlines $ map toline rs
-	where
-		toline (u, n, c) = u ++ " " ++ n ++ (unwords $ mapToKeyVal c)
-
-remoteLogParse :: String -> [(UUID, String, M.Map String String)]
-remoteLogParse s = catMaybes $ map parseline $ filter (not . null) $ lines s
+remoteLogParse :: String -> M.Map UUID (M.Map String String)
+remoteLogParse s =
+	M.fromList $ catMaybes $ map parseline $ filter (not . null) $ lines s
 	where
 		parseline l
-			| length w > 2 = Just (u, n, c)
+			| length w > 2 = Just (u, c)
 			| otherwise = Nothing
 			where
 				w = words l
 				u = w !! 0
-				n = w !! 1
-				c = keyValToMap $ drop 2 w
+				c = keyValToMap $ tail w
 
 {- Given Strings like "key=value", generates a Map. -}
 keyValToMap :: [String] -> M.Map String String

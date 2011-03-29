@@ -12,7 +12,7 @@ module Remote.Git (
 
 import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
-import qualified Data.Map as Map
+import qualified Data.Map as M
 import System.Cmd.Utils
 import Control.Monad (filterM, liftM)
 
@@ -68,7 +68,6 @@ genRemote r = do
 		removeKey = dropKey r,
 		hasKey = inAnnex r,
 		hasKeyCheap = not (Git.repoIsUrl r),
-		hasConfig = False,
 		config = Nothing,
 		setup = \_ -> return ()
 	}
@@ -77,7 +76,7 @@ genRemote r = do
  - returns the updated repo. -}
 tryGitConfigRead :: Git.Repo -> Annex Git.Repo
 tryGitConfigRead r 
-	| not $ Map.null $ Git.configMap r = return r -- already read
+	| not $ M.null $ Git.configMap r = return r -- already read
 	| Git.repoIsSsh r = store $ onRemote r (pipedconfig, r) "configlist" []
 	| Git.repoIsUrl r = return r
 	| otherwise = store $ safely $ Git.configRead r
