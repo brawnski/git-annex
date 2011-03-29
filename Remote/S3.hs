@@ -70,7 +70,7 @@ genRemote r u c cst = this
 			cost = cst,
 			name = Git.repoDescribe r,
 	 		storeKey = s3Store this,
-			retrieveKeyFile = error "TODO retrievekey",
+			retrieveKeyFile = s3Retrieve this,
 			removeKey = error "TODO removekey",
 			hasKey = s3CheckPresent this,
 			hasKeyCheap = False,
@@ -139,14 +139,13 @@ s3Action r a = do
 	let bucket = fromJust $ M.lookup "bucket" $ fromJust $ config r
 	a (conn, bucket)
 
-s3File :: Key -> FilePath
-s3File k = show k
+bucketKey :: String -> Key -> L.ByteString -> S3Object
+bucketKey bucket k content = S3Object bucket (show k) "" [] content
 
 s3CheckPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
 s3CheckPresent r k = s3Action r $ \(conn, bucket) -> do
-	let object = S3Object bucket (s3File k) "" [] L.empty
 	showNote ("checking " ++ name r ++ "...")
-	res <- liftIO $ getObjectInfo conn object
+	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
 	case res of
 		Right _ -> return $ Right True
 		Left (AWSError _ _) -> return $ Right False
@@ -156,8 +155,7 @@ s3Store :: Remote Annex -> Key -> Annex Bool
 s3Store r k = s3Action r $ \(conn, bucket) -> do
 	g <- Annex.gitRepo
 	content <- liftIO $ L.readFile $ gitAnnexLocation g k
-	let object = setStorageClass storageclass $
-		S3Object bucket (s3File k) "" [] content
+	let object = setStorageClass storageclass $ bucketKey bucket k content
 	res <- liftIO $ sendObject conn object
 	case res of
 		Right _ -> return True
@@ -169,3 +167,14 @@ s3Store r k = s3Action r $ \(conn, bucket) -> do
 			case fromJust $ M.lookup "storageclass" $ fromJust $ config r of
 				"REDUCED_REDUNDANCY" -> REDUCED_REDUNDANCY
 				_ -> STANDARD
+
+s3Retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
+s3Retrieve r k f = s3Action r $ \(conn, bucket) -> do
+	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
+	case res of
+		Right o -> do
+			liftIO $ L.writeFile f (obj_data o)
+			return True
+		Left e -> do
+			warning $ prettyReqError e
+			return False
