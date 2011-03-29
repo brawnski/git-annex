@@ -1,33 +1,15 @@
-[[done]]
-
 Support Amazon S3 as a file storage backend.
 
 There's a haskell library that looks good. Not yet in Debian.
 
-Multiple ways of using S3 are possible. Current plan is to 
-have a special type of git remote (though git won't know how to use it;
-only git-annex will) that uses a S3 bucket.
+Multiple ways of using S3 are possible. Currently implemented as 
+a special type of git remote.
 
-Something like:
+Before this can be close, I need to fix:
 
-	[remote "s3"]
-		annex-s3bucket = mybucket
-		annex-s3datacenter = Europe
-		annex-uuid = 1a586cf6-45e9-11e0-ba9c-3b0a3397aec2
-		annex-cost = 500
+## encryption
 
-The UUID will be stored as a special file in the S3 bucket.
-
-Using a different type of remote like this will allow S3 to be used
-anywhere a regular remote would be used. `git annex get` will transparently
-download a file from S3 if S3 has it and is the cheapest remote.
-
-	git annex copy --to s3
-	git annex move --from s3
-	git annex drop --from s3 # not currently allowed, will need adding
-
-Each s3 remote will count as one copy for numcopies handling, just like
-any other remote.
+TODO
 
 ## unused checking
 
