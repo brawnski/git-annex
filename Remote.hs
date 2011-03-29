@@ -53,7 +53,7 @@ remoteTypes =
 	]
 
 {- Builds a list of all available Remotes.
- - Since doing so can be expensive, the list is cached in the Annex. -}
+ - Since doing so can be expensive, the list is cached. -}
 genList :: Annex [Remote Annex]
 genList = do
 	rs <- Annex.getState Annex.remotes
@@ -130,7 +130,7 @@ remoteLog = do
 getConfigs :: [Remote Annex] -> Annex [Remote Annex]
 getConfigs rs = do
 	m <- readRemoteLog
-	return $ map (get m) rs	
+	return $ map (get m) rs
 	where
 		get m r = r { config = M.lookup (uuid r) m }
 

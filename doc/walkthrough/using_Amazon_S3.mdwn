@@ -13,7 +13,7 @@ First, export your S3 credentials:
 Next, create the S3 remote.
 
 	# git annex initremote mys3 type=S3 encryption=none
-	initremote mys3 (checking bucket) (creating bucket) ok
+	initremote mys3 (checking bucket) (creating bucket in US) ok
 
 The configuration for the S3 remote is stored in git. So to make a different
 repository use the same S3 remote is easy:

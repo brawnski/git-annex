@@ -14,7 +14,7 @@ import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Cmd.Utils
-import Control.Monad (filterM, liftM)
+import Control.Monad (filterM, liftM, when)
 import Data.String.Utils
 import Maybe
 
@@ -50,18 +50,19 @@ gen = do
 	 - cached UUID value. -}
 	let cheap = filter (not . Git.repoIsUrl) allremotes
 	let expensive = filter Git.repoIsUrl allremotes
-	expensive_todo <- filterM cachedUUID expensive
+	expensive_todo <- filterM noCachedUUID expensive
 	let skip = filter (`notElem` expensive_todo) expensive
 	let todo = cheap++expensive_todo
 
-	showNote $ "getting UUID for " ++ (join ", " $
-		map Git.repoDescribe expensive_todo)
+	when (not $ null expensive_todo) $
+		showNote $ "getting UUID for " ++ (join ", " $
+			map Git.repoDescribe expensive_todo)
 	done <- mapM tryGitConfigRead todo
 
 	generated <- mapM genRemote $ skip ++ done
 	return $ catMaybes generated
 	where
-		cachedUUID r = liftM null $ getUUID r
+		noCachedUUID r = liftM null $ getUUID r
 	
 genRemote :: Git.Repo -> Annex (Maybe (Remote Annex))
 genRemote r = do
