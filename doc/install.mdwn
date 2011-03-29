@@ -13,6 +13,7 @@ To build and use git-annex, you will need:
 * MissingH: <http://github.com/jgoerzen/missingh/wiki>
 * pcre-light: <http://hackage.haskell.org/package/pcre-light>
 * utf8-string: <http://hackage.haskell.org/package/utf8-string>
+* hS3: <http://hackage.haskell.org/package/hS3>
 * `uuid`: <http://www.ossp.org/pkg/lib/uuid/>
   (or uuidgen from util-linux)
 * `xargs`: <http://savannah.gnu.org/projects/findutils/>

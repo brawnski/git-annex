@@ -71,7 +71,7 @@ genRemote r u c cst = this
 			name = Git.repoDescribe r,
 	 		storeKey = s3Store this,
 			retrieveKeyFile = s3Retrieve this,
-			removeKey = error "TODO removekey",
+			removeKey = s3Remove this,
 			hasKey = s3CheckPresent this,
 			hasKeyCheap = False,
 			config = c
@@ -175,6 +175,15 @@ s3Retrieve r k f = s3Action r $ \(conn, bucket) -> do
 		Right o -> do
 			liftIO $ L.writeFile f (obj_data o)
 			return True
+		Left e -> do
+			warning $ prettyReqError e
+			return False
+
+s3Remove :: Remote Annex -> Key -> Annex Bool
+s3Remove r k = s3Action r $ \(conn, bucket) -> do
+	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
+	case res of
+		Right _ -> return True
 		Left e -> do
 			warning $ prettyReqError e
 			return False
