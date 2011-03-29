@@ -6,7 +6,7 @@
  -}
 
 module Remote.Git (
-	generate,
+	remote,
 	onRemote
 ) where
 
@@ -30,8 +30,11 @@ import RsyncFile
 import Ssh
 import Config
 
-generate :: Annex (RemoteGenerator Annex)
-generate = do
+remote :: RemoteType Annex
+remote = RemoteType { typename = "git", generator = gen }
+
+gen :: Annex (RemoteGenerator Annex)
+gen = do
 	g <- Annex.gitRepo
 	allremotes <- filterM remoteNotIgnored $ Git.remotes g
 
@@ -64,7 +67,10 @@ genRemote r = do
 		retrieveKeyFile = copyFromRemote r,
 		removeKey = dropKey r,
 		hasKey = inAnnex r,
-		hasKeyCheap = not (Git.repoIsUrl r)
+		hasKeyCheap = not (Git.repoIsUrl r),
+		hasConfig = False,
+		config = Nothing,
+		setup = \_ -> return ()
 	}
 
 {- Tries to read the config for a specified remote, updates state, and

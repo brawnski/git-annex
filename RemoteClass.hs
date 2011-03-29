@@ -10,6 +10,7 @@
 module RemoteClass where
 
 import Control.Exception
+import Data.Map as M
 
 import Key
 
@@ -18,6 +19,15 @@ import Key
  - that are not cheap to set up. -}
 type RemoteGenerator a = ([a (Remote a)], [String])
 
+{- There are different types of remotes. -}
+data RemoteType a = RemoteType {
+	-- human visible type name
+	typename :: String,
+	-- generates remotes of this type
+	generator :: a (RemoteGenerator a)
+}
+
+{- An individual remote. -}
 data Remote a = Remote {
 	-- each Remote has a unique uuid
 	uuid :: String,
@@ -36,7 +46,12 @@ data Remote a = Remote {
 	hasKey :: Key -> a (Either IOException Bool),
 	-- Some remotes can check hasKey without an expensive network
 	-- operation.
-	hasKeyCheap :: Bool
+	hasKeyCheap :: Bool,
+	-- a Remote may have a persistent configuration store
+	hasConfig :: Bool,
+	config :: Maybe (M.Map String String),
+	-- initializes or changes the config of a remote
+	setup :: M.Map String String -> a ()
 }
 
 instance Show (Remote a) where

@@ -44,17 +44,16 @@ import LocationLog
 import Locations
 import Messages
 
-{- Add generators for new Remotes here. -}
-generators :: [Annex (RemoteGenerator Annex)]
-generators =
-	[ Remote.Git.generate
-	, Remote.S3.generate
+remoteTypes :: [RemoteType Annex]
+remoteTypes =
+	[ Remote.Git.remote
+	, Remote.S3.remote
 	]
 
-{- Runs a list of generators. -}
-runGenerators :: [Annex (RemoteGenerator Annex)] -> Annex [Remote Annex]
-runGenerators gs = do
-	(actions, expensive) <- collect ([], []) gs
+{- Runs the generators of each type of Remote -}
+runGenerators :: Annex [Remote Annex]
+runGenerators = do
+	(actions, expensive) <- collect ([], []) $ map generator remoteTypes
 	when (not $ null expensive) $
 		showNote $ "getting UUID for " ++ join ", " expensive
 	sequence actions
@@ -71,7 +70,7 @@ genList = do
 	rs <- Annex.getState Annex.remotes
 	if null rs
 		then do
-			rs' <- runGenerators generators
+			rs' <- runGenerators
 			Annex.changeState $ \s -> s { Annex.remotes = rs' }
 			return rs'
 		else return rs

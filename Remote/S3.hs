@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Remote.S3 (generate) where
+module Remote.S3 (remote) where
 
 import Network.AWS.AWSConnection
 import Network.AWS.S3Object
@@ -27,8 +27,11 @@ import qualified Annex
 import UUID
 import Config
 
-generate :: Annex (RemoteGenerator Annex)
-generate = do
+remote :: RemoteType Annex
+remote = RemoteType { typename = "S3", generator = gen }
+
+gen :: Annex (RemoteGenerator Annex)
+gen = do
 	g <- Annex.gitRepo
 	remotes <- filterM remoteNotIgnored $ findS3Remotes g
 	todo <- filterM cachedUUID remotes
@@ -64,7 +67,10 @@ genRemote r u = do
 		retrieveKeyFile = error "TODO",
 		removeKey = error "TODO",
 		hasKey = error "TODO",
-		hasKeyCheap = False
+		hasKeyCheap = False,
+		hasConfig = True,
+		config = Nothing,
+		setup = \_ -> return ()
 	}
 
 s3Connection :: Git.Repo -> Annex (Maybe AWSConnection)
