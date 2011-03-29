@@ -25,3 +25,10 @@ Once all checks are done, one single transfer session should be started. Creatin
 > While I do hope to improve ssh usage so that it sshs once, and feeds
 > `git-annex-shell` a series of commands to run, that is a much longer-term
 > thing. --[[Joey]]
+
+>> FYI, in a repo with 1228 files, all small, repos _completely in sync_.
+
+    % git annex copy . --to foo # 1200 seconds
+    % git annex copy . --to foo --fast # 20 seconds
+
+>> RichiH
