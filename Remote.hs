@@ -46,11 +46,13 @@ import Config
 
 import qualified Remote.Git
 import qualified Remote.S3
+import qualified Remote.Directory
 
 remoteTypes :: [RemoteType Annex]
 remoteTypes =
 	[ Remote.Git.remote
 	, Remote.S3.remote
+	, Remote.Directory.remote
 	]
 
 {- Builds a list of all available Remotes.

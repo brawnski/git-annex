@@ -13,3 +13,4 @@ html
 .hpc
 Touch.hs
 StatFS.hs
+Remote/S3.hs

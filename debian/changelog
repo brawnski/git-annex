@@ -6,6 +6,8 @@ git-annex (0.20110329) UNRELEASED; urgency=low
     as hS3 is not packaged.
   * fsck: Ensure that files and directories in .git/annex/objects
     have proper permissions.
+  * Added a special type of remote called a directory remote, which
+    simply stores files in an arbitrary local directory.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 26 Mar 2011 14:36:16 -0400
 
