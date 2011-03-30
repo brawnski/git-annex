@@ -26,6 +26,7 @@ import qualified Annex
 import UUID
 import Messages
 import Locations
+import Config
 import Remote.Special
 
 remote :: RemoteType Annex
@@ -36,25 +37,28 @@ remote = RemoteType {
 	setup = s3Setup
 }
 
-gen :: Git.Repo -> UUID -> Cost -> Maybe (M.Map String String) -> Annex (Remote Annex)
-gen r u cst c = return this
+gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen r u c = do
+	cst <- remoteCost r expensiveRemoteCost
+	return $ this cst
 	where
-		this = Remote {
+		this cst = Remote {
 			uuid = u,
 			cost = cst,
 			name = Git.repoDescribe r,
-	 		storeKey = store this,
-			retrieveKeyFile = retrieve this,
-			removeKey = remove this,
-			hasKey = checkPresent this,
+	 		storeKey = store (this cst),
+			retrieveKeyFile = retrieve (this cst),
+			removeKey = remove (this cst),
+			hasKey = checkPresent (this cst),
 			hasKeyCheap = False,
 			config = c
 		}
 
-s3Connection :: M.Map String String -> IO AWSConnection
+s3Connection :: M.Map String String -> Annex AWSConnection
 s3Connection c = do
 	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
 	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
+	when (null ak || null sk) $ warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
 	return $ AWSConnection host port ak sk
 	where
 		host = fromJust $ (M.lookup "host" c)
@@ -62,7 +66,7 @@ s3Connection c = do
 			case reads s of
 			[(p, _)] -> p
 			_ -> error $ "bad S3 port value: " ++ s
-		getEnvKey s = catch (getEnv s) (error $ "Set " ++ s)
+		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
 
 s3Setup :: UUID -> M.Map String String -> Annex (M.Map String String)
 s3Setup u c = do
@@ -75,7 +79,7 @@ s3Setup u c = do
 
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
-	conn <- liftIO $ s3Connection fullconfig
+	conn <- s3Connection fullconfig
 	showNote "checking bucket"
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
@@ -105,7 +109,7 @@ s3Action :: Remote Annex -> ((AWSConnection, String) -> Annex a) -> Annex a
 s3Action r a = do
 	when (config r == Nothing) $
 		error $ "Missing configuration for special remote " ++ name r
-	conn <- liftIO $ s3Connection (fromJust $ config r)
+	conn <- s3Connection (fromJust $ config r)
 	let bucket = fromJust $ M.lookup "bucket" $ fromJust $ config r
 	a (conn, bucket)
 

@@ -42,14 +42,17 @@ remoteConfig r key = "remote." ++ fromMaybe "" (Git.repoRemoteName r) ++ ".annex
  - The default cost is 100 for local repositories, and 200 for remote
  - repositories; it can also be configured by remote.<name>.annex-cost
  -}
-remoteCost :: Git.Repo -> Annex Int
-remoteCost r = do
+remoteCost :: Git.Repo -> Int -> Annex Int
+remoteCost r def = do
 	c <- getConfig r "cost" ""
 	if not $ null c
 		then return $ read c
-		else if not $ Git.repoIsUrl r
-			then return 100
-			else return 200
+		else return def
+
+cheapRemoteCost :: Int
+cheapRemoteCost = 100
+expensiveRemoteCost :: Int
+expensiveRemoteCost = 200
 
 {- Checks if a repo should be ignored, based either on annex-ignore
  - setting, or on command-line options. Allows command-line to override

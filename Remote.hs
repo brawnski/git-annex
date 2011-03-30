@@ -75,8 +75,7 @@ genList = do
 			mapM (gen m t) l'
 		gen m t r = do
 			u <- getUUID r
-			cst <- remoteCost r
-			generate t r u cst (M.lookup u m)
+			generate t r u (M.lookup u m)
 
 {- Looks up a remote by name. (Or by UUID.) -}
 byName :: String -> Annex (Remote Annex)
