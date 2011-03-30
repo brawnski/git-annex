@@ -54,12 +54,22 @@ gen r u c = do
 			config = c
 		}
 
-s3Connection :: M.Map String String -> Annex AWSConnection
+s3ConnectionRequired :: M.Map String String -> Annex AWSConnection
+s3ConnectionRequired c = do
+	conn <- s3Connection c
+	case conn of
+		Nothing -> error "Cannot connect to S3"
+		Just conn' -> return conn'
+
+s3Connection :: M.Map String String -> Annex (Maybe AWSConnection)
 s3Connection c = do
 	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
 	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
-	when (null ak || null sk) $ warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
-	return $ AWSConnection host port ak sk
+	if (null ak || null sk)
+		then do
+			warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
+			return Nothing
+		else return $ Just $ AWSConnection host port ak sk
 	where
 		host = fromJust $ (M.lookup "host" c)
 		port = let s = fromJust $ (M.lookup "port" c) in
@@ -79,7 +89,8 @@ s3Setup u c = do
 
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
-	conn <- s3Connection fullconfig
+	conn <- s3ConnectionRequired fullconfig
+	
 	showNote "checking bucket"
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
@@ -105,28 +116,32 @@ s3Setup u c = do
 			, ("bucket", bucket)
 			]
 
-s3Action :: Remote Annex -> ((AWSConnection, String) -> Annex a) -> Annex a
-s3Action r a = do
+s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
+s3Action r noconn action = do
 	when (config r == Nothing) $
 		error $ "Missing configuration for special remote " ++ name r
+	let bucket = M.lookup "bucket" $ fromJust $ config r
 	conn <- s3Connection (fromJust $ config r)
-	let bucket = fromJust $ M.lookup "bucket" $ fromJust $ config r
-	a (conn, bucket)
+	case (bucket, conn) of
+		(Just b, Just c) -> action (c, b)
+		_ -> return noconn
 
 bucketKey :: String -> Key -> L.ByteString -> S3Object
 bucketKey bucket k content = S3Object bucket (show k) "" [] content
 
 checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
-checkPresent r k = s3Action r $ \(conn, bucket) -> do
+checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
 	showNote ("checking " ++ name r ++ "...")
 	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
 	case res of
 		Right _ -> return $ Right True
 		Left (AWSError _ _) -> return $ Right False
 		Left e -> return $ Left (error $ prettyReqError e)
+	where
+		noconn = Left $ error "S3 not configured"
 
 store :: Remote Annex -> Key -> Annex Bool
-store r k = s3Action r $ \(conn, bucket) -> do
+store r k = s3Action r False $ \(conn, bucket) -> do
 	g <- Annex.gitRepo
 	content <- liftIO $ L.readFile $ gitAnnexLocation g k
 	let object = setStorageClass storageclass $ bucketKey bucket k content
@@ -143,7 +158,7 @@ store r k = s3Action r $ \(conn, bucket) -> do
 				_ -> STANDARD
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
-retrieve r k f = s3Action r $ \(conn, bucket) -> do
+retrieve r k f = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right o -> do
@@ -154,7 +169,7 @@ retrieve r k f = s3Action r $ \(conn, bucket) -> do
 			return False
 
 remove :: Remote Annex -> Key -> Annex Bool
-remove r k = s3Action r $ \(conn, bucket) -> do
+remove r k = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right _ -> return True
