@@ -3,7 +3,7 @@ or a similar service.
 
 See [[walkthrough/using_Amazon_S3]] for usage examples.
 
-## initremote parameters
+## configuration
 
 A number of parameters can be passed to `git annex initremote` to configure
 the S3 remote.
