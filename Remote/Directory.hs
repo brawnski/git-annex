@@ -1,4 +1,4 @@
-{- A "remote" that is just a local directory.
+{- A "remote" that is just a filesystem directory.
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
@@ -12,7 +12,7 @@ import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
-import System.Directory (doesDirectoryExist, doesFileExist, removeFile)
+import System.Directory hiding (copyFile)
 import System.FilePath
 
 import RemoteClass
@@ -23,6 +23,8 @@ import UUID
 import Locations
 import CopyFile
 import Config
+import Content
+import Utility
 import Remote.Special
 
 remote :: RemoteType Annex
@@ -63,20 +65,40 @@ directorySetup u c = do
 	return $ M.delete "directory" c
 
 dirKey :: FilePath -> Key -> FilePath
-dirKey d k = d </> show k
+dirKey d k = d </> hashDir k </> f </> f
+	where
+		f = keyFile k
 
 store :: FilePath -> Key -> Annex Bool
 store d k = do
 	g <- Annex.gitRepo
-	liftIO $ copyFile (gitAnnexLocation g k) (dirKey d k)
+	let src = gitAnnexLocation g k
+	liftIO $ catch (copy src) (const $ return False)
+	where
+		dest = dirKey d k
+		dir = parentDir dest
+		copy src = do
+			createDirectoryIfMissing True dir
+			allowWrite dir
+			ok <- copyFile src dest
+			when ok $ do
+				preventWrite dest
+				preventWrite dir
+			return ok
 
 retrieve :: FilePath -> Key -> FilePath -> Annex Bool
 retrieve d k f = liftIO $ copyFile (dirKey d k) f
 
 remove :: FilePath -> Key -> Annex Bool
-remove d k = liftIO $ catch
-	(removeFile (dirKey d k) >> return True)
-	(const $ return False)
+remove d k = liftIO $ catch del (const $ return False)
+	where
+		file = dirKey d k
+		dir = parentDir file
+		del = do
+			allowWrite dir
+			removeFile file
+			removeDirectory dir
+			return True
 
 checkPresent :: FilePath -> Key -> Annex (Either IOException Bool)
 checkPresent d k = liftIO $ try $ doesFileExist (dirKey d k)

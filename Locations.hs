@@ -20,6 +20,7 @@ module Locations (
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
 	logFile,
+	hashDir,
 
 	prop_idempotent_fileKey
 ) where
