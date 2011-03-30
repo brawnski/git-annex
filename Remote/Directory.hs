@@ -11,7 +11,6 @@ import IO
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
 import Data.Maybe
-import Data.String.Utils
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Directory (doesDirectoryExist, doesFileExist, removeFile)
@@ -22,41 +21,21 @@ import Types
 import qualified GitRepo as Git
 import qualified Annex
 import UUID
-import Config
 import Utility
 import Locations
 import CopyFile
+import Remote.Special
 
 remote :: RemoteType Annex
 remote = RemoteType {
 	typename = "directory",
-	enumerate = list,
+	enumerate = findSpecialRemotes "directory",
 	generate = gen,
-	setup = dosetup
+	setup = directorySetup
 }
 
-list :: Annex [Git.Repo]
-list = do
-	g <- Annex.gitRepo
-	return $ findDirectoryRemotes g
-
-findDirectoryRemotes :: Git.Repo -> [Git.Repo]
-findDirectoryRemotes r = map construct remotepairs
-	where
-		remotepairs = M.toList $ filterremotes $ Git.configMap r
-		filterremotes = M.filterWithKey (\k _ -> directoryremote k)
-		construct (k,_) = Git.repoRemoteNameSet Git.repoFromUnknown k
-		directoryremote k = startswith "remote." k && endswith ".annex-directory" k
-
-gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
-gen r c = do
-	u <- getUUID r
-	cst <- remoteCost r
-	return $ genRemote r u c cst
-	where
-
-genRemote :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Int -> Remote Annex
-genRemote r u c cst = this
+gen :: Git.Repo -> UUID -> Cost -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen r u cst c = return this
 	where
 		this = Remote {
 			uuid = u,
@@ -70,8 +49,8 @@ genRemote r u c cst = this
 			config = c
 		}
 
-dosetup :: UUID -> M.Map String String -> Annex (M.Map String String)
-dosetup u c = do
+directorySetup :: UUID -> M.Map String String -> Annex (M.Map String String)
+directorySetup u c = do
 	-- verify configuration is sane
 	let dir = case M.lookup "directory" c of
 		Nothing -> error "Specify directory="
@@ -79,6 +58,7 @@ dosetup u c = do
 	e <- liftIO $ doesDirectoryExist dir
 	when (not e) $ error $ "Directory does not exist: " ++ dir
 
+	gitConfigSpecialRemote "directory" u c
 	g <- Annex.gitRepo
 	liftIO $ do
 		Git.run g "config" [Param (configsetting "annex-directory"), Param "true"]

@@ -15,7 +15,6 @@ import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Data.Maybe
-import Data.String.Utils
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
@@ -25,54 +24,29 @@ import Types
 import qualified GitRepo as Git
 import qualified Annex
 import UUID
-import Config
-import Utility
 import Messages
 import Locations
+import Remote.Special
 
 remote :: RemoteType Annex
 remote = RemoteType {
 	typename = "S3",
-	enumerate = s3List,
-	generate = s3Gen,
+	enumerate = findSpecialRemotes "s3",
+	generate = gen,
 	setup = s3Setup
 }
 
-s3List :: Annex [Git.Repo]
-s3List = do
-	g <- Annex.gitRepo
-	return $ findS3Remotes g
-
-{- S3 remotes have a remote.<name>.annex-s3 config setting.
- - Git.Repo does not normally generate remotes for things that
- - have no configured url, so the Git.Repo objects have to be
- - constructed as coming from an unknown location. -}
-findS3Remotes :: Git.Repo -> [Git.Repo]
-findS3Remotes r = map construct remotepairs
-	where
-		remotepairs = M.toList $ filterremotes $ Git.configMap r
-		filterremotes = M.filterWithKey (\k _ -> s3remote k)
-		construct (k,_) = Git.repoRemoteNameSet Git.repoFromUnknown k
-		s3remote k = startswith "remote." k && endswith ".annex-s3" k
-
-s3Gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
-s3Gen r c = do
-	u <- getUUID r
-	cst <- remoteCost r
-	return $ genRemote r u c cst
-	where
-
-genRemote :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Int -> Remote Annex
-genRemote r u c cst = this
+gen :: Git.Repo -> UUID -> Cost -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen r u cst c = return this
 	where
 		this = Remote {
 			uuid = u,
 			cost = cst,
 			name = Git.repoDescribe r,
-	 		storeKey = s3Store this,
-			retrieveKeyFile = s3Retrieve this,
-			removeKey = s3Remove this,
-			hasKey = s3CheckPresent this,
+	 		storeKey = store this,
+			retrieveKeyFile = retrieve this,
+			removeKey = remove this,
+			hasKey = checkPresent this,
 			hasKeyCheap = False,
 			config = c
 		}
@@ -114,15 +88,11 @@ s3Setup u c = do
 				Right _ -> return ()
 				Left err -> error $ prettyReqError err
 
-	g <- Annex.gitRepo
-	liftIO $ do
-		Git.run g "config" [Param (configsetting "annex-s3"), Param "true"]
-		Git.run g "config" [Param (configsetting "annex-uuid"), Param u]
+	gitConfigSpecialRemote "s3" u fullconfig
 	return fullconfig
 	where
 		remotename = fromJust (M.lookup "name" c)
 		bucket = remotename ++ "-" ++ u
-		configsetting s = "remote." ++ remotename ++ "." ++ s
 		defaults = M.fromList
 			[ ("datacenter", "US")
 			, ("storageclass", "STANDARD")
@@ -142,8 +112,8 @@ s3Action r a = do
 bucketKey :: String -> Key -> L.ByteString -> S3Object
 bucketKey bucket k content = S3Object bucket (show k) "" [] content
 
-s3CheckPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
-s3CheckPresent r k = s3Action r $ \(conn, bucket) -> do
+checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
+checkPresent r k = s3Action r $ \(conn, bucket) -> do
 	showNote ("checking " ++ name r ++ "...")
 	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
 	case res of
@@ -151,8 +121,8 @@ s3CheckPresent r k = s3Action r $ \(conn, bucket) -> do
 		Left (AWSError _ _) -> return $ Right False
 		Left e -> return $ Left (error $ prettyReqError e)
 
-s3Store :: Remote Annex -> Key -> Annex Bool
-s3Store r k = s3Action r $ \(conn, bucket) -> do
+store :: Remote Annex -> Key -> Annex Bool
+store r k = s3Action r $ \(conn, bucket) -> do
 	g <- Annex.gitRepo
 	content <- liftIO $ L.readFile $ gitAnnexLocation g k
 	let object = setStorageClass storageclass $ bucketKey bucket k content
@@ -168,8 +138,8 @@ s3Store r k = s3Action r $ \(conn, bucket) -> do
 				"REDUCED_REDUNDANCY" -> REDUCED_REDUNDANCY
 				_ -> STANDARD
 
-s3Retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
-s3Retrieve r k f = s3Action r $ \(conn, bucket) -> do
+retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
+retrieve r k f = s3Action r $ \(conn, bucket) -> do
 	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right o -> do
@@ -179,8 +149,8 @@ s3Retrieve r k f = s3Action r $ \(conn, bucket) -> do
 			warning $ prettyReqError e
 			return False
 
-s3Remove :: Remote Annex -> Key -> Annex Bool
-s3Remove r k = s3Action r $ \(conn, bucket) -> do
+remove :: Remote Annex -> Key -> Annex Bool
+remove r k = s3Action r $ \(conn, bucket) -> do
 	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right _ -> return True

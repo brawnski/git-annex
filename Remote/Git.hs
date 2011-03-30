@@ -42,33 +42,27 @@ list = do
 	g <- Annex.gitRepo
 	return $ Git.remotes g
 
-gen :: Git.Repo -> Maybe (M.Map String String) -> Annex (Remote Annex)
-gen repo _ = do
+gen :: Git.Repo -> UUID -> Cost -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen r u cst _ = do
  	{- It's assumed to be cheap to read the config of non-URL remotes,
 	 - so this is done each time git-annex is run. Conversely,
 	 - the config of an URL remote is only read when there is no
 	 - cached UUID value. -}
-	let cheap = not $ Git.repoIsUrl repo
-	u <- getUUID repo
-	repo' <- case (cheap, u) of
-		(True, _) -> tryGitConfigRead repo
-		(False, "") -> tryGitConfigRead repo
-		_ -> return repo
-	genRemote repo'
-	
-genRemote :: Git.Repo -> Annex (Remote Annex)
-genRemote r = do
-	u <- getUUID r
-	c <- remoteCost r
+	let cheap = not $ Git.repoIsUrl r
+	r' <- case (cheap, u) of
+		(True, _) -> tryGitConfigRead r
+		(False, "") -> tryGitConfigRead r
+		_ -> return r
+
 	return $ Remote {
 		uuid = u,
-		cost = c,
-		name = Git.repoDescribe r,
-		storeKey = copyToRemote r,
-		retrieveKeyFile = copyFromRemote r,
-		removeKey = dropKey r,
-		hasKey = inAnnex r,
-		hasKeyCheap = not (Git.repoIsUrl r),
+		cost = cst,
+		name = Git.repoDescribe r',
+		storeKey = copyToRemote r',
+		retrieveKeyFile = copyFromRemote r',
+		removeKey = dropKey r',
+		hasKey = inAnnex r',
+		hasKeyCheap = not (Git.repoIsUrl r'),
 		config = Nothing
 	}
 

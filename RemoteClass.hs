@@ -15,6 +15,8 @@ import Data.Map as M
 import qualified GitRepo as Git
 import Key
 
+type Cost = Int
+
 {- There are different types of remotes. -}
 data RemoteType a = RemoteType {
 	-- human visible type name
@@ -22,7 +24,7 @@ data RemoteType a = RemoteType {
 	-- enumerates remotes of this type
 	enumerate :: a [Git.Repo],
 	-- generates a remote of this type
-	generate :: Git.Repo -> Maybe (M.Map String String) -> a (Remote a),
+	generate :: Git.Repo -> String -> Cost -> Maybe (M.Map String String) -> a (Remote a),
 	-- initializes or changes a remote
 	setup :: String -> M.Map String String -> a (M.Map String String)
 }
@@ -34,7 +36,7 @@ data Remote a = Remote {
 	-- each Remote has a human visible name
 	name :: String,
 	-- Remotes have a use cost; higher is more expensive
-	cost :: Int,
+	cost :: Cost,
 	-- Transfers a key to the remote.
 	storeKey :: Key -> a Bool,
 	-- retrieves a key's contents to a file
