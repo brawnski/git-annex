@@ -1,4 +1,4 @@
-This special remote type stores file contents in directory on the system.
+This special remote type stores file contents in directory.
 
 One use case for this would be if you have a removable drive, that you
 cannot put a git repository on for some reason, and you want to use it
