@@ -15,7 +15,14 @@ SysConfig.hs: configure.hs TestConfig.hs
 	hsc2hs $<
 	perl -i -pe 's/^{-# INCLUDE.*//' $@
 
-$(bins): SysConfig.hs Touch.hs StatFS.hs
+Remote/S3.o:
+	@ln -sf S3real.hs Remote/S3.hs
+	@if ! $(GHCMAKE) Remote/S3.hs; then \
+		ln -sf S3stub.hs Remote/S3.hs; \
+		echo "** building without S3 support"; \
+	fi
+
+$(bins): SysConfig.hs Touch.hs StatFS.hs Remote/S3.o
 	$(GHCMAKE) $@
 
 git-annex.1: doc/git-annex.mdwn
@@ -62,8 +69,8 @@ docs: $(mans)
 		--exclude='news/.*'
 
 clean:
-	rm -rf build $(bins) $(mans) test configure \
-		StatFS.hs Touch.hs SysConfig.hs *.tix .hpc
+	rm -rf build $(bins) $(mans) test configure  *.tix .hpc \
+		StatFS.hs Touch.hs SysConfig.hs Remote/S3.hs
 	rm -rf doc/.ikiwiki html
 	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 

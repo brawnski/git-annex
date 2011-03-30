@@ -2,6 +2,8 @@ git-annex (0.20110329) UNRELEASED; urgency=low
 
   * Amazon S3 is now supported as a special type of remote.
     Warning: Encrypting data before sending it to S3 is not yet supported.
+  * Note that Amazon S3 support is not built in by default on Debian yet,
+    as hS3 is not packaged.
   * fsck: Ensure that files and directories in .git/annex/objects
     have proper permissions.
 
