@@ -32,12 +32,12 @@ findSpecialRemotes s = do
 		match k _ = startswith "remote." k && endswith (".annex-"++s) k
 
 {- Sets up configuration for a special remote in .git/config. -}
-gitConfigSpecialRemote :: String -> UUID -> M.Map String String -> Annex ()
-gitConfigSpecialRemote s u c = do
+gitConfigSpecialRemote :: UUID -> M.Map String String -> String -> String -> Annex ()
+gitConfigSpecialRemote u c k v = do
 	g <- Annex.gitRepo
 	liftIO $ do
-		Git.run g "config" [Param (configsetting $ "annex-"++s), Param "true"]
+		Git.run g "config" [Param (configsetting $ "annex-"++k), Param v]
 		Git.run g "config" [Param (configsetting $ "annex-uuid"), Param u]
 	where
 		remotename = fromJust (M.lookup "name" c)
-		configsetting v = "remote." ++ remotename ++ "." ++ v
+		configsetting s = "remote." ++ remotename ++ "." ++ s

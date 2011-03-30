@@ -10,7 +10,6 @@ module Remote.Directory (remote) where
 import IO
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
-import Data.Maybe
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Directory (doesDirectoryExist, doesFileExist, removeFile)
@@ -21,9 +20,9 @@ import Types
 import qualified GitRepo as Git
 import qualified Annex
 import UUID
-import Utility
 import Locations
 import CopyFile
+import Config
 import Remote.Special
 
 remote :: RemoteType Annex
@@ -35,19 +34,19 @@ remote = RemoteType {
 }
 
 gen :: Git.Repo -> UUID -> Cost -> Maybe (M.Map String String) -> Annex (Remote Annex)
-gen r u cst c = return this
-	where
-		this = Remote {
-			uuid = u,
-			cost = cst,
-			name = Git.repoDescribe r,
-	 		storeKey = store this,
-			retrieveKeyFile = retrieve this,
-			removeKey = remove this,
-			hasKey = checkPresent this,
-			hasKeyCheap = True,
-			config = c
-		}
+gen r u cst _ = do
+	dir <- getConfig r "directory" (error "missing directory")
+	return $ Remote {
+		uuid = u,
+		cost = cst,
+		name = Git.repoDescribe r,
+ 		storeKey = store dir,
+		retrieveKeyFile = retrieve dir,
+		removeKey = remove dir,
+		hasKey = checkPresent dir,
+		hasKeyCheap = True,
+		config = Nothing
+	}
 
 directorySetup :: UUID -> M.Map String String -> Annex (M.Map String String)
 directorySetup u c = do
@@ -58,33 +57,26 @@ directorySetup u c = do
 	e <- liftIO $ doesDirectoryExist dir
 	when (not e) $ error $ "Directory does not exist: " ++ dir
 
-	gitConfigSpecialRemote "directory" u c
+	-- The directory is stored in git config, not in this remote's
+	-- persistant state, so it can vary between hosts.
+	gitConfigSpecialRemote u c "directory" dir
+	return $ M.delete "directory" c
+
+dirKey :: FilePath -> Key -> FilePath
+dirKey d k = d </> show k
+
+store :: FilePath -> Key -> Annex Bool
+store d k = do
 	g <- Annex.gitRepo
-	liftIO $ do
-		Git.run g "config" [Param (configsetting "annex-directory"), Param "true"]
-		Git.run g "config" [Param (configsetting "annex-uuid"), Param u]
-	return c
-	where
-		remotename = fromJust (M.lookup "name" c)
-		configsetting s = "remote." ++ remotename ++ "." ++ s
+	liftIO $ copyFile (gitAnnexLocation g k) (dirKey d k)
 
-dirKey :: Remote Annex -> Key -> FilePath
-dirKey r k = dir </> show k
-	where
-		dir = fromJust $ M.lookup "directory" $ fromJust $ config r
+retrieve :: FilePath -> Key -> FilePath -> Annex Bool
+retrieve d k f = liftIO $ copyFile (dirKey d k) f
 
-store :: Remote Annex -> Key -> Annex Bool
-store r k = do
-	g <- Annex.gitRepo
-	liftIO $ copyFile (gitAnnexLocation g k) (dirKey r k)
-
-retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
-retrieve r k f = liftIO $ copyFile (dirKey r k) f
-
-remove :: Remote Annex -> Key -> Annex Bool
-remove r k = liftIO $ catch
-	(removeFile (dirKey r k) >> return True)
+remove :: FilePath -> Key -> Annex Bool
+remove d k = liftIO $ catch
+	(removeFile (dirKey d k) >> return True)
 	(const $ return False)
 
-checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
-checkPresent r k = liftIO $ try $ doesFileExist (dirKey r k)
+checkPresent :: FilePath -> Key -> Annex (Either IOException Bool)
+checkPresent d k = liftIO $ try $ doesFileExist (dirKey d k)

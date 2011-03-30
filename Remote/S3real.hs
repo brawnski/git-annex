@@ -88,7 +88,7 @@ s3Setup u c = do
 				Right _ -> return ()
 				Left err -> error $ prettyReqError err
 
-	gitConfigSpecialRemote "s3" u fullconfig
+	gitConfigSpecialRemote u fullconfig "s3" "true"
 	return fullconfig
 	where
 		remotename = fromJust (M.lookup "name" c)
