@@ -12,19 +12,16 @@ To get a feel for it, see the [[walkthrough]].
 * [[forum]]
 * [[comments]]
 * [[contact]]
+* <a href="http://flattr.com/thing/84843/git-annex"><img src="http://api.flattr.com/button/button-compact-static-100x17.png" alt="Flattr this" title="Flattr this" /></a>
 
 [[News]]:
 
 [[!inline pages="news/* and !*/discussion" archive=yes show=7 feeds=no]]
 
-<a href="http://flattr.com/thing/84843/git-annex">
-<img src="http://api.flattr.com/button/button-compact-static-100x17.png"
-alt="Flattr this" title="Flattr this" /></a>
-"""]]
-
 [[Feeds]]:
 
 [[!inline pages="internal(feeds/*)" template="microblog" show=5 feeds=no]]
+"""]]
 
 <table>
 <tr>
