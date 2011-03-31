@@ -22,6 +22,10 @@ To get a feel for it, see the [[walkthrough]].
 alt="Flattr this" title="Flattr this" /></a>
 """]]
 
+[[Feeds]]:
+
+[[!inline pages="internal(feeds/*)" template="microblog" show=5 feeds=no]]
+
 <table>
 <tr>
 <td width="50%" valign="top">[[!inline feeds=no template=bare pages=use_case/bob]]</td>
