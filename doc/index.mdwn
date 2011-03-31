@@ -15,7 +15,7 @@ To get a feel for it, see the [[walkthrough]].
 
 [[News]]:
 
-[[!inline pages="news/* and !*/discussion" archive=yes show=3 feeds=no]]
+[[!inline pages="news/* and !*/discussion" archive=yes show=6 feeds=no]]
 
 <a href="http://flattr.com/thing/84843/git-annex">
 <img src="http://api.flattr.com/button/button-compact-static-100x17.png"
