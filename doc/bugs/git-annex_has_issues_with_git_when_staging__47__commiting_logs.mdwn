@@ -27,3 +27,8 @@ For now it's just a bit of extra work for me when it does occur but it does not 
 >>>>> what git is doing. Sounds like the files could just not be `git
 >>>>> added` yet, but I get the impression from other things that you say
 >>>>> that it's not so simple. --[[Joey]] 
+
+This turns out to be a bug in git, and I have posted a bug report on the mailing list.
+The git-annex behavior that causes this situation is being handled as
+another bug, [[git-annex directory hashing problems on osx]].
+So, closing this bug report. [[done]] --[[Joey]]
