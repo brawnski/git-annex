@@ -16,11 +16,15 @@ To get a feel for it, see the [[walkthrough]].
 
 [[News]]:
 
+<small>
 [[!inline pages="news/* and !*/discussion" archive=yes show=7 feeds=no]]
+</small>
 
 [[Feeds]]:
 
+</small>
 [[!inline pages="internal(feeds/*)" template="microblog" show=5 feeds=no]]
+</small>
 """]]
 
 <table>
