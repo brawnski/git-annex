@@ -57,6 +57,7 @@ add_plugins:
   - sidebar
   - blogspam
   - comments
+  - aggregate
 # plugins to disable
 disable_plugins: []
 # additional directory to search for template files
