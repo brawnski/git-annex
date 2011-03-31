@@ -53,6 +53,14 @@ index 772ba54..1a563e0 100644
 >>> A S3 backend that could upload files to S3 in addition to downloading
 >>> them, for example, would be handy. --[[Joey]]
 
+>>>> So, rather than use backends to do this, it instead made more sense
+>>>> to make them [[special_remotes]]. The URL backend remains a bit
+>>>> of a special case, and a bittorrent backend that downloaded a file
+>>>> from a bittorrent url would still be a good use of backend, but for
+>>>> storing files in external data stores like S3, making it a remote
+>>>> makes better sense. I think I can close this bug now, [[done]]
+>>>> --[[Joey]] 
+
 also in Backend/URL.hs is it worth making a minor change to the way curl is called (I'm not sure if the following is correct or not)
 
 > It's correct, typewise, but I don't see any real reason to bother
