@@ -22,7 +22,7 @@ To get a feel for it, see the [[walkthrough]].
 
 [[Feeds]]:
 
-</small>
+<small>
 [[!inline pages="internal(feeds/*)" template="microblog" show=5 feeds=no]]
 </small>
 """]]
