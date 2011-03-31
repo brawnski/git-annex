@@ -50,5 +50,7 @@ files with git.
 
 <br clear="all" />
 
+----
+
 git-annex's wiki is powered by [Ikiwiki](http://ikiwiki.info/) and
 hosted by [Branchable](http://branchable.com/).
