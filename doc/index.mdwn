@@ -17,7 +17,7 @@ To get a feel for it, see the [[walkthrough]].
 [[News]]:
 
 <small>
-[[!inline pages="news/* and !*/discussion" archive=yes show=7 feeds=no]]
+[[!inline pages="news/* and !*/discussion" archive=yes show=3 feeds=no]]
 </small>
 
 [[Feeds]]:
@@ -48,7 +48,7 @@ files with git.
 * [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
 
-----
+<br clear="all" />
 
 git-annex's wiki is powered by [Ikiwiki](http://ikiwiki.info/) and
 hosted by [Branchable](http://branchable.com/).
