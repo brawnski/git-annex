@@ -8,6 +8,7 @@ git-annex (0.20110329) UNRELEASED; urgency=low
     have proper permissions.
   * Added a special type of remote called a directory remote, which
     simply stores files in an arbitrary local directory.
+  * Bugfix: copy --to --fast never really copied, fixed.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 26 Mar 2011 14:36:16 -0400
 

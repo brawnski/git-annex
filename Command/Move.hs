@@ -89,8 +89,10 @@ toPerform dest move key = do
 	-- and an explicit check is not done, when copying. When moving,
 	-- it has to be done, to avoid inaverdent data loss.
 	fast <- Annex.getState Annex.fast
-	isthere <- if fast && not move
-		then return $ Right True
+	isthere <- if fast && not move && not (Remote.hasKeyCheap dest)
+		then do
+			(remotes, _) <- Remote.keyPossibilities key
+			return $ Right $ dest `elem` remotes
 		else Remote.hasKey dest key
 	case isthere of
 		Left err -> do
