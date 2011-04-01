@@ -54,13 +54,15 @@ gen r u _ = do
 		(False, "") -> tryGitConfigRead r
 		_ -> return r
 
+	u' <- getUUID r'
+
 	let defcst = if not $ Git.repoIsUrl r
 		then cheapRemoteCost
 		else expensiveRemoteCost
 	cst <- remoteCost r' defcst
 
 	return $ Remote {
-		uuid = u,
+		uuid = u',
 		cost = cst,
 		name = Git.repoDescribe r',
 		storeKey = copyToRemote r',

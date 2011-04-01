@@ -60,8 +60,7 @@ run repo (Queue _ m) = do
  -
  - Complicated by commandline length limits. -}
 runAction :: Git.Repo -> Action -> [FilePath] -> IO ()
-runAction repo action files = do
-	unless (null files) runxargs
+runAction repo action files = unless (null files) runxargs
 	where
 		runxargs = pOpen WriteToPipe "xargs" ("-0":"git":params) feedxargs
 		params = toCommand $ Git.gitCommandLine repo
