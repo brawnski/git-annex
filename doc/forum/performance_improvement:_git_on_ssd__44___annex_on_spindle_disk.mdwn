@@ -1,0 +1,3 @@
+This works with bind-mount, I might try with softlinks as well.
+
+Going through git's data on push/pull can take ages on a spindle disk even if the repo is rather small in size. This is especially true if you are used to ssd speeds, but ssd storage is expensive. Storing the annex objects on a cheap spindle disk and everything else on a ssd makes things a _lot_ faster.
