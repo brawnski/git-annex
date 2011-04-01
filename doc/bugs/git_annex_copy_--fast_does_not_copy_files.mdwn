@@ -1,0 +1,16 @@
+Workflow:
+
+    % git annex add
+      # list new files
+    % git commit -a -m "foo"
+      # commit summary
+    % git annex copy . --to remote --fast
+      # all files listed with "ok
+    % git annex copy . --to remote
+      # again, lists all files, _but the new ones are actually copied, this time_.
+
+This happens no matter if I
+
+    % git push
+
+before copy or not.
