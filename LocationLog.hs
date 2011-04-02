@@ -90,7 +90,8 @@ instance Read LogLine where
 logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO FilePath
 logChange repo key u s = do
 	when (null u) $
-		error $ "bug detected: unknown UUID for " ++ Git.repoDescribe repo
+		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
+			" (have you run git annex init there?)"
 	line <- logNow s u
 	ls <- readLog logfile
 	writeLog logfile (compactLog $ line:ls)
