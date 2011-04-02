@@ -1,9 +1,7 @@
 {- git-annex location log
  -
- - git-annex keeps track of on which repository it last saw a value.
- - This can be useful when using it for archiving with offline storage.
- - When you indicate you --want a file, git-annex will tell you which
- - repositories have the value.
+ - git-annex keeps track of which repositories have the contents of annexed
+ - files.
  -
  - Location tracking information is stored in `.git-annex/key.log`.
  - Repositories record their UUID and the date when they --get or --drop
@@ -15,7 +13,7 @@
  - Git is configured to use a union merge for this file,
  - so the lines may be in arbitrary order, but it will never conflict.
  -
- - Copyright 2010 Joey Hess <joey@kitenet.net>
+ - Copyright 2010-2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
@@ -25,14 +23,19 @@ module LocationLog (
 	logChange,
 	readLog,
 	writeLog,
-	keyLocations
+	keyLocations,
+	loggedKeys,
+	logFile
 ) where
 
 import Data.Time.Clock.POSIX
 import Data.Time
 import System.Locale
+import System.Directory
+import System.FilePath
 import qualified Data.Map as Map
 import Control.Monad (when)
+import Data.Maybe
 
 import qualified GitRepo as Git
 import Utility
@@ -153,3 +156,20 @@ mapLog m l =
 			Just l' -> (date l' <= date l)
 			Nothing -> True
 		u = uuid l
+
+{- Finds all keys that have location log information. -}
+loggedKeys :: Git.Repo -> IO [Key]
+loggedKeys repo = do
+	let dir = gitStateDir repo
+	exists <- doesDirectoryExist dir
+	if exists
+		then do
+			-- 2 levels of hashing
+			levela <- dirContents dir
+			levelb <- mapM tryDirContents levela
+			files <- mapM tryDirContents (concat levelb)
+			return $ catMaybes $
+				map (logFileKey . takeFileName) (concat files)
+		else return []
+	where
+		tryDirContents d = catch (dirContents d) (return . const [])

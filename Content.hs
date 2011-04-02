@@ -219,9 +219,9 @@ getKeysPresent' dir = do
 		then return []
 		else do
 			-- 2 levels of hashing
-			levela <- liftIO $ subdirContent dir
-			levelb <- liftIO $ mapM subdirContent levela
-			contents <- liftIO $ mapM subdirContent (concat levelb)
+			levela <- liftIO $ dirContents dir
+			levelb <- liftIO $ mapM dirContents levela
+			contents <- liftIO $ mapM dirContents (concat levelb)
 			files <- liftIO $ filterM present (concat contents)
 			return $ catMaybes $ map (fileKey . takeFileName) files
 	where
@@ -231,7 +231,3 @@ getKeysPresent' dir = do
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
-		subdirContent d = do
-			c <- getDirectoryContents d
-			return $ map (d </>) $ filter notcruft c
-		notcruft f = f /= "." && f /= ".."

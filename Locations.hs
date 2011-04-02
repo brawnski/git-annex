@@ -21,6 +21,7 @@ module Locations (
 	isLinkToAnnex,
 	logFile,
 	logFileOld,
+	logFileKey,
 	hashDirMixed,
 
 	prop_idempotent_fileKey
@@ -126,6 +127,14 @@ logFileOld = logFile' hashDirMixed
 logFile' :: (Key -> FilePath) -> Git.Repo -> Key -> String
 logFile' hasher repo key =
 	gitStateDir repo ++ hasher key ++ keyFile key ++ ".log"
+
+{- Converts a log filename into a key. -}
+logFileKey :: FilePath -> Maybe Key
+logFileKey file
+	| end == ".log" = readKey beginning
+	| otherwise = Nothing
+	where
+		(beginning, end) = splitAt (length file - 4) file
 
 {- Converts a key into a filename fragment.
  -

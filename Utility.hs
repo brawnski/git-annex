@@ -22,6 +22,7 @@ module Utility (
 	readMaybe,
 	safeWriteFile,
 	dirContains,
+	dirContents,
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -235,3 +236,14 @@ safeWriteFile file content = do
 	createDirectoryIfMissing True (parentDir file)
 	writeFile tmpfile content
 	renameFile tmpfile file
+
+{- Lists the contents of a directory.
+ - Unlike getDirectoryContents, paths are not relative to the directory. -}
+dirContents :: FilePath -> IO [FilePath]
+dirContents d = do
+	c <- getDirectoryContents d
+	return $ map (d </>) $ filter notcruft c
+	where
+		notcruft "." = False
+		notcruft ".." = False
+		notcruft _ = True
