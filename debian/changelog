@@ -1,4 +1,4 @@
-git-annex (0.20110329) UNRELEASED; urgency=low
+git-annex (0.20110401) experimental; urgency=low
 
   * Amazon S3 is now supported as a special type of remote.
     Warning: Encrypting data before sending it to S3 is not yet supported.
@@ -10,7 +10,7 @@ git-annex (0.20110329) UNRELEASED; urgency=low
     simply stores files in an arbitrary local directory.
   * Bugfix: copy --to --fast never really copied, fixed.
 
- -- Joey Hess <joeyh@debian.org>  Sat, 26 Mar 2011 14:36:16 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 01 Apr 2011 21:27:22 -0400
 
 git-annex (0.20110328) experimental; urgency=low
 
