@@ -23,7 +23,6 @@
 module LocationLog (
 	LogStatus(..),
 	logChange,
-	logFile,
 	readLog,
 	writeLog,
 	keyLocations
@@ -33,7 +32,6 @@ import Data.Time.Clock.POSIX
 import Data.Time
 import System.Locale
 import qualified Data.Map as Map
-import System.Directory
 import Control.Monad (when)
 
 import qualified GitRepo as Git
@@ -93,22 +91,16 @@ logChange repo key u s = do
 		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
 			" (have you run git annex init there?)"
 	line <- logNow s u
-	ls <- readLog logfile
-	writeLog logfile (compactLog $ line:ls)
-	return logfile
-	where
-		logfile = logFile repo key
+	let f = logFile repo key
+	ls' <- readLog $ logFileOld repo key
+	ls <- readLog f
+	writeLog f (compactLog $ line:ls'++ls)
+	return f
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
 readLog :: FilePath -> IO [LogLine]
-readLog file = do
-	exists <- doesFileExist file
-	if exists
-		then do
-			s <- readFile file
-			return $ parseLog s
-		else return []
+readLog file = catch (return . parseLog =<< readFile file) (const $ return [])
 
 parseLog :: String -> [LogLine]
 parseLog s = filter parsable $ map read $ lines s
@@ -131,7 +123,8 @@ logNow s u = do
 keyLocations :: Git.Repo -> Key -> IO [UUID]
 keyLocations thisrepo key = do
 	ls <- readLog $ logFile thisrepo key
-	return $ map uuid $ filterPresent ls
+	ls' <- readLog $ logFileOld thisrepo key
+	return $ map uuid $ filterPresent $ ls'++ls
 
 {- Filters the list of LogLines to find ones where the value
  - is (or should still be) present. -}

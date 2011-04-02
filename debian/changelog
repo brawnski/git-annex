@@ -1,3 +1,12 @@
+git-annex (0.20110402) UNRELEASED; urgency=low
+
+  * Use lowercase hash directories for locationlog files, to avoid
+    some issues with git on OSX with the mixed-case directories.
+    No migration is needed; the old mixed case hash directories are still
+    read; new information is written to the new directories.
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
+
 git-annex (0.20110401) experimental; urgency=low
 
   * Amazon S3 is now supported as a special type of remote.

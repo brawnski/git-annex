@@ -53,7 +53,7 @@ Example:
 	e605dca6-446a-11e0-8b2a-002170d25c55 1
 	26339d22-446b-11e0-9101-002170d25c55 ?
 
-## `.git-annex/aa/bb/*.log`
+## `.git-annex/aaa/bbb/*.log`
 
 The remainder of the log files record [[location_tracking]] information
 for file contents. Again these are placed in two levels of subdirectories

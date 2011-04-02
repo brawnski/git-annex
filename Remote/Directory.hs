@@ -66,7 +66,7 @@ directorySetup u c = do
 	return $ M.delete "directory" c
 
 dirKey :: FilePath -> Key -> FilePath
-dirKey d k = d </> hashDir k </> f </> f
+dirKey d k = d </> hashDirMixed k </> f </> f
 	where
 		f = keyFile k
 

@@ -20,7 +20,8 @@ module Locations (
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
 	logFile,
-	hashDir,
+	logFileOld,
+	hashDirMixed,
 
 	prop_idempotent_fileKey
 ) where
@@ -68,7 +69,7 @@ objectDir = addTrailingPathSeparator $ annexDir </> "objects"
 
 {- Annexed file's location relative to the .git directory. -}
 annexLocation :: Key -> FilePath
-annexLocation key = objectDir </> hashDir key </> f </> f
+annexLocation key = objectDir </> hashDirMixed key </> f </> f
 	where
 		f = keyFile key
 
@@ -113,8 +114,18 @@ isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
 
 {- The filename of the log file for a given key. -}
 logFile :: Git.Repo -> Key -> String
-logFile repo key = 
-	gitStateDir repo ++ hashDir key ++ keyFile key ++ ".log"
+logFile = logFile' hashDirLower
+
+{- The old filename of the log file for a key. These can have mixed
+ - case, which turned out to be a bad idea for directories whose contents
+ - are checked into git. There was no conversion, so these have to be checked
+ - for and merged in at runtime. -}
+logFileOld :: Git.Repo -> Key -> String
+logFileOld = logFile' hashDirMixed
+
+logFile' :: (Key -> FilePath) -> Git.Repo -> Key -> String
+logFile' hasher repo key =
+	gitStateDir repo ++ hasher key ++ keyFile key ++ ".log"
 
 {- Converts a key into a filename fragment.
  -
@@ -147,13 +158,17 @@ prop_idempotent_fileKey s = Just k == fileKey (keyFile k)
 {- Given a key, generates a short directory name to put it in,
  - to do hashing to protect against filesystems that dislike having
  - many items in a single directory. -}
-hashDir :: Key -> FilePath
-hashDir k = addTrailingPathSeparator $ take 2 dir </> drop 2 dir
+hashDirMixed :: Key -> FilePath
+hashDirMixed k = addTrailingPathSeparator $ take 2 dir </> drop 2 dir
 	where
-		dir = take 4 $ abcd_to_dir $ md5 $ Str $ show k
+		dir = take 4 $ concat $ map display_32bits_as_dir [a,b,c,d]
+		ABCD (a,b,c,d) = md5 $ Str $ show k
 
-abcd_to_dir :: ABCD -> String
-abcd_to_dir (ABCD (a,b,c,d)) = concat $ map display_32bits_as_dir [a,b,c,d]
+{- Generates a hash directory that is all lower case. -}
+hashDirLower :: Key -> FilePath
+hashDirLower k = addTrailingPathSeparator $ take 3 dir </> drop 3 dir
+	where
+		dir = take 6 $ md5s $ Str $ show k
 
 {- modified version of display_32bits_as_hex from Data.Hash.MD5
  -   Copyright (C) 2001 Ian Lynagh 
