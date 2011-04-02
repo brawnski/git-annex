@@ -1,0 +1,45 @@
+I ran git-annex (git version) on three machines with ghc-7.0.2 for about a month, but recently (no more than a week ago) I've started getting this error for every file on "git annex get":
+
+    git-annex-shell: internal error: evacuate(static): strange closure type 30799
+        (GHC version 7.0.2 for i386_unknown_linux)
+        Please report this as a GHC bug:  http://www.haskell.org/ghc/reportabug
+
+There were no changes to ghc or it's modules, so I assume something has changed in git-annex itself.
+
+strace shows "git annnex get" (on "host1") performing following exec's:
+
+    [pid  9481] execve("/usr/bin/rsync", ["rsync", "-p", "--progress", "--inplace", "-e", "'ssh' 'user@host2' 'git-annex-shell ''sendkey'' ''/remote/path'' ''SHA1-s6654080--abd8edec20648ade69351d68ae1c64c8074a6f0b'' ''--'''", ":", "/local/path/.git/annex/tmp/SHA1-s6654080--abd8edec20648ade69351d68ae1c64c8074a6f0b"], [/* 41 vars */]) = 0
+    [pid  9482] execve("/usr/bin/ssh", ["ssh", "user@host2", "git-annex-shell 'sendkey' '/remote/path' 'SHA1-s6654080--abd8edec20648ade69351d68ae1c64c8074a6f0b' '--'", "", "rsync", "--server", "--sender", "-vpe.Lsf", "--inplace", ".", ""], [/* 41 vars */] <unfinished ...>
+
+I've tried running the second command directly from the shell and got the same error message from a remote GHC.
+Adding strace before git-annex-shell to remote command yielded something like this in the end:
+
+    stat64("/local/path.git", 0xb727d610) = -1 ENOENT (No such file or directory)
+    stat64("/local/path.git", 0xb727d6b0) = -1 ENOENT (No such file or directory)
+    waitpid(7525, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0) = 7525
+    chdir("/home/user")                  = 0
+    rt_sigprocmask(SIG_BLOCK, [INT], [], 8) = 0
+    write(2, "git-annex-shell: internal error: ", 33git-annex-shell: internal error: ) = 33
+    ...
+
+Note that "/local/path" here is not what's specified in rsync arguments at all, and git repo with files-to-be-fetched on "host2" is in "/remote/path", but "/local/path" is present in git remotes there since I mount it via nfs from "host1" (yes, to the same path as it's there):
+
+    [remote "nfs"]
+      url = /local/path
+      fetch = +refs/heads/*:refs/remotes/nfs/*
+      push = refs/heads/*:refs/remotes/host2/*
+      annex-uuid = 0a4e14ba-5236-11e0-9004-7f24452c0f05
+
+If I comment that remote out from "/remote/path/.git/config", "git annex get" works fine.
+The only git-command git-annex-shell seem to exec there (on "host2") is "git config --list", so it's shouldn't be git trying to do something with it's remotes - it's git-annex itself, right?
+
+Anyways, looks like a simple path-joining error, if "/local/path.git" should be "/local/path/.git" there.
+
+I'm actually quite confused about what it's trying to do with that path.
+Connect from "host1" to "host2" just to connect back to "host1"?
+What for, when it should just fetch files from "host2"?
+
+Not sure if it's a bug or I'm doing something wrong, but if git-annex really need to check something in git remotes' paths, error message (the one at the top of this post) can be a more descriptive, I guess.
+Something like "error: failed to do something with git remote X on a remote host" would've been a lot less confusing than that GHC thing.
+
+Thanks!
