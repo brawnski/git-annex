@@ -1,5 +1,6 @@
 This special remote type stores file contents in a bucket in Amazon S3
-or a similar service.
+or a similar service, such as 
+[Archive.org's S3 API](http://www.archive.org/help/abouts3.txt).
 
 See [[walkthrough/using_Amazon_S3]] for usage examples.
 
