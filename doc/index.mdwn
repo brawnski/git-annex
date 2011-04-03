@@ -10,7 +10,6 @@ To get a feel for it, see the [[walkthrough]].
 * [[bugs]]
 * [[todo]]
 * [[forum]]
-* [[design]]
 * [[comments]]
 * [[contact]]
 * <a href="http://flattr.com/thing/84843/git-annex"><img src="http://api.flattr.com/button/button-compact-static-100x17.png" alt="Flattr this" title="Flattr this" /></a>
@@ -46,6 +45,7 @@ files with git.
 * [[key-value backends|backends]] for data storage
 * [[internals]]
 * [[bare_repositories]]
+* [[design]]
 * [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
 
