@@ -9,3 +9,8 @@ wrong.
 
 At the time I had git-annex version 0.20110329 and I've been using the SHA1
 backend since version 1.
+
+> Yes, I agree with Jimmy, it's the same bug. So I'll be closing this one.
+> Please keep us informed how the workaround committed to git-annex
+> yesterday for the case insensativity issue works out. [[dup|done]]
+> --[[Joey]] 
