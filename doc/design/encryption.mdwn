@@ -1,0 +1,108 @@
+git-annex mostly does not use encryption. Anyone with access to a git
+repository can see all the filenames in it, its history, and can access
+any annexed file contents.
+
+Encryption is needed when using [[special_remotes]] like Amazon S3, where
+file content is sent to an untrusted party who does not have access to the
+git repository.
+
+Such an encrypted remote uses strong encryption on the contents of files,
+as well as the filenames. The size of the encrypted files, and access
+patterns of the data, should be the only clues to what type of is stored in
+such a remote.
+
+## encryption backends
+
+It makes sense to support multiple encryption backends. So, there
+should be a way to tell what backend is responsible for a given filename
+in an encrypted remote. (And since special remotes can also store files
+unencrypted, differentiate from those as well.)
+
+At a high level, an encryption backend needs to support these operations:
+
+* Given a key/value backend key, produce and return an encrypted key.
+  
+  The same naming scheme git-annex uses for keys in regular key/value 
+  [[backends]] can be used. So a filename for a key might be
+  "GPG-s12345--armoureddatahere"
+
+* Given a streaming source of file content, encrypt it, and send it in
+  a stream to an action that consumes the encrypted content.
+
+* Given a streaming source of encrypted content, decrypt it, and send
+  it in a stream to an anction that consumes the decrypted content.
+
+* Initialize itself.
+
+* Clean up.
+
+* Configure an encryption key to use.
+
+The rest of this page will describe a single encryption backend using GPG.
+Probably only one will be needed, but who knows? Maybe that backend will
+turn out badly designed, or some other encryptor needed. Designing
+with more than one encryption backend in mind helps future-proofing.
+
+## encryption key management
+
+[[!template id=note text="""
+The basis of this scheme was originally developed by Lars Wirzenius et al
+[for Obnam](http://braawi.org/obnam/encryption/).
+"""]]
+
+Data is encrypted by gpg, using a symmetric cipher. The passphrase of the
+cipher is itself checked into your git repository, encrypted using one or
+more gpg public keys. This scheme allows new gpg private keys to be given
+access to content that has already been stored in the remote.
+
+Different encrypted remotes need to be able to each use different ciphers.
+There does not seem to be a benefit to allowing multiple cipers to be
+used within a single remote, and it would add a lot of complexity.
+Instead, if you want a new cipher, create a new S3 bucket, or whatever.
+There does not seem to be much benefit to using the same cipher for
+two different enrypted remotes.
+
+So, the encrypted cipher could just be stored with the rest of a remote's
+configuration in `.git-annex/remotes.log` (see [[internals]]). When `git
+annex intiremote` makes a remote, it can generate a random symmetric
+cipher, and encrypt it with the specified gpg key. To allow another gpg
+public key access, update the encrypted cipher to be encrypted to both gpg
+keys.
+
+## filename enumeration
+
+If the names of files are encrypted, this makes it harder for
+git-annex (let alone untrusted third parties!) to get a list
+of the files that are stored on a given enrypted remote. This has been
+a concern, and it has been considered to use a hash like HMAC, rather
+than gpg encrypting filenames, to make it easier. (For git-annex, but 
+possibly also for attackers!) But, does git-annex really ever need to do
+such an enumeration?
+
+Apparently not. `git annex unused --from remote` can now check for
+unused data that is stored on a remote, and it does so based only on
+location log data for the remote. This assumes that the location log is
+kept accurately.
+
+What about `git annex fsck --from remote`? Such a command should be able to,
+for each file in the repository, contact the encrypted remote to check
+if it has the file. This can be done without enumeration, although it will
+mean running gpg once per file fscked, to get the encrypted filename.
+
+### risks
+
+A risk of this scheme is that, once the symmetric cipher has been obtained, it
+allows full access to all the encrypted content. This scheme does not allow
+revoking a given gpg key access to the cipher, since anyone with such a key
+could have already decrypted the cipher and stored a copy. 
+
+If git-annex stores the decrypted symmetric cipher in memory, then there
+is a risk that it could be intercepted from there by an attacker. Gpg
+amelorates these type of risks by using locked memory.
+ 
+This design does not support obfuscating the size of files by chunking
+them, as that would have added a lot of complexity, for dubious benefits.
+If the untrusted party running the encrypted remote wants to know file sizes,
+they could correlate chunks that are accessed together. Enctypting data
+changes the original file size enough to avoid it being used as a direct
+fingerprint at least.

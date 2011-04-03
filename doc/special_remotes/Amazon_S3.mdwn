@@ -37,19 +37,4 @@ only be used for public data.
 
 ** Encryption is not yet supported. **
 
-When encryption is enabled, all files stored in the bucket are
-encrypted with gpg. Additionally, the filenames themselves are encrypted
-(using HMAC). The size of the encrypted files, and
-access patterns of the data, should be the only clues to what type of
-data you are storing in S3.
-
-[[!template id=note text="""
-This scheme was originally developed by Lars Wirzenius et al
-[for Obnam](http://braawi.org/obnam/encryption/).
-"""]]
-The data stored in S3 is encrypted by gpg with a symmetric cipher. The
-passphrase of the cipher is itself checked into your git repository,
-encrypted using one or more gpg public keys. This scheme allows new private
-keys to be given access to a bucket's content, after the bucket is created
-and is in use. The symmetric cipher is also hashed together with filenames
-used in the bucket, in order to obfuscate the filenames.
+See [[design/encryption]].
