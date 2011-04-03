@@ -102,8 +102,11 @@ could have already decrypted the cipher and stored a copy.
 
 If git-annex stores the decrypted symmetric cipher in memory, then there
 is a risk that it could be intercepted from there by an attacker. Gpg
-amelorates these type of risks by using locked memory.
- 
+amelorates these type of risks by using locked memory. For git-annex, note
+that an attacker with local machine access can tell at least all the
+filenames and metadata of files stored in the encrypted remote anyway,
+and can access whatever content is stored locally.
+
 This design does not support obfuscating the size of files by chunking
 them, as that would have added a lot of complexity, for dubious benefits.
 If the untrusted party running the encrypted remote wants to know file sizes,
