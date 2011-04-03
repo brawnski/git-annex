@@ -155,15 +155,20 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * unused
 
-  Checks the annex for data that is not used by any files currently
-  in the annex, and prints a numbered list of the data.
+  Checks the annex for data that does not correspond to any files currently
+  in the respository, and prints a numbered list of the data.
 
   To only show unused temp files, specify --fast
+
+  To check data on a remote that does not correspond to any files currently
+  in the local repository, specify --from.
 
 * dropunused [number ...]
 
   Drops the data corresponding to the numbers, as listed by the last
   `git annex unused`
+
+  To drop the data from a remote, specify --from.
 
 * find [path ...]
 
@@ -317,12 +322,15 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * --from=repository
 
-  Specifies a repository that content will be retrieved from.
+  Specifies a repository that content will be retrieved from, or that
+  should otherwise be acted on.
+
   It should be specified using the name of a configured remote.
 
 * --to=repository
 
-  Specifies a repository that content will be sent to. 
+  Specifies a repository that content will be sent to.
+
   It should be specified using the name of a configured remote.
 
 * --exclude=glob

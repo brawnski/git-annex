@@ -4,6 +4,9 @@ git-annex (0.20110402) UNRELEASED; urgency=low
     some issues with git on OSX with the mixed-case directories.
     No migration is needed; the old mixed case hash directories are still
     read; new information is written to the new directories.
+  * Unused files on remotes, particulary special remotes, can now be
+    identified and dropped, by using "--from remote" with git annex unused
+    and git annex dropunused.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
 

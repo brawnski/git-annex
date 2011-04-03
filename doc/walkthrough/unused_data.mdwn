@@ -10,7 +10,7 @@ eliminate it to save space.
 
 	# git annex unused
 	unused  (checking for unused data...) 
-	  Some annexed data is no longer pointed to by any files in the repository.
+	  Some annexed data is no longer used by any files in the repository.
 	    NUMBER  KEY
 	    1       WORM-s3-m1289672605--file
 	    2       WORM-s14-m1289672605--file
