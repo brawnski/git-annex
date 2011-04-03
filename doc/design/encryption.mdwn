@@ -78,13 +78,10 @@ keys.
 
 ## filename enumeration
 
-If the names of files are encrypted, this makes it harder for
-git-annex (let alone untrusted third parties!) to get a list
-of the files that are stored on a given enrypted remote. This has been
-a concern, and it has been considered to use a hash like HMAC, rather
-than gpg encrypting filenames, to make it easier. (For git-annex, but 
-possibly also for attackers!) But, does git-annex really ever need to do
-such an enumeration?
+If the names of files are encrypted or securely hashed, or whatever is
+chosen, this makes it harder for git-annex (let alone untrusted third parties!)
+to get a list of the files that are stored on a given enrypted remote.
+But, does git-annex really ever need to do such an enumeration?
 
 Apparently not. `git annex unused --from remote` can now check for
 unused data that is stored on a remote, and it does so based only on
