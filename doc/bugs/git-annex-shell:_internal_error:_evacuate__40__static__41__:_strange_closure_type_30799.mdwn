@@ -39,7 +39,33 @@ I'm actually quite confused about what it's trying to do with that path.
 Connect from "host1" to "host2" just to connect back to "host1"?
 What for, when it should just fetch files from "host2"?
 
+> git-annex (and git-annex shell) always start up by learning what git
+> remotes are locally configured, and this includes checking them to
+> try to look up their annex.uuid setting.
+> 
+> Since git will, given a remote like "url = /foo", first look in
+> "/foo.git" for a bare git repository, so too does git-annex.
+> I do not think this is a path joining error. That seems likely to
+> be a red herring. --[[Joey]]
+
 Not sure if it's a bug or I'm doing something wrong, but if git-annex really need to check something in git remotes' paths, error message (the one at the top of this post) can be a more descriptive, I guess.
 Something like "error: failed to do something with git remote X on a remote host" would've been a lot less confusing than that GHC thing.
 
 Thanks!
+
+> I've never seen anything like this error message. I don't know if the
+> problem is caused by building with GHC 7, or what. You didn't say what
+> OS you're using. Searching for the error message, it seems to involve
+> Mac OS X. 
+
+> For example: <http://hackage.haskell.org/trac/ghc/ticket/3771>
+>> The error "strange closure type" indicates some kind of memory corruption, which can have many different causes, from bugs in the GC to hardware failures.
+> 
+> You said that you'd been using git-annex built with that version of GHC
+> successfully before. Perhaps you could use `git bisect` to see if you can
+> identify a point in git-annex's history where this started happening?
+> Since you  can reproduce the problem by just running git-annex-shell at
+> the command line with the right parameters, it should be easy to bisect it.
+> 
+> Probably your best bet will be changing to a different version or build of
+> GHC.. --[[Joey]] 
