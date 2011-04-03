@@ -11,6 +11,8 @@ as well as the filenames. The size of the encrypted files, and access
 patterns of the data, should be the only clues to what type of is stored in
 such a remote.
 
+[[!toc]]
+
 ## encryption backends
 
 It makes sense to support multiple encryption backends. So, there
@@ -94,7 +96,7 @@ for each file in the repository, contact the encrypted remote to check
 if it has the file. This can be done without enumeration, although it will
 mean running gpg once per file fscked, to get the encrypted filename.
 
-### risks
+## risks
 
 A risk of this scheme is that, once the symmetric cipher has been obtained, it
 allows full access to all the encrypted content. This scheme does not allow
@@ -108,6 +110,6 @@ amelorates these type of risks by using locked memory.
 This design does not support obfuscating the size of files by chunking
 them, as that would have added a lot of complexity, for dubious benefits.
 If the untrusted party running the encrypted remote wants to know file sizes,
-they could correlate chunks that are accessed together. Enctypting data
+they could correlate chunks that are accessed together. Encrypting data
 changes the original file size enough to avoid it being used as a direct
 fingerprint at least.
