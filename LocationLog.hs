@@ -103,7 +103,7 @@ logChange repo key u s = do
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
 readLog :: FilePath -> IO [LogLine]
-readLog file = catch (return . parseLog =<< readFile file) (const $ return [])
+readLog file = catch (return . parseLog =<< readFileStrict file) (const $ return [])
 
 parseLog :: String -> [LogLine]
 parseLog s = filter parsable $ map read $ lines s
@@ -157,7 +157,8 @@ mapLog m l =
 			Nothing -> True
 		u = uuid l
 
-{- Finds all keys that have location log information. -}
+{- Finds all keys that have location log information.
+ - (There may be duplicate keys in the list.) -}
 loggedKeys :: Git.Repo -> IO [Key]
 loggedKeys repo = do
 	let dir = gitStateDir repo
