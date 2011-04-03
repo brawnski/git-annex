@@ -20,7 +20,7 @@ type Option = OptDescr (Annex ())
 
 commonOptions :: [Option]
 commonOptions =
-	[ Option ['f'] ["force"] (NoArg (setforce True))
+	[ Option [] ["force"] (NoArg (setforce True))
 		"allow actions that may lose annexed data"
 	, Option ['F'] ["fast"] (NoArg (setfast True))
 		"avoid slow operations"

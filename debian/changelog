@@ -7,6 +7,8 @@ git-annex (0.20110402) UNRELEASED; urgency=low
   * Unused files on remotes, particulary special remotes, can now be
     identified and dropped, by using "--from remote" with git annex unused
     and git annex dropunused.
+  * Clear up short option confusion between --from and --force (-f is now
+    --from, and there is no short option for --force).
 
  -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
 

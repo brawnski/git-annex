@@ -12,3 +12,7 @@ which gives me
 I would have expected that since *--to* is the same as *-t* and *--from* is the same as *-f* as the in program documentation suggests. But *-f* clashes with the force command, I would suggest that the short form of *--force* be changed to *-F* and possibly rename the *Fast* commands to *Quick* and use *-Q* as the short form of the *Quick* operations. I didn't try the *-f* option with the move command, but it probably suffers from the same issue. It's probably better to avoid clashing short forms of command options.
 
 I guess this issue is just a documentation issue and a minor interface change if needed and not a bug of git-annex, but a quirk.
+
+> Yeah, -f needs to be from; -F was already --fast. I have made --force not
+> have any short option abbreviation, I think it's entirely reasonable to
+> avoid fat-fingering an option that can lose data. [[done]] --[[Joey]]
