@@ -43,8 +43,6 @@ At a high level, an encryption backend needs to support these operations:
 
 * Clean up.
 
-* Configure an encryption key to use.
-
 The rest of this page will describe a single encryption backend using GPG.
 Probably only one will be needed, but who knows? Maybe that backend will
 turn out badly designed, or some other encryptor needed. Designing
