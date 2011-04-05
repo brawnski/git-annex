@@ -1,5 +1,9 @@
 PREFIX=/usr
-GHCFLAGS=-O2 -Wall -ignore-package monads-fd
+IGNORE=-ignore-package monads-fd
+GHCFLAGS=-O2 -Wall -ignore-package $(IGNORE)
+ifdef PROFILE
+GHCFLAGS=-prof -auto-all -caf-all -fforce-recomp $(IGNORE)
+endif
 GHCMAKE=ghc $(GHCFLAGS) --make
 
 bins=git-annex git-annex-shell
