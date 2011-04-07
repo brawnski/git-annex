@@ -105,3 +105,13 @@ too.
 The problem would then be that any locationlog lookup would need to look in
 all other branches (any branch could have more current info after all),
 which could get expensive.
+
+## way outside the box approach
+
+Another approach I have been mulling over is keeping the log file
+branch checked out in .git-annex/logs/ -- this would be a checkout of a git
+repository inside a git repository, using "git fake bare" techniques. This
+would solve the merge problem, since git auto merge could be used. It would
+still mean all the log files are on-disk, which annoys some. It would
+require some tighter integration with git, so that after a pull, the log
+repo is updated with the data pulled. --[[Joey]] 
