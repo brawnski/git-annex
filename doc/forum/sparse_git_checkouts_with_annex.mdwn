@@ -16,13 +16,16 @@ Now i didn't simply clone the raid-annex to media, but did an sparse-checkout (p
 
 As you can see i have to checkout the .git-annex directory with the file-logs twice which slows down git operations. Everything else works fine until now. git-annex doesn't have any problem, that only a part of the symlinks are present, which is really great. Is there a possibility to sparse checkout the .git-annex directory also? Perhaps splitting the log files in .git-annex/ into N subfolders, corresponding to the toplevel subfolders, like this?
 
-* Before:
-    $ ls .git-annex
-    00 01 02....
-* After:
-    $ ls .git-annex
-    documents/ music/ videos/
-    $ ls .git-annex/documents
-    00 01 02....
+Before:
+
+     $ ls .git-annex
+     00 01 02....
+
+After:
+
+     $ ls .git-annex
+     documents/ music/ videos/
+     $ ls .git-annex/documents
+     00 01 02....
 
 This would make it possible to checkout only the part of the log files which i'm interested in.
