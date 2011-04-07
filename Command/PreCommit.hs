@@ -11,6 +11,7 @@ import Control.Monad.State (liftIO)
 
 import Command
 import qualified Annex
+import qualified AnnexQueue
 import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
@@ -42,5 +43,5 @@ cleanup file = do
 	-- stage the symlink
 	g <- Annex.gitRepo
 	liftIO $ Git.run g "reset" [Params "-q --", File file]
-	Annex.queueRun
+	AnnexQueue.flush True
 	return True

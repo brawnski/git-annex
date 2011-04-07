@@ -12,7 +12,7 @@ import System.Posix.Files
 import System.Directory
 
 import Command
-import qualified Annex
+import qualified AnnexQueue
 import Utility
 import Content
 import Messages
@@ -44,5 +44,5 @@ perform file link = do
 
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do
-	Annex.queue "add" [Param "--"] file
+	AnnexQueue.add "add" [Param "--"] file
 	return True

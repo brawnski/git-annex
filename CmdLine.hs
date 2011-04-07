@@ -14,11 +14,11 @@ module CmdLine (
 import System.IO.Error (try)
 import System.Console.GetOpt
 import Control.Monad.State (liftIO)
-import Control.Monad (when, unless)
+import Control.Monad (when)
 
 import qualified Annex
+import qualified AnnexQueue
 import qualified GitRepo as Git
-import qualified GitQueue
 import Types
 import Command
 import BackendList
@@ -81,7 +81,9 @@ tryRun :: Annex.AnnexState -> [Annex Bool] -> IO ()
 tryRun state actions = tryRun' state 0 actions
 tryRun' :: Annex.AnnexState -> Integer -> [Annex Bool] -> IO ()
 tryRun' state errnum (a:as) = do
-	result <- try $ Annex.run state a
+	result <- try $ Annex.run state $ do
+		AnnexQueue.flushWhenFull
+		a
 	case result of
 		Left err -> do
 			Annex.eval state $ showErr err
@@ -100,10 +102,7 @@ startup = do
 {- Cleanup actions. -}
 shutdown :: Annex Bool
 shutdown = do
-	q <- Annex.getState Annex.repoqueue
-	unless (0 == GitQueue.size q) $ do
-		showSideAction "Recording state in git..."
-		Annex.queueRun
+	AnnexQueue.flush False
 
 	liftIO $ Git.reap
 	

@@ -36,6 +36,7 @@ import LocationLog
 import UUID
 import qualified GitRepo as Git
 import qualified Annex
+import qualified AnnexQueue
 import Utility
 import StatFS
 import Key
@@ -72,7 +73,7 @@ logStatus key status = do
 	unless (Git.repoIsLocalBare g) $ do
 		u <- getUUID g
 		logfile <- liftIO $ logChange g key u status
-		Annex.queue "add" [Param "--"] logfile
+		AnnexQueue.add "add" [Param "--"] logfile
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 

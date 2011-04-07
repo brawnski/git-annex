@@ -12,6 +12,8 @@ git-annex (0.20110402) UNRELEASED; urgency=low
   * Add build depend on perlmagick so docs are consistently built.
     Closes: #621410
   * Add doc-base file. Closes: #621408
+  * Periodically flush git command queue, to avoid boating memory usage
+    too much.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
 

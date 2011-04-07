@@ -24,6 +24,7 @@ import Types
 import Locations
 import LocationLog
 import qualified Annex
+import qualified AnnexQueue
 import qualified GitRepo as Git
 import Backend
 import Messages
@@ -68,7 +69,7 @@ upgrade = do
 			updateSymlinks
 			moveLocationLogs
 	
-			Annex.queueRun
+			AnnexQueue.flush True
 			setVersion
 
 			-- add new line to auto-merge hashed location logs
@@ -106,8 +107,7 @@ updateSymlinks = do
 					link <- calcGitLink f k
 					liftIO $ removeFile f
 					liftIO $ createSymbolicLink link f
-					Annex.queue "add" [Param "--"] f
-					Annex.queueRunAt 10240
+					AnnexQueue.add "add" [Param "--"] f
 
 moveLocationLogs :: Annex ()
 moveLocationLogs = do
@@ -137,10 +137,9 @@ moveLocationLogs = do
 				old <- liftIO $ readLog f
 				new <- liftIO $ readLog dest
 				liftIO $ writeLog dest (old++new)
-				Annex.queue "add" [Param "--"] dest
-				Annex.queue "add" [Param "--"] f
-				Annex.queue "rm" [Param "--quiet", Param "-f", Param "--"] f
-				Annex.queueRunAt 10240
+				AnnexQueue.add "add" [Param "--"] dest
+				AnnexQueue.add "add" [Param "--"] f
+				AnnexQueue.add "rm" [Param "--quiet", Param "-f", Param "--"] f
 		
 oldlog2key :: FilePath -> Maybe (FilePath, Key)
 oldlog2key l = 

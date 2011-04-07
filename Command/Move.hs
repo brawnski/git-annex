@@ -12,6 +12,7 @@ import Control.Monad.State (liftIO)
 import Command
 import qualified Command.Drop
 import qualified Annex
+import qualified AnnexQueue
 import LocationLog
 import Types
 import Content
@@ -59,7 +60,7 @@ remoteHasKey remote key present	= do
 	g <- Annex.gitRepo
 	let remoteuuid = Remote.uuid remote
 	logfile <- liftIO $ logChange g key remoteuuid status
-	Annex.queue "add" [Param "--"] logfile
+	AnnexQueue.add "add" [Param "--"] logfile
 	where
 		status = if present then ValuePresent else ValueMissing
 

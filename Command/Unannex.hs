@@ -13,6 +13,7 @@ import System.Directory
 
 import Command
 import qualified Annex
+import qualified AnnexQueue
 import Utility
 import qualified Backend
 import LocationLog
@@ -68,6 +69,6 @@ cleanup file key = do
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to
 	-- git as a normal, non-annexed file.
-	Annex.queue "commit" [Params "-a -m", Param "content removed from git annex"] "-a"
+	AnnexQueue.add "commit" [Params "-a -m", Param "content removed from git annex"] "-a"
 	
 	return True

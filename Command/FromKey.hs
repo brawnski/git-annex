@@ -13,7 +13,7 @@ import System.Directory
 import Control.Monad (unless)
 
 import Command
-import qualified Annex
+import qualified AnnexQueue
 import Utility
 import qualified Backend
 import Content
@@ -46,5 +46,5 @@ perform file = do
 
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do
-	Annex.queue "add" [Param "--"] file
+	AnnexQueue.add "add" [Param "--"] file
 	return True

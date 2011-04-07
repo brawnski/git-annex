@@ -13,10 +13,7 @@ module Annex (
 	eval,
 	getState,
 	changeState,
-	gitRepo,
-	queue,
-	queueRun,
-	queueRunAt,
+	gitRepo
 ) where
 
 import Control.Monad.State
@@ -25,7 +22,6 @@ import qualified GitRepo as Git
 import qualified GitQueue
 import qualified BackendClass
 import qualified RemoteClass
-import Utility
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -93,26 +89,3 @@ changeState a = do
 {- Returns the git repository being acted on -}
 gitRepo :: Annex Git.Repo
 gitRepo = getState repo
-
-{- Adds a git command to the queue. -}
-queue :: String -> [CommandParam] -> FilePath -> Annex ()
-queue command params file = do
-	state <- get
-	let q = repoqueue state
-	put state { repoqueue = GitQueue.add q command params file }
-
-{- Runs (and empties) the queue. -}
-queueRun :: Annex ()
-queueRun = do
-	state <- get
-	let q = repoqueue state
-	g <- gitRepo
-	liftIO $ GitQueue.run g q
-	put state { repoqueue = GitQueue.empty }
-
-{- Runs the queue if the specified number of items have been queued. -}
-queueRunAt :: Integer -> Annex ()
-queueRunAt n = do
-	state <- get
-	let q = repoqueue state
-	when (GitQueue.size q >= n) queueRun

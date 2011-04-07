@@ -19,6 +19,7 @@ import RemoteClass
 import Types
 import qualified GitRepo as Git
 import qualified Annex
+import qualified AnnexQueue
 import Locations
 import UUID
 import Utility
@@ -150,7 +151,7 @@ copyToRemote r key
 			Annex.eval a $ do
 				ok <- Content.getViaTmp key $
 					\f -> liftIO $ copyFile keysrc f
-				Annex.queueRun
+				AnnexQueue.flush True
 				return ok
 	| Git.repoIsSsh r = do
 		g <- Annex.gitRepo

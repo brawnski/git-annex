@@ -10,7 +10,8 @@ module GitQueue (
 	empty,
 	add,
 	size,
-	run
+	full,
+	flush
 ) where
 
 import qualified Data.Map as M
@@ -32,8 +33,20 @@ data Action = Action {
 {- A queue of actions to perform (in any order) on a git repository,
  - with lists of files to perform them on. This allows coalescing 
  - similar git commands. -}
-data Queue = Queue Integer (M.Map Action [FilePath])
+data Queue = Queue Int (M.Map Action [FilePath])
 	deriving (Show, Eq)
+
+{- A recommended maximum size for the queue, after which it should be
+ - run.
+ -
+ - 10240 is semi-arbitrary. If we assume git filenames are between 10 and
+ - 255 characters long, then the queue will build up between 100kb and
+ - 2550kb long commands. The max command line length on linux is somewhere
+ - above 20k, so this is a fairly good balance -- the queue will buffer
+ - only a few megabytes of stuff and a minimal number of commands will be
+ - run by xargs. -}
+maxSize :: Int
+maxSize = 10240
 
 {- Constructor for empty queue. -}
 empty :: Queue
@@ -47,14 +60,18 @@ add (Queue n m) subcommand params file = Queue (n + 1) m'
 		m' = M.insertWith' (++) action [file] m
 
 {- Number of items in a queue. -}
-size :: Queue -> Integer
+size :: Queue -> Int
 size (Queue n _) = n
 
+{- Is a queue large enough that it should be flushed? -}
+full :: Queue -> Bool
+full (Queue n _) = n > maxSize
+
 {- Runs a queue on a git repository. -}
-run :: Git.Repo -> Queue -> IO ()
-run repo (Queue _ m) = do
+flush :: Git.Repo -> Queue -> IO Queue
+flush repo (Queue _ m) = do
 	forM_ (M.toList m) $ uncurry $ runAction repo
-	return ()
+	return empty
 
 {- Runs an Action on a list of files in a git repository.
  -
