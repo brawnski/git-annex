@@ -57,7 +57,11 @@ add :: Queue -> String -> [CommandParam] -> FilePath -> Queue
 add (Queue n m) subcommand params file = Queue (n + 1) m'
 	where
 		action = Action subcommand params
-		m' = M.insertWith' (++) action [file] m
+		-- There are probably few items in the map, but there
+		-- can be a lot of files per item. So, optimise adding
+		-- files.
+		m' = M.insertWith' const action files m
+		files = file:(M.findWithDefault [] action m)
 
 {- Number of items in a queue. -}
 size :: Queue -> Int
