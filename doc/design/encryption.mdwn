@@ -61,8 +61,8 @@ more gpg public keys. This scheme allows new gpg private keys to be given
 access to content that has already been stored in the remote.
 
 Different encrypted remotes need to be able to each use different ciphers.
-There does not seem to be a benefit to allowing multiple cipers to be
-used within a single remote, and it would add a lot of complexity.
+Allowing multiple cipers to be used within a single remote would add a lot
+of complexity, so is not planned to be supported.
 Instead, if you want a new cipher, create a new S3 bucket, or whatever.
 There does not seem to be much benefit to using the same cipher for
 two different enrypted remotes.
