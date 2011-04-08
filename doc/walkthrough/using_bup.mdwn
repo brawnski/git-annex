@@ -19,4 +19,13 @@ Now the remote can be used like any other remote.
 	Receiving index from server: 1100/1100, done.
 	ok
 
+Note that, unlike other remotes, bup does not really support removing
+content from its git repositories. This is a feature. :)
+
+	# git annex move my_cool_big_file --from mybup
+	move my_cool_big_file 
+	  content cannot be removed from bup remote
+	failed
+	git-annex: 1 failed
+
 See [[special_remotes/bup]] for details.

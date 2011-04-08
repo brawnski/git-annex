@@ -5,6 +5,12 @@ interface to large files, and easy backups of the file contents using git.
 
 See [[walkthrough/using_bup]] for usage examples.
 
+Each individual key is stored in a bup remote using `bup split`, with
+a git branch named the same as the key name. Content is retrieved from
+bup using `bup join`. All other bup operations are up to you -- consider
+running `bup fsck --generate` in a cron job to generate recovery blocks,
+for example; or clone bup's git repository to further back it up.
+
 ## configuration
 
 These parameters can be passed to `git annex initremote` to configure bup:
