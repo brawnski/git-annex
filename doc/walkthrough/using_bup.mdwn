@@ -1,0 +1,18 @@
+Another [[special_remote|special_remotes]] that git-annex can use is
+a [[special_remotes/bup]] repository. Bup stores large file contents
+in a git repository of its own, with deduplication. Combined with
+git-annex, you can have git on both the frontend and the backend.
+
+Here's how to create a bup remote, and describe it.
+
+	# git annex initremote mybup type=bup encryption=none remote=example.com/big/mybup
+	initremote bup (init) ok
+	# git annex describe mybup "my bup repository at example.com"
+	describe mybup ok
+
+Now the remote can be used like any other remote.
+
+	# git annex move my_cool_big_file --to mybup
+	move my_cool_big_file (to mybup...) ok
+
+See [[special_remotes/bup]] for details.

@@ -7,6 +7,7 @@ types of remotes. These can be used just like any normal remote by git-annex.
 They cannot be used by other git commands though.
 
 * [[Amazon_S3]]
+* [[bup]]
 * [[directory]]
 
 ## Unused content on special remotes

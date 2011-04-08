@@ -1,0 +1,34 @@
+This special remote type stores file contents in a 
+[bup](http://github.com/apenwarr/bup) repository. By using git-annex
+in the front-end, and bup as a remote, you get an easy git-style
+interface to large files, and easy backups of the file contents using git.
+
+See [[walkthrough/using_bup]] for usage examples.
+
+## configuration
+
+These parameters can be passed to `git annex initremote` to configure bup:
+
+* `encryption` - Required. Either "none" to disable encryption,
+  or a value that can be looked up (using gpg -k) to find a gpg encryption
+  key that will be given access to the remote. Note that additional gpg
+  keys can be given access to a remote by rerunning initremote with
+  the new key id.
+
+* `remote` - Required. This is passed to `bup` as the `--remote`
+  to use to store data. `bup init` will be run to create the
+  repository. Example: "remote=example.com:/big/mybup"
+
+Options to pass to `bup split` when sending content to bup can also
+be specified, by using `git config annex.bup-split-options`. This
+can be used to, for example, limit its bandwidth.
+
+## data security
+
+When encryption=none, there is **no** protection against your data being read
+by anyone who can access the bup remote. However, bup does transfer data
+using ssh, and if you trust the security of the remote, that's fine.
+
+** Encryption is not yet supported. **
+
+See [[design/encryption]].

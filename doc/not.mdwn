@@ -2,10 +2,8 @@
 
 * git-annex is not a backup system. It may be a useful component of an
   [[archival|use_case/bob]] system, or a way to deliver files to a backup
-  system.
-
-  For a backup system that uses git, take a look at
-  [bup](http://github.com/apenwarr/bup).
+  system. For a backup system that uses git and that git-annex supports
+  storing data in, see [[special_remotes/bup]].
 
 * git-annex is not unison, but if you're finding unison's checksumming
   too slow, or its strict mirroring of everything to both places too
