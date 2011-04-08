@@ -23,7 +23,7 @@ Note that, unlike other remotes, bup does not really support removing
 content from its git repositories. This is a feature. :)
 
 	# git annex move my_cool_big_file --from mybup
-	move my_cool_big_file 
+	move my_cool_big_file (from mybup...)
 	  content cannot be removed from bup remote
 	failed
 	git-annex: 1 failed
