@@ -7,7 +7,10 @@ import System.Cmd
 import System.Exit
 
 type ConfigKey = String
-data ConfigValue = BoolConfig Bool | StringConfig String
+data ConfigValue =
+	BoolConfig Bool |
+	StringConfig String |
+	MaybeStringConfig (Maybe String)
 data Config = Config ConfigKey ConfigValue
 
 type Test = IO Config
@@ -17,15 +20,17 @@ data TestCase = TestCase TestName Test
 instance Show ConfigValue where
 	show (BoolConfig b) = show b
 	show (StringConfig s) = show s
+	show (MaybeStringConfig s) = show s
 
 instance Show Config where
-        show (Config key value) = unlines
+	show (Config key value) = unlines
 		[ key ++ " :: " ++ valuetype value
 		, key ++ " = " ++ show value
 		]
 		where
 			valuetype (BoolConfig _) = "Bool"
 			valuetype (StringConfig _) = "String"
+			valuetype (MaybeStringConfig _) = "Maybe String"
 
 writeSysConfig :: [Config] -> IO ()
 writeSysConfig config = writeFile "SysConfig.hs" body
@@ -83,12 +88,13 @@ whichCmd :: ConfigKey -> [String] -> Test
 whichCmd k cmds = search cmds
 	where
 		search [] = do
-			testEnd $ Config k (StringConfig "")
-			return $ Config k (StringConfig "")
+			let r = Config k (MaybeStringConfig Nothing)
+			testEnd r
+			return r
 		search (c:cs) = do
 			ret <- system $ quiet c
 			if (ret == ExitSuccess)
-				then return $ Config k (StringConfig $ head $ words c)
+				then return $ Config k (MaybeStringConfig $ Just $ head $ words c)
 				else search cs
 
 quiet :: String -> String
@@ -103,3 +109,5 @@ testEnd :: Config -> IO ()
 testEnd (Config _ (BoolConfig True)) = putStrLn $ " yes"
 testEnd (Config _ (BoolConfig False)) = putStrLn $ " no"
 testEnd (Config _ (StringConfig s)) = putStrLn $ " " ++ s
+testEnd (Config _ (MaybeStringConfig (Just s))) = putStrLn $ " " ++ s
+testEnd (Config _ (MaybeStringConfig Nothing)) = putStrLn $ " not available"

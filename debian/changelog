@@ -14,6 +14,7 @@ git-annex (0.20110402) UNRELEASED; urgency=low
   * Add doc-base file. Closes: #621408
   * Periodically flush git command queue, to avoid boating memory usage
     too much.
+  * Support "sha1" and "sha512" commands on FreeBSD. Thanks, Fraser Tweedale
 
  -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
 

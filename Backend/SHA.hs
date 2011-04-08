@@ -27,7 +27,7 @@ import qualified SysConfig
 import Key
 
 type SHASize = Int
-
+ 
 backends :: [Backend Annex]
 -- order is slightly significant; want sha1 first ,and more general
 -- sizes earlier
@@ -35,8 +35,8 @@ backends = catMaybes $ map genBackend [1, 256, 512, 224, 384]
 
 genBackend :: SHASize -> Maybe (Backend Annex)
 genBackend size
-	| shaCommand size /= "" = Just b
-	| otherwise = Nothing
+	| shaCommand size == Nothing = Nothing
+	| otherwise = Just b
 	where
 		b = Backend.File.backend 
 			{ name = shaName size
@@ -44,13 +44,13 @@ genBackend size
 			, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
 			}
 
-shaCommand :: SHASize -> String
+shaCommand :: SHASize -> Maybe String
 shaCommand 1 = SysConfig.sha1
 shaCommand 256 = SysConfig.sha256
 shaCommand 224 = SysConfig.sha224
 shaCommand 384 = SysConfig.sha384
 shaCommand 512 = SysConfig.sha512
-shaCommand _ = ""
+shaCommand _ = Nothing
 
 shaName :: SHASize -> String
 shaName size = "SHA" ++ show size
@@ -65,7 +65,7 @@ shaN size file = do
 			then error $ command ++ " parse error"
 			else return $ head bits
 	where
-		command = shaCommand size
+		command = fromJust $ shaCommand size
 
 {- A key is a checksum of its contents. -}
 keyValue :: SHASize -> FilePath -> Annex (Maybe Key)
