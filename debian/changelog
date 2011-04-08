@@ -1,5 +1,6 @@
 git-annex (0.20110402) UNRELEASED; urgency=low
 
+  * bup is now supported as a special type of remote.
   * Use lowercase hash directories for locationlog files, to avoid
     some issues with git on OSX with the mixed-case directories.
     No migration is needed; the old mixed case hash directories are still

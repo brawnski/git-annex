@@ -46,12 +46,14 @@ import Config
 
 import qualified Remote.Git
 import qualified Remote.S3
+import qualified Remote.Bup
 import qualified Remote.Directory
 
 remoteTypes :: [RemoteType Annex]
 remoteTypes =
 	[ Remote.Git.remote
 	, Remote.S3.remote
+	, Remote.Bup.remote
 	, Remote.Directory.remote
 	]
 
