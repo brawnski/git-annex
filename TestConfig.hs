@@ -72,30 +72,26 @@ testCmd k cmdline = do
 
 {- Ensures that one of a set of commands is available by running each in
  - turn. The Config is set to the first one found. -}
-selectCmd :: ConfigKey -> [String] -> Test
-selectCmd k cmds = search cmds
+selectCmd :: Bool -> ConfigKey -> [String] -> String -> Test
+selectCmd required k cmds param = search cmds
 	where
-		search [] = do
-			testEnd $ Config k (BoolConfig False)
-			error $ "* need one of these commands, but none are available: " ++ show (map (head . words) cmds)
+		search [] = failure
 		search (c:cs) = do
-			ret <- system $ quiet c
+			ret <- system $ quiet c ++ " " ++ param
 			if (ret == ExitSuccess)
-				then return $ Config k (StringConfig c)
+				then success c
 				else search cs
-
-whichCmd :: ConfigKey -> [String] -> Test
-whichCmd k cmds = search cmds
-	where
-		search [] = do
-			let r = Config k (MaybeStringConfig Nothing)
-			testEnd r
-			return r
-		search (c:cs) = do
-			ret <- system $ quiet c
-			if (ret == ExitSuccess)
-				then return $ Config k (MaybeStringConfig $ Just $ head $ words c)
-				else search cs
+		success c
+			| required == True = return $ Config k (StringConfig c)
+			| otherwise = return $ Config k (MaybeStringConfig $ Just c)
+		failure
+			| required == True = do
+				testEnd $ Config k (BoolConfig False)
+				error $ "* need one of these commands, but none are available: " ++ show cmds
+			| otherwise = do
+				let r = Config k (MaybeStringConfig Nothing)
+				testEnd r
+				return r			
 
 quiet :: String -> String
 quiet s = s ++ " >/dev/null 2>&1"

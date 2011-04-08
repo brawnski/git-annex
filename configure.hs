@@ -11,7 +11,7 @@ tests = [
 	, testCp "cp_a" "-a"
 	, testCp "cp_p" "-p"
 	, testCp "cp_reflink_auto" "--reflink=auto"
-	, TestCase "uuid generator" $ selectCmd "uuid" ["uuid", "uuidgen"]
+	, TestCase "uuid generator" $ selectCmd True "uuid" ["uuid", "uuidgen"] ""
 	, TestCase "xargs -0" $ requireCmd "xargs_0" "xargs -0 </dev/null"
 	, TestCase "rsync" $ requireCmd "rsync" "rsync --version >/dev/null"
 	, TestCase "curl" $ testCmd "curl" "curl --version >/dev/null"
@@ -22,9 +22,9 @@ shaTestCases :: [Int] -> [TestCase]
 shaTestCases l = map make l
 	where make n =
 		let
-			cmds = map (\x -> "sha" ++ show n ++ x ++ " </dev/null") ["", "sum"]
+			cmds = map (\x -> "sha" ++ show n ++ x) ["", "sum"]
 			key = "sha" ++ show n
-		in TestCase key $ whichCmd key cmds
+		in TestCase key $ selectCmd False key cmds "</dev/null"
 
 tmpDir :: String
 tmpDir = "tmp"
