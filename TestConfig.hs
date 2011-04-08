@@ -72,11 +72,23 @@ selectCmd k cmds = search cmds
 	where
 		search [] = do
 			testEnd $ Config k (BoolConfig False)
-			error $ "* need one of these commands, but none are available: " ++ show cmds
+			error $ "* need one of these commands, but none are available: " ++ show (map (head . words) cmds)
 		search (c:cs) = do
 			ret <- system $ quiet c
 			if (ret == ExitSuccess)
 				then return $ Config k (StringConfig c)
+				else search cs
+
+whichCmd :: ConfigKey -> [String] -> Test
+whichCmd k cmds = search cmds
+	where
+		search [] = do
+			testEnd $ Config k (StringConfig "")
+			return $ Config k (StringConfig "")
+		search (c:cs) = do
+			ret <- system $ quiet c
+			if (ret == ExitSuccess)
+				then return $ Config k (StringConfig $ head $ words c)
 				else search cs
 
 quiet :: String -> String

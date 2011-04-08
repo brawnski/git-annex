@@ -35,7 +35,7 @@ backends = catMaybes $ map genBackend [1, 256, 512, 224, 384]
 
 genBackend :: SHASize -> Maybe (Backend Annex)
 genBackend size
-	| supported size = Just b 
+	| shaCommand size /= "" = Just b
 	| otherwise = Nothing
 	where
 		b = Backend.File.backend 
@@ -43,12 +43,14 @@ genBackend size
 			, getKey = keyValue size
 			, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
 			}
-		supported 1 = SysConfig.sha1sum
-		supported 256 = SysConfig.sha256sum
-		supported 224 = SysConfig.sha224sum
-		supported 384 = SysConfig.sha384sum
-		supported 512 = SysConfig.sha512sum
-		supported _ = False
+
+shaCommand :: SHASize -> String
+shaCommand 1 = SysConfig.sha1
+shaCommand 256 = SysConfig.sha256
+shaCommand 224 = SysConfig.sha224
+shaCommand 384 = SysConfig.sha384
+shaCommand 512 = SysConfig.sha512
+shaCommand _ = ""
 
 shaName :: SHASize -> String
 shaName size = "SHA" ++ show size
@@ -63,7 +65,7 @@ shaN size file = do
 			then error $ command ++ " parse error"
 			else return $ head bits
 	where
-		command = "sha" ++ (show size) ++ "sum"
+		command = shaCommand size
 
 {- A key is a checksum of its contents. -}
 keyValue :: SHASize -> FilePath -> Annex (Maybe Key)

@@ -20,10 +20,11 @@ tests = [
 
 shaTestCases :: [Int] -> [TestCase]
 shaTestCases l = map make l
-	where
-		make n = 
-			let cmd = "sha" ++ show n ++ "sum"
-			in TestCase cmd $ requireCmd cmd (cmd ++ " </dev/null")
+	where make n =
+		let
+			cmds = map (\x -> "sha" ++ show n ++ x ++ " </dev/null") ["", "sum"]
+			key = "sha" ++ show n
+		in TestCase key $ whichCmd key cmds
 
 tmpDir :: String
 tmpDir = "tmp"
