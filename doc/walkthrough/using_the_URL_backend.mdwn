@@ -1,5 +1,5 @@
-git-annex has multiple key-value [[backends]]. So far this walkthrough has
-demonstrated the default, WORM (Write Once, Read Many) backend. 
+git-annex has multiple key-value [[backends]]. So far you have been using
+the default, WORM (Write Once, Read Many) backend.
 
 Another handy backend is the URL backend, which can fetch file's content
 from remote URLs. Here's how to set up some files in your repository
