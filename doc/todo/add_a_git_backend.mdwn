@@ -12,3 +12,5 @@ use all of git-annex's features everywhere else.
 >> of the git backend using bup. --[[Joey]] 
 
 >>> Very much so. Generally speaking, having one or more versioned storage back-ends with current data in the local annexes sounds incredibly useful. Still being able to get at old data in via the back-end and/or making offline backups of the full history are excellent use cases. -- RichiH
+
+[[done]], the bup special remote type is written! --[[Joey]] 
