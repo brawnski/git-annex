@@ -42,7 +42,7 @@ gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
 	buprepo <- getConfig r "buprepo" (error "missing buprepo")
 	cst <- remoteCost r (if bupLocal buprepo then semiCheapRemoteCost else expensiveRemoteCost)
---	u' <- getBupUUID r u
+	u' <- getBupUUID buprepo u
 	
 	return $ this cst buprepo u'
 	where
@@ -61,8 +61,8 @@ gen r u c = do
 bupSetup :: UUID -> M.Map String String -> Annex (M.Map String String)
 bupSetup u c = do
 	-- verify configuration is sane
-	let buprepo = case M.lookup "remote" c of
-		Nothing -> error "Specify remote="
+	let buprepo = case M.lookup "buprepo" c of
+		Nothing -> error "Specify buprepo="
 		Just r -> r
 	case M.lookup "encryption" c of
 		Nothing -> error "Specify encryption=key or encryption=none"
@@ -160,8 +160,9 @@ storeBupUUID u buprepo = do
 
 {- Allow for bup repositories on removable media by checking
  - local bup repositories  -}
---getBupUUID :: UUID -> FilePath -> Annex ()
---getBupUUID u buprepo = do
+getBupUUID :: FilePath -> UUID -> Annex UUID
+getBupUUID buprepo u = do
+	return u -- TODO
 
 {- Converts a bup remote path spec into a Git.Repo. There are some
  - differences in path representation between git and bup. -}
