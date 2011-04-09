@@ -95,7 +95,6 @@ new file mode 100644
 index 0000000..e69de29
 </pre>
 
-Also I came across this when I accidentally annexed some files in the .git-annex directory and it cause git-annex/git to be very unhappy when i pulled the repo to somewhere else. It might be worth teaching git-annex to disallow annex'ing of files inside the .git-annex/.git directories.
-
-> There is a guard against `git annex add .git-annex/foo`, but it doesn't
-> notice `cd .git-annex; git annex add foo`. --[[Joey]]
+> Closing this bug, as it seems I have dealt with it adequately now.
+> [[done]]
+> --[[Joey]] 
