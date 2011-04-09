@@ -43,8 +43,9 @@ files with git.
 
 * [[git-annex man page|git-annex]]
 * [[key-value backends|backends]] for data storage
-* [[internals]]
+* [[special_remotes]] (including [[special_remotes/Amazon_S3]] and [[special_remotes/bup]])
 * [[bare_repositories]]
+* [[internals]]
 * [[design]]
 * [[what git annex is not|not]]
 * git-annex is Free Software, licensed under the [[GPL]].
