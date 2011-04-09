@@ -134,7 +134,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * initremote name [param=value ...]
 
-  Sets up a [[special_remote|special_remotes]]. The remote's
+  Sets up a special remote. The remote's
   configuration is specified by the parameters. If a remote
   with the specified name has already been configured, its configuration
   is modified by any values specified. In either case, the remote will be
@@ -244,19 +244,19 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * trust [repository ...]
 
-  Records that a repository is [[trusted|trust]] to not unexpectedly lose
+  Records that a repository is trusted to not unexpectedly lose
   content. Use with care.
 
   To trust the current repository, use "."
 
 * untrust [repository ...]
 
-  Records that a repository is [[not trusted|trust]] and could lose content
+  Records that a repository is not trusted and could lose content
   at any time.
 
 * semitrust [repository ...]
 
-  Returns a repository to the default [[semi trusted|trust]] state.
+  Returns a repository to the default semi trusted state.
 
 * fromkey file
 
@@ -384,7 +384,7 @@ Here are all the supported configuration settings.
   by the --from and --to options.)
 
   This is, for example, useful if the remote is located somewhere
-  without [[git-annex-shell]]. (For example, if it's on GitHub).
+  without git-annex-shell. (For example, if it's on GitHub).
   Or, it could be used if the network connection between two
   repositories is too slow to be used normally.
 
@@ -427,7 +427,23 @@ Here are all the supported configuration settings.
 
   Automatically maintained, and used to automate upgrades between versions.
 
-  
+* `remote.<name>.buprepo`
+
+  Used by bup special remotes, this configures
+  the location of the bup repository to use. Normally this is automaticaly
+  set up by `git annex initremote`, but you can change it if needed.
+
+* `remote.<name>.directory`
+
+  Used by directory special remotes, this configures
+  the location of the directory where annexed files are stored for this
+  remote. Normally this is automaticaly set up by `git annex initremote`,
+  but you can change it if needed.
+
+* `remote.<name>.s3`
+
+  Used to identify Amazon S3 special remotes.
+  Normally this is automaticaly set up by `git annex initremote`.
 
 # CONFIGURATION VIA .gitattributes
 
