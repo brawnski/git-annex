@@ -23,12 +23,13 @@ import qualified GitRepo as Git
 import qualified Annex
 import UUID
 import Locations
-import LocationLog
 import Config
 import Utility
 import Messages
 import Remote.Special
 import Ssh
+
+type BupRepo = String
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -42,18 +43,19 @@ gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
 	buprepo <- getConfig r "buprepo" (error "missing buprepo")
 	cst <- remoteCost r (if bupLocal buprepo then semiCheapRemoteCost else expensiveRemoteCost)
-	u' <- getBupUUID buprepo u
+	bupr <- liftIO $ bup2GitRemote buprepo
+	(u', bupr') <- getBupUUID bupr u
 	
-	return $ this cst buprepo u'
+	return $ this cst buprepo u' bupr'
 	where
-		this cst buprepo u' = Remote {
+		this cst buprepo u' bupr = Remote {
 			uuid = u',
 			cost = cst,
 			name = Git.repoDescribe r,
  			storeKey = store r buprepo,
 			retrieveKeyFile = retrieve buprepo,
 			removeKey = remove,
-			hasKey = checkPresent u',
+			hasKey = checkPresent r bupr,
 			hasKeyCheap = True,
 			config = c
 		}
@@ -83,16 +85,16 @@ bupSetup u c = do
 
 	return $ M.delete "directory" c
 
-bupParams :: String -> String -> [CommandParam] -> [CommandParam]
+bupParams :: String -> BupRepo -> [CommandParam] -> [CommandParam]
 bupParams command buprepo params = 
 	(Param command) : [Param "-r", Param buprepo] ++ params
 
-bup :: String -> String -> [CommandParam] -> Annex Bool
+bup :: String -> BupRepo -> [CommandParam] -> Annex Bool
 bup command buprepo params = do
 	showProgress -- make way for bup output
 	liftIO $ boolSystem "bup" $ bupParams command buprepo params
 
-store :: Git.Repo -> String -> Key -> Annex Bool
+store :: Git.Repo -> BupRepo -> Key -> Annex Bool
 store r buprepo k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
@@ -100,7 +102,7 @@ store r buprepo k = do
 	let os = map Param $ words o
 	bup "split" buprepo $ os ++ [Param "-n", Param (show k), File src]
 
-retrieve :: String -> Key -> FilePath -> Annex Bool
+retrieve :: BupRepo -> Key -> FilePath -> Annex Bool
 retrieve buprepo k f = do
 	let params = bupParams "join" buprepo [Param $ show k]
 	ret <- liftIO $ try $ do
@@ -124,39 +126,41 @@ remove _ = do
 {- Bup does not provide a way to tell if a given dataset is present
  - in a bup repository. One way it to check if the git repository has
  - a branch matching the name (as created by bup split -n).
- -
- - However, git-annex's ususal reasons for checking if a remote really
- - has a key also don't really apply in the case of bup, since, short
- - of deleting bup's git repository, data cannot be removed from it.
- - 
- - So, trust git-annex's location log; if it says a bup repository has
- - content, assume it's right.
  -}
-checkPresent :: UUID -> Key -> Annex (Either IOException Bool)
-checkPresent u k = do
-	g <- Annex.gitRepo
-	liftIO $ try $ do
-		uuids <- keyLocations g k
-		return $ u `elem` uuids
+checkPresent :: Git.Repo -> Git.Repo -> Key -> Annex (Either IOException Bool)
+checkPresent r bupr k
+	| Git.repoIsUrl bupr = do
+		showNote ("checking " ++ Git.repoDescribe r ++ "...")
+		ok <- onBupRemote bupr boolSystem "git" params
+		return $ Right ok
+	| otherwise = liftIO $ try $ boolSystem "git" $ Git.gitCommandLine bupr params
+	where
+		params = 
+			[ Params "show-ref --quiet --verify"
+			, Param $ "refs/heads/" ++ show k]
 
 {- Store UUID in the annex.uuid setting of the bup repository. -}
-storeBupUUID :: UUID -> FilePath -> Annex ()
+storeBupUUID :: UUID -> BupRepo -> Annex ()
 storeBupUUID u buprepo = do
 	r <- liftIO $ bup2GitRemote buprepo
 	if Git.repoIsUrl r
 		then do
 			showNote "storing uuid"
-			let dir = shellEscape (Git.workTree r)
-			sshparams <- sshToRepo r
-				[Param $ "cd " ++ dir ++
-				 " && git config annex.uuid " ++ u]
-			ok <- liftIO $ boolSystem "ssh" sshparams
+			ok <- onBupRemote r boolSystem "git"
+				[Params $ "config annex.uuid " ++ u]
 			unless ok $ do error "ssh failed"
 		else liftIO $ do
 			r' <- Git.configRead r
 			let olduuid = Git.configGet r' "annex.uuid" ""
 			when (olduuid == "") $
 				Git.run r' "config" [Param "annex.uuid", Param u]
+
+onBupRemote :: Git.Repo -> (FilePath -> [CommandParam] -> IO a) -> FilePath -> [CommandParam] -> Annex a
+onBupRemote r a command params = do
+	let dir = shellEscape (Git.workTree r)
+	sshparams <- sshToRepo r [Param $
+			"cd " ++ dir ++ " && " ++ (unwords $ command : toCommand params)]
+	liftIO $ a "ssh" sshparams
 
 {- Allow for bup repositories on removable media by checking
  - local bup repositories to see if they are available, and getting their
@@ -165,21 +169,21 @@ storeBupUUID u buprepo = do
  - If a bup repository is not available, returns a dummy uuid of "".
  - This will cause checkPresent to indicate nothing from the bup remote
  - is known to be present.
+ -
+ - Also, returns a version of the repo with config read, if it is local.
  -}
-getBupUUID :: FilePath -> UUID -> Annex UUID
-getBupUUID buprepo u = liftIO $ do
-	r <- bup2GitRemote buprepo
-	if Git.repoIsUrl r
-		then return u
-		else do
-			ret <- try $ Git.configRead r
-			case ret of
-				Right r' -> return $ Git.configGet r' "annex.uuid" ""
-				Left _ -> return ""
+getBupUUID :: Git.Repo -> UUID -> Annex (UUID, Git.Repo)
+getBupUUID r u
+	| Git.repoIsUrl r = return (u, r)
+	| otherwise = liftIO $ do
+		ret <- try $ Git.configRead r
+		case ret of
+			Right r' -> return (Git.configGet r' "annex.uuid" "", r')
+			Left _ -> return ("", r)
 
 {- Converts a bup remote path spec into a Git.Repo. There are some
  - differences in path representation between git and bup. -}
-bup2GitRemote :: FilePath -> IO Git.Repo
+bup2GitRemote :: BupRepo -> IO Git.Repo
 bup2GitRemote "" = do
 	-- bup -r "" operates on ~/.bup
 	h <- myHomeDir
@@ -202,5 +206,5 @@ bup2GitRemote r
 				| d !! 0 == '/' = d
 				| otherwise = "/~/" ++ d
 
-bupLocal :: FilePath -> Bool
+bupLocal :: BupRepo -> Bool
 bupLocal = notElem ':'
