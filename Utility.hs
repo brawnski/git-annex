@@ -23,6 +23,7 @@ module Utility (
 	safeWriteFile,
 	dirContains,
 	dirContents,
+	myHomeDir,
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -36,6 +37,7 @@ import System.Posix.Process
 import System.Posix.Signals
 import System.Posix.Files
 import System.Posix.Types
+import System.Posix.User
 import Data.String.Utils
 import System.Path
 import System.FilePath
@@ -247,3 +249,10 @@ dirContents d = do
 		notcruft "." = False
 		notcruft ".." = False
 		notcruft _ = True
+
+{- Current user's home directory. -}
+myHomeDir :: IO FilePath
+myHomeDir = do
+	uid <- getEffectiveUserID
+	u <- getUserEntryForID uid
+	return $ homeDirectory u

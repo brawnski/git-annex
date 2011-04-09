@@ -10,10 +10,12 @@ module Remote.Bup (remote) where
 import IO
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Control.Monad.State (liftIO)
 import System.Process
 import System.Exit
+import System.FilePath
+import Data.List.Utils
 
 import RemoteClass
 import Types
@@ -26,6 +28,7 @@ import Config
 import Utility
 import Messages
 import Remote.Special
+import Ssh
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -38,8 +41,7 @@ remote = RemoteType {
 gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
 	bupremote <- getConfig r "bupremote" (error "missing bupremote")
-	let local = ':' `notElem` bupremote
-	cst <- remoteCost r (if local then semiCheapRemoteCost else expensiveRemoteCost)
+	cst <- remoteCost r (if bupLocal bupremote then semiCheapRemoteCost else expensiveRemoteCost)
 	
 	return $ this cst bupremote
 	where
@@ -71,6 +73,8 @@ bupSetup u c = do
 	showNote "bup init"
 	ok <- bup "init" bupremote []
 	unless ok $ error "bup init failed"
+
+	storeBupUUID u bupremote
 
 	-- The bup remote is stored in git config, as well as this remote's
 	-- persistant state, so it can vary between hosts.
@@ -133,3 +137,50 @@ checkPresent u k = do
 	liftIO $ try $ do
 		uuids <- keyLocations g k
 		return $ u `elem` uuids
+
+{- Store UUID in the annex.uuid setting of the bup repository. -}
+storeBupUUID :: UUID -> FilePath -> Annex ()
+storeBupUUID u bupremote = do
+	r <- liftIO $ bup2GitRemote bupremote
+	if Git.repoIsUrl r
+		then do
+			showNote "storing uuid"
+			let dir = shellEscape (Git.workTree r)
+			sshparams <- sshToRepo r
+				[Param $ "cd " ++ dir ++
+				 " && git config annex.uuid " ++ u]
+			ok <- liftIO $ boolSystem "ssh" sshparams
+			unless ok $ do error "ssh failed"
+		else liftIO $ do
+			r' <- Git.configRead r
+			let olduuid = Git.configGet r' "annex.uuid" ""
+			when (olduuid == "") $
+				Git.run r' "config" [Param "annex.uuid", Param u]
+
+{- Converts a bup remote path spec into a Git.Repo. There are some
+ - differences in path representation between git and bup. -}
+bup2GitRemote :: FilePath -> IO Git.Repo
+bup2GitRemote "" = do
+	-- bup -r "" operates on ~/.bup
+	h <- myHomeDir
+	Git.repoFromAbsPath $ h </> ".bup"
+bup2GitRemote r
+	| bupLocal r = 
+		if r !! 0 == '/'
+			then Git.repoFromAbsPath r
+			else error "please specify an absolute path"
+	| otherwise = Git.repoFromUrl $ "ssh://" ++ host ++ slash dir
+		where
+			bits = split ":" r
+			host = bits !! 0
+			dir = join ":" $ drop 1 bits
+			-- "host:~user/dir" is not supported specially by bup;
+			-- "host:dir" is relative to the home directory;
+			-- "host:" goes in ~/.bup
+			slash d
+				| d == "" = "/~/.bup"
+				| d !! 0 == '/' = d
+				| otherwise = "/~/" ++ d
+
+bupLocal :: FilePath -> Bool
+bupLocal = notElem ':'

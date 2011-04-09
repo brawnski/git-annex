@@ -573,12 +573,6 @@ repoAbsPath d = do
 	h <- myHomeDir
 	return $ h </> d'
 
-myHomeDir :: IO FilePath
-myHomeDir = do
-	uid <- getEffectiveUserID
-	u <- getUserEntryForID uid
-	return $ homeDirectory u
-
 expandTilde :: FilePath -> IO FilePath
 expandTilde = expandt True
 	where
