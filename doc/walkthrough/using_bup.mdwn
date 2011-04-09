@@ -5,7 +5,7 @@ git-annex, you can have git on both the frontend and the backend.
 
 Here's how to create a bup remote, and describe it.
 
-[[!template id=note test="""
+[[!template id=note text="""
 Instead of specifying a remote system, you could choose to make a bup
 remote that is only accessible on the current system, by passing
 "remote=/big/mybup".
