@@ -69,3 +69,7 @@ Thanks!
 > 
 > Probably your best bet will be changing to a different version or build of
 > GHC.. --[[Joey]] 
+
+---
+
+forwarded to GHC upstream; closing [[done]] --[[Joey]] 
