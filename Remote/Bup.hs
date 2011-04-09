@@ -159,10 +159,23 @@ storeBupUUID u buprepo = do
 				Git.run r' "config" [Param "annex.uuid", Param u]
 
 {- Allow for bup repositories on removable media by checking
- - local bup repositories  -}
+ - local bup repositories to see if they are available, and getting their
+ - uuid (which may be different from the stored uuid for the bup remote).
+ -
+ - If a bup repository is not available, returns a dummy uuid of "".
+ - This will cause checkPresent to indicate nothing from the bup remote
+ - is known to be present.
+ -}
 getBupUUID :: FilePath -> UUID -> Annex UUID
-getBupUUID buprepo u = do
-	return u -- TODO
+getBupUUID buprepo u = liftIO $ do
+	r <- bup2GitRemote buprepo
+	if Git.repoIsUrl r
+		then return u
+		else do
+			ret <- try $ Git.configRead r
+			case ret of
+				Right r' -> return $ Git.configGet r' "annex.uuid" ""
+				Left _ -> return ""
 
 {- Converts a bup remote path spec into a Git.Repo. There are some
  - differences in path representation between git and bup. -}
