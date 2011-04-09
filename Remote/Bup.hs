@@ -37,8 +37,10 @@ remote = RemoteType {
 
 gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
-	cst <- remoteCost r expensiveRemoteCost
 	bupremote <- getConfig r "bupremote" (error "missing bupremote")
+	let local = ':' `notElem` bupremote
+	cst <- remoteCost r (if local then cheapRemoteCost else expensiveRemoteCost)
+	
 	return $ this cst bupremote
 	where
 		this cst bupremote = Remote {
