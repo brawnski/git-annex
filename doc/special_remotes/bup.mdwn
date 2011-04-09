@@ -22,8 +22,8 @@ These parameters can be passed to `git annex initremote` to configure bup:
   the new key id.
 
 * `remote` - Required. This is passed to `bup` as the `--remote`
-  to use to store data. `bup init` will be run to create the
-  repository. Example: "remote=example.com:/big/mybup"
+  to use to store data. To create the repository,`bup init` will be run.
+  Example: "remote=example.com:/big/mybup" or "remote=/big/mybup"
 
 Options to pass to `bup split` when sending content to bup can also
 be specified, by using `git config annex.bup-split-options`. This

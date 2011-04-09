@@ -5,6 +5,12 @@ git-annex, you can have git on both the frontend and the backend.
 
 Here's how to create a bup remote, and describe it.
 
+[[!template id=note test="""
+Instead of specifying a remote system, you could choose to make a bup
+remote that is only accessible on the current system, by passing
+"remote=/big/mybup".
+"""]
+
 	# git annex initremote mybup type=bup encryption=none remote=example.com:/big/mybup
 	initremote bup (bup init)
 	Initialized empty Git repository in /big/mybup/
