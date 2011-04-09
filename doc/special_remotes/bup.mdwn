@@ -24,6 +24,7 @@ These parameters can be passed to `git annex initremote` to configure bup:
 * `remote` - Required. This is passed to `bup` as the `--remote`
   to use to store data. To create the repository,`bup init` will be run.
   Example: "remote=example.com:/big/mybup" or "remote=/big/mybup"
+  (To use the default `~/.bup` repository on the local host, specify "remote=")
 
 Options to pass to `bup split` when sending content to bup can also
 be specified, by using `git config annex.bup-split-options`. This
