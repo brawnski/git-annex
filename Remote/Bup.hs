@@ -33,26 +33,27 @@ import Ssh
 remote :: RemoteType Annex
 remote = RemoteType {
 	typename = "bup",
-	enumerate = findSpecialRemotes "bupremote",
+	enumerate = findSpecialRemotes "buprepo",
 	generate = gen,
 	setup = bupSetup
 }
 
 gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
-	bupremote <- getConfig r "bupremote" (error "missing bupremote")
-	cst <- remoteCost r (if bupLocal bupremote then semiCheapRemoteCost else expensiveRemoteCost)
+	buprepo <- getConfig r "buprepo" (error "missing buprepo")
+	cst <- remoteCost r (if bupLocal buprepo then semiCheapRemoteCost else expensiveRemoteCost)
+--	u' <- getBupUUID r u
 	
-	return $ this cst bupremote
+	return $ this cst buprepo u'
 	where
-		this cst bupremote = Remote {
-			uuid = u,
+		this cst buprepo u' = Remote {
+			uuid = u',
 			cost = cst,
 			name = Git.repoDescribe r,
- 			storeKey = store r bupremote,
-			retrieveKeyFile = retrieve bupremote,
+ 			storeKey = store r buprepo,
+			retrieveKeyFile = retrieve buprepo,
 			removeKey = remove,
-			hasKey = checkPresent u,
+			hasKey = checkPresent u',
 			hasKeyCheap = True,
 			config = c
 		}
@@ -60,7 +61,7 @@ gen r u c = do
 bupSetup :: UUID -> M.Map String String -> Annex (M.Map String String)
 bupSetup u c = do
 	-- verify configuration is sane
-	let bupremote = case M.lookup "remote" c of
+	let buprepo = case M.lookup "remote" c of
 		Nothing -> error "Specify remote="
 		Just r -> r
 	case M.lookup "encryption" c of
@@ -71,37 +72,37 @@ bupSetup u c = do
 	-- bup init will create the repository.
 	-- (If the repository already exists, bup init again appears safe.)
 	showNote "bup init"
-	ok <- bup "init" bupremote []
+	ok <- bup "init" buprepo []
 	unless ok $ error "bup init failed"
 
-	storeBupUUID u bupremote
+	storeBupUUID u buprepo
 
-	-- The bup remote is stored in git config, as well as this remote's
+	-- The buprepo is stored in git config, as well as this repo's
 	-- persistant state, so it can vary between hosts.
-	gitConfigSpecialRemote u c "bupremote" bupremote
+	gitConfigSpecialRemote u c "buprepo" buprepo
 
 	return $ M.delete "directory" c
 
 bupParams :: String -> String -> [CommandParam] -> [CommandParam]
-bupParams command bupremote params = 
-	(Param command) : [Param "-r", Param bupremote] ++ params
+bupParams command buprepo params = 
+	(Param command) : [Param "-r", Param buprepo] ++ params
 
 bup :: String -> String -> [CommandParam] -> Annex Bool
-bup command bupremote params = do
+bup command buprepo params = do
 	showProgress -- make way for bup output
-	liftIO $ boolSystem "bup" $ bupParams command bupremote params
+	liftIO $ boolSystem "bup" $ bupParams command buprepo params
 
 store :: Git.Repo -> String -> Key -> Annex Bool
-store r bupremote k = do
+store r buprepo k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
 	o <- getConfig r "bup-split-options" ""
 	let os = map Param $ words o
-	bup "split" bupremote $ os ++ [Param "-n", Param (show k), File src]
+	bup "split" buprepo $ os ++ [Param "-n", Param (show k), File src]
 
 retrieve :: String -> Key -> FilePath -> Annex Bool
-retrieve bupremote k f = do
-	let params = bupParams "join" bupremote [Param $ show k]
+retrieve buprepo k f = do
+	let params = bupParams "join" buprepo [Param $ show k]
 	ret <- liftIO $ try $ do
 		-- pipe bup's stdout directly to file
 		tofile <- openFile f WriteMode
@@ -140,8 +141,8 @@ checkPresent u k = do
 
 {- Store UUID in the annex.uuid setting of the bup repository. -}
 storeBupUUID :: UUID -> FilePath -> Annex ()
-storeBupUUID u bupremote = do
-	r <- liftIO $ bup2GitRemote bupremote
+storeBupUUID u buprepo = do
+	r <- liftIO $ bup2GitRemote buprepo
 	if Git.repoIsUrl r
 		then do
 			showNote "storing uuid"
@@ -156,6 +157,11 @@ storeBupUUID u bupremote = do
 			let olduuid = Git.configGet r' "annex.uuid" ""
 			when (olduuid == "") $
 				Git.run r' "config" [Param "annex.uuid", Param u]
+
+{- Allow for bup repositories on removable media by checking
+ - local bup repositories  -}
+--getBupUUID :: UUID -> FilePath -> Annex ()
+--getBupUUID u buprepo = do
 
 {- Converts a bup remote path spec into a Git.Repo. There are some
  - differences in path representation between git and bup. -}

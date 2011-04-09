@@ -21,10 +21,10 @@ These parameters can be passed to `git annex initremote` to configure bup:
   keys can be given access to a remote by rerunning initremote with
   the new key id.
 
-* `remote` - Required. This is passed to `bup` as the `--remote`
+* `buprepo` - Required. This is passed to `bup` as the `--remote`
   to use to store data. To create the repository,`bup init` will be run.
-  Example: "remote=example.com:/big/mybup" or "remote=/big/mybup"
-  (To use the default `~/.bup` repository on the local host, specify "remote=")
+  Example: "buprepo=example.com:/big/mybup" or "buprepo=/big/mybup"
+  (To use the default `~/.bup` repository on the local host, specify "buprepo=")
 
 Options to pass to `bup split` when sending content to bup can also
 be specified, by using `git config annex.bup-split-options`. This
