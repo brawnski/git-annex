@@ -107,7 +107,7 @@ retrieve bupremote k f = do
 			_ -> return False
 	case ret of
 		Right r -> return r
-		Left e -> return False
+		Left _ -> return False
 
 remove :: Key -> Annex Bool
 remove _ = do

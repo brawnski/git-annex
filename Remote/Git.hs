@@ -57,9 +57,7 @@ gen r u _ = do
 
 	u' <- getUUID r'
 
-	let defcst = if not $ Git.repoIsUrl r
-		then cheapRemoteCost
-		else expensiveRemoteCost
+	let defcst = if cheap then cheapRemoteCost else expensiveRemoteCost
 	cst <- remoteCost r' defcst
 
 	return $ Remote {
@@ -70,7 +68,7 @@ gen r u _ = do
 		retrieveKeyFile = copyFromRemote r',
 		removeKey = dropKey r',
 		hasKey = inAnnex r',
-		hasKeyCheap = not (Git.repoIsUrl r'),
+		hasKeyCheap = cheap,
 		config = Nothing
 	}
 
