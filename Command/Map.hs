@@ -16,7 +16,6 @@ import Data.List.Utils
 import Command
 import qualified Annex
 import qualified GitRepo as Git
-import qualified Remote.Git
 import Messages
 import Types
 import Utility
@@ -203,7 +202,7 @@ tryScan r
 				Git.hConfigRead r
 
 		configlist =
-			Remote.Git.onRemote r (pipedconfig, Nothing) "configlist" []
+			onRemote r (pipedconfig, Nothing) "configlist" []
 		manualconfiglist = do
 			let sshcmd =
 				"cd " ++ shellEscape(Git.workTree r) ++ " && " ++

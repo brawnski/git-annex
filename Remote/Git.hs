@@ -5,10 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Remote.Git (
-	remote,
-	onRemote
-) where
+module Remote.Git (remote) where
 
 import Control.Exception.Extensible
 import Control.Monad.State (liftIO)
@@ -194,34 +191,3 @@ rsyncParams r sending key file = do
 		-- goes, so the source/dest parameter can be a dummy value,
 		-- that just enables remote rsync mode.
 		dummy = Param ":"
-
-{- Uses a supplied function to run a git-annex-shell command on a remote.
- -
- - Or, if the remote does not support running remote commands, returns
- - a specified error value. -}
-onRemote 
-	:: Git.Repo
-	-> (FilePath -> [CommandParam] -> IO a, a)
-	-> String
-	-> [CommandParam]
-	-> Annex a
-onRemote r (with, errorval) command params = do
-	s <- git_annex_shell r command params
-	case s of
-		Just (c, ps) -> liftIO $ with c ps
-		Nothing -> return errorval
-
-{- Generates parameters to run a git-annex-shell command on a remote. -}
-git_annex_shell :: Git.Repo -> String -> [CommandParam] -> Annex (Maybe (FilePath, [CommandParam]))
-git_annex_shell r command params
-	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
-	| Git.repoIsSsh r = do
-		sshparams <- sshToRepo r [Param sshcmd]
-		return $ Just ("ssh", sshparams)
-	| otherwise = return Nothing
-	where
-		dir = Git.workTree r
-		shellcmd = "git-annex-shell"
-		shellopts = (Param command):(File dir):params
-		sshcmd = shellcmd ++ " " ++ 
-			unwords (map shellEscape $ toCommand shellopts)

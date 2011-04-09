@@ -7,6 +7,8 @@
 
 module Ssh where
 
+import Control.Monad.State (liftIO)
+
 import qualified GitRepo as Git
 import Utility
 import Types
@@ -24,3 +26,36 @@ sshToRepo repo sshcmd = do
 		Just p -> [Param "-p", Param (show p)]
 	let sshhost = Param $ Git.urlHostUser repo
 	return $ sshoptions ++ sshport ++ [sshhost] ++ sshcmd
+
+{- Generates parameters to run a git-annex-shell command on a remote
+ - repository. -}
+git_annex_shell :: Git.Repo -> String -> [CommandParam] -> Annex (Maybe (FilePath, [CommandParam]))
+git_annex_shell r command params
+	| not $ Git.repoIsUrl r = return $ Just (shellcmd, shellopts)
+	| Git.repoIsSsh r = do
+		sshparams <- sshToRepo r [Param sshcmd]
+		return $ Just ("ssh", sshparams)
+	| otherwise = return Nothing
+	where
+		dir = Git.workTree r
+		shellcmd = "git-annex-shell"
+		shellopts = (Param command):(File dir):params
+		sshcmd = shellcmd ++ " " ++ 
+			unwords (map shellEscape $ toCommand shellopts)
+
+{- Uses a supplied function (such as boolSystem) to run a git-annex-shell
+ - command on a remote.
+ -
+ - Or, if the remote does not support running remote commands, returns
+ - a specified error value. -}
+onRemote 
+	:: Git.Repo
+	-> (FilePath -> [CommandParam] -> IO a, a)
+	-> String
+	-> [CommandParam]
+	-> Annex a
+onRemote r (with, errorval) command params = do
+	s <- git_annex_shell r command params
+	case s of
+		Just (c, ps) -> liftIO $ with c ps
+		Nothing -> return errorval
