@@ -115,3 +115,14 @@ would solve the merge problem, since git auto merge could be used. It would
 still mean all the log files are on-disk, which annoys some. It would
 require some tighter integration with git, so that after a pull, the log
 repo is updated with the data pulled. --[[Joey]] 
+
+## notes
+
+Another approach could be to use git-notes. It supports merging branches
+of notes, with union merge strategy (a hook would have to do this after
+a pull, it's not done automatically). 
+
+Problem: Notes are usually attached to git
+objects, and there are no git objects corresponding to git-annex keys.
+
+Problem: Notes are not normally copied when cloning.
