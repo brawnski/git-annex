@@ -39,7 +39,7 @@ gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
 gen r u c = do
 	bupremote <- getConfig r "bupremote" (error "missing bupremote")
 	let local = ':' `notElem` bupremote
-	cst <- remoteCost r (if local then cheapRemoteCost else expensiveRemoteCost)
+	cst <- remoteCost r (if local then semiCheapRemoteCost else expensiveRemoteCost)
 	
 	return $ this cst bupremote
 	where

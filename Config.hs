@@ -51,6 +51,8 @@ remoteCost r def = do
 
 cheapRemoteCost :: Int
 cheapRemoteCost = 100
+semiCheapRemoteCost :: Int
+semiCheapRemoteCost = 150
 expensiveRemoteCost :: Int
 expensiveRemoteCost = 200
 
