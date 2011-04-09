@@ -27,3 +27,5 @@ I can create an annex remote named 'test:/test'. git itself does not allow colon
 
 >>>> Nobody spoke up to say it's unclear, so closing as PEBKAC :)
 >>>> [[done]] --[[Joey]] 
+
+>>>>> I still think git-annex should follow the same rules as git in this regard, but if your design decision is different, I won't try to argue the point :) -- RichiH
