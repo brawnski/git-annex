@@ -30,6 +30,11 @@ Options to pass to `bup split` when sending content to bup can also
 be specified, by using `git config annex.bup-split-options`. This
 can be used to, for example, limit its bandwidth.
 
+## notes
+
+[[git-annex-shell]] does not support bup, due to the wacky way that bup
+starts its server. So, to use bup, you need full shell access to the server.
+
 ## data security
 
 When encryption=none, there is **no** protection against your data being read
