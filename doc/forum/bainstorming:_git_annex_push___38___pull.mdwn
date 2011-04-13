@@ -19,3 +19,10 @@ which would do
     git push
 
 Resulting in commands that are totally analogous to git push & pull: Sync all data from/to a remote.
+
+> Update:
+
+This is useful:
+
+    git config [--global] alias.annex-push '!git pull && git annex add . && git annex copy . --to $REMOTE --fast --quiet && git commit -a -m "$HOST $(date +%F--%H-%M-%S-%Z)" && git push'
+
