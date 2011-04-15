@@ -39,7 +39,7 @@ At a high level, an encryption backend needs to support these operations:
   a stream to an action that consumes the encrypted content.
 
 * Given a streaming source of encrypted content, decrypt it, and send
-  it in a stream to an anction that consumes the decrypted content.
+  it in a stream to an action that consumes the decrypted content.
 
 * Clean up.
 
