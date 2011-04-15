@@ -13,6 +13,7 @@ import Data.String.Utils
 import Control.Monad.State (liftIO)
 
 import Types
+import RemoteClass
 import qualified GitRepo as Git
 import qualified Annex
 import UUID
@@ -32,7 +33,7 @@ findSpecialRemotes s = do
 		match k _ = startswith "remote." k && endswith (".annex-"++s) k
 
 {- Sets up configuration for a special remote in .git/config. -}
-gitConfigSpecialRemote :: UUID -> M.Map String String -> String -> String -> Annex ()
+gitConfigSpecialRemote :: UUID -> RemoteConfig -> String -> String -> Annex ()
 gitConfigSpecialRemote u c k v = do
 	g <- Annex.gitRepo
 	liftIO $ do

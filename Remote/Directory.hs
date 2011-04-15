@@ -35,7 +35,7 @@ remote = RemoteType {
 	setup = directorySetup
 }
 
-gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u _ = do
 	dir <- getConfig r "directory" (error "missing directory")
 	cst <- remoteCost r cheapRemoteCost
@@ -51,7 +51,7 @@ gen r u _ = do
 		config = Nothing
 	}
 
-directorySetup :: UUID -> M.Map String String -> Annex (M.Map String String)
+directorySetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 directorySetup u c = do
 	-- verify configuration is sane
 	let dir = case M.lookup "directory" c of

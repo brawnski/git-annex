@@ -37,7 +37,7 @@ remote = RemoteType {
 	setup = s3Setup
 }
 
-gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	cst <- remoteCost r expensiveRemoteCost
 	return $ this cst
@@ -54,14 +54,14 @@ gen r u c = do
 			config = c
 		}
 
-s3ConnectionRequired :: M.Map String String -> Annex AWSConnection
+s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
 s3ConnectionRequired c = do
 	conn <- s3Connection c
 	case conn of
 		Nothing -> error "Cannot connect to S3"
 		Just conn' -> return conn'
 
-s3Connection :: M.Map String String -> Annex (Maybe AWSConnection)
+s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
 s3Connection c = do
 	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
 	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
@@ -78,7 +78,7 @@ s3Connection c = do
 			_ -> error $ "bad S3 port value: " ++ s
 		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
 
-s3Setup :: UUID -> M.Map String String -> Annex (M.Map String String)
+s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
 s3Setup u c = do
 	-- verify configuration is sane
 	case M.lookup "encryption" c of

@@ -39,7 +39,7 @@ remote = RemoteType {
 	setup = bupSetup
 }
 
-gen :: Git.Repo -> UUID -> Maybe (M.Map String String) -> Annex (Remote Annex)
+gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	buprepo <- getConfig r "buprepo" (error "missing buprepo")
 	cst <- remoteCost r (if bupLocal buprepo then semiCheapRemoteCost else expensiveRemoteCost)
@@ -60,7 +60,7 @@ gen r u c = do
 			config = c
 		}
 
-bupSetup :: UUID -> M.Map String String -> Annex (M.Map String String)
+bupSetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 bupSetup u c = do
 	-- verify configuration is sane
 	let buprepo = case M.lookup "buprepo" c of

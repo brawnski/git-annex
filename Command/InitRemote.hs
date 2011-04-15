@@ -44,14 +44,14 @@ start params = notBareRepo $ do
 	where
 		ws = words params
 		name = head ws
-		config = Remote.keyValToMap $ tail ws
+		config = Remote.keyValToConfig $ tail ws
 
-perform :: RemoteClass.RemoteType Annex -> UUID -> M.Map String String -> CommandPerform
+perform :: RemoteClass.RemoteType Annex -> UUID -> RemoteClass.RemoteConfig -> CommandPerform
 perform t u c = do
 	c' <- RemoteClass.setup t u c
 	return $ Just $ cleanup u c'
 
-cleanup :: UUID -> M.Map String String -> CommandCleanup
+cleanup :: UUID -> RemoteClass.RemoteConfig -> CommandCleanup
 cleanup u c = do
 	Remote.configSet u c
 	g <- Annex.gitRepo
@@ -65,7 +65,7 @@ cleanup u c = do
         return True
 
 {- Look up existing remote's UUID and config by name, or generate a new one -}
-findByName :: String -> Annex (UUID, M.Map String String)
+findByName :: String -> Annex (UUID, RemoteClass.RemoteConfig)
 findByName name = do
 	m <- Remote.readRemoteLog
 	case findByName' name m of
@@ -74,7 +74,7 @@ findByName name = do
 			uuid <- liftIO $ genUUID
 			return $ (uuid, M.insert nameKey name M.empty)
 
-findByName' :: String ->  M.Map UUID (M.Map String String) -> Maybe (UUID, M.Map String String)
+findByName' :: String ->  M.Map UUID RemoteClass.RemoteConfig -> Maybe (UUID, RemoteClass.RemoteConfig)
 findByName' n m = if null matches then Nothing else Just $ head matches
 	where
 		matches = filter (matching . snd) $ M.toList m
@@ -85,7 +85,7 @@ findByName' n m = if null matches then Nothing else Just $ head matches
 				| otherwise -> False
 
 {- find the specified remote type -}
-findType :: M.Map String String -> Annex (RemoteClass.RemoteType Annex)
+findType :: RemoteClass.RemoteConfig -> Annex (RemoteClass.RemoteType Annex)
 findType config = 
 	case M.lookup typeKey config of
 		Nothing -> error "Specify the type of remote with type="

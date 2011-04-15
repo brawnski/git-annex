@@ -15,6 +15,8 @@ import Data.Map as M
 import qualified GitRepo as Git
 import Key
 
+type RemoteConfig = M.Map String String
+
 {- There are different types of remotes. -}
 data RemoteType a = RemoteType {
 	-- human visible type name
@@ -22,9 +24,9 @@ data RemoteType a = RemoteType {
 	-- enumerates remotes of this type
 	enumerate :: a [Git.Repo],
 	-- generates a remote of this type
-	generate :: Git.Repo -> String -> Maybe (M.Map String String) -> a (Remote a),
+	generate :: Git.Repo -> String -> Maybe RemoteConfig -> a (Remote a),
 	-- initializes or changes a remote
-	setup :: String -> M.Map String String -> a (M.Map String String)
+	setup :: String -> RemoteConfig -> a RemoteConfig
 }
 
 {- An individual remote. -}
@@ -48,7 +50,7 @@ data Remote a = Remote {
 	-- operation.
 	hasKeyCheap :: Bool,
 	-- a Remote can have a persistent configuration store
-	config :: Maybe (M.Map String String)
+	config :: Maybe RemoteConfig
 }
 
 instance Show (Remote a) where

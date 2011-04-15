@@ -25,7 +25,7 @@ module Remote (
 	remoteLog,
 	readRemoteLog,
 	configSet,
-	keyValToMap
+	keyValToConfig
 ) where
 
 import Control.Monad.State (liftIO)
@@ -137,17 +137,17 @@ remoteLog = do
 	return $ gitStateDir g ++ "remote.log"
 
 {- Adds or updates a remote's config in the log. -}
-configSet :: UUID -> M.Map String String -> Annex ()
+configSet :: UUID -> RemoteConfig -> Annex ()
 configSet u c = do
 	m <- readRemoteLog
 	l <- remoteLog
 	liftIO $ safeWriteFile l $ unlines $ sort $
 		map toline $ M.toList $ M.insert u c m
 	where
-		toline (u', c') = u' ++ " " ++ (unwords $ mapToKeyVal c')
+		toline (u', c') = u' ++ " " ++ (unwords $ configToKeyVal c')
 
 {- Map of remotes by uuid containing key/value config maps. -}
-readRemoteLog :: Annex (M.Map UUID (M.Map String String))
+readRemoteLog :: Annex (M.Map UUID RemoteConfig)
 readRemoteLog = do
 	l <- remoteLog
 	s <- liftIO $ catch (readFile l) ignoreerror
@@ -155,7 +155,7 @@ readRemoteLog = do
 	where
 		ignoreerror _ = return ""
 
-remoteLogParse :: String -> M.Map UUID (M.Map String String)
+remoteLogParse :: String -> M.Map UUID RemoteConfig
 remoteLogParse s =
 	M.fromList $ catMaybes $ map parseline $ filter (not . null) $ lines s
 	where
@@ -165,18 +165,18 @@ remoteLogParse s =
 			where
 				w = words l
 				u = w !! 0
-				c = keyValToMap $ tail w
+				c = keyValToConfig $ tail w
 
-{- Given Strings like "key=value", generates a Map. -}
-keyValToMap :: [String] -> M.Map String String
-keyValToMap ws = M.fromList $ map (/=/) ws
+{- Given Strings like "key=value", generates a RemoteConfig. -}
+keyValToConfig :: [String] -> RemoteConfig
+keyValToConfig ws = M.fromList $ map (/=/) ws
 	where
 		(/=/) s = (k, v)
 			where
 				k = takeWhile (/= '=') s
 				v = drop (1 + length k) s
 
-mapToKeyVal :: M.Map String String -> [String]
-mapToKeyVal m = map toword $ sort $ M.toList m
+configToKeyVal :: M.Map String String -> [String]
+configToKeyVal m = map toword $ sort $ M.toList m
 	where
 		toword (k, v) = k ++ "=" ++ v
