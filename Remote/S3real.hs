@@ -28,6 +28,7 @@ import Messages
 import Locations
 import Config
 import Remote.Special
+import Remote.Encrypted
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -81,11 +82,8 @@ s3Connection c = do
 s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
 s3Setup u c = do
 	-- verify configuration is sane
-	case M.lookup "encryption" c of
-		Nothing -> error "Specify encryption=key or encryption=none"
-		Just "none" -> return ()
-		Just _ -> error "encryption keys not yet supported"
-	let fullconfig = M.union c defaults
+	c' <- encryptionSetup c
+	let fullconfig = M.union c' defaults
 
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig

@@ -26,8 +26,9 @@ import Locations
 import Config
 import Utility
 import Messages
-import Remote.Special
 import Ssh
+import Remote.Special
+import Remote.Encrypted
 
 type BupRepo = String
 
@@ -66,10 +67,7 @@ bupSetup u c = do
 	let buprepo = case M.lookup "buprepo" c of
 		Nothing -> error "Specify buprepo="
 		Just r -> r
-	case M.lookup "encryption" c of
-		Nothing -> error "Specify encryption=key or encryption=none"
-		Just "none" -> return ()
-		Just _ -> error "encryption keys not yet supported"
+	c' <- encryptionSetup c
 
 	-- bup init will create the repository.
 	-- (If the repository already exists, bup init again appears safe.)
@@ -81,9 +79,9 @@ bupSetup u c = do
 
 	-- The buprepo is stored in git config, as well as this repo's
 	-- persistant state, so it can vary between hosts.
-	gitConfigSpecialRemote u c "buprepo" buprepo
+	gitConfigSpecialRemote u c' "buprepo" buprepo
 
-	return $ M.delete "directory" c
+	return c'
 
 bupParams :: String -> BupRepo -> [CommandParam] -> [CommandParam]
 bupParams command buprepo params = 
