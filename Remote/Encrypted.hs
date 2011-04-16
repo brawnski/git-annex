@@ -23,7 +23,8 @@ encryptionSetup :: RemoteConfig -> Annex RemoteConfig
 encryptionSetup c =
 	case (M.lookup "encryption" c, extractCipher c) of
 		(Nothing, Nothing) -> error "Specify encryption=key or encryption=none"
-		(Just "none", _) -> return c
+		(Just "none", Nothing) -> return c
+		(Just "none", Just _) -> error "Cannot change encryption type of existing remote."
 		(Nothing, Just _) -> return c
 		(Just _, Nothing) -> use $ genCipher c
 		(Just _, Just v) -> use $ updateCipher c v
