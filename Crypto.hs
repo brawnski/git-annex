@@ -15,8 +15,8 @@ module Crypto (
 	extractCipher,
 	decryptCipher,		
 	encryptKey,
-	encryptContent,
-	decryptContent
+	withEncryptedContent,
+	withDecryptedContent,
 ) where
 
 import qualified Data.ByteString.Lazy.Char8 as L
@@ -26,8 +26,14 @@ import System.Cmd.Utils
 import Data.String.Utils
 import Data.List
 import Data.Bits.Utils
+import System.IO
+import System.Posix.IO
+import System.Posix.Types
+import Control.Concurrent
+import Control.Exception
 
 import Types
+import Key
 import RemoteClass
 import Utility
 
@@ -50,13 +56,16 @@ genCipher c = do
 	random <- genrandom
 	encryptCipher (Cipher random) ks
 	where
-		genrandom = gpgPipeRead
-			[ Params "--gen-random"
+		genrandom = gpgRead
+			-- Armor the random data, to avoid newlines,
+			-- since gpg only reads ciphers up to the first
+			-- newline.
+			[ Params "--gen-random --armor"
 			, Param $ show randomquality
 			, Param $ show ciphersize
 			]
 		randomquality = 1 :: Int -- 1 is /dev/urandom; 2 is /dev/random
-		ciphersize = 1024 :: Int
+		ciphersize = 256 :: Int
 
 {- Updates an existing Cipher, re-encrypting it to add KeyIds specified in
  - the remote's configuration. -}
@@ -72,8 +81,6 @@ updateCipher c encipher@(EncryptedCipher _ ks) = do
 storeCipher :: RemoteConfig -> EncryptedCipher -> RemoteConfig
 storeCipher c (EncryptedCipher t ks) = 
 	M.insert "cipher" (toB64 t) $ M.insert "cipherkeys" (show ks) c
-	where
-		toB64 = B64.encode . s2w8
 
 {- Extracts an EncryptedCipher from a remote's configuration. -}
 extractCipher :: RemoteConfig -> Maybe EncryptedCipher
@@ -81,16 +88,12 @@ extractCipher c =
 	case (M.lookup "cipher" c, M.lookup "cipherkeys" c) of
 		(Just t, Just ks) -> Just $ EncryptedCipher (fromB64 t) (read ks)
 		_ -> Nothing
-	where
-		fromB64 s = case B64.decode s of
-			Nothing -> error "bad base64 encoded cipher in remote config"
-			Just ws -> w82s ws
 
 {- Encrypts a Cipher to the specified KeyIds. -}
 encryptCipher :: Cipher -> KeyIds -> IO EncryptedCipher
 encryptCipher (Cipher c) (KeyIds ks) = do
 	let ks' = nub $ sort ks -- gpg complains about duplicate recipient keyids
-	encipher <- gpgPipeBoth (encrypt++recipients ks') c
+	encipher <- gpgPipeStrict (encrypt++recipients ks') c
 	return $ EncryptedCipher encipher (KeyIds ks')
 	where
 		encrypt = [ Params "--encrypt" ]
@@ -103,43 +106,80 @@ encryptCipher (Cipher c) (KeyIds ks) = do
 {- Decrypting an EncryptedCipher is expensive; the Cipher should be cached. -}
 decryptCipher :: RemoteConfig -> EncryptedCipher -> IO Cipher
 decryptCipher _ (EncryptedCipher encipher _) = 
-	return . Cipher =<< gpgPipeBoth decrypt encipher
+	return . Cipher =<< gpgPipeStrict decrypt encipher
 	where
-		decrypt = [ Params "--decrypt" ]
+		decrypt = [ Param "--decrypt" ]
 
-{- Genetates an encrypted form of a Key. The enctyption does not need to be
+{- Generates an encrypted form of a Key. The encryption does not need to be
  - reversable, nor does it need to be the same type of encryption used
- - on content. -}
+ - on content. It does need to be repeatable. -}
 encryptKey :: Cipher -> Key -> IO Key
-encryptKey = error "TODO"
+encryptKey c k =
+	return Key {
+		-- FIXME: should use HMAC with the cipher; I don't
+		-- have Data.Crypto in Debian yet though.
+		keyName = show k,
+		keyBackendName = "INSECURE",
+		keySize = Nothing, -- size and mtime omitted
+		keyMtime = Nothing -- to avoid leaking data
+	}
 
-{- Streams content, encrypting. -}
-encryptContent :: Cipher -> L.ByteString -> IO L.ByteString
-encryptContent = error "TODO"
+{- Streams encrypted content to an action. -}
+withEncryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+withEncryptedContent = gpgCipher [Params "--symmetric --force-mdc"]
 
-{- Streams encrypted content, decrypting. -}
-decryptContent :: Cipher -> L.ByteString -> IO L.ByteString
-decryptContent = error "TODO"
+{- Streams decrypted content to an action. -}
+withDecryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+withDecryptedContent = gpgCipher [Param "--decrypt"]
 
 
 gpgParams :: [CommandParam] -> [String]
 gpgParams params =
-	-- avoid console IO, and be quiet, even about checking the trustdb
+	-- avoid prompting, and be quiet, even about checking the trustdb
 	["--batch", "--quiet", "--trust-model", "always"] ++
 	toCommand params
 
-gpgPipeRead :: [CommandParam] -> IO String
-gpgPipeRead params = pOpen ReadFromPipe "gpg" (gpgParams params) hGetContentsStrict
+gpgRead :: [CommandParam] -> IO String
+gpgRead params = pOpen ReadFromPipe "gpg" (gpgParams params) hGetContentsStrict
 
-gpgPipeBoth :: [CommandParam] -> String -> IO String
-gpgPipeBoth params input = do
-	(_, s) <- pipeBoth "gpg" (gpgParams params) input
-	return s
+gpgPipeStrict :: [CommandParam] -> String -> IO String
+gpgPipeStrict params input = do
+	(_, output) <- pipeBoth "gpg" (gpgParams params) input
+	return output
+
+gpgPipeBytes :: [CommandParam] -> L.ByteString -> IO (PipeHandle, L.ByteString)
+gpgPipeBytes params input = do
+	(pid, fromh, toh) <- hPipeBoth "gpg" (gpgParams params)
+	_ <- forkIO $ finally (L.hPut toh input) (hClose toh)
+	output <- L.hGetContents fromh
+	return (pid, output)
+
+{- Runs gpg with a cipher and some parameters, feeding it an input,
+ - and piping its output lazily to an action. -}
+gpgCipher :: [CommandParam] -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+gpgCipher params (Cipher c) input a = do
+	-- pipe the passphrase into gpg on a fd
+	(frompipe, topipe) <- createPipe
+	toh <- fdToHandle topipe
+	let Fd fromno = frompipe
+	_ <- forkIO $ do
+		hPutStrLn toh c
+		hClose toh
+	let passphrase = [Param "--passphrase-fd", Param $ show fromno]
+	(pid, output) <- gpgPipeBytes (passphrase ++ params) input
+	
+	ret <- a output
+
+	-- cleanup
+	forceSuccess pid
+	closeFd frompipe
+
+	return ret
 
 configKeyIds :: RemoteConfig -> IO KeyIds
 configKeyIds c = do
 	let k = configGet c "encryption"
-	s <- gpgPipeRead [Params "--with-colons --list-public-keys", Param k]
+	s <- gpgRead [Params "--with-colons --list-public-keys", Param k]
 	return $ KeyIds $ parseWithColons s
 	where
 		parseWithColons s = map keyIdField $ filter pubKey $ lines s
@@ -151,3 +191,12 @@ configGet c key =
 	case M.lookup key c of
 		Just v -> v
 		Nothing -> error $ "missing " ++ key ++ " in remote config"
+
+toB64 :: String -> String		
+toB64 = B64.encode . s2w8
+
+fromB64 :: String -> String
+fromB64 s =
+	case B64.decode s of
+		Nothing -> error "bad base64 encoded data"
+		Just ws -> w82s ws
