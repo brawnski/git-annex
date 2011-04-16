@@ -26,6 +26,7 @@ import Config
 import Content
 import Utility
 import Remote.Special
+import Remote.Encrypted
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -59,11 +60,12 @@ directorySetup u c = do
 		Just d -> d
 	e <- liftIO $ doesDirectoryExist dir
 	when (not e) $ error $ "Directory does not exist: " ++ dir
+	c' <- encryptionSetup c
 
 	-- The directory is stored in git config, not in this remote's
 	-- persistant state, so it can vary between hosts.
-	gitConfigSpecialRemote u c "directory" dir
-	return $ M.delete "directory" c
+	gitConfigSpecialRemote u c' "directory" dir
+	return $ M.delete "directory" c'
 
 dirKey :: FilePath -> Key -> FilePath
 dirKey d k = d </> hashDirMixed k </> f </> f
