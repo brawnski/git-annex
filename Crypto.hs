@@ -9,6 +9,8 @@
  -}
 
 module Crypto (
+	Cipher,
+	EncryptedCipher,
 	genCipher,
 	updateCipher,
 	storeCipher,
@@ -133,7 +135,10 @@ gpgRead params = pOpen ReadFromPipe "gpg" (gpgParams params) hGetContentsStrict
 
 gpgPipeStrict :: [CommandParam] -> String -> IO String
 gpgPipeStrict params input = do
-	(_, output) <- pipeBoth "gpg" (gpgParams params) input
+	(pid, fromh, toh) <- hPipeBoth "gpg" (gpgParams params)
+	_ <- forkIO $ finally (hPutStr toh input) (hClose toh)
+	output <- hGetContentsStrict fromh
+	forceSuccess pid
 	return output
 
 gpgPipeBytes :: [CommandParam] -> L.ByteString -> IO (PipeHandle, L.ByteString)
