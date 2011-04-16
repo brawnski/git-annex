@@ -2,17 +2,19 @@ git-annex extends git's usual remotes with some [[special_remotes]], that
 are not git repositories. This way you can set up a remote using say,
 Amazon S3, and use git-annex to transfer files into the cloud.
 
-**Note that encrypted buckets are not (yet) supported. Data sent to S3
-is without encryption susceptible to snooping.**
-
 First, export your S3 credentials:
 
 	# export ANNEX_S3_ACCESS_KEY_ID="08TJMT99S3511WOZEP91"
 	# export ANNEX_S3_SECRET_ACCESS_KEY="s3kr1t"
 
-Next, create the S3 remote, and describe it.
+Now, create a gpg key, if you don't already have one. This will be used
+to encrypt everything stored in S3, for your privacy. Once you have
+a gpg key, run `gpg --list-secret-keys` to look up its key id, something
+like "2512E3C7"
 
-	# git annex initremote mys3 type=S3 encryption=none
+Next, create the S3 remote, and describe it. 
+
+	# git annex initremote mys3 type=S3 encryption=2512E3C7
 	initremote mys3 (checking bucket) (creating bucket in US) ok
 	# git annex describe mys3 "at Amazon's US datacenter"
 	describe mys3 ok

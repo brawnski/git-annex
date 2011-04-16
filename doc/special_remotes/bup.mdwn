@@ -15,11 +15,12 @@ for example; or clone bup's git repository to further back it up.
 
 These parameters can be passed to `git annex initremote` to configure bup:
 
-* `encryption` - Required. Either "none" to disable encryption,
+* `encryption` - Required. Either "none" to disable encryption of content
+  stored in bup (ssh will still be used to transport it securely),
   or a value that can be looked up (using gpg -k) to find a gpg encryption
   key that will be given access to the remote. Note that additional gpg
   keys can be given access to a remote by rerunning initremote with
-  the new key id.
+  the new key id. See [[encryption]].
 
 * `buprepo` - Required. This is passed to `bup` as the `--remote`
   to use to store data. To create the repository,`bup init` will be run.
@@ -34,13 +35,3 @@ can be used to, for example, limit its bandwidth.
 
 [[git-annex-shell]] does not support bup, due to the wacky way that bup
 starts its server. So, to use bup, you need full shell access to the server.
-
-## data security
-
-When encryption=none, there is **no** protection against your data being read
-by anyone who can access the bup remote. However, bup does transfer data
-using ssh, and if you trust the security of the remote, that's fine.
-
-** Encryption is not yet supported. **
-
-See [[design/encryption]].

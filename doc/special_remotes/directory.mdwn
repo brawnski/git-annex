@@ -1,8 +1,8 @@
 This special remote type stores file contents in directory.
 
-One use case for this would be if you have a removable drive, that you
-cannot put a git repository on for some reason, and you want to use it
-to sneakernet files between systems. Just set up both systems to use
+One use case for this would be if you have a removable drive that
+you want to use it to sneakernet files between systems (possibly with
+[[encrypted|encryption]] contents). Just set up both systems to use
 the drive's mountpoint as a directory remote.
 
 Setup example:
