@@ -36,18 +36,7 @@ import Types
 import Key
 import RemoteClass
 import Utility
-
-data Cipher = Cipher String -- XXX ideally, this would be a locked memory region
-
-data EncryptedCipher = EncryptedCipher String KeyIds
-
-data KeyIds = KeyIds [String]
-
-instance Show KeyIds where
-	show (KeyIds ks) = join "," ks
-
-instance Read KeyIds where
-	readsPrec _ s = [(KeyIds (split "," s), "")]
+import CryptoTypes
 
 {- Creates a new Cipher, encrypted as specified in the remote's configuration -}
 genCipher :: RemoteConfig -> IO EncryptedCipher

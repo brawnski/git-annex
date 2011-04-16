@@ -22,6 +22,7 @@ import qualified GitRepo as Git
 import qualified GitQueue
 import qualified BackendClass
 import qualified RemoteClass
+import qualified CryptoTypes
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -41,7 +42,8 @@ data AnnexState = AnnexState
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
 	, exclude :: [String]
-	} deriving (Show)
+	, cipher :: Maybe CryptoTypes.Cipher
+	}
 
 newState :: Git.Repo -> [BackendClass.Backend Annex] -> AnnexState
 newState gitrepo allbackends = AnnexState
@@ -58,6 +60,7 @@ newState gitrepo allbackends = AnnexState
 	, toremote = Nothing
 	, fromremote = Nothing
 	, exclude = []
+	, cipher = Nothing
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}
