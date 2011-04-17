@@ -30,8 +30,8 @@ repository use the same S3 remote is easy:
 Now the remote can be used like any other remote.
 
 	# git annex copy my_cool_big_file --to mys3
-	copy my_cool_big_file (to mys3...) ok
+	copy my_cool_big_file (unlocking) (checking mys3...) (to mys3...) ok
 	# git annex move video/hackity_hack_and_kaxxt.mov --to mys3
-	move video/hackity_hack_and_kaxxt.mov (to mys3...) ok
+	move video/hackity_hack_and_kaxxt.mov (unlocking) (checking mys3...) (to mys3...) ok
 
 See [[special_remotes/Amazon_S3]] for details.
