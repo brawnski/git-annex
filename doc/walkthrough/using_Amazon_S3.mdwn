@@ -14,24 +14,24 @@ like "2512E3C7"
 
 Next, create the S3 remote, and describe it. 
 
-	# git annex initremote mys3 type=S3 encryption=2512E3C7
-	initremote mys3 (checking bucket) (creating bucket in US) ok
-	# git annex describe mys3 "at Amazon's US datacenter"
-	describe mys3 ok
+	# git annex initremote cloud type=S3 encryption=2512E3C7
+	initremote cloud (checking bucket) (creating bucket in US) ok
+	# git annex describe cloud "at Amazon's US datacenter"
+	describe cloud ok
 
 The configuration for the S3 remote is stored in git. So to make another
 repository use the same S3 remote is easy:
 
 	# cd /media/usb/annex
         # git pull laptop master
-	# git annex initremote mys3
-	initremote mys3 (checking bucket) ok
+	# git annex initremote cloud
+	initremote cloud (checking bucket) ok
 
 Now the remote can be used like any other remote.
 
-	# git annex copy my_cool_big_file --to mys3
-	copy my_cool_big_file (unlocking) (checking mys3...) (to mys3...) ok
-	# git annex move video/hackity_hack_and_kaxxt.mov --to mys3
-	move video/hackity_hack_and_kaxxt.mov (unlocking) (checking mys3...) (to mys3...) ok
+	# git annex copy my_cool_big_file --to cloud
+	copy my_cool_big_file (gpg) (checking cloud...) (to cloud...) ok
+	# git annex move video/hackity_hack_and_kaxxt.mov --to cloud
+	move video/hackity_hack_and_kaxxt.mov (gpg) (checking cloud...) (to cloud...) ok
 
 See [[special_remotes/Amazon_S3]] for details.
