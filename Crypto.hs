@@ -48,6 +48,9 @@ import CryptoTypes
 {- The first half of a Cipher is used for HMAC; the remainder
  - is used as the GPG symmetric encryption passphrase.
  -
+ - HMAC SHA1 needs only 64 bytes. The remainder is for expansion,
+ - perhaps to HMAC SHA512, which needs 128 bytes (ideally).
+ -
  - 256 is enough for gpg's symetric cipher; unlike weaker public key
  - crypto, the key does not need to be too large.
  -}
