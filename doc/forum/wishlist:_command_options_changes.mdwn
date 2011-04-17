@@ -10,5 +10,7 @@ Some suggestions for changes to command options:
     * replace with: -d $DESTINATION || --destination=$DESTINATION
 
   * --force:
-    * add alternate: -F (-f was removed in v0.20110417)
+    * add alternate: -F
+      * "-f" was removed in v0.20110417
+      * since it forces unsafe operations, should be capitalized to reduce chance of accidental usage.
 
