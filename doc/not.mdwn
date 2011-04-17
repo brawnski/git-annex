@@ -5,6 +5,12 @@
   system. For a backup system that uses git and that git-annex supports
   storing data in, see [[special_remotes/bup]].
 
+* git-annex is not a filesystem or DropBox clone. But there
+  is a FUSE filesystem built on top of git-annex, called 
+  [ShareBox](https://github.com/chmduquesne/sharebox), and there is
+  interest in making it easy to use and covering some of the use
+  cases supported by DropBox.
+
 * git-annex is not unison, but if you're finding unison's checksumming
   too slow, or its strict mirroring of everything to both places too
   limiting, then git-annex could be a useful alternative.
