@@ -15,6 +15,7 @@ import RemoteClass
 import Crypto
 import qualified Annex
 import Messages
+import Config
 
 {- Encryption setup for a remote. The user must specify whether to use
  - an encryption key, or not encrypt. An encrypted cipher is created, or is
@@ -48,7 +49,8 @@ encryptableRemote c storeKeyEncrypted retrieveKeyFileEncrypted r =
 		storeKey = store,
 		retrieveKeyFile = retrieve,
 		removeKey = withkey $ removeKey r,
-		hasKey = withkey $ hasKey r
+		hasKey = withkey $ hasKey r,
+		cost = cost r + encryptedRemoteCostAdj
 	}
 	where
 		store k = do

@@ -39,6 +39,7 @@ import qualified Remote
 import qualified Content
 import qualified Command.DropUnused
 import qualified Key
+import qualified Config
 
 main :: IO ()
 main = do
@@ -61,6 +62,7 @@ quickcheck = TestLabel "quickcheck" $ TestList
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
 	, qctest "prop_relPathDirToDir_basics" Utility.prop_relPathDirToDir_basics
+	, qctest "prop_cost_sane" Config.prop_cost_sane
 	]
 
 blackbox :: Test

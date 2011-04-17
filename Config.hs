@@ -52,9 +52,24 @@ remoteCost r def = do
 cheapRemoteCost :: Int
 cheapRemoteCost = 100
 semiCheapRemoteCost :: Int
-semiCheapRemoteCost = 150
+semiCheapRemoteCost = 110
 expensiveRemoteCost :: Int
 expensiveRemoteCost = 200
+
+{- Adjust's a remote's cost to reflect it being encrypted. -}
+encryptedRemoteCostAdj :: Int
+encryptedRemoteCostAdj = 50
+
+{- Make sure the remote cost numbers work out. -}
+prop_cost_sane :: Bool
+prop_cost_sane = False `notElem`
+	[ expensiveRemoteCost > 0
+	, cheapRemoteCost < semiCheapRemoteCost
+	, semiCheapRemoteCost < expensiveRemoteCost
+	, cheapRemoteCost + encryptedRemoteCostAdj > semiCheapRemoteCost
+	, cheapRemoteCost + encryptedRemoteCostAdj < expensiveRemoteCost
+	, semiCheapRemoteCost + encryptedRemoteCostAdj < expensiveRemoteCost
+	]
 
 {- Checks if a repo should be ignored, based either on annex-ignore
  - setting, or on command-line options. Allows command-line to override
