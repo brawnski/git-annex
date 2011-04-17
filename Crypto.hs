@@ -24,6 +24,8 @@ module Crypto (
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import qualified Codec.Binary.Base64 as B64
+import Data.ByteString.Lazy.UTF8 (fromString)
+import Data.Digest.Pure.SHA
 import System.Cmd.Utils
 import Data.String.Utils
 import Data.List
@@ -105,12 +107,11 @@ decryptCipher _ (EncryptedCipher encipher _) =
  - reversable, nor does it need to be the same type of encryption used
  - on content. It does need to be repeatable. -}
 encryptKey :: Cipher -> Key -> IO Key
-encryptKey c k =
+encryptKey (Cipher c) k =
 	return Key {
-		-- FIXME: should use HMAC with the cipher; I don't
-		-- have Data.Crypto in Debian yet though.
-		keyName = show k,
-		keyBackendName = "INSECURE",
+		keyName = showDigest $
+			hmacSha1 (fromString $ show k) (fromString c),
+		keyBackendName = "GPGHMACSHA1",
 		keySize = Nothing, -- size and mtime omitted
 		keyMtime = Nothing -- to avoid leaking data
 	}
@@ -154,12 +155,12 @@ gpgCipher :: [CommandParam] -> Cipher -> L.ByteString -> (L.ByteString -> IO a) 
 gpgCipher params (Cipher c) input a = do
 	-- pipe the passphrase into gpg on a fd
 	(frompipe, topipe) <- createPipe
-	toh <- fdToHandle topipe
-	let Fd fromno = frompipe
 	_ <- forkIO $ do
+		toh <- fdToHandle topipe
 		hPutStrLn toh c
 		hClose toh
-	let passphrase = [Param "--passphrase-fd", Param $ show fromno]
+	let Fd passphrasefd = frompipe
+	let passphrase = [Param "--passphrase-fd", Param $ show passphrasefd]
 	(pid, output) <- gpgPipeBytes (passphrase ++ params) input
 	
 	ret <- a output
