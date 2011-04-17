@@ -82,14 +82,14 @@ store d k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
 	let dest = dirKey d k
-	liftIO $ catch (storeHelper dest $ copyFile src dest) (const $ return False)
+	liftIO $ catchBool $ storeHelper dest $ copyFile src dest
 
 storeEncrypted :: FilePath -> (Cipher, Key) -> Key -> Annex Bool
 storeEncrypted d (cipher, enck) k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
 	let dest = dirKey d enck
-	liftIO $ catch (storeHelper dest $ encrypt src dest) (const $ return False)
+	liftIO $ catchBool $ storeHelper dest $ encrypt src dest
 	where
 		encrypt src dest = do
 			content <- L.readFile src
@@ -112,23 +112,20 @@ retrieve d k f = liftIO $ copyFile (dirKey d k) f
 
 retrieveEncrypted :: FilePath -> (Cipher, Key) -> FilePath -> Annex Bool
 retrieveEncrypted d (cipher, enck) f =
-	liftIO $ catch decrypt (const $ return False)
-	where
-		decrypt = do
-			content <- L.readFile (dirKey d enck)
-			withDecryptedContent cipher content $ L.writeFile f
-			return True
+	liftIO $ catchBool $ do
+		content <- L.readFile (dirKey d enck)
+		withDecryptedContent cipher content $ L.writeFile f
+		return True
 
 remove :: FilePath -> Key -> Annex Bool
-remove d k = liftIO $ catch del (const $ return False)
+remove d k = liftIO $ catchBool $ do
+	allowWrite dir
+	removeFile file
+	removeDirectory dir
+	return True
 	where
 		file = dirKey d k
 		dir = parentDir file
-		del = do
-			allowWrite dir
-			removeFile file
-			removeDirectory dir
-			return True
 
 checkPresent :: FilePath -> Key -> Annex (Either IOException Bool)
 checkPresent d k = liftIO $ try $ doesFileExist (dirKey d k)

@@ -24,6 +24,7 @@ module Utility (
 	dirContains,
 	dirContents,
 	myHomeDir,
+	catchBool,
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -256,3 +257,7 @@ myHomeDir = do
 	uid <- getEffectiveUserID
 	u <- getUserEntryForID uid
 	return $ homeDirectory u
+
+{- Catches IO errors and returns a Bool -}
+catchBool :: IO Bool -> IO Bool
+catchBool = flip catch (const $ return False)
