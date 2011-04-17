@@ -131,8 +131,8 @@ encryptKey :: Cipher -> Key -> IO Key
 encryptKey c k =
 	return Key {
 		keyName = showDigest $ hmacSha1
-			(fromString $ show k)
-			(fromString $ cipherHmac c),
+			(fromString $ cipherHmac c)
+			(fromString $ show k),
 		keyBackendName = "GPGHMACSHA1",
 		keySize = Nothing, -- size and mtime omitted
 		keyMtime = Nothing -- to avoid leaking data
