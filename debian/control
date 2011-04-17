@@ -1,7 +1,18 @@
 Source: git-annex
 Section: utils
 Priority: optional
-Build-Depends: debhelper (>= 7.0.50), ghc6, libghc6-missingh-dev, libghc6-pcre-light-dev, libghc6-testpack-dev, ikiwiki, uuid, rsync, git | git-core, perlmagick
+Build-Depends: 
+	debhelper (>= 7.0.50),
+	ghc6,
+	libghc6-missingh-dev,
+	libghc6-pcre-light-dev,
+	libghc6-testpack-dev,
+	libghc6-sha-dev
+	ikiwiki,
+	perlmagick,
+	git | git-core,
+	uuid,
+	rsync,
 Maintainer: Joey Hess <joeyh@debian.org>
 Standards-Version: 3.9.1
 Vcs-Git: git://git.kitenet.net/git-annex
@@ -10,7 +21,11 @@ Homepage: http://git-annex.branchable.com/
 Package: git-annex
 Architecture: any
 Section: utils
-Depends: ${misc:Depends}, ${shlibs:Depends}, git | git-core, uuid, openssh-client, rsync
+Depends: ${misc:Depends}, ${shlibs:Depends},
+	git | git-core,
+	uuid,
+	rsync,
+	openssh-client
 Suggests: graphviz, bup, gnupg
 Description: manage files with git, without checking their contents into git
  git-annex allows managing files with git, without checking the file
