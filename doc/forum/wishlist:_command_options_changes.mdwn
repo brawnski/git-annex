@@ -10,5 +10,5 @@ Some suggestions for changes to command options:
     * replace with: -d $DESTINATION || --destination=$DESTINATION
 
   * --force:
-    * re-add alternate: -f (was removed in v0.20110417)
+    * add alternate: -F (-f was removed in v0.20110417)
 
