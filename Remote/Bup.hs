@@ -127,7 +127,7 @@ storeEncrypted r buprepo (cipher, enck) k = do
 	params <- bupSplitParams r buprepo enck (Param "-")
 	liftIO $ catchBool $ do
 		content <- L.readFile src
-		withEncryptedContentHandle cipher content $ \h -> do
+		withEncryptedHandle cipher content $ \h -> do
 			pipeBup params (Just h) Nothing
 
 retrieve :: BupRepo -> Key -> FilePath -> Annex Bool

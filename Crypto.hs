@@ -17,7 +17,8 @@ module Crypto (
 	extractCipher,
 	decryptCipher,		
 	encryptKey,
-	withEncryptedContentHandle,
+	withEncryptedHandle,
+	withDecryptedHandle,
 	withEncryptedContent,
 	withDecryptedContent,
 ) where
@@ -141,19 +142,27 @@ encryptKey c k =
 		keyMtime = Nothing -- to avoid leaking data
 	}
 
-{- Runs an action passing it a handle from which it can 
+{- Runs an action, passing it a handle from which it can 
  - stream encrypted content. -}
-withEncryptedContentHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
-withEncryptedContentHandle = gpgCipherHandle [Params "--symmetric --force-mdc"]
+withEncryptedHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+withEncryptedHandle = gpgCipherHandle [Params "--symmetric --force-mdc"]
+
+{- Runs an action, passing it a handle from which it can
+ - stream decrypted content. -}
+withDecryptedHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+withDecryptedHandle = gpgCipherHandle [Param "--decrypt"]
 
 {- Streams encrypted content to an action. -}
 withEncryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
-withEncryptedContent = gpgCipher [Params "--symmetric --force-mdc"]
+withEncryptedContent = pass withEncryptedHandle
 
 {- Streams decrypted content to an action. -}
 withDecryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
-withDecryptedContent = gpgCipher [Param "--decrypt"]
+withDecryptedContent = pass withDecryptedHandle
 
+pass :: (Cipher -> L.ByteString -> (Handle -> IO a) -> IO a) 
+      -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+pass to c i a = to c i $ \h -> a =<< L.hGetContents h
 
 gpgParams :: [CommandParam] -> [String]
 gpgParams params =
@@ -198,14 +207,6 @@ gpgCipherHandle params c input a = do
 	forceSuccess pid
 	closeFd frompipe
 	return ret
-
-{- Runs gpg with a cipher and some parameters, feeding it an input,
- - and piping its output lazily to an action. -}
-gpgCipher :: [CommandParam] -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
-gpgCipher params c input a = do
-	gpgCipherHandle params c input $ \h -> do
-		content <- L.hGetContents h
-		a content
 
 configKeyIds :: RemoteConfig -> IO KeyIds
 configKeyIds c = do
