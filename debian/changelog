@@ -1,3 +1,10 @@
+git-annex (0.20110418) UNRELEASED; urgency=low
+
+  * Don't run gpg in batch mode, so it can prompt for passphrase when
+    there is no agent.
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 17 Apr 2011 14:29:49 -0400
+
 git-annex (0.20110417) unstable; urgency=low
 
   * bup is now supported as a special type of remote.

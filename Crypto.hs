@@ -167,7 +167,7 @@ pass to c i a = to c i $ \h -> a =<< L.hGetContents h
 gpgParams :: [CommandParam] -> [String]
 gpgParams params =
 	-- avoid prompting, and be quiet, even about checking the trustdb
-	["--batch", "--quiet", "--trust-model", "always"] ++
+	["--quiet", "--trust-model", "always"] ++
 	toCommand params
 
 gpgRead :: [CommandParam] -> IO String
