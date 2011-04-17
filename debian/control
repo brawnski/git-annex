@@ -8,6 +8,7 @@ Build-Depends:
 	libghc6-pcre-light-dev,
 	libghc6-testpack-dev,
 	libghc6-sha-dev,
+	libghc6-dataenc-dev,
 	ikiwiki,
 	perlmagick,
 	git | git-core,
@@ -40,3 +41,4 @@ Description: manage files with git, without checking their contents into git
  versioned files, which is convenient for maintaining documents, Makefiles,
  etc that are associated with annexed files but that benefit from full
  revision control.
+
