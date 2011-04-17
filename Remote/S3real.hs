@@ -28,7 +28,7 @@ import Messages
 import Locations
 import Config
 import Remote.Special
-import Remote.Encrypted
+import Remote.Encryptable
 
 remote :: RemoteType Annex
 remote = RemoteType {

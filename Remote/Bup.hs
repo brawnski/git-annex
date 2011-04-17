@@ -29,7 +29,7 @@ import Utility
 import Messages
 import Ssh
 import Remote.Special
-import Remote.Encrypted
+import Remote.Encryptable
 import Crypto
 
 type BupRepo = String
@@ -49,7 +49,7 @@ gen r u c = do
 	bupr <- liftIO $ bup2GitRemote buprepo
 	(u', bupr') <- getBupUUID bupr u
 	
-	return $ encryptedRemote c
+	return $ encryptableRemote c
 		(storeEncrypted r buprepo)
 		(retrieveEncrypted buprepo)
 		Remote {

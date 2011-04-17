@@ -27,7 +27,7 @@ import Config
 import Content
 import Utility
 import Remote.Special
-import Remote.Encrypted
+import Remote.Encryptable
 import Crypto
 
 remote :: RemoteType Annex
@@ -42,7 +42,7 @@ gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	dir <- getConfig r "directory" (error "missing directory")
 	cst <- remoteCost r cheapRemoteCost
-	return $ encryptedRemote c
+	return $ encryptableRemote c
 		(storeEncrypted dir)
 		(retrieveEncrypted dir)
 		Remote {

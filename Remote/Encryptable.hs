@@ -1,11 +1,11 @@
-{- common functions for encrypted remotes
+{- common functions for encryptable remotes
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Remote.Encrypted where
+module Remote.Encryptable where
 
 import qualified Data.Map as M
 import Control.Monad.State (liftIO)
@@ -37,13 +37,13 @@ encryptionSetup c =
  -
  - Two additional functions must be provided by the remote,
  - to support storing and retrieving encrypted content. -}
-encryptedRemote
+encryptableRemote
 	:: Maybe RemoteConfig
 	-> ((Cipher, Key) -> Key -> Annex Bool)
 	-> ((Cipher, Key) -> FilePath -> Annex Bool)
 	-> Remote Annex 
 	-> Remote Annex
-encryptedRemote c storeKeyEncrypted retrieveKeyFileEncrypted r = 
+encryptableRemote c storeKeyEncrypted retrieveKeyFileEncrypted r = 
 	r {
 		storeKey = store,
 		retrieveKeyFile = retrieve,
