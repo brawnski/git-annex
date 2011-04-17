@@ -22,8 +22,8 @@ The basis of this scheme was originally developed by Lars Wirzenius et al
 [for Obnam](http://braawi.org/obnam/encryption/).
 """]]
 
-Data is encrypted by gpg, using a symmetric cipher. The passphrase of the
-cipher is itself checked into your git repository, encrypted using one or
+Data is encrypted by gpg, using a symmetric cipher.
+The cipher is itself checked into your git repository, encrypted using one or
 more gpg public keys. This scheme allows new gpg private keys to be given
 access to content that has already been stored in the remote.
 
@@ -57,6 +57,33 @@ What about `git annex fsck --from remote`? Such a command should be able to,
 for each file in the repository, contact the encrypted remote to check
 if it has the file. This can be done without enumeration, although it will
 mean running gpg once per file fscked, to get the encrypted filename.
+
+So, the files stored in the remote should be encrypted. But, it needs
+to be a repeatable encryption, so they cannot just be gpg encrypted,
+that would yeild a new name each time. Instead, HMAC is used. Any hash
+could be used with HMAC; currently SHA1 is used.
+
+It was suggested that it might not be wise to use the same cipher for both
+gpg and HMAC. Being paranoid, it's best not to tie the security of one
+to the security of the other. So, the encrypted cipher described above is
+actually split in two; half is used for HMAC, and half for gpg.
+
+----
+
+Does the HMAC cipher need to be gpg encrypted? Imagine if it were
+stored in plainext in the git repository. Anyone who can access
+the git repository already knows the actual filenames, and typically also
+the content hashes of annexed content. Having access to the HMAC cipher
+could perhaps be said to only let them verify that data they already
+know.
+
+While this seems a pretty persuasive argument, I'm not 100% convinced, and
+anyway, most times that the HMAC cipher is needed, the gpg cipher is also
+needed. Keeping the HMAC cipher encrypted does slow down two things:
+dropping content from encrypted remotes, and checking if encrypted remotes
+really have content. If it's later determined to be safe to not encrypt the
+HMAC cipher, the current design allows changing that, even for existing
+remotes.
 
 ## risks
 
