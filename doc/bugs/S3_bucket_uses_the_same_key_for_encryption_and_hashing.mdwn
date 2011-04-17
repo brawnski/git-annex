@@ -6,3 +6,5 @@ Compability for old buckets and support for different ones can be maintained by 
 
 > Bug was filed prematurely, but was a good bit of paranoia, and gpg and
 > hmac are given different secret keys [[done]] --[[Joey]] 
+
+>> Thanks :) -- RIchiH
