@@ -45,6 +45,24 @@ import RemoteClass
 import Utility
 import CryptoTypes
 
+{- The first half of a Cipher is used for HMAC; the remainder
+ - is used as the GPG symmetric encryption passphrase.
+ -
+ - 256 is enough for gpg's symetric cipher; unlike weaker public key
+ - crypto, the key does not need to be too large.
+ -}
+cipherHalf :: Int
+cipherHalf = 256
+
+cipherSize :: Int
+cipherSize = cipherHalf * 2
+
+cipherPassphrase :: Cipher -> String
+cipherPassphrase (Cipher c) = drop cipherHalf c
+
+cipherHmac :: Cipher -> String
+cipherHmac (Cipher c) = take cipherHalf c
+
 {- Creates a new Cipher, encrypted as specified in the remote's configuration -}
 genCipher :: RemoteConfig -> IO EncryptedCipher
 genCipher c = do
@@ -58,10 +76,10 @@ genCipher c = do
 			-- newline.
 			[ Params "--gen-random --armor"
 			, Param $ show randomquality
-			, Param $ show ciphersize
+			, Param $ show cipherSize
 			]
-		randomquality = 1 :: Int -- 1 is /dev/urandom; 2 is /dev/random
-		ciphersize = 256 :: Int
+		-- 1 is /dev/urandom; 2 is /dev/random
+		randomquality = 1 :: Int
 
 {- Updates an existing Cipher, re-encrypting it to add KeyIds specified in
  - the remote's configuration. -}
@@ -110,10 +128,11 @@ decryptCipher _ (EncryptedCipher encipher _) =
  - reversable, nor does it need to be the same type of encryption used
  - on content. It does need to be repeatable. -}
 encryptKey :: Cipher -> Key -> IO Key
-encryptKey (Cipher c) k =
+encryptKey c k =
 	return Key {
-		keyName = showDigest $
-			hmacSha1 (fromString $ show k) (fromString c),
+		keyName = showDigest $ hmacSha1
+			(fromString $ show k)
+			(fromString $ cipherHmac c),
 		keyBackendName = "GPGHMACSHA1",
 		keySize = Nothing, -- size and mtime omitted
 		keyMtime = Nothing -- to avoid leaking data
@@ -153,12 +172,12 @@ gpgPipeStrict params input = do
 {- Runs gpg with a cipher and some parameters, feeding it an input,
  - and passing a handle to its output to an action. -}
 gpgCipherHandle :: [CommandParam] -> Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
-gpgCipherHandle params (Cipher c) input a = do
+gpgCipherHandle params c input a = do
 	-- pipe the passphrase into gpg on a fd
 	(frompipe, topipe) <- createPipe
 	_ <- forkIO $ do
 		toh <- fdToHandle topipe
-		hPutStrLn toh c
+		hPutStrLn toh $ cipherPassphrase c
 		hClose toh
 	let Fd passphrasefd = frompipe
 	let passphrase = [Param "--passphrase-fd", Param $ show passphrasefd]

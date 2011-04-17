@@ -4,5 +4,5 @@ Also, ttbomk, HMAC needs two keys, not one. Are you re-using the same key twice?
 
 Compability for old buckets and support for different ones can be maintained by introducing a new option and simply copying over the encryption key's identifier into this new option should it be missing.
 
-> See [[design/encryption]]. I don't think this bug needs to be kept
-> open. [[done]] --[[Joey]] 
+> Bug was filed prematurely, but was a good bit of paranoia, and gpg and
+> hmac are given different secret keys [[done]] --[[Joey]] 
