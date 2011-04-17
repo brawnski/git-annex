@@ -29,6 +29,7 @@ import Locations
 import Config
 import Remote.Special
 import Remote.Encryptable
+import Crypto
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -41,16 +42,22 @@ remote = RemoteType {
 gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	cst <- remoteCost r expensiveRemoteCost
-	return $ this cst
+	return $ gen' r u c cst
+gen' :: Git.Repo -> UUID -> Maybe RemoteConfig -> Int -> Remote Annex
+gen' r u c cst =
+	encryptableRemote c
+		(storeEncrypted this)
+		(retrieveEncrypted this)
+		this
 	where
-		this cst = Remote {
+		this = Remote {
 			uuid = u,
 			cost = cst,
 			name = Git.repoDescribe r,
-	 		storeKey = store (this cst),
-			retrieveKeyFile = retrieve (this cst),
-			removeKey = remove (this cst),
-			hasKey = checkPresent (this cst),
+	 		storeKey = store this,
+			retrieveKeyFile = retrieve this,
+			removeKey = remove this,
+			hasKey = checkPresent this,
 			hasKeyCheap = False,
 			config = c
 		}
@@ -139,9 +146,21 @@ checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
 		noconn = Left $ error "S3 not configured"
 
 store :: Remote Annex -> Key -> Annex Bool
-store r k = s3Action r False $ \(conn, bucket) -> do
+store r k = storeHelper r k =<< lazyKeyContent k
+
+storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
+storeEncrypted r (cipher, enck) k = do
+	content <- lazyKeyContent k
+	content' <- liftIO $ withEncryptedContent cipher content return
+	storeHelper r enck content'
+
+lazyKeyContent :: Key -> Annex L.ByteString
+lazyKeyContent k = do
 	g <- Annex.gitRepo
-	content <- liftIO $ L.readFile $ gitAnnexLocation g k
+	liftIO $ L.readFile $ gitAnnexLocation g k
+
+storeHelper :: Remote Annex -> Key -> L.ByteString -> Annex Bool
+storeHelper r k content = s3Action r False $ \(conn, bucket) -> do
 	let object = setStorageClass storageclass $ bucketKey bucket k content
 	res <- liftIO $ sendObject conn object
 	case res of
@@ -156,16 +175,25 @@ store r k = s3Action r False $ \(conn, bucket) -> do
 				_ -> STANDARD
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
-retrieve r k f = s3Action r False $ \(conn, bucket) -> do
+retrieve = retrieveHelper (return . obj_data)
+
+retrieveEncrypted :: Remote Annex -> (Cipher, Key) -> FilePath -> Annex Bool
+retrieveEncrypted r (cipher, enck) f = retrieveHelper decrypt r enck f
+	where
+		decrypt o = withDecryptedContent cipher (obj_data o) return
+
+retrieveHelper :: (S3Object -> IO L.ByteString) -> Remote Annex -> Key -> FilePath -> Annex Bool
+retrieveHelper a r k f = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right o -> do
-			liftIO $ L.writeFile f (obj_data o)
+			content <- liftIO $ a o
+			liftIO $ L.writeFile f content
 			return True
 		Left e -> do
 			warning $ prettyReqError e
 			return False
-
+	
 remove :: Remote Annex -> Key -> Annex Bool
 remove r k = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
