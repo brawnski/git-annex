@@ -1,4 +1,4 @@
-git-annex (0.20110402) UNRELEASED; urgency=low
+git-annex (0.20110417) unstable; urgency=low
 
   * bup is now supported as a special type of remote.
   * The data sent to special remotes (Amazon S3, bup, etc) can be encrypted
@@ -20,7 +20,7 @@ git-annex (0.20110402) UNRELEASED; urgency=low
   * Support "sha1" and "sha512" commands on FreeBSD, and allow building
     if any/all SHA commands are not available. Thanks, Fraser Tweedale
 
- -- Joey Hess <joeyh@debian.org>  Sat, 02 Apr 2011 13:45:54 -0400
+ -- Joey Hess <joeyh@debian.org>  Sun, 17 Apr 2011 12:00:24 -0400
 
 git-annex (0.20110401) experimental; urgency=low
 
