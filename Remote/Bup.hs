@@ -7,6 +7,7 @@
 
 module Remote.Bup (remote) where
 
+import qualified Data.ByteString.Lazy.Char8 as L
 import IO
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
@@ -16,6 +17,7 @@ import System.Process
 import System.Exit
 import System.FilePath
 import Data.List.Utils
+import System.Cmd.Utils
 
 import RemoteClass
 import Types
@@ -29,6 +31,7 @@ import Messages
 import Ssh
 import Remote.Special
 import Remote.Encrypted
+import Crypto
 
 type BupRepo = String
 
@@ -47,16 +50,17 @@ gen r u c = do
 	bupr <- liftIO $ bup2GitRemote buprepo
 	(u', bupr') <- getBupUUID bupr u
 	
-	return $ this cst buprepo u' bupr'
-	where
-		this cst buprepo u' bupr = Remote {
+	return $ encryptedRemote c
+		(storeEncrypted r buprepo)
+		(retrieveEncrypted buprepo)
+		Remote {
 			uuid = u',
 			cost = cst,
 			name = Git.repoDescribe r,
  			storeKey = store r buprepo,
 			retrieveKeyFile = retrieve buprepo,
 			removeKey = remove,
-			hasKey = checkPresent r bupr,
+			hasKey = checkPresent r bupr',
 			hasKeyCheap = True,
 			config = c
 		}
@@ -92,13 +96,34 @@ bup command buprepo params = do
 	showProgress -- make way for bup output
 	liftIO $ boolSystem "bup" $ bupParams command buprepo params
 
+bupSplitParams :: Git.Repo -> BupRepo -> Key -> CommandParam -> Annex [CommandParam]
+bupSplitParams r buprepo k src = do
+	o <- getConfig r "bup-split-options" ""
+	let os = map Param $ words o
+	showProgress -- make way for bup output
+	return $ bupParams "split" buprepo 
+		(os ++ [Param "-n", Param (show k), src])
+
 store :: Git.Repo -> BupRepo -> Key -> Annex Bool
 store r buprepo k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
-	o <- getConfig r "bup-split-options" ""
-	let os = map Param $ words o
-	bup "split" buprepo $ os ++ [Param "-n", Param (show k), File src]
+	params <- bupSplitParams r buprepo k (File src)
+	liftIO $ boolSystem "bup" params
+
+storeEncrypted :: Git.Repo -> BupRepo -> (Cipher, Key) -> Key -> Annex Bool
+storeEncrypted r buprepo (cipher, enck) k = do
+	g <- Annex.gitRepo
+	let src = gitAnnexLocation g k
+	params <- bupSplitParams r buprepo enck (Param "-")
+	liftIO $ flip catch (const $ return False) $ do
+		content <- L.readFile src
+		-- FIXME hangs after a while
+		(pid, h) <- hPipeTo "bup" (toCommand params)
+		withEncryptedContent cipher content $ L.hPut h
+		hClose h
+		forceSuccess pid
+		return True
 
 retrieve :: BupRepo -> Key -> FilePath -> Annex Bool
 retrieve buprepo k f = do
@@ -115,6 +140,10 @@ retrieve buprepo k f = do
 	case ret of
 		Right r -> return r
 		Left _ -> return False
+
+retrieveEncrypted :: BupRepo -> (Cipher, Key) -> FilePath -> Annex Bool
+retrieveEncrypted bupreoo (cipher, enck) f = do
+	error "TODO"
 
 remove :: Key -> Annex Bool
 remove _ = do
