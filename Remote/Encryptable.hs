@@ -27,11 +27,12 @@ encryptionSetup c =
 		(Just "none", Nothing) -> return c
 		(Just "none", Just _) -> error "Cannot change encryption type of existing remote."
 		(Nothing, Just _) -> return c
-		(Just _, Nothing) -> use $ genCipher c
-		(Just _, Just v) -> use $ updateCipher c v
+		(Just _, Nothing) -> use "encryption setup" $ genCipher c
+		(Just _, Just v) -> use "encryption updated" $ updateCipher c v
 	where
-		use a = do
+		use m a = do
 			cipher <- liftIO a
+			showNote $ m ++ " " ++ describeCipher cipher
 			return $ M.delete "encryption" $ storeCipher c cipher
 
 {- Modifies a Remote to support encryption.

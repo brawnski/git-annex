@@ -13,6 +13,7 @@ module Crypto (
 	EncryptedCipher,
 	genCipher,
 	updateCipher,
+	describeCipher,
 	storeCipher,
 	extractCipher,
 	decryptCipher,		
@@ -94,6 +95,13 @@ updateCipher c encipher@(EncryptedCipher _ ks) = do
 	encryptCipher cipher (combine ks ks')
 	where
 		combine (KeyIds a) (KeyIds b) = KeyIds $ a ++ b
+
+describeCipher :: EncryptedCipher -> String
+describeCipher (EncryptedCipher _ (KeyIds ks)) =
+	"with gpg " ++ keys ks ++ " " ++ unwords ks
+	where
+		keys [_] = "key"
+		keys _ = "keys"
 
 {- Stores an EncryptedCipher in a remote's configuration. -}
 storeCipher :: RemoteConfig -> EncryptedCipher -> RemoteConfig
