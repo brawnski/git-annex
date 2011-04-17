@@ -17,6 +17,7 @@ import System.Process
 import System.Exit
 import System.FilePath
 import Data.List.Utils
+import System.Cmd.Utils
 
 import RemoteClass
 import Types
@@ -124,7 +125,7 @@ storeEncrypted r buprepo (cipher, enck) k = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g k
 	params <- bupSplitParams r buprepo enck (Param "-")
-	liftIO $ flip catch (const $ return False) $ do
+	liftIO $ catchBool $ do
 		content <- L.readFile src
 		withEncryptedContentHandle cipher content $ \h -> do
 			pipeBup params (Just h) Nothing
@@ -132,13 +133,19 @@ storeEncrypted r buprepo (cipher, enck) k = do
 retrieve :: BupRepo -> Key -> FilePath -> Annex Bool
 retrieve buprepo k f = do
 	let params = bupParams "join" buprepo [Param $ show k]
-	liftIO $ flip catch (const $ return False) $ do
+	liftIO $ catchBool $ do
 		tofile <- openFile f WriteMode
 		pipeBup params Nothing (Just tofile)
 
 retrieveEncrypted :: BupRepo -> (Cipher, Key) -> FilePath -> Annex Bool
-retrieveEncrypted bupreoo (cipher, enck) f = do
-	error "TODO"
+retrieveEncrypted buprepo (cipher, enck) f = do
+	let params = bupParams "join" buprepo [Param $ show enck]
+	liftIO $ catchBool $ do
+		(pid, h) <- hPipeFrom "bup" $ toCommand params
+		content <- L.hGetContents h
+		withDecryptedContent cipher content $ L.writeFile f
+		forceSuccess pid
+		return True
 
 remove :: Key -> Annex Bool
 remove _ = do
