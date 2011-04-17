@@ -42,17 +42,20 @@ gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	dir <- getConfig r "directory" (error "missing directory")
 	cst <- remoteCost r cheapRemoteCost
-	return $ Remote {
-		uuid = u,
-		cost = cst,
-		name = Git.repoDescribe r,
- 		storeKey = storeKeyEncrypted c $ store dir,
-		retrieveKeyFile = retrieveKeyFileEncrypted c $ retrieve dir,
-		removeKey = removeKeyEncrypted c $ remove dir,
-		hasKey = hasKeyEncrypted c $ checkPresent dir,
-		hasKeyCheap = True,
-		config = Nothing
-	}
+	return $ encryptedRemote c
+		(storeEncrypted dir)
+		(retrieveEncrypted dir)
+		Remote {
+			uuid = u,
+			cost = cst,
+			name = Git.repoDescribe r,
+ 			storeKey = store dir,
+			retrieveKeyFile = retrieve dir,
+			removeKey = remove dir,
+			hasKey = checkPresent dir,
+			hasKeyCheap = True,
+			config = Nothing
+		}
 
 directorySetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 directorySetup u c = do
@@ -74,43 +77,47 @@ dirKey d k = d </> hashDirMixed k </> f </> f
 	where
 		f = keyFile k
 
-store :: FilePath -> Key -> Maybe (Cipher, Key) -> Annex Bool
-store d k c = do
+store :: FilePath -> Key -> Annex Bool
+store d k = do
 	g <- Annex.gitRepo
-	let src = gitAnnexLocation g k	
-	liftIO $ catch (copy src) (const $ return False)
-	where
-		copy src = case c of
-			Just (cipher, enckey) -> do
-				content <- L.readFile src
-				let dest = dirKey d enckey
-				prep dest
-				withEncryptedContent cipher content $ \s -> do
-					L.writeFile dest s
-					cleanup True dest
-			_ -> do
-				let dest = dirKey d k
-				prep dest
-				ok <- copyFile src dest
-				cleanup ok dest
-		prep dest = liftIO $ do
-			let dir = parentDir dest
-			createDirectoryIfMissing True dir
-			allowWrite dir
-		cleanup ok dest = do
-			when ok $ do
-				let dir = parentDir dest
-				preventWrite dest
-				preventWrite dir
-			return ok
+	let src = gitAnnexLocation g k
+	let dest = dirKey d k
+	liftIO $ catch (storeHelper dest $ copyFile src dest) (const $ return False)
 
-retrieve :: FilePath -> Key -> FilePath -> Maybe (Cipher, Key) -> Annex Bool
-retrieve d k f Nothing = liftIO $ copyFile (dirKey d k) f
-retrieve d k f (Just (cipher, enckey)) = 
-	liftIO $ flip catch (const $ return False) $ do
-		content <- L.readFile (dirKey d enckey)
-		withDecryptedContent cipher content $ L.writeFile f
-		return True
+storeEncrypted :: FilePath -> (Cipher, Key) -> Key -> Annex Bool
+storeEncrypted d (cipher, enck) k = do
+	g <- Annex.gitRepo
+	let src = gitAnnexLocation g k
+	let dest = dirKey d enck
+	liftIO $ catch (storeHelper dest $ encrypt src dest) (const $ return False)
+	where
+		encrypt src dest = do
+			content <- L.readFile src
+			withEncryptedContent cipher content $ L.writeFile dest
+			return True
+
+storeHelper :: FilePath -> IO Bool -> IO Bool
+storeHelper dest a = do
+	let dir = parentDir dest
+	createDirectoryIfMissing True dir
+	allowWrite dir	
+	ok <- a
+	when ok $ do
+		preventWrite dest
+		preventWrite dir
+	return ok
+
+retrieve :: FilePath -> Key -> FilePath -> Annex Bool
+retrieve d k f = liftIO $ copyFile (dirKey d k) f
+
+retrieveEncrypted :: FilePath -> (Cipher, Key) -> FilePath -> Annex Bool
+retrieveEncrypted d (cipher, enck) f =
+	liftIO $ catch decrypt (const $ return False)
+	where
+		decrypt = do
+			content <- L.readFile (dirKey d enck)
+			withDecryptedContent cipher content $ L.writeFile f
+			return True
 
 remove :: FilePath -> Key -> Annex Bool
 remove d k = liftIO $ catch del (const $ return False)

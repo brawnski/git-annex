@@ -33,16 +33,39 @@ encryptionSetup c =
 			cipher <- liftIO a
 			return $ M.delete "encryption" $ storeCipher c cipher
 
-{- Helpers that can be applied to a Remote's normal actions to
- - add crypto support. -}
-storeKeyEncrypted :: Maybe RemoteConfig -> (Key -> Maybe (Cipher, Key) -> Annex a) -> Key -> Annex a
-storeKeyEncrypted c a k = a k =<< cipherKey c k
-retrieveKeyFileEncrypted :: Maybe RemoteConfig -> (Key -> FilePath -> Maybe (Cipher, Key) -> Annex a) -> Key -> FilePath -> Annex a
-retrieveKeyFileEncrypted c a k f = a k f =<< cipherKey c k
-removeKeyEncrypted :: Maybe RemoteConfig -> (Key -> Annex a) -> Key -> Annex a
-removeKeyEncrypted = withEncryptedKey
-hasKeyEncrypted :: Maybe RemoteConfig -> (Key -> Annex a) -> Key -> Annex a
-hasKeyEncrypted = withEncryptedKey
+{- Modifies a Remote to support encryption.
+ -
+ - Two additional functions must be provided by the remote,
+ - to support storing and retrieving encrypted content. -}
+encryptedRemote
+	:: Maybe RemoteConfig
+	-> ((Cipher, Key) -> Key -> Annex Bool)
+	-> ((Cipher, Key) -> FilePath -> Annex Bool)
+	-> Remote Annex 
+	-> Remote Annex
+encryptedRemote c storeKeyEncrypted retrieveKeyFileEncrypted r = 
+	r {
+		storeKey = store,
+		retrieveKeyFile = retrieve,
+		removeKey = withkey $ removeKey r,
+		hasKey = withkey $ hasKey r
+	}
+	where
+		store k = do
+			v <- cipherKey c k
+			case v of
+				Nothing -> (storeKey r) k
+				Just x -> storeKeyEncrypted x k
+		retrieve k f = do
+			v <- cipherKey c k
+			case v of
+				Nothing -> (retrieveKeyFile r) k f
+				Just x -> retrieveKeyFileEncrypted x f
+		withkey a k = do
+			v <- cipherKey c k
+			case v of
+				Nothing -> a k
+				Just (_, k') -> a k'
 
 {- Gets encryption Cipher, and encrypted version of Key. 
  -
@@ -64,12 +87,3 @@ cipherKey (Just c) k = do
 		ret cipher = do
 			k' <- liftIO $ encryptKey cipher k
 			return $ Just (cipher, k')
-
-{- Passes the encrypted version of the key to the action when encryption
- - is enabled, and the non-encrypted version otherwise. -}
-withEncryptedKey :: Maybe RemoteConfig -> (Key -> Annex a) -> Key -> Annex a
-withEncryptedKey c a k = do
-	v <- cipherKey c k
-	case v of
-		Nothing -> a k
-		Just (_, k') -> a k'
