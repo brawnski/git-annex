@@ -17,7 +17,6 @@ import System.Process
 import System.Exit
 import System.FilePath
 import Data.List.Utils
-import System.Cmd.Utils
 
 import RemoteClass
 import Types
@@ -96,6 +95,15 @@ bup command buprepo params = do
 	showProgress -- make way for bup output
 	liftIO $ boolSystem "bup" $ bupParams command buprepo params
 
+pipeBup :: [CommandParam] -> Maybe Handle -> Maybe Handle -> IO Bool
+pipeBup params inh outh = do
+	p <- runProcess "bup" (toCommand params)
+		Nothing Nothing inh outh Nothing
+	ok <- waitForProcess p
+	case ok of
+		ExitSuccess -> return True
+		_ -> return False
+
 bupSplitParams :: Git.Repo -> BupRepo -> Key -> CommandParam -> Annex [CommandParam]
 bupSplitParams r buprepo k src = do
 	o <- getConfig r "bup-split-options" ""
@@ -118,28 +126,15 @@ storeEncrypted r buprepo (cipher, enck) k = do
 	params <- bupSplitParams r buprepo enck (Param "-")
 	liftIO $ flip catch (const $ return False) $ do
 		content <- L.readFile src
-		-- FIXME hangs after a while
-		(pid, h) <- hPipeTo "bup" (toCommand params)
-		withEncryptedContent cipher content $ L.hPut h
-		hClose h
-		forceSuccess pid
-		return True
+		withEncryptedContentHandle cipher content $ \h -> do
+			pipeBup params (Just h) Nothing
 
 retrieve :: BupRepo -> Key -> FilePath -> Annex Bool
 retrieve buprepo k f = do
 	let params = bupParams "join" buprepo [Param $ show k]
-	ret <- liftIO $ try $ do
-		-- pipe bup's stdout directly to file
+	liftIO $ flip catch (const $ return False) $ do
 		tofile <- openFile f WriteMode
-		p <- runProcess "bup" (toCommand params) 
-			Nothing Nothing Nothing (Just tofile) Nothing
-		r <- waitForProcess p
-		case r of
-			ExitSuccess -> return True
-			_ -> return False
-	case ret of
-		Right r -> return r
-		Left _ -> return False
+		pipeBup params Nothing (Just tofile)
 
 retrieveEncrypted :: BupRepo -> (Cipher, Key) -> FilePath -> Annex Bool
 retrieveEncrypted bupreoo (cipher, enck) f = do

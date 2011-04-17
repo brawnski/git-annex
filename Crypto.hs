@@ -17,6 +17,7 @@ module Crypto (
 	extractCipher,
 	decryptCipher,		
 	encryptKey,
+	withEncryptedContentHandle,
 	withEncryptedContent,
 	withDecryptedContent,
 ) where
@@ -33,8 +34,10 @@ import Data.Bits.Utils
 import System.IO
 import System.Posix.IO
 import System.Posix.Types
+import System.Posix.Process
 import Control.Concurrent
 import Control.Exception
+import System.Exit
 
 import Types
 import Key
@@ -116,6 +119,11 @@ encryptKey (Cipher c) k =
 		keyMtime = Nothing -- to avoid leaking data
 	}
 
+{- Runs an action passing it a handle from which it can 
+ - stream encrypted content. -}
+withEncryptedContentHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+withEncryptedContentHandle = gpgCipherHandle [Params "--symmetric --force-mdc"]
+
 {- Streams encrypted content to an action. -}
 withEncryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
 withEncryptedContent = gpgCipher [Params "--symmetric --force-mdc"]
@@ -142,17 +150,10 @@ gpgPipeStrict params input = do
 	forceSuccess pid
 	return output
 
-gpgPipeBytes :: [CommandParam] -> L.ByteString -> IO (PipeHandle, L.ByteString)
-gpgPipeBytes params input = do
-	(pid, fromh, toh) <- hPipeBoth "gpg" (gpgParams params)
-	_ <- forkIO $ finally (L.hPut toh input) (hClose toh)
-	output <- L.hGetContents fromh
-	return (pid, output)
-
 {- Runs gpg with a cipher and some parameters, feeding it an input,
- - and piping its output lazily to an action. -}
-gpgCipher :: [CommandParam] -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
-gpgCipher params (Cipher c) input a = do
+ - and passing a handle to its output to an action. -}
+gpgCipherHandle :: [CommandParam] -> Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+gpgCipherHandle params (Cipher c) input a = do
 	-- pipe the passphrase into gpg on a fd
 	(frompipe, topipe) <- createPipe
 	_ <- forkIO $ do
@@ -161,15 +162,28 @@ gpgCipher params (Cipher c) input a = do
 		hClose toh
 	let Fd passphrasefd = frompipe
 	let passphrase = [Param "--passphrase-fd", Param $ show passphrasefd]
-	(pid, output) <- gpgPipeBytes (passphrase ++ params) input
-	
-	ret <- a output
+
+	(pid, fromh, toh) <- hPipeBoth "gpg" $
+		gpgParams $ passphrase ++ params
+	_ <- forkProcess $ do
+		L.hPut toh input
+		hClose toh
+		exitSuccess
+	hClose toh
+	ret <- a fromh
 
 	-- cleanup
 	forceSuccess pid
 	closeFd frompipe
-
 	return ret
+
+{- Runs gpg with a cipher and some parameters, feeding it an input,
+ - and piping its output lazily to an action. -}
+gpgCipher :: [CommandParam] -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+gpgCipher params c input a = do
+	gpgCipherHandle params c input $ \h -> do
+		content <- L.hGetContents h
+		a content
 
 configKeyIds :: RemoteConfig -> IO KeyIds
 configKeyIds c = do
