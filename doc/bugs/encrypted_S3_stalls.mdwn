@@ -5,3 +5,5 @@ dialup.
 There was a similar issue with bup, which I fixed by forking a process
 rather than using a thread to do some IO. Probably need the same here.
 --[[Joey]]
+
+[[done]] --[[Joey]] 

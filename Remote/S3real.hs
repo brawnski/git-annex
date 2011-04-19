@@ -100,13 +100,13 @@ s3Setup u c = do
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
 		Right _ -> return ()
-		Left err@(NetworkError _) -> error $ prettyReqError err
+		Left err@(NetworkError _) -> s3Error err
 		Left (AWSError _ _) -> do
 			showNote $ "creating bucket in " ++ datacenter
 			res <- liftIO $ createBucketIn conn bucket datacenter
 			case res of
 				Right _ -> return ()
-				Left err -> error $ prettyReqError err
+				Left err -> s3Error err
 
 	gitConfigSpecialRemote u fullconfig "s3" "true"
 	return fullconfig
@@ -141,33 +141,32 @@ checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
 	case res of
 		Right _ -> return $ Right True
 		Left (AWSError _ _) -> return $ Right False
-		Left e -> return $ Left (error $ prettyReqError e)
+		Left e -> return $ Left (s3Error e)
 	where
 		noconn = Left $ error "S3 not configured"
 
 store :: Remote Annex -> Key -> Annex Bool
-store r k = storeHelper r k =<< lazyKeyContent k
+store r k = s3Action r False $ \(conn, bucket) -> do
+	content <- lazyKeyContent k
+	res <- liftIO $ storeHelper (conn, bucket) r k content
+	s3Bool res
 
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
-storeEncrypted r (cipher, enck) k = do
+storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
 	content <- lazyKeyContent k
-	content' <- liftIO $ withEncryptedContent cipher content return
-	storeHelper r enck content'
+	res <- liftIO $ withEncryptedContent cipher content $ \s -> do
+		storeHelper (conn, bucket) r enck s
+	s3Bool res
 
 lazyKeyContent :: Key -> Annex L.ByteString
 lazyKeyContent k = do
 	g <- Annex.gitRepo
 	liftIO $ L.readFile $ gitAnnexLocation g k
 
-storeHelper :: Remote Annex -> Key -> L.ByteString -> Annex Bool
-storeHelper r k content = s3Action r False $ \(conn, bucket) -> do
+storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> L.ByteString -> IO (AWSResult ())
+storeHelper (conn, bucket) r k content = do
 	let object = setStorageClass storageclass $ bucketKey bucket k content
-	res <- liftIO $ sendObject conn object
-	case res of
-		Right _ -> return True
-		Left e -> do
-			warning $ prettyReqError e
-			return False
+	sendObject conn object
 	where
 		storageclass =
 			case fromJust $ M.lookup "storageclass" $ fromJust $ config r of
@@ -175,30 +174,41 @@ storeHelper r k content = s3Action r False $ \(conn, bucket) -> do
 				_ -> STANDARD
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
-retrieve = retrieveHelper (return . obj_data)
-
-retrieveEncrypted :: Remote Annex -> (Cipher, Key) -> FilePath -> Annex Bool
-retrieveEncrypted r (cipher, enck) f = retrieveHelper decrypt r enck f
-	where
-		decrypt o = withDecryptedContent cipher (obj_data o) return
-
-retrieveHelper :: (S3Object -> IO L.ByteString) -> Remote Annex -> Key -> FilePath -> Annex Bool
-retrieveHelper a r k f = s3Action r False $ \(conn, bucket) -> do
+retrieve r k f = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right o -> do
-			content <- liftIO $ a o
-			liftIO $ L.writeFile f content
+			liftIO $ L.writeFile f $ obj_data o
 			return True
-		Left e -> do
-			warning $ prettyReqError e
-			return False
-	
+		Left e -> s3Warning e
+
+retrieveEncrypted :: Remote Annex -> (Cipher, Key) -> FilePath -> Annex Bool
+retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
+	res <- liftIO $ getObject conn $ bucketKey bucket enck L.empty
+	case res of
+		Right o -> liftIO $ 
+			withDecryptedContent cipher (obj_data o) $ \content -> do
+				L.writeFile f content
+				return True
+		Left e -> s3Warning e
+
 remove :: Remote Annex -> Key -> Annex Bool
 remove r k = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
 	case res of
 		Right _ -> return True
-		Left e -> do
-			warning $ prettyReqError e
-			return False
+		Left e -> s3Warning e
+			
+s3Warning :: ReqError -> Annex Bool
+s3Warning e = do
+	warning $ prettyReqError e
+	return False
+
+s3Error :: ReqError -> a
+s3Error e = error $ prettyReqError e
+
+s3Bool :: AWSResult () -> Annex Bool
+s3Bool res = do
+	case res of
+		Right _ -> return True
+		Left e -> s3Warning e

@@ -199,7 +199,10 @@ gpgPipeStrict params input = do
 	return output
 
 {- Runs gpg with a cipher and some parameters, feeding it an input,
- - and passing a handle to its output to an action. -}
+ - and passing a handle to its output to an action.
+ -
+ - Note that to avoid deadlock with the cleanup stage,
+ - the action must fully consume gpg's input before returning. -}
 gpgCipherHandle :: [CommandParam] -> Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
 gpgCipherHandle params c input a = do
 	-- pipe the passphrase into gpg on a fd
