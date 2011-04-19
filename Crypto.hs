@@ -153,24 +153,24 @@ encryptKey c k =
 
 {- Runs an action, passing it a handle from which it can 
  - stream encrypted content. -}
-withEncryptedHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+withEncryptedHandle :: Cipher -> (IO L.ByteString) -> (Handle -> IO a) -> IO a
 withEncryptedHandle = gpgCipherHandle [Params "--symmetric --force-mdc"]
 
 {- Runs an action, passing it a handle from which it can
  - stream decrypted content. -}
-withDecryptedHandle :: Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
+withDecryptedHandle :: Cipher -> (IO L.ByteString) -> (Handle -> IO a) -> IO a
 withDecryptedHandle = gpgCipherHandle [Param "--decrypt"]
 
 {- Streams encrypted content to an action. -}
-withEncryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+withEncryptedContent :: Cipher -> (IO L.ByteString) -> (L.ByteString -> IO a) -> IO a
 withEncryptedContent = pass withEncryptedHandle
 
 {- Streams decrypted content to an action. -}
-withDecryptedContent :: Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+withDecryptedContent :: Cipher -> (IO L.ByteString) -> (L.ByteString -> IO a) -> IO a
 withDecryptedContent = pass withDecryptedHandle
 
-pass :: (Cipher -> L.ByteString -> (Handle -> IO a) -> IO a) 
-      -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
+pass :: (Cipher -> (IO L.ByteString) -> (Handle -> IO a) -> IO a) 
+      -> Cipher -> (IO L.ByteString) -> (L.ByteString -> IO a) -> IO a
 pass to c i a = to c i $ \h -> a =<< L.hGetContents h
 
 gpgParams :: [CommandParam] -> IO [String]
@@ -203,8 +203,8 @@ gpgPipeStrict params input = do
  -
  - Note that to avoid deadlock with the cleanup stage,
  - the action must fully consume gpg's input before returning. -}
-gpgCipherHandle :: [CommandParam] -> Cipher -> L.ByteString -> (Handle -> IO a) -> IO a
-gpgCipherHandle params c input a = do
+gpgCipherHandle :: [CommandParam] -> Cipher -> (IO L.ByteString) -> (Handle -> IO a) -> IO a
+gpgCipherHandle params c a b = do
 	-- pipe the passphrase into gpg on a fd
 	(frompipe, topipe) <- createPipe
 	_ <- forkIO $ do
@@ -217,11 +217,11 @@ gpgCipherHandle params c input a = do
 	params' <- gpgParams $ passphrase ++ params
 	(pid, fromh, toh) <- hPipeBoth "gpg" params'
 	_ <- forkProcess $ do
-		L.hPut toh input
+		L.hPut toh =<< a
 		hClose toh
 		exitSuccess
 	hClose toh
-	ret <- a fromh
+	ret <- b fromh
 
 	-- cleanup
 	forceSuccess pid

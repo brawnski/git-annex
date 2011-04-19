@@ -3,7 +3,8 @@ git-annex (0.20110418) UNRELEASED; urgency=low
   * Don't run gpg in batch mode, so it can prompt for passphrase when
     there is no agent.
   * Add missing build dep on dataenc.
-  * Fix stalls in S3 when transferring encrypted data.
+  * S3: Fix stalls when transferring encrypted data.
+  * bup: Avoid memory leak when transferring encrypted data.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 17 Apr 2011 14:29:49 -0400
 

@@ -106,7 +106,7 @@ store r k = s3Action r False $ \(conn, bucket) -> do
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
 storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
 	content <- lazyKeyContent k
-	res <- liftIO $ withEncryptedContent cipher content $ \s -> do
+	res <- liftIO $ withEncryptedContent cipher (return content) $ \s -> do
 		storeHelper (conn, bucket) r enck s
 	s3Bool res
 
@@ -139,7 +139,7 @@ retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ getObject conn $ bucketKey bucket enck L.empty
 	case res of
 		Right o -> liftIO $ 
-			withDecryptedContent cipher (obj_data o) $ \content -> do
+			withDecryptedContent cipher (return $ obj_data o) $ \content -> do
 				L.writeFile f content
 				return True
 		Left e -> s3Warning e

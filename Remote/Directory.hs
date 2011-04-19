@@ -92,8 +92,7 @@ storeEncrypted d (cipher, enck) k = do
 	liftIO $ catchBool $ storeHelper dest $ encrypt src dest
 	where
 		encrypt src dest = do
-			content <- L.readFile src
-			withEncryptedContent cipher content $ L.writeFile dest
+			withEncryptedContent cipher (L.readFile src) $ L.writeFile dest
 			return True
 
 storeHelper :: FilePath -> IO Bool -> IO Bool
@@ -113,8 +112,7 @@ retrieve d k f = liftIO $ copyFile (dirKey d k) f
 retrieveEncrypted :: FilePath -> (Cipher, Key) -> FilePath -> Annex Bool
 retrieveEncrypted d (cipher, enck) f =
 	liftIO $ catchBool $ do
-		content <- L.readFile (dirKey d enck)
-		withDecryptedContent cipher content $ L.writeFile f
+		withDecryptedContent cipher (L.readFile (dirKey d enck)) $ L.writeFile f
 		return True
 
 remove :: FilePath -> Key -> Annex Bool

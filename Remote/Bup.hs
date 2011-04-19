@@ -126,8 +126,7 @@ storeEncrypted r buprepo (cipher, enck) k = do
 	let src = gitAnnexLocation g k
 	params <- bupSplitParams r buprepo enck (Param "-")
 	liftIO $ catchBool $ do
-		content <- L.readFile src
-		withEncryptedHandle cipher content $ \h -> do
+		withEncryptedHandle cipher (L.readFile src) $ \h -> do
 			pipeBup params (Just h) Nothing
 
 retrieve :: BupRepo -> Key -> FilePath -> Annex Bool
@@ -142,8 +141,7 @@ retrieveEncrypted buprepo (cipher, enck) f = do
 	let params = bupParams "join" buprepo [Param $ show enck]
 	liftIO $ catchBool $ do
 		(pid, h) <- hPipeFrom "bup" $ toCommand params
-		content <- L.hGetContents h
-		withDecryptedContent cipher content $ L.writeFile f
+		withDecryptedContent cipher (L.hGetContents h) $ L.writeFile f
 		forceSuccess pid
 		return True
 
