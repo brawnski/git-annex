@@ -62,30 +62,6 @@ gen' r u c cst =
 			config = c
 		}
 
-s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
-s3ConnectionRequired c = do
-	conn <- s3Connection c
-	case conn of
-		Nothing -> error "Cannot connect to S3"
-		Just conn' -> return conn'
-
-s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
-s3Connection c = do
-	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
-	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
-	if (null ak || null sk)
-		then do
-			warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
-			return Nothing
-		else return $ Just $ AWSConnection host port ak sk
-	where
-		host = fromJust $ (M.lookup "host" c)
-		port = let s = fromJust $ (M.lookup "port" c) in
-			case reads s of
-			[(p, _)] -> p
-			_ -> error $ "bad S3 port value: " ++ s
-		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
-
 s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
 s3Setup u c = do
 	-- verify configuration is sane
@@ -120,30 +96,6 @@ s3Setup u c = do
 			, ("port", show defaultAmazonS3Port)
 			, ("bucket", bucket)
 			]
-
-s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
-s3Action r noconn action = do
-	when (config r == Nothing) $
-		error $ "Missing configuration for special remote " ++ name r
-	let bucket = M.lookup "bucket" $ fromJust $ config r
-	conn <- s3Connection (fromJust $ config r)
-	case (bucket, conn) of
-		(Just b, Just c) -> action (c, b)
-		_ -> return noconn
-
-bucketKey :: String -> Key -> L.ByteString -> S3Object
-bucketKey bucket k content = S3Object bucket (show k) "" [] content
-
-checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
-checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
-	showNote ("checking " ++ name r ++ "...")
-	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
-	case res of
-		Right _ -> return $ Right True
-		Left (AWSError _ _) -> return $ Right False
-		Left e -> return $ Left (s3Error e)
-	where
-		noconn = Left $ error "S3 not configured"
 
 store :: Remote Annex -> Key -> Annex Bool
 store r k = s3Action r False $ \(conn, bucket) -> do
@@ -195,9 +147,18 @@ retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
 remove :: Remote Annex -> Key -> Annex Bool
 remove r k = s3Action r False $ \(conn, bucket) -> do
 	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
+	s3Bool res
+
+checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
+checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
+	showNote ("checking " ++ name r ++ "...")
+	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
 	case res of
-		Right _ -> return True
-		Left e -> s3Warning e
+		Right _ -> return $ Right True
+		Left (AWSError _ _) -> return $ Right False
+		Left e -> return $ Left (s3Error e)
+	where
+		noconn = Left $ error "S3 not configured"
 			
 s3Warning :: ReqError -> Annex Bool
 s3Warning e = do
@@ -212,3 +173,40 @@ s3Bool res = do
 	case res of
 		Right _ -> return True
 		Left e -> s3Warning e
+
+s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
+s3ConnectionRequired c = do
+	conn <- s3Connection c
+	case conn of
+		Nothing -> error "Cannot connect to S3"
+		Just conn' -> return conn'
+
+s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
+s3Connection c = do
+	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
+	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
+	if (null ak || null sk)
+		then do
+			warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
+			return Nothing
+		else return $ Just $ AWSConnection host port ak sk
+	where
+		host = fromJust $ (M.lookup "host" c)
+		port = let s = fromJust $ (M.lookup "port" c) in
+			case reads s of
+			[(p, _)] -> p
+			_ -> error $ "bad S3 port value: " ++ s
+		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
+
+s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
+s3Action r noconn action = do
+	when (config r == Nothing) $
+		error $ "Missing configuration for special remote " ++ name r
+	let bucket = M.lookup "bucket" $ fromJust $ config r
+	conn <- s3Connection (fromJust $ config r)
+	case (bucket, conn) of
+		(Just b, Just c) -> action (c, b)
+		_ -> return noconn
+
+bucketKey :: String -> Key -> L.ByteString -> S3Object
+bucketKey bucket k content = S3Object bucket (show k) "" [] content
