@@ -99,21 +99,18 @@ s3Setup u c = do
 
 store :: Remote Annex -> Key -> Annex Bool
 store r k = s3Action r False $ \(conn, bucket) -> do
-	content <- lazyKeyContent k
+	g <- Annex.gitRepo
+	content <- liftIO $ L.readFile $ gitAnnexLocation g k
 	res <- liftIO $ storeHelper (conn, bucket) r k content
 	s3Bool res
 
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
 storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
-	content <- lazyKeyContent k
-	res <- liftIO $ withEncryptedContent cipher (return content) $ \s -> do
+	g <- Annex.gitRepo
+	let f = gitAnnexLocation g k
+	res <- liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> do
 		storeHelper (conn, bucket) r enck s
 	s3Bool res
-
-lazyKeyContent :: Key -> Annex L.ByteString
-lazyKeyContent k = do
-	g <- Annex.gitRepo
-	liftIO $ L.readFile $ gitAnnexLocation g k
 
 storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> L.ByteString -> IO (AWSResult ())
 storeHelper (conn, bucket) r k content = do

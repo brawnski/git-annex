@@ -2,6 +2,7 @@ S3 has two memory leaks.
 
 One only occurs with encryption. It was was fixed for bup, but
 not yet for S3, in 5985acdfad8a6791f0b2fc54a1e116cee9c12479.
+(The fix I used for bup doesn't seem to work with S3.)
 
 The other occurs independant of encryption use. Copying a 100 mb
 file to S3 causes an immediate sharp memory spike to 119 mb.
