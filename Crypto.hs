@@ -38,8 +38,9 @@ import System.Posix.IO
 import System.Posix.Types
 import System.Posix.Process
 import Control.Concurrent
-import Control.Exception
+import Control.Exception (finally)
 import System.Exit
+import System.Environment
 
 import Types
 import Key
@@ -172,18 +173,26 @@ pass :: (Cipher -> L.ByteString -> (Handle -> IO a) -> IO a)
       -> Cipher -> L.ByteString -> (L.ByteString -> IO a) -> IO a
 pass to c i a = to c i $ \h -> a =<< L.hGetContents h
 
-gpgParams :: [CommandParam] -> [String]
-gpgParams params =
-	-- avoid prompting, and be quiet, even about checking the trustdb
-	["--quiet", "--trust-model", "always"] ++
-	toCommand params
+gpgParams :: [CommandParam] -> IO [String]
+gpgParams params = do
+	-- Enable batch mode if GPG_AGENT_INFO is set, to avoid extraneous
+	-- gpg output about password prompts.
+	e <- catch (getEnv "GPG_AGENT_INFO") (const $ return "")
+	let batch = if null e then [] else ["--batch"]
+	return $ batch ++ defaults ++ toCommand params
+	where
+		-- be quiet, even about checking the trustdb
+		defaults = ["--quiet", "--trust-model", "always"]
 
 gpgRead :: [CommandParam] -> IO String
-gpgRead params = pOpen ReadFromPipe "gpg" (gpgParams params) hGetContentsStrict
+gpgRead params = do
+	params' <- gpgParams params
+	pOpen ReadFromPipe "gpg" params' hGetContentsStrict
 
 gpgPipeStrict :: [CommandParam] -> String -> IO String
 gpgPipeStrict params input = do
-	(pid, fromh, toh) <- hPipeBoth "gpg" (gpgParams params)
+	params' <- gpgParams params
+	(pid, fromh, toh) <- hPipeBoth "gpg" params'
 	_ <- forkIO $ finally (hPutStr toh input) (hClose toh)
 	output <- hGetContentsStrict fromh
 	forceSuccess pid
@@ -202,8 +211,8 @@ gpgCipherHandle params c input a = do
 	let Fd passphrasefd = frompipe
 	let passphrase = [Param "--passphrase-fd", Param $ show passphrasefd]
 
-	(pid, fromh, toh) <- hPipeBoth "gpg" $
-		gpgParams $ passphrase ++ params
+	params' <- gpgParams $ passphrase ++ params
+	(pid, fromh, toh) <- hPipeBoth "gpg" params'
 	_ <- forkProcess $ do
 		L.hPut toh input
 		hClose toh
