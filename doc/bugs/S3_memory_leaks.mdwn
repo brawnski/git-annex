@@ -1,14 +1,21 @@
 S3 has two memory leaks.
 
+## with encryption
+
 One only occurs with encryption. It was was fixed for bup, but
 not yet for S3, in 5985acdfad8a6791f0b2fc54a1e116cee9c12479.
 (The fix I used for bup doesn't seem to work with S3.)
+
+## always
 
 The other occurs independant of encryption use. Copying a 100 mb
 file to S3 causes an immediate sharp memory spike to 119 mb.
 Copying the file back from S3 causes a slow memory increase toward 119 mb.
 It's likely that this memory is used by the hS3 library, if it does not
 construct the message to Amazon lazily. (And it may not be possible to
-construct it lazily, if it includes checksum headers..)  I have
-emailed the hS3 author about this.
+construct it lazily, if it includes checksum headers..)  
+
+I have emailed the hS3 author about this. He wrote back quickly, seems
+only getting the size of the file is causing it to be buffered, and a quick
+fix should be forthcoming.
 --[[Joey]]
