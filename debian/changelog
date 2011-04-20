@@ -1,4 +1,4 @@
-git-annex (0.20110418) UNRELEASED; urgency=low
+git-annex (0.20110419) unstable; urgency=low
 
   * Don't run gpg in batch mode, so it can prompt for passphrase when
     there is no agent.
@@ -6,7 +6,7 @@ git-annex (0.20110418) UNRELEASED; urgency=low
   * S3: Fix stalls when transferring encrypted data.
   * bup: Avoid memory leak when transferring encrypted data.
 
- -- Joey Hess <joeyh@debian.org>  Sun, 17 Apr 2011 14:29:49 -0400
+ -- Joey Hess <joeyh@debian.org>  Tue, 19 Apr 2011 21:26:51 -0400
 
 git-annex (0.20110417) unstable; urgency=low
 
