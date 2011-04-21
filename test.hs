@@ -40,6 +40,7 @@ import qualified Content
 import qualified Command.DropUnused
 import qualified Key
 import qualified Config
+import qualified Crypto
 
 main :: IO ()
 main = do
@@ -63,6 +64,7 @@ quickcheck = TestLabel "quickcheck" $ TestList
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
 	, qctest "prop_relPathDirToDir_basics" Utility.prop_relPathDirToDir_basics
 	, qctest "prop_cost_sane" Config.prop_cost_sane
+	, qctest "prop_hmacWithCipher_sane" Crypto.prop_hmacWithCipher_sane
 	]
 
 blackbox :: Test

@@ -22,6 +22,8 @@ module Crypto (
 	withDecryptedHandle,
 	withEncryptedContent,
 	withDecryptedContent,
+
+	prop_hmacWithCipher_sane
 ) where
 
 import qualified Data.ByteString.Lazy.Char8 as L
@@ -144,9 +146,7 @@ decryptCipher _ (EncryptedCipher encipher _) =
 encryptKey :: Cipher -> Key -> IO Key
 encryptKey c k =
 	return Key {
-		keyName = showOctets $ hmac_sha1
-			(s2w8 $ cipherHmac c)
-			(s2w8 $ show k),
+		keyName = hmacWithCipher c (show k),
 		keyBackendName = "GPGHMACSHA1",
 		keySize = Nothing, -- size and mtime omitted
 		keyMtime = Nothing -- to avoid leaking data
@@ -259,4 +259,14 @@ showOctets = concat . map hexChars
 	where
 		hexChars c = [arr ! (c `div` 16), arr ! (c `mod` 16)]
 		arr = listArray (0, 15) "0123456789abcdef"
+ 
+hmacWithCipher :: Cipher -> String -> String
+hmacWithCipher c = hmacWithCipher' (cipherHmac c) 
+hmacWithCipher' :: String -> String -> String
+hmacWithCipher' c s = showOctets $ hmac_sha1 (s2w8 c) (s2w8 s)
 
+{- Ensure that hmacWithCipher' returns the same thing forevermore. -}
+prop_hmacWithCipher_sane :: Bool
+prop_hmacWithCipher_sane = known_good == hmacWithCipher' "foo" "bar"
+	where
+		known_good = "46b4ec586117154dacd49d664e5d63fdc88efb51"
