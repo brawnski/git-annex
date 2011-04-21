@@ -17,5 +17,7 @@ construct it lazily, if it includes checksum headers..)
 
 I have emailed the hS3 author about this. He wrote back quickly, seems
 only getting the size of the file is causing it to be buffered, and a quick
-fix should be forthcoming.
+fix should be forthcoming. Update: 0.5.6 has been released which will
+allow providing file size out of band to avoid buffering when uploading.
+Downloading will take further work in hS3.
 --[[Joey]]
