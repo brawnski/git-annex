@@ -1,4 +1,4 @@
-git-annex (0.20110420) UNRELEASED; urgency=low
+git-annex (0.20110420) unstable; urgency=low
 
   * Update Debian build dependencies for ghc 7.
   * Debian package is now built with S3 support.
@@ -7,7 +7,7 @@ git-annex (0.20110420) UNRELEASED; urgency=low
     Thanks Greg Heartsfield for ongoing work to improve the hS3 library
     for git-annex.
 
- -- Joey Hess <joeyh@debian.org>  Thu, 21 Apr 2011 02:00:00 -0400
+ -- Joey Hess <joeyh@debian.org>  Thu, 21 Apr 2011 15:00:48 -0400
 
 git-annex (0.20110419) unstable; urgency=low
 
