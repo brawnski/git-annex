@@ -1,3 +1,12 @@
+git-annex (0.20110420) UNRELEASED; urgency=low
+
+  * Update Debian build dependencies for ghc 7.
+  * Debian package is now built with S3 support. Thanks Joachim Breitner for
+    making this possible, also thanks Greg Heartsfield for working to improve
+    the hS3 library for git-annex.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 21 Apr 2011 02:00:00 -0400
+
 git-annex (0.20110419) unstable; urgency=low
 
   * Don't run gpg in batch mode, so it can prompt for passphrase when

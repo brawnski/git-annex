@@ -32,7 +32,7 @@ module Backend (
 	maybeLookupBackendName
 ) where
 
-import Control.Monad.State
+import Control.Monad.State hiding (state)
 import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files
