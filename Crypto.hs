@@ -27,20 +27,21 @@ module Crypto (
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import qualified Codec.Binary.Base64 as B64
-import Data.ByteString.Lazy.UTF8 (fromString)
-import Data.Digest.Pure.SHA
-import System.Cmd.Utils
 import Data.String.Utils
 import Data.List
 import Data.Bits.Utils
+import Data.HMAC
+import Data.Array
+import Codec.Utils
+import System.Cmd.Utils
 import System.IO
 import System.Posix.IO
 import System.Posix.Types
 import System.Posix.Process
-import Control.Concurrent
-import Control.Exception (finally)
 import System.Exit
 import System.Environment
+import Control.Concurrent
+import Control.Exception (finally)
 
 import Types
 import Key
@@ -143,9 +144,9 @@ decryptCipher _ (EncryptedCipher encipher _) =
 encryptKey :: Cipher -> Key -> IO Key
 encryptKey c k =
 	return Key {
-		keyName = showDigest $ hmacSha1
-			(fromString $ cipherHmac c)
-			(fromString $ show k),
+		keyName = showOctets $ hmac_sha1
+			(s2w8 $ cipherHmac c)
+			(s2w8 $ show k),
 		keyBackendName = "GPGHMACSHA1",
 		keySize = Nothing, -- size and mtime omitted
 		keyMtime = Nothing -- to avoid leaking data
@@ -252,3 +253,10 @@ fromB64 s =
 	case B64.decode s of
 		Nothing -> error "bad base64 encoded data"
 		Just ws -> w82s ws
+
+showOctets :: [Octet] -> String
+showOctets = concat . map hexChars
+	where
+		hexChars c = [arr ! (c `div` 16), arr ! (c `mod` 16)]
+		arr = listArray (0, 15) "0123456789abcdef"
+

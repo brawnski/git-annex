@@ -1,3 +1,9 @@
+git-annex (0.20110421) UNRELEASED; urgency=low
+
+  * Use haskell Crypto library instead of haskell SHA library.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 21 Apr 2011 16:35:27 -0400
+
 git-annex (0.20110420) unstable; urgency=low
 
   * Update Debian build dependencies for ghc 7.
