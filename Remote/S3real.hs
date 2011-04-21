@@ -33,6 +33,7 @@ import Remote.Special
 import Remote.Encryptable
 import Crypto
 import Key
+import Utility
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -113,6 +114,7 @@ storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
 	-- To get file size of the encrypted content, have to use a temp file.
 	-- (An alternative would be chunking to to a constant size.)
 	let tmp = gitAnnexTmpLocation g enck
+	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
 	res <- liftIO $ storeHelper (conn, bucket) r enck tmp
 	tmp_exists <- liftIO $ doesFileExist tmp
