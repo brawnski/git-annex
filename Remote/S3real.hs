@@ -10,7 +10,7 @@ module Remote.S3 (remote) where
 import Control.Exception.Extensible (IOException)
 import Network.AWS.AWSConnection
 import Network.AWS.S3Object
-import Network.AWS.S3Bucket
+import Network.AWS.S3Bucket hiding (size)
 import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
@@ -18,6 +18,8 @@ import Data.Maybe
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
+import System.Posix.Files
+import System.Directory
 
 import RemoteClass
 import Types
@@ -30,6 +32,7 @@ import Config
 import Remote.Special
 import Remote.Encryptable
 import Crypto
+import Key
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -100,21 +103,35 @@ s3Setup u c = do
 store :: Remote Annex -> Key -> Annex Bool
 store r k = s3Action r False $ \(conn, bucket) -> do
 	g <- Annex.gitRepo
-	content <- liftIO $ L.readFile $ gitAnnexLocation g k
-	res <- liftIO $ storeHelper (conn, bucket) r k content
+	res <- liftIO $ storeHelper (conn, bucket) r k $ gitAnnexLocation g k
 	s3Bool res
 
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
 storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
 	g <- Annex.gitRepo
 	let f = gitAnnexLocation g k
-	res <- liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> do
-		storeHelper (conn, bucket) r enck s
+	-- To get file size of the encrypted content, have to use a temp file.
+	-- (An alternative would be chunking to to a constant size.)
+	let tmp = gitAnnexTmpLocation g enck
+	liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
+	res <- liftIO $ storeHelper (conn, bucket) r enck tmp
+	tmp_exists <- liftIO $ doesFileExist tmp
+	when tmp_exists $ liftIO $ removeFile tmp
 	s3Bool res
 
-storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> L.ByteString -> IO (AWSResult ())
-storeHelper (conn, bucket) r k content = do
-	let object = setStorageClass storageclass $ bucketKey bucket k content
+storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> FilePath -> IO (AWSResult ())
+storeHelper (conn, bucket) r k file = do
+	content <- liftIO $ L.readFile file
+	-- size is provided to S3 so the whole content does not need to be
+	-- buffered to calculate it
+	size <- case keySize k of
+		Just s -> return $ fromIntegral s
+		Nothing -> do
+			s <- liftIO $ getFileStatus file
+			return $ fileSize s
+	let object = setStorageClass storageclass $ 
+		S3Object bucket (show k) ""
+			[("Content-Length",(show size))] content
 	sendObject conn object
 	where
 		storageclass =
@@ -124,7 +141,7 @@ storeHelper (conn, bucket) r k content = do
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
 retrieve r k f = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ getObject conn $ bucketKey bucket k L.empty
+	res <- liftIO $ getObject conn $ bucketKey bucket k
 	case res of
 		Right o -> do
 			liftIO $ L.writeFile f $ obj_data o
@@ -133,7 +150,7 @@ retrieve r k f = s3Action r False $ \(conn, bucket) -> do
 
 retrieveEncrypted :: Remote Annex -> (Cipher, Key) -> FilePath -> Annex Bool
 retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ getObject conn $ bucketKey bucket enck L.empty
+	res <- liftIO $ getObject conn $ bucketKey bucket enck
 	case res of
 		Right o -> liftIO $ 
 			withDecryptedContent cipher (return $ obj_data o) $ \content -> do
@@ -143,13 +160,13 @@ retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
 
 remove :: Remote Annex -> Key -> Annex Bool
 remove r k = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ deleteObject conn $ bucketKey bucket k L.empty
+	res <- liftIO $ deleteObject conn $ bucketKey bucket k
 	s3Bool res
 
 checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
 checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
 	showNote ("checking " ++ name r ++ "...")
-	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k L.empty
+	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k
 	case res of
 		Right _ -> return $ Right True
 		Left (AWSError _ _) -> return $ Right False
@@ -205,5 +222,5 @@ s3Action r noconn action = do
 		(Just b, Just c) -> action (c, b)
 		_ -> return noconn
 
-bucketKey :: String -> Key -> L.ByteString -> S3Object
-bucketKey bucket k content = S3Object bucket (show k) "" [] content
+bucketKey :: String -> Key -> S3Object
+bucketKey bucket k = S3Object bucket (show k) "" [] L.empty

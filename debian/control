@@ -43,4 +43,3 @@ Description: manage files with git, without checking their contents into git
  versioned files, which is convenient for maintaining documents, Makefiles,
  etc that are associated with annexed files but that benefit from full
  revision control.
-
