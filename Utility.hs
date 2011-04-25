@@ -13,8 +13,8 @@ module Utility (
 	parentDir,
 	absPath,
 	absPathFrom,
-	relPathCwdToDir,
-	relPathDirToDir,
+	relPathCwdToFile,
+	relPathDirToFile,
 	boolSystem,
 	shellEscape,
 	shellUnEscape,
@@ -29,7 +29,7 @@ module Utility (
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
 	prop_parentDir_basics,
-	prop_relPathDirToDir_basics
+	prop_relPathDirToFile_basics
 ) where
 
 import System.IO
@@ -180,26 +180,21 @@ absPathFrom cwd file =
 		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
 
-{- Constructs a relative path from the CWD to a directory.
+{- Constructs a relative path from the CWD to a file.
  -
  - For example, assuming CWD is /tmp/foo/bar:
- -    relPathCwdToDir "/tmp/foo" == "../"
- -    relPathCwdToDir "/tmp/foo/bar" == "" 
+ -    relPathCwdToFile "/tmp/foo" == ".."
+ -    relPathCwdToFile "/tmp/foo/bar" == "" 
  -}
-relPathCwdToDir :: FilePath -> IO FilePath
-relPathCwdToDir dir = liftM2 relPathDirToDir getCurrentDirectory (absPath dir)
+relPathCwdToFile :: FilePath -> IO FilePath
+relPathCwdToFile f = liftM2 relPathDirToFile getCurrentDirectory (absPath f)
 
-{- Constructs a relative path from one directory to another.
+{- Constructs a relative path from a directory to a file.
  -
- - Both directories must be absolute, and normalized (eg with absNormpath).
- -
- - The path will end with "/", unless it is empty.
+ - Both must be absolute, and normalized (eg with absNormpath).
  -}
-relPathDirToDir :: FilePath -> FilePath -> FilePath
-relPathDirToDir from to = 
-	if not $ null path
-		then addTrailingPathSeparator path
-		else ""
+relPathDirToFile :: FilePath -> FilePath -> FilePath
+relPathDirToFile from to = path
 	where
 		s = [pathSeparator]
 		pfrom = split s from
@@ -211,12 +206,12 @@ relPathDirToDir from to =
 		numcommon = length common
 		path = join s $ dotdots ++ uncommon
 
-prop_relPathDirToDir_basics :: FilePath -> FilePath -> Bool
-prop_relPathDirToDir_basics from to
+prop_relPathDirToFile_basics :: FilePath -> FilePath -> Bool
+prop_relPathDirToFile_basics from to
 	| from == to = null r
-	| otherwise = not (null r) && (last r == '/')
+	| otherwise = not (null r)
 	where
-		r = relPathDirToDir from to 
+		r = relPathDirToFile from to 
 
 {- Removes a FileMode from a file.
  - For example, call with otherWriteMode to chmod o-w -}

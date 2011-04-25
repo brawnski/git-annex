@@ -62,7 +62,7 @@ quickcheck = TestLabel "quickcheck" $ TestList
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
-	, qctest "prop_relPathDirToDir_basics" Utility.prop_relPathDirToDir_basics
+	, qctest "prop_relPathDirToFile_basics" Utility.prop_relPathDirToFile_basics
 	, qctest "prop_cost_sane" Config.prop_cost_sane
 	, qctest "prop_hmacWithCipher_sane" Crypto.prop_hmacWithCipher_sane
 	]

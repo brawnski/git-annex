@@ -58,7 +58,7 @@ calcGitLink file key = do
 	let absfile = case absNormPath cwd file of
 		Just f -> f
 		Nothing -> error $ "unable to normalize " ++ file
-	return $ relPathDirToDir (parentDir absfile) 
+	return $ relPathDirToFile (parentDir absfile) 
 			(Git.workTree g) </> ".git" </> annexLocation key
 
 {- Updates the LocationLog when a key's presence changes.
