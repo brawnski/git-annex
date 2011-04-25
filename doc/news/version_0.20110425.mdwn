@@ -1,0 +1,7 @@
+git-annex 0.20110425 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * Use haskell Crypto library instead of haskell SHA library.
+   * Remove testpack from build depends for non x86 architectures where it
+     is not available. The test suite will not be run if it cannot be compiled.
+   * Avoid using absolute paths when staging location log, as that can
+     confuse git when a remote's path contains a symlink. Closes: #[621386](http://bugs.debian.org/621386)"""]]
