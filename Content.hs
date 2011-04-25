@@ -9,6 +9,7 @@ module Content (
 	inAnnex,
 	calcGitLink,
 	logStatus,
+	logStatusFor,
 	getViaTmp,
 	getViaTmpUnchecked,
 	checkDiskSpace,
@@ -61,7 +62,8 @@ calcGitLink file key = do
 	return $ relPathDirToFile (parentDir absfile) 
 			(Git.workTree g) </> ".git" </> annexLocation key
 
-{- Updates the LocationLog when a key's presence changes.
+{- Updates the LocationLog when a key's presence changes in the current
+ - repository.
  -
  - Note that the LocationLog is not updated in bare repositories.
  - Operations that change a bare repository should be done from
@@ -70,10 +72,18 @@ calcGitLink file key = do
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
+	u <- getUUID g
+	logStatusFor u key status
+
+{- Updates the LocationLog when a key's presence changes in a repository
+ - identified by UUID. -}
+logStatusFor :: UUID -> Key -> LogStatus -> Annex ()
+logStatusFor u key status = do
+	g <- Annex.gitRepo
 	unless (Git.repoIsLocalBare g) $ do
-		u <- getUUID g
 		logfile <- liftIO $ logChange g key u status
-		AnnexQueue.add "add" [Param "--"] logfile
+		rellogfile <- liftIO $ Git.workTreeFile g logfile
+		AnnexQueue.add "add" [Param "--"] rellogfile
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 

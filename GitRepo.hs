@@ -21,8 +21,8 @@ module GitRepo (
 	repoDescribe,
 	repoLocation,
 	workTree,
+	workTreeFile,
 	gitDir,
-	relative,
 	urlPath,
 	urlHost,
 	urlPort,
@@ -59,7 +59,7 @@ module GitRepo (
 	prop_idempotent_deencode
 ) where
 
-import Control.Monad (unless, when)
+import Control.Monad (unless)
 import System.Directory
 import System.FilePath
 import System.Posix.Directory
@@ -236,27 +236,38 @@ workTree r@(Repo { location = Url _ }) = urlPath r
 workTree (Repo { location = Dir d }) = d
 workTree Repo { location = Unknown } = undefined
 
-{- Given a relative or absolute filename in a repository, calculates the
- - name to use to refer to the file relative to a git repository's top.
- - This is the same form displayed and used by git. -}
-relative :: Repo -> FilePath -> IO FilePath
-relative repo@(Repo { location = Dir d }) file = do
+{- Given a relative or absolute filename inside a git repository's
+ - workTree, calculates the name to use to refer to that file to git.
+ -
+ - This is complicated because the best choice can vary depending on
+ - whether the cwd is in a subdirectory of the git repository, or not.
+ -
+ - For example, when adding a file "/tmp/repo/foo", it's best to refer
+ - to it as "foo" if the cwd is outside the repository entirely
+ - (this avoids a gotcha with using the full path name when /tmp/repo
+ - is itself a symlink). But, if the cwd is "/tmp/repo/subdir",
+ - it's best to refer to "../foo".
+ -}
+workTreeFile :: Repo -> FilePath -> IO FilePath
+workTreeFile repo@(Repo { location = Dir d }) file = do
 	cwd <- getCurrentDirectory
 	let file' = absfile cwd
-	let len = length absrepo
-	when (take len file' /= absrepo) $
+	unless (inrepo file') $
 		error $ file ++ " is not located inside git repository " ++ absrepo
-	return $ drop (length absrepo) file'
+	if (inrepo $ addTrailingPathSeparator cwd)
+		then return $ relPathDirToFile cwd file'
+		else return $ drop (length absrepo) file'
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
 		absrepo = case (absNormPath "/" d) of
-			Just f -> f ++ "/"
+			Just f -> addTrailingPathSeparator f
 			Nothing -> error $ "bad repo" ++ repoDescribe repo
 		absfile c = case (secureAbsNormPath c file) of
 			Just f -> f
 			Nothing -> file
-relative repo _ = assertLocal repo $ error "internal"
+		inrepo f = absrepo `isPrefixOf` f
+workTreeFile repo _ = assertLocal repo $ error "internal"
 
 {- Path of an URL repo. -}
 urlPath :: Repo -> String
