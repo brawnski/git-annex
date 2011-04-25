@@ -1,13 +1,12 @@
-git-annex (0.20110421) UNRELEASED; urgency=low
+git-annex (0.20110425) unstable; urgency=low
 
   * Use haskell Crypto library instead of haskell SHA library.
-  * Remove testpack from build depends, as it is not available
-    on all architectures. The test suite will not be run if it
-    cannot be compiled.
+  * Remove testpack from build depends for non x86 architectures where it
+    is not available. The test suite will not be run if it cannot be compiled.
   * Avoid using absolute paths when staging location log, as that can
     confuse git when a remote's path contains a symlink. Closes: #621386
 
- -- Joey Hess <joeyh@debian.org>  Thu, 21 Apr 2011 16:35:27 -0400
+ -- Joey Hess <joeyh@debian.org>  Mon, 25 Apr 2011 15:47:00 -0400
 
 git-annex (0.20110420) unstable; urgency=low
 
