@@ -7,6 +7,8 @@
 
 import Test.HUnit
 import Test.HUnit.Tools
+import Test.QuickCheck
+
 import System.Directory
 import System.Posix.Directory (changeWorkingDirectory)
 import System.Posix.Files
@@ -41,6 +43,18 @@ import qualified Command.DropUnused
 import qualified Key
 import qualified Config
 import qualified Crypto
+
+-- for quickcheck
+instance Arbitrary Key.Key where
+	arbitrary = do
+		n <- arbitrary
+		b <- elements ['A'..'Z']
+		return $ Key.Key {
+			Key.keyName = n,
+			Key.keyBackendName = [b],
+			Key.keySize = Nothing,
+			Key.keyMtime = Nothing
+		}
 
 main :: IO ()
 main = do

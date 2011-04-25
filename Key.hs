@@ -13,7 +13,6 @@ module Key (
 	prop_idempotent_key_read_show
 ) where
 
-import Test.QuickCheck
 import Utility
 import System.Posix.Types
 
@@ -70,18 +69,6 @@ readKey s = if key == Just stubKey then Nothing else key
 		addfield 's' k v = Just k { keySize = readMaybe v }
 		addfield 'm' k v = Just k { keyMtime = readMaybe v }
 		addfield _ _ _ = Nothing
-
--- for quickcheck
-instance Arbitrary Key where
-	arbitrary = do
-		n <- arbitrary
-		b <- elements ['A'..'Z']
-		return $ Key {
-			keyName = n,
-			keyBackendName = [b],
-			keySize = Nothing,
-			keyMtime = Nothing
-		}
 
 prop_idempotent_key_read_show :: Key -> Bool
 prop_idempotent_key_read_show k = Just k == (readKey $ show k)
