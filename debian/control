@@ -6,7 +6,6 @@ Build-Depends:
 	ghc,
 	libghc-missingh-dev,
 	libghc-pcre-light-dev,
-	libghc-testpack-dev,
 	libghc-dataenc-dev,
 	libghc-crypto-dev,
 	libghc-utf8-string-dev,

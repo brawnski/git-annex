@@ -45,8 +45,11 @@ install: all
 	fi
 
 test: $(bins)
-	$(GHCMAKE) test
-	./test
+	if ! $(GHCMAKE) test; then \
+		echo "** not running test suite" >&2; \
+	else \
+		./test; \
+	fi
 
 testcoverage: $(bins)
 	rm -f test.tix test
