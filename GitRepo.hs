@@ -59,7 +59,7 @@ module GitRepo (
 	prop_idempotent_deencode
 ) where
 
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import System.Directory
 import System.FilePath
 import System.Posix.Directory
@@ -242,7 +242,11 @@ workTree Repo { location = Unknown } = undefined
 relative :: Repo -> FilePath -> IO FilePath
 relative repo@(Repo { location = Dir d }) file = do
 	cwd <- getCurrentDirectory
-	return $ drop (length absrepo) (absfile cwd)
+	let file' = absfile cwd
+	let len = length absrepo
+	when (take len file' /= absrepo) $
+		error $ file ++ " is not located inside git repository " ++ absrepo
+	return $ drop (length absrepo) file'
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
@@ -251,7 +255,7 @@ relative repo@(Repo { location = Dir d }) file = do
 			Nothing -> error $ "bad repo" ++ repoDescribe repo
 		absfile c = case (secureAbsNormPath c file) of
 			Just f -> f
-			Nothing -> error $ file ++ " is not located inside git repository " ++ absrepo
+			Nothing -> file
 relative repo _ = assertLocal repo $ error "internal"
 
 {- Path of an URL repo. -}
