@@ -103,6 +103,8 @@ getViaTmp key action = do
 			checkDiskSpace' (fromIntegral $ fileSize stat) key
 		else checkDiskSpace key
 
+	when e $ liftIO $ allowWrite tmp
+
 	getViaTmpUnchecked key action
 
 {- Like getViaTmp, but does not check that there is enough disk space
