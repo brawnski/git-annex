@@ -2,10 +2,10 @@ If using Debian testing or unstable:
 
 	sudo apt-get install git-annex
 
-## on Debian stable
+### Debian stable
 
-git-annex is not yet in a Debian stable release, but the source
-can be built from Debian stable. 
+git-annex is not yet in a Debian stable release, and nobody has backported it
+(yet?), but the source can be built from Debian stable.
 
 First, install build dependencies. Package names have changed since
 Debian stable, so this must be done by hand, rather than by using
