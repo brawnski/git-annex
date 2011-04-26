@@ -16,7 +16,8 @@ module Annex (
 	gitRepo
 ) where
 
-import Control.Monad.State hiding (state)
+import Control.Monad.State
+	(liftIO, StateT, runStateT, evalStateT, liftM, get, put)
 
 import qualified GitRepo as Git
 import qualified GitQueue
