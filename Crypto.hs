@@ -29,21 +29,20 @@ module Crypto (
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import qualified Codec.Binary.Base64 as B64
+import Data.ByteString.Lazy.UTF8 (fromString)
+import Data.Digest.Pure.SHA
+import System.Cmd.Utils
 import Data.String.Utils
 import Data.List
 import Data.Bits.Utils
-import Data.HMAC
-import Data.Array
-import Codec.Utils
-import System.Cmd.Utils
 import System.IO
 import System.Posix.IO
 import System.Posix.Types
 import System.Posix.Process
-import System.Exit
-import System.Environment
 import Control.Concurrent
 import Control.Exception (finally)
+import System.Exit
+import System.Environment
 
 import Types
 import Key
@@ -253,17 +252,10 @@ fromB64 s =
 	case B64.decode s of
 		Nothing -> error "bad base64 encoded data"
 		Just ws -> w82s ws
-
-showOctets :: [Octet] -> String
-showOctets = concat . map hexChars
-	where
-		hexChars c = [arr ! (c `div` 16), arr ! (c `mod` 16)]
-		arr = listArray (0, 15) "0123456789abcdef"
- 
 hmacWithCipher :: Cipher -> String -> String
 hmacWithCipher c = hmacWithCipher' (cipherHmac c) 
 hmacWithCipher' :: String -> String -> String
-hmacWithCipher' c s = showOctets $ hmac_sha1 (s2w8 c) (s2w8 s)
+hmacWithCipher' c s = showDigest $ hmacSha1 (fromString c) (fromString s)
 
 {- Ensure that hmacWithCipher' returns the same thing forevermore. -}
 prop_hmacWithCipher_sane :: Bool
