@@ -577,10 +577,14 @@ checkcontent f = do
 
 checkunwritable :: FilePath -> Assertion
 checkunwritable f = do
-	r <- try $ writeFile f $ content f
-	case r of
-		Left _ -> return () -- expected permission error
-		Right _ -> assertFailure $ "was able to modify annexed file's " ++ f ++ " content"
+	-- Look at permissions bits rather than trying to write or using
+	-- fileAccess because if run as root, any file can be modified
+	-- despite permissions.
+	s <- getFileStatus f
+	let mode = fileMode s
+	if (mode == mode `unionFileModes` ownerWriteMode)
+		then assertFailure $ "able to modify annexed file's " ++ f ++ " content"
+		else return ()
 
 checkwritable :: FilePath -> Assertion
 checkwritable f = do
@@ -640,7 +644,7 @@ runchecks (a:as) f = do
 
 annexed_notpresent :: FilePath -> Assertion
 annexed_notpresent = runchecks
-	[checklink, checkdangling, checkunwritable, notinlocationlog]
+	[checklink, checkdangling, notinlocationlog]
 
 annexed_present :: FilePath -> Assertion
 annexed_present = runchecks
