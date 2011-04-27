@@ -64,8 +64,8 @@ main = do
 	propigate r
 
 propigate :: (Counts, Int) -> IO ()
-propigate (Counts { errors = e }, _)
-	| e > 0 = error "failed"
+propigate (Counts { errors = e , failures = f }, _)
+	| e+f > 0 = error "failed"
 	| otherwise = return ()
 
 quickcheck :: Test
