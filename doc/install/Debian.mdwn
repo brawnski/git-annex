@@ -1,24 +1,8 @@
 If using Debian testing or unstable:
 
-	sudo apt-get install git-annex
+* `sudo apt-get install git-annex`
 
-### Debian stable
+If using Debian 6.0 stable:
 
-git-annex is not yet in a Debian stable release, and nobody has backported it
-(yet?), but the source can be built from Debian stable.
-
-First, install build dependencies. Package names have changed since
-Debian stable, so this must be done by hand, rather than by using
-`dpkg-checkbuilddeps`:
-
-	sudo apt-get install debhelper ghc6 libghc6-missingh-dev \
-		libghc6-pcre-light-dev libghc6-sha-dev \
-		libghc6-dataenc-dev libghc6-utf8-string-dev \
-		libghc6-testpack-dev
-
-Then [[download]] git-annex it from git.
-
-In the `git-annex` directory, run `sudo debian/rules binary` to build
-a `git-annex.deb`.
-
-Note that S3 support will not be available when building on stable.
+* Follow the instructions to [enable backports](http://backports.debian.org/Instructions/).
+* `sudo apt-get -t squeeze-backports install git-annex`
