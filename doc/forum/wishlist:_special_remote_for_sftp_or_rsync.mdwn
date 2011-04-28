@@ -19,3 +19,8 @@ haven't learned haskell yet).
 > no comparison with sitting down and writing code tuned to work with
 > a given transport like rsync, when it comes to reliability and taking
 > advantage of its abilities (like resuming). --[[Joey]]
+
+>> big thanks, and bonus points for identical formats, so converting from
+>> directory to rsync is just a matter of changing ``type`` from ``directory``
+>> to ``rsync`` in ``.git-annex/remote.log`` and replacing the directory info
+>> with ``annex-rsyncurl = <host>:<dir>`` in ``.git/config``. --[[chrysn]]
