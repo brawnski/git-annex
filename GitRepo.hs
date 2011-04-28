@@ -78,6 +78,7 @@ import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
 import Data.List (isInfixOf, isPrefixOf)
+import System.Exit
 
 import Utility
 
@@ -482,7 +483,14 @@ checkAttr repo attr files = do
 	-- in its output back to relative.
 	cwd <- getCurrentDirectory
 	let absfiles = map (absPathFrom cwd) files
-	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
+	(_, fromh, toh) <- hPipeBoth "git" (toCommand params)
+        _ <- forkProcess $ do
+		hClose fromh
+                hPutStr toh $ join "\0" absfiles
+                hClose toh
+                exitSuccess
+        hClose toh
+	s <- hGetContents fromh
 	return $ map (topair $ cwd++"/") $ lines s
 	where
 		params = gitCommandLine repo [Param "check-attr", Param attr, Params "-z --stdin"]
