@@ -1,4 +1,4 @@
-This special remote lets you store content in a remote of your own
+This special remote type lets you store content in a remote of your own
 devising.
 
 It's not recommended to use this remote type when another like [[rsync]]
