@@ -10,6 +10,7 @@ They cannot be used by other git commands though.
 * [[bup]]
 * [[directory]]
 * [[rsync]]
+* [[hook]]
 
 ## Unused content on special remotes
 
