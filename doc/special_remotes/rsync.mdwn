@@ -4,6 +4,10 @@ Setup example:
 
 	# git annex initremote myrsync type=rsync rsyncurl=rsync://rsync.example.com/myrsync encryption=joey@kitenet.net
 
+Or for using rsync over SSH
+
+	# git annex initremote myrsync type=rsync rsyncurl=ssh.example.com:/myrsync encryption=joey@kitenet.net
+
 ## configuration
 
 These parameters can be passed to `git annex initremote` to configure rsync:
