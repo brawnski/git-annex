@@ -9,6 +9,7 @@ They cannot be used by other git commands though.
 * [[Amazon_S3]]
 * [[bup]]
 * [[directory]]
+* [[rsync]]
 
 ## Unused content on special remotes
 

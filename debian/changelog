@@ -2,6 +2,8 @@ git-annex (0.20110426) UNRELEASED; urgency=low
 
   * Switch back to haskell SHA library, so git-annex remains buildable on
     Debian stable.
+  * Added rsync special remotes. This could be used, for example, to 
+    store annexed content on rsync.net, encrypted naturally. Or anywhere else.
 
  -- Joey Hess <joeyh@debian.org>  Tue, 26 Apr 2011 11:23:54 -0400
 

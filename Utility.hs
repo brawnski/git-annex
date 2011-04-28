@@ -95,8 +95,9 @@ boolSystem command params = do
 			restoresignals oldint oldset
 			executeFile command True (toCommand params) Nothing
 
-{- Escapes a filename to be safely able to be exposed to the shell. -}
-shellEscape :: FilePath -> String
+{- Escapes a filename or other parameter to be safely able to be exposed to
+ - the shell. -}
+shellEscape :: String -> String
 shellEscape f = "'" ++ escaped ++ "'"
 	where
 		-- replace ' with '"'"'

@@ -12,6 +12,7 @@ module Content (
 	logStatusFor,
 	getViaTmp,
 	getViaTmpUnchecked,
+	withTmp,
 	checkDiskSpace,
 	preventWrite,
 	allowWrite,
@@ -126,6 +127,17 @@ getViaTmpUnchecked key action = do
 			-- the tmp file is left behind, in case caller wants
 			-- to resume its transfer
 			return False
+
+{- Creates a temp file, runs an action on it, and cleans up the temp file. -}
+withTmp :: Key -> (FilePath -> Annex a) -> Annex a
+withTmp key action = do
+	g <- Annex.gitRepo
+	let tmp = gitAnnexTmpLocation g key
+	liftIO $ createDirectoryIfMissing True (parentDir tmp)
+	res <- action tmp
+	tmp_exists <- liftIO $ doesFileExist tmp
+	when tmp_exists $ liftIO $ removeFile tmp
+	return res
 
 {- Checks that there is disk space available to store a given key,
  - throwing an error if not. -}

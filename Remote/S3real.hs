@@ -19,7 +19,6 @@ import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
 import System.Posix.Files
-import System.Directory
 
 import RemoteClass
 import Types
@@ -33,7 +32,7 @@ import Remote.Special
 import Remote.Encryptable
 import Crypto
 import Key
-import Utility
+import Content
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -108,18 +107,15 @@ store r k = s3Action r False $ \(conn, bucket) -> do
 	s3Bool res
 
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
-storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
-	g <- Annex.gitRepo
-	let f = gitAnnexLocation g k
+storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> 
 	-- To get file size of the encrypted content, have to use a temp file.
 	-- (An alternative would be chunking to to a constant size.)
-	let tmp = gitAnnexTmpLocation g enck
-	liftIO $ createDirectoryIfMissing True (parentDir tmp)
-	liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
-	res <- liftIO $ storeHelper (conn, bucket) r enck tmp
-	tmp_exists <- liftIO $ doesFileExist tmp
-	when tmp_exists $ liftIO $ removeFile tmp
-	s3Bool res
+	withTmp enck $ \tmp -> do
+		g <- Annex.gitRepo
+		let f = gitAnnexLocation g k
+		liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
+		res <- liftIO $ storeHelper (conn, bucket) r enck tmp
+		s3Bool res
 
 storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> FilePath -> IO (AWSResult ())
 storeHelper (conn, bucket) r k file = do
