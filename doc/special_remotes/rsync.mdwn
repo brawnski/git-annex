@@ -19,5 +19,4 @@ These parameters can be passed to `git annex initremote` to configure rsync:
   pass to rsync to tell it where to store content.
 
 The `annex-rsync-options` git configuration setting can be used to pass
-parameters to rsync. Note that it is **not safe** to put "--delete"
-in `annex-rsync-options` when using rsync special remotes.
+parameters to rsync.
