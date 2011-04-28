@@ -10,11 +10,11 @@ Here's a simple example that stores content on clay tablets. If you
 implement this example in the real world, I'd appreciate a tour
 next Apert! :) --[[Joey]]
 
-	# git config annex.cuneiform-store-hook 'tocuneiform < $ANNEX_FILE | tablet-writer --implement=stylus --title=$ANNEX_KEY | tablet-proofreader | librarian --shelve --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2'
-	# git config annex.cuneiform-retrieve-hook 'librarian --get --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title=$ANNEX_KEY | tablet-reader --implement=coffee --implement=glasses --force-monastic-dedication | fromcuneiform > $ANNEX_FILE'
-	# git config annex.cuneiform-remove-hook 'goon --hit-with-hammer --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title=$ANNEX_KEY'
-	# git config annex.cuneiform-checkpresent-hook 'librarian --find --force-distrust-catalog --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title=$ANNEX_KEY --shout-title'
-	# git annex initremote special type=hook hooktype=cuneiform encryption=none
+	# git config annex.cuneiform-store-hook 'tocuneiform < "$ANNEX_FILE" | tablet-writer --implement=stylus --title="$ANNEX_KEY" | tablet-proofreader | librarian --shelve --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2'
+	# git config annex.cuneiform-retrieve-hook 'librarian --get --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" | tablet-reader --implement=coffee --implement=glasses --force-monastic-dedication | fromcuneiform > "$ANNEX_FILE"'
+	# git config annex.cuneiform-remove-hook 'goon --hit-with-hammer --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY"'
+	# git config annex.cuneiform-checkpresent-hook 'librarian --find --force-distrust-catalog --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" --shout-title'
+	# git annex initremote library type=hook hooktype=cuneiform encryption=none
 
 Can you spot the potential data loss bugs in the above simple example?
 (Hint: What happens when the `tablet-proofreader` exits nonzero?)
