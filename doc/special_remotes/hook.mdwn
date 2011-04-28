@@ -1,4 +1,5 @@
-This special remote type runs hooks that you configure to store content.
+This special remote lets you store content in a remote of your own
+devising.
 
 It's not recommended to use this remote type when another like [[rsync]]
 or [[directory]] will do. If your hooks are not carefully written, data
