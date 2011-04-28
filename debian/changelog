@@ -1,3 +1,9 @@
+git-annex (0.20110428) UNRELEASED; urgency=low
+
+  * Fix hasKeyCheap setting for bup and rsync special remotes.
+
+ -- Joey Hess <joeyh@debian.org>  Thu, 28 Apr 2011 14:38:16 -0400
+
 git-annex (0.20110427) unstable; urgency=low
 
   * Switch back to haskell SHA library, so git-annex remains buildable on

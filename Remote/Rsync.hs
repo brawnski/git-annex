@@ -61,7 +61,7 @@ gen r u c = do
 			retrieveKeyFile = retrieve o,
 			removeKey = remove o,
 			hasKey = checkPresent r o,
-			hasKeyCheap = True,
+			hasKeyCheap = False,
 			config = Nothing
 		}
 
