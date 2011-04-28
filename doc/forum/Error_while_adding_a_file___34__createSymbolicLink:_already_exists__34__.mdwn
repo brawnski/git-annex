@@ -30,6 +30,9 @@ git-annex: 1 failed
 paulproteus@pathi:/tmp/annex-test$ 
 </pre>
 
+When trying to make a small test case for this bug, I noticed that if file1 and file2 have the same contents but are not hard links of each other, they both get annexed just fine.
+
 I think the right behavior here is to annex file2 just fine, as if they weren't hard links before.
+
 
 -- Asheesh.
