@@ -1,4 +1,4 @@
-This is work in progress, since there is now a "hook" for users to plug in whatever they want as a remote, here's my recipe for using tahoe-lafs as a remote, this is a copy and paste the relavent section from my .git/config file
+This is work in progress, since there is now a [[special_remotes/hook]] for users to plug in whatever they want as a remote, here's my recipe for using tahoe-lafs as a remote, this is a copy and paste the relavent section from my .git/config file
 
         tahoe-store-hook = tahoe put $ANNEX_FILE tahoe:$ANNEX_KEY
         tahoe-retrieve-hook = tahoe get tahoe:$ANNEX_KEY $ANNEX_FILE
