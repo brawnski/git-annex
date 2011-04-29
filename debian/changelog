@@ -2,6 +2,7 @@ git-annex (0.20110428) UNRELEASED; urgency=low
 
   * Fix hasKeyCheap setting for bup and rsync special remotes.
   * Add hook special remotes.
+  * Avoid crashing when an existing key is readded to the annex.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 28 Apr 2011 14:38:16 -0400
 
