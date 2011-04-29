@@ -158,7 +158,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Checks the annex for data that does not correspond to any files currently
   in the respository, and prints a numbered list of the data.
 
-  To only show unused temp files, specify --fast
+  To only show unused temp and bad files, specify --fast
 
   To check data on a remote that does not correspond to any files currently
   in the local repository, specify --from.
