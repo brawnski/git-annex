@@ -16,6 +16,7 @@ next Apert! :) --[[Joey]]
 	# git config annex.cuneiform-remove-hook 'librarian --get --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" | goon --hit-with-hammer'
 	# git config annex.cuneiform-checkpresent-hook 'librarian --find --force-distrust-catalog --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" --shout-title'
 	# git annex initremote library type=hook hooktype=cuneiform encryption=none
+	# git annex describe library "the reborn Library of Alexandria (upgrade to bronze plates pending)"
 
 Can you spot the potential data loss bugs in the above simple example?
 (Hint: What happens when the `tablet-proofreader` exits nonzero?)

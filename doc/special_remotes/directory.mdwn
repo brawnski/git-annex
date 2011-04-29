@@ -8,3 +8,4 @@ the drive's mountpoint as a directory remote.
 Setup example:
 
 	# git annex initremote usbdrive type=directory directory=/media/usbdrive/ encryption=none
+	# git annex describe usbdrive "usb drive on /media/usbdrive/"
