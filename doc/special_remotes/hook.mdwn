@@ -13,7 +13,7 @@ next Apert! :) --[[Joey]]
 
 	# git config annex.cuneiform-store-hook 'tocuneiform < "$ANNEX_FILE" | tablet-writer --implement=stylus --title="$ANNEX_KEY" | tablet-proofreader | librarian --shelve --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2'
 	# git config annex.cuneiform-retrieve-hook 'librarian --get --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" | tablet-reader --implement=coffee --implement=glasses --force-monastic-dedication | fromcuneiform > "$ANNEX_FILE"'
-	# git config annex.cuneiform-remove-hook 'goon --hit-with-hammer --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY"'
+	# git config annex.cuneiform-remove-hook 'librarian --get --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" | goon --hit-with-hammer'
 	# git config annex.cuneiform-checkpresent-hook 'librarian --find --force-distrust-catalog --floor=$ANNEX_HASH_1 --shelf=$ANNEX_HASH_2 --title="$ANNEX_KEY" --shout-title'
 	# git annex initremote library type=hook hooktype=cuneiform encryption=none
 
