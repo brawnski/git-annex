@@ -38,8 +38,8 @@ I think the right behavior here is to annex file2 just fine, as if they weren't 
 -- Asheesh.
 
 > The same thing happens anytime the key for a file collides with a key
-> already in the annex, AFAICS. Including when the files have the same
-> content but are not hard links.
+> already in the annex, AFAICS. (Including when the files have the same
+> content but are not hard links... unless you're using WORM backend.)
 > 
 > I've fixed this bug. The first file in wins. See commit for some
 > interesting discussion about why it should not check for hash collisions
