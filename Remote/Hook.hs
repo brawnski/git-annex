@@ -69,16 +69,16 @@ hookSetup u c = do
 	return c'
 
 hookEnv :: Key -> Maybe FilePath -> Maybe [(String, String)]
-hookEnv k f = Just $ keyenv : fileenv f
+hookEnv k f = Just $ fileenv f ++ keyenv
 	where
 		env s v = ("ANNEX_" ++ s, v)
-		keyenv = env "KEY" (show k)
-		fileenv Nothing = []
-		fileenv (Just file) = 
-			[ env "FILE" file
+		keyenv =
+			[ env "KEY" (show k)
 			, env "HASH_1" (hashbits !! 0)
 			, env "HASH_2" (hashbits !! 1)
 			]
+		fileenv Nothing = []
+		fileenv (Just file) =  [env "FILE" file]
 		hashbits = map takeDirectory $ splitPath $ hashDirMixed k
 
 lookupHook :: String -> String -> Annex (Maybe String)
