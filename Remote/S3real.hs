@@ -15,10 +15,11 @@ import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Data.Maybe
-import Control.Monad (when, liftM)
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
 import System.Posix.Files
+import System.Posix.Env (setEnv)
 
 import RemoteClass
 import Types
@@ -46,8 +47,7 @@ remote = RemoteType {
 gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	cst <- remoteCost r expensiveRemoteCost
-	c' <- s3GetCreds c
-	return $ gen' r u c' cst
+	return $ gen' r u c cst
 gen' :: Git.Repo -> UUID -> Maybe RemoteConfig -> Int -> Remote Annex
 gen' r u c cst = do
 	encryptableRemote c
@@ -71,8 +71,7 @@ s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
 s3Setup u c = do
 	-- verify configuration is sane
 	c' <- encryptionSetup c
-	c'' <- liftM fromJust (s3GetCreds $ Just c')
-	let fullconfig = M.union c'' defaults
+	let fullconfig = M.union c' defaults
 
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
@@ -210,8 +209,9 @@ s3ConnectionRequired c = do
 
 s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
 s3Connection c = do
-	case (M.lookup s3AccessKey c, M.lookup s3SecretKey c) of
-		(Just ak, Just sk) -> return $ Just $ AWSConnection host port ak sk
+	creds <- s3GetCreds c
+	case creds of
+		Just (ak, sk) -> return $ Just $ AWSConnection host port ak sk
 		_ -> do
 			warning $ "Set both " ++ s3AccessKey ++ " and " ++ s3SecretKey  ++ " to use S3"
 			return Nothing
@@ -224,9 +224,8 @@ s3Connection c = do
 
 {- S3 creds come from the environment if set. 
  - Otherwise, might be stored encrypted in the remote's config. -}
-s3GetCreds :: Maybe RemoteConfig -> Annex (Maybe RemoteConfig)
-s3GetCreds Nothing = return Nothing
-s3GetCreds (Just c) = do
+s3GetCreds :: RemoteConfig -> Annex (Maybe (String, String))
+s3GetCreds c = do
 	ak <- getEnvKey s3AccessKey
 	sk <- getEnvKey s3SecretKey
 	if (null ak || null sk)
@@ -238,28 +237,32 @@ s3GetCreds (Just c) = do
 						(return $ L.pack $ fromB64 encrypted)
 						(return . L.unpack)
 					let line = lines s
-					creds (line !! 0) (line !! 1)
-				_ -> return $ Just c
-		else creds ak sk
+					let ak' = line !! 0
+					let sk' = line !! 1
+					liftIO $ do
+						setEnv s3AccessKey ak True
+						setEnv s3SecretKey sk True
+					return $ Just (ak', sk')
+				_ -> return Nothing
+		else return $ Just (ak, sk)
 	where
 		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
-		creds ak sk = return $ Just $ M.insert s3AccessKey ak $ M.insert s3SecretKey sk c
 
 {- Stores S3 creds encrypted in the remote's config if possible. -}
 s3SetCreds :: RemoteConfig -> Annex RemoteConfig
 s3SetCreds c = do
-	let cleanconfig = M.delete s3AccessKey $ M.delete s3SecretKey c
-	case (M.lookup s3AccessKey c, M.lookup s3SecretKey c) of
-		(Just ak, Just sk) -> do
+	creds <- s3GetCreds c
+	case creds of
+		Just (ak, sk) -> do
 			mcipher <- remoteCipher c
 			case mcipher of
 				Just cipher -> do
 					s <- liftIO $ withEncryptedContent cipher
 						(return $ L.pack $ unlines [ak, sk])
 						(return . L.unpack)
-					return $ M.insert "s3creds" (toB64 s) cleanconfig
-				Nothing -> return cleanconfig
-		_ -> return cleanconfig
+					return $ M.insert "s3creds" (toB64 s) c
+				Nothing -> return c
+		_ -> return c
 
 s3AccessKey :: String
 s3AccessKey = "AWS_ACCESS_KEY_ID"

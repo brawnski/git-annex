@@ -80,6 +80,7 @@ remoteCipher c = do
 		Nothing -> case extractCipher c of
 			Nothing -> return Nothing
 			Just encipher -> do
+				showNote "gpg"
 				cipher <- liftIO $ decryptCipher c encipher
 				Annex.changeState (\s -> s { Annex.cipher = Just cipher })
 				return $ Just cipher

@@ -15,7 +15,7 @@ like "2512E3C7"
 Next, create the S3 remote, and describe it. 
 
 	# git annex initremote cloud type=S3 encryption=2512E3C7
-	initremote cloud (encryption setup with gpg key C910D9222512E3C7) (checking bucket) (creating bucket in US) ok
+	initremote cloud (encryption setup with gpg key C910D9222512E3C7) (checking bucket) (creating bucket in US) (gpg) ok
 	# git annex describe cloud "at Amazon's US datacenter"
 	describe cloud ok
 
@@ -25,12 +25,12 @@ repository use the same S3 remote is easy:
 	# cd /media/usb/annex
         # git pull laptop master
 	# git annex initremote cloud
-	initremote cloud (checking bucket) ok
+	initremote cloud (gpg) (checking bucket) ok
 
 Now the remote can be used like any other remote.
 
 	# git annex copy my_cool_big_file --to cloud
-	copy my_cool_big_file (checking cloud...) (to cloud...) ok
+	copy my_cool_big_file (gpg) (checking cloud...) (to cloud...) ok
 	# git annex move video/hackity_hack_and_kaxxt.mov --to cloud
 	move video/hackity_hack_and_kaxxt.mov (checking cloud...) (to cloud...) ok
 
