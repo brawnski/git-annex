@@ -22,6 +22,8 @@ module Crypto (
 	withDecryptedHandle,
 	withEncryptedContent,
 	withDecryptedContent,
+	toB64,
+	fromB64,
 
 	prop_hmacWithCipher_sane
 ) where
@@ -252,6 +254,7 @@ fromB64 s =
 	case B64.decode s of
 		Nothing -> error "bad base64 encoded data"
 		Just ws -> w82s ws
+
 hmacWithCipher :: Cipher -> String -> String
 hmacWithCipher c = hmacWithCipher' (cipherHmac c) 
 hmacWithCipher' :: String -> String -> String

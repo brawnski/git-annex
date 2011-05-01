@@ -70,23 +70,27 @@ encryptableRemote c storeKeyEncrypted retrieveKeyFileEncrypted r =
 				Nothing -> a k
 				Just (_, k') -> a k'
 
-{- Gets encryption Cipher, and encrypted version of Key. 
- -
- - The decrypted Cipher is cached in the Annex state. -}
-cipherKey :: Maybe RemoteConfig -> Key -> Annex (Maybe (Cipher, Key))
-cipherKey Nothing _ = return Nothing
-cipherKey (Just c) k = do
+{- Gets encryption Cipher. The decrypted Cipher is cached in the Annex
+ - state. -}
+remoteCipher :: RemoteConfig -> Annex (Maybe Cipher)
+remoteCipher c = do
 	cache <- Annex.getState Annex.cipher
 	case cache of
-		Just cipher -> ret cipher
+		Just cipher -> return $ Just cipher
 		Nothing -> case extractCipher c of
 			Nothing -> return Nothing
 			Just encipher -> do
-				showNote "gpg"
 				cipher <- liftIO $ decryptCipher c encipher
 				Annex.changeState (\s -> s { Annex.cipher = Just cipher })
-				ret cipher
-	where
-		ret cipher = do
-			k' <- liftIO $ encryptKey cipher k
-			return $ Just (cipher, k')
+				return $ Just cipher
+
+{- Gets encryption Cipher, and encrypted version of Key. -}
+cipherKey :: Maybe RemoteConfig -> Key -> Annex (Maybe (Cipher, Key))
+cipherKey Nothing _ = return Nothing
+cipherKey (Just c) k = do
+	cipher <- remoteCipher c
+	case cipher of	
+		Just ciphertext -> do
+			k' <- liftIO $ encryptKey ciphertext k
+			return $ Just (ciphertext, k')
+		Nothing -> return Nothing

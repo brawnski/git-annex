@@ -15,7 +15,7 @@ import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Data.Maybe
-import Control.Monad (when)
+import Control.Monad (when, liftM)
 import Control.Monad.State (liftIO)
 import System.Environment
 import System.Posix.Files
@@ -45,9 +45,10 @@ remote = RemoteType {
 gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r u c = do
 	cst <- remoteCost r expensiveRemoteCost
-	return $ gen' r u c cst
+	c' <- s3GetCreds c
+	return $ gen' r u c' cst
 gen' :: Git.Repo -> UUID -> Maybe RemoteConfig -> Int -> Remote Annex
-gen' r u c cst =
+gen' r u c cst = do
 	encryptableRemote c
 		(storeEncrypted this)
 		(retrieveEncrypted this)
@@ -69,12 +70,12 @@ s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
 s3Setup u c = do
 	-- verify configuration is sane
 	c' <- encryptionSetup c
-	let fullconfig = M.union c' defaults
+	c'' <- liftM fromJust (s3GetCreds $ Just c')
+	let fullconfig = M.union c'' defaults
 
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
 	conn <- s3ConnectionRequired fullconfig
-	
 	showNote "checking bucket"
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
@@ -88,7 +89,7 @@ s3Setup u c = do
 				Left err -> s3Error err
 
 	gitConfigSpecialRemote u fullconfig "s3" "true"
-	return fullconfig
+	s3SetCreds fullconfig
 	where
 		remotename = fromJust (M.lookup "name" c)
 		bucket = remotename ++ "-" ++ u
@@ -186,6 +187,19 @@ s3Bool res = do
 		Right _ -> return True
 		Left e -> s3Warning e
 
+s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
+s3Action r noconn action = do
+	when (config r == Nothing) $
+		error $ "Missing configuration for special remote " ++ name r
+	let bucket = M.lookup "bucket" $ fromJust $ config r
+	conn <- s3Connection $ fromJust $ config r
+	case (bucket, conn) of
+		(Just b, Just c) -> action (c, b)
+		_ -> return noconn
+
+bucketKey :: String -> Key -> S3Object
+bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+
 s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
 s3ConnectionRequired c = do
 	conn <- s3Connection c
@@ -195,30 +209,58 @@ s3ConnectionRequired c = do
 
 s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
 s3Connection c = do
-	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
-	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
-	if (null ak || null sk)
-		then do
-			warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
+	case (M.lookup s3AccessKey c, M.lookup s3SecretKey c) of
+		(Just ak, Just sk) -> return $ Just $ AWSConnection host port ak sk
+		_ -> do
+			warning $ "Set both " ++ s3AccessKey ++ " and " ++ s3SecretKey  ++ " to use S3"
 			return Nothing
-		else return $ Just $ AWSConnection host port ak sk
 	where
 		host = fromJust $ (M.lookup "host" c)
 		port = let s = fromJust $ (M.lookup "port" c) in
 			case reads s of
 			[(p, _)] -> p
 			_ -> error $ "bad S3 port value: " ++ s
+
+{- S3 creds come from the environment if set. 
+ - Otherwise, might be stored encrypted in the remote's config. -}
+s3GetCreds :: Maybe RemoteConfig -> Annex (Maybe RemoteConfig)
+s3GetCreds Nothing = return Nothing
+s3GetCreds (Just c) = do
+	ak <- getEnvKey s3AccessKey
+	sk <- getEnvKey s3SecretKey
+	if (null ak || null sk)
+		then do
+			mcipher <- remoteCipher c
+			case (M.lookup "s3creds" c, mcipher) of
+				(Just encrypted, Just cipher) -> do
+					s <- liftIO $ withDecryptedContent cipher
+						(return $ L.pack $ fromB64 encrypted)
+						(return . L.unpack)
+					let line = lines s
+					creds (line !! 0) (line !! 1)
+				_ -> return $ Just c
+		else creds ak sk
+	where
 		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
+		creds ak sk = return $ Just $ M.insert s3AccessKey ak $ M.insert s3SecretKey sk c
 
-s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
-s3Action r noconn action = do
-	when (config r == Nothing) $
-		error $ "Missing configuration for special remote " ++ name r
-	let bucket = M.lookup "bucket" $ fromJust $ config r
-	conn <- s3Connection (fromJust $ config r)
-	case (bucket, conn) of
-		(Just b, Just c) -> action (c, b)
-		_ -> return noconn
+{- Stores S3 creds encrypted in the remote's config if possible. -}
+s3SetCreds :: RemoteConfig -> Annex RemoteConfig
+s3SetCreds c = do
+	let cleanconfig = M.delete s3AccessKey $ M.delete s3SecretKey c
+	case (M.lookup s3AccessKey c, M.lookup s3SecretKey c) of
+		(Just ak, Just sk) -> do
+			mcipher <- remoteCipher c
+			case mcipher of
+				Just cipher -> do
+					s <- liftIO $ withEncryptedContent cipher
+						(return $ L.pack $ unlines [ak, sk])
+						(return . L.unpack)
+					return $ M.insert "s3creds" (toB64 s) cleanconfig
+				Nothing -> return cleanconfig
+		_ -> return cleanconfig
 
-bucketKey :: String -> Key -> S3Object
-bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+s3AccessKey :: String
+s3AccessKey = "AWS_ACCESS_KEY_ID"
+s3SecretKey :: String
+s3SecretKey = "AWS_SECRET_ACCESS_KEY"
