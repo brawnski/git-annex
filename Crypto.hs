@@ -22,21 +22,17 @@ module Crypto (
 	withDecryptedHandle,
 	withEncryptedContent,
 	withDecryptedContent,
-	toB64,
-	fromB64,
 
 	prop_hmacWithCipher_sane
 ) where
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
-import qualified Codec.Binary.Base64 as B64
 import Data.ByteString.Lazy.UTF8 (fromString)
 import Data.Digest.Pure.SHA
 import System.Cmd.Utils
 import Data.String.Utils
 import Data.List
-import Data.Bits.Utils
 import System.IO
 import System.Posix.IO
 import System.Posix.Types
@@ -50,6 +46,7 @@ import Types
 import Key
 import RemoteClass
 import Utility
+import Base64
 import CryptoTypes
 
 {- The first half of a Cipher is used for HMAC; the remainder
@@ -245,15 +242,6 @@ configGet c key =
 	case M.lookup key c of
 		Just v -> v
 		Nothing -> error $ "missing " ++ key ++ " in remote config"
-
-toB64 :: String -> String		
-toB64 = B64.encode . s2w8
-
-fromB64 :: String -> String
-fromB64 s =
-	case B64.decode s of
-		Nothing -> error "bad base64 encoded data"
-		Just ws -> w82s ws
 
 hmacWithCipher :: Cipher -> String -> String
 hmacWithCipher c = hmacWithCipher' (cipherHmac c) 
