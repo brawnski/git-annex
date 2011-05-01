@@ -85,6 +85,15 @@ really have content. If it's later determined to be safe to not encrypt the
 HMAC cipher, the current design allows changing that, even for existing
 remotes.
 
+## other use of the symmetric cipher
+
+The symmetric cipher can be used to encrypt other content than the content
+sent to the remote. In particular, it may make sense to encrypt whatever
+access keys are used by the special remote with the cipher, and store that
+in remotes.log. This way anyone whose gpg key has been given access to 
+the cipher can get access to whatever other credentials are needed to
+use the special remote.
+
 ## risks
 
 A risk of this scheme is that, once the symmetric cipher has been obtained, it
