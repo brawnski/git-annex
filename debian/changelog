@@ -1,4 +1,4 @@
-git-annex (0.20110428) UNRELEASED; urgency=low
+git-annex (0.20110503) unstable; urgency=low
 
   * Fix hasKeyCheap setting for bup and rsync special remotes.
   * Add hook special remotes.
@@ -8,7 +8,7 @@ git-annex (0.20110428) UNRELEASED; urgency=low
     are stored, encrypted, in .git-annex/remotes.log, so environment
     variables need not be set after the remote is initialized.
 
- -- Joey Hess <joeyh@debian.org>  Thu, 28 Apr 2011 14:38:16 -0400
+ -- Joey Hess <joeyh@debian.org>  Tue, 03 May 2011 20:56:01 -0400
 
 git-annex (0.20110427) unstable; urgency=low
 
