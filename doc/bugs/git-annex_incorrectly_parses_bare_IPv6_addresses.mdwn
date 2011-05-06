@@ -41,3 +41,19 @@ git-annex: bad url ssh://[2001/~/0:53aa:64c:24ef:5ce4:2ef9:cdda]:/home/paulprote
 (Note that both these .git/config entries work fine with "git fetch".)
 
 -- Asheesh.
+
+> Technically, this seems to be a bug in the haskell URI library; it honors
+> the `[]` in parsing, but does not remove them when the URI is queried for
+> the host part. 
+
+<pre>
+Prelude Network.URI> let (Just u) = parseURI "http://foo@[2001:0:53aa:64c:24ef:5ce4:2ef9:cdda]/bar"
+Prelude Network.URI> let (Just a) = uriAuthority u
+Prelude Network.URI> uriRegName a
+"[2001:0:53aa:64c:24ef:5ce4:2ef9:cdda]"
+Prelude Network.URI> isIPv6address $ uriRegName a
+False
+</pre>
+
+> I have filed a [bug upstream](http://trac.haskell.org/network/ticket/40), and put a workaround in git-annex. [[done]]
+> --[[Joey]] 
