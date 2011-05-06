@@ -39,3 +39,5 @@ git-annex: bad url ssh://[2001/~/0:53aa:64c:24ef:5ce4:2ef9:cdda]:/home/paulprote
 </pre>
 
 (Note that both these .git/config entries work fine with "git fetch".)
+
+-- Asheesh.
