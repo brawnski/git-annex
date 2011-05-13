@@ -58,6 +58,7 @@ add_plugins:
   - blogspam
   - comments
   - aggregate
+  - gitpush
 # plugins to disable
 disable_plugins: []
 # additional directory to search for template files
@@ -117,8 +118,8 @@ allow_symlinks_before_srcdir: 0
 
 ######################################################################
 # core plugins
-#   (branchable, editpage, git, htmlscrubber, inline, link, meta,
-#    parentlinks)
+#   (branchable, editpage, git, gitpush, htmlscrubber, ikiwikihosting,
+#    inline, link, meta, parentlinks)
 ######################################################################
 
 # branchable plugin
@@ -147,9 +148,30 @@ gitorigin_branch: origin
 # branch that the wiki is stored in
 gitmaster_branch: master
 
+# gitpush plugin
+# git repository urls that changes are pushed to
+git_push_to:
+  - git@github.com:joeyh/git-annex.git
+
 # htmlscrubber plugin
 # PageSpec specifying pages not to scrub
 #htmlscrubber_skip: '!*/Discussion'
+
+# ikiwikihosting plugin
+# list of urls that alias to the main url
+#urlalias: []
+# openid of primary site owner
+owner: http://joey.kitenet.net/
+# optional hostname of site this one was branched from
+#parent: ''
+# internal hostname of this site
+hostname: git-annex.branchable.com
+# site creation datestamp
+created: 1287531313
+# how many days to retain logs
+#log_period: 7
+# disable IPv6?
+ipv6_disabled: 0
 
 # inline plugin
 # enable rss feeds by default?
@@ -343,11 +365,10 @@ directive_description_dir: ikiwiki/directive
 ######################################################################
 # other plugins
 #   (aggregate, autoindex, brokenlinks, camelcase, ddate, embed, favicon,
-#    flattr, goodstuff, htmlbalance, ikiwikihosting, localstyle,
-#    missingsite, pagetemplate, parked, pingee, pinger, prettydate,
-#    recentchanges, recentchangesdiff, relativedate, rsync, sidebar,
-#    smiley, sortnaturally, tag, testpagespec, transient, typography,
-#    underlay)
+#    flattr, goodstuff, htmlbalance, localstyle, missingsite, pagetemplate,
+#    parked, pingee, pinger, prettydate, recentchanges, recentchangesdiff,
+#    relativedate, rsync, sidebar, smiley, sortnaturally, tag,
+#    testpagespec, transient, typography, underlay)
 ######################################################################
 
 # aggregate plugin
@@ -370,22 +391,6 @@ autoindex_commit: 1
 # flattr plugin
 # userid or user name to use by default for Flattr buttons
 #flattr_userid: joeyh
-
-# ikiwikihosting plugin
-# list of urls that alias to the main url
-#urlalias: []
-# openid of primary site owner
-owner: http://joey.kitenet.net/
-# optional hostname of site this one was branched from
-#parent: ''
-# internal hostname of this site
-hostname: git-annex.branchable.com
-# site creation datestamp
-created: 1287531313
-# how many days to retain logs
-#log_period: 7
-# disable IPv6?
-ipv6_disabled: 0
 
 # parked plugin
 # An optional message explaining why this site is parked.
