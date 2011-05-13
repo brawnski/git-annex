@@ -1,5 +1,6 @@
-This was the design doc for [[encryption]] and is preserved for
-the curious.
+This was the design doc for [[/encryption]] and is preserved for
+the curious. For an example of using git-annex with an encrypted S3 remote,
+see [[using_Amazon_S3]].
 
 [[!toc]]
 
@@ -32,7 +33,7 @@ Allowing multiple ciphers to be used within a single remote would add a lot
 of complexity, so is not planned to be supported.
 Instead, if you want a new cipher, create a new S3 bucket, or whatever.
 There does not seem to be much benefit to using the same cipher for
-two different enrypted remotes.
+two different encrypted remotes.
 
 So, the encrypted cipher could just be stored with the rest of a remote's
 configuration in `.git-annex/remotes.log` (see [[internals]]). When `git
