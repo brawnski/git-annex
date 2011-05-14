@@ -42,7 +42,7 @@ Any command not listed below is passed through to git-shell.
 
   This runs rsync in server mode to transfer out the content of a key.
 
-## OPTIONS
+# OPTIONS
 
 Same as git-annex or git-shell, depending on the command being run.
 
