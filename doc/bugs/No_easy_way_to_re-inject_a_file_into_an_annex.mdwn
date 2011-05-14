@@ -8,3 +8,5 @@ Then, I copied the annex object to the correct place in .git/annex/objects/..., 
 
 
 Long story short, I think there should be a `git annex reinject $file` or similar which will take a file, either one replacing the symlink or with an arbitrary path, and put it into the correct place in the object store. Called normally, it should reject all reinjects where the checksum does not match. With --force, this should be overridden. For reasons of safety, WORM should always require --force.
+
+> [[closing|done]], seems addressed --[[Joey]] 
