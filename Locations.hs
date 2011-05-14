@@ -17,6 +17,7 @@ module Locations (
 	gitAnnexTmpDir,
 	gitAnnexTmpLocation,
 	gitAnnexBadDir,
+	gitAnnexBadLocation,
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
 	logFile,
@@ -105,9 +106,13 @@ gitAnnexTmpLocation r key = gitAnnexTmpDir r </> keyFile key
 gitAnnexBadDir :: Git.Repo -> FilePath
 gitAnnexBadDir r = addTrailingPathSeparator $ gitAnnexDir r </> "bad"
 
-{- .git/annex/unused is used to number possibly unused keys -}
-gitAnnexUnusedLog :: Git.Repo -> FilePath
-gitAnnexUnusedLog r = gitAnnexDir r </> "unused"
+{- The bad file to use for a given key. -}
+gitAnnexBadLocation :: Git.Repo -> Key -> FilePath
+gitAnnexBadLocation r key = gitAnnexBadDir r </> keyFile key
+
+{- .git/annex/*unused is used to number possibly unused keys -}
+gitAnnexUnusedLog :: FilePath -> Git.Repo -> FilePath
+gitAnnexUnusedLog prefix r = gitAnnexDir r </> (prefix ++ "unused")
 
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool

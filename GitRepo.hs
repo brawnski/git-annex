@@ -78,6 +78,7 @@ import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
 import Data.List (isInfixOf, isPrefixOf)
+import System.Exit
 
 import Utility
 
@@ -279,9 +280,21 @@ urlScheme :: Repo -> String
 urlScheme Repo { location = Url u } = uriScheme u
 urlScheme repo = assertUrl repo $ error "internal"
 
+{- Work around a bug in the real uriRegName
+ - <http://trac.haskell.org/network/ticket/40> -}
+uriRegName' :: URIAuth -> String
+uriRegName' a = fixup $ uriRegName a
+	where
+		fixup x@('[':rest)
+			| rest !! len == ']' = take len rest
+			| otherwise = x
+			where
+				len  = (length rest) - 1
+		fixup x = x
+
 {- Hostname of an URL repo. -}
 urlHost :: Repo -> String
-urlHost = urlAuthPart uriRegName
+urlHost = urlAuthPart uriRegName'
 
 {- Port of an URL repo, if it has a nonstandard one. -}
 urlPort :: Repo -> Maybe Integer
@@ -293,11 +306,11 @@ urlPort r =
 
 {- Hostname of an URL repo, including any username (ie, "user@host") -}
 urlHostUser :: Repo -> String
-urlHostUser r = urlAuthPart uriUserInfo r ++ urlAuthPart uriRegName r
+urlHostUser r = urlAuthPart uriUserInfo r ++ urlAuthPart uriRegName' r
 
 {- The full authority portion an URL repo. (ie, "user@host:port") -}
 urlAuthority :: Repo -> String
-urlAuthority Repo { location = Url u } = uriUserInfo a ++ uriRegName a ++ uriPort a
+urlAuthority Repo { location = Url u } = uriUserInfo a ++ uriRegName' a ++ uriPort a
 	where
 		a = fromMaybe (error $ "bad url " ++ show u) (uriAuthority u)
 urlAuthority repo = assertUrl repo $ error "internal"
@@ -482,7 +495,14 @@ checkAttr repo attr files = do
 	-- in its output back to relative.
 	cwd <- getCurrentDirectory
 	let absfiles = map (absPathFrom cwd) files
-	(_, s) <- pipeBoth "git" (toCommand params) $ join "\0" absfiles
+	(_, fromh, toh) <- hPipeBoth "git" (toCommand params)
+        _ <- forkProcess $ do
+		hClose fromh
+                hPutStr toh $ join "\0" absfiles
+                hClose toh
+                exitSuccess
+        hClose toh
+	s <- hGetContents fromh
 	return $ map (topair $ cwd++"/") $ lines s
 	where
 		params = gitCommandLine repo [Param "check-attr", Param attr, Params "-z --stdin"]

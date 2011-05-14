@@ -61,7 +61,7 @@ gen r u c = do
 			retrieveKeyFile = retrieve buprepo,
 			removeKey = remove,
 			hasKey = checkPresent r bupr',
-			hasKeyCheap = True,
+			hasKeyCheap = bupLocal buprepo,
 			config = c
 		}
 

@@ -9,6 +9,9 @@ They cannot be used by other git commands though.
 * [[Amazon_S3]]
 * [[bup]]
 * [[directory]]
+* [[rsync]]
+* [[hook]]
+* [[tahoe-lafs|forum/tips:_special__95__remotes__47__hook_with_tahoe-lafs]] - limited testing
 
 ## Unused content on special remotes
 

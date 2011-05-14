@@ -12,6 +12,7 @@ module Content (
 	logStatusFor,
 	getViaTmp,
 	getViaTmpUnchecked,
+	withTmp,
 	checkDiskSpace,
 	preventWrite,
 	allowWrite,
@@ -127,6 +128,17 @@ getViaTmpUnchecked key action = do
 			-- to resume its transfer
 			return False
 
+{- Creates a temp file, runs an action on it, and cleans up the temp file. -}
+withTmp :: Key -> (FilePath -> Annex a) -> Annex a
+withTmp key action = do
+	g <- Annex.gitRepo
+	let tmp = gitAnnexTmpLocation g key
+	liftIO $ createDirectoryIfMissing True (parentDir tmp)
+	res <- action tmp
+	tmp_exists <- liftIO $ doesFileExist tmp
+	when tmp_exists $ liftIO $ removeFile tmp
+	return res
+
 {- Checks that there is disk space available to store a given key,
  - throwing an error if not. -}
 checkDiskSpace :: Key -> Annex ()
@@ -170,18 +182,41 @@ allowWrite f = do
 	s <- getFileStatus f
 	setFileMode f $ fileMode s `unionFileModes` ownerWriteMode
 
-{- Moves a file into .git/annex/objects/ -}
+{- Moves a file into .git/annex/objects/
+ -
+ - What if the key there already has content? This could happen for
+ - various reasons; perhaps the same content is being annexed again.
+ - Perhaps there has been a hash collision generating the keys.
+ -
+ - The current strategy is to assume that in this case it's safe to delete
+ - one of the two copies of the content; and the one already in the annex
+ - is left there, assuming it's the original, canonical copy.
+ -
+ - I considered being more paranoid, and checking that both files had
+ - the same content. Decided against it because A) users explicitly choose
+ - a backend based on its hashing properties and so if they're dealing
+ - with colliding files it's their own fault and B) adding such a check
+ - would not catch all cases of colliding keys. For example, perhaps 
+ - a remote has a key; if it's then added again with different content then
+ - the overall system now has two different peices of content for that
+ - key, and one of them will probably get deleted later. So, adding the
+ - check here would only raise expectations that git-annex cannot truely
+ - meet.
+ -}
 moveAnnex :: Key -> FilePath -> Annex ()
 moveAnnex key src = do
 	g <- Annex.gitRepo
 	let dest = gitAnnexLocation g key
 	let dir = parentDir dest
-	liftIO $ do
-		createDirectoryIfMissing True dir
-		allowWrite dir -- in case the directory already exists
-		renameFile src dest
-		preventWrite dest
-		preventWrite dir
+	e <- liftIO $ doesFileExist dest
+	if e
+		then liftIO $ removeFile src
+		else liftIO $ do
+			createDirectoryIfMissing True dir
+			allowWrite dir -- in case the directory already exists
+			renameFile src dest
+			preventWrite dest
+			preventWrite dir
 
 {- Removes a key's file from .git/annex/objects/ -}
 removeAnnex :: Key -> Annex ()

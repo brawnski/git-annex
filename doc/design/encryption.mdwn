@@ -1,5 +1,6 @@
-This was the design doc for [[encryption]] and is preserved for
-the curious.
+This was the design doc for [[/encryption]] and is preserved for
+the curious. For an example of using git-annex with an encrypted S3 remote,
+see [[walkthrough/using_Amazon_S3]].
 
 [[!toc]]
 
@@ -32,7 +33,7 @@ Allowing multiple ciphers to be used within a single remote would add a lot
 of complexity, so is not planned to be supported.
 Instead, if you want a new cipher, create a new S3 bucket, or whatever.
 There does not seem to be much benefit to using the same cipher for
-two different enrypted remotes.
+two different encrypted remotes.
 
 So, the encrypted cipher could just be stored with the rest of a remote's
 configuration in `.git-annex/remotes.log` (see [[internals]]). When `git
@@ -84,6 +85,15 @@ dropping content from encrypted remotes, and checking if encrypted remotes
 really have content. If it's later determined to be safe to not encrypt the
 HMAC cipher, the current design allows changing that, even for existing
 remotes.
+
+## other use of the symmetric cipher
+
+The symmetric cipher can be used to encrypt other content than the content
+sent to the remote. In particular, it may make sense to encrypt whatever
+access keys are used by the special remote with the cipher, and store that
+in remotes.log. This way anyone whose gpg key has been given access to 
+the cipher can get access to whatever other credentials are needed to
+use the special remote.
 
 ## risks
 

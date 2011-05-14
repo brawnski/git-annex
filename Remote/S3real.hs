@@ -19,7 +19,7 @@ import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
 import System.Posix.Files
-import System.Directory
+import System.Posix.Env (setEnv)
 
 import RemoteClass
 import Types
@@ -33,7 +33,8 @@ import Remote.Special
 import Remote.Encryptable
 import Crypto
 import Key
-import Utility
+import Content
+import Base64
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -48,7 +49,7 @@ gen r u c = do
 	cst <- remoteCost r expensiveRemoteCost
 	return $ gen' r u c cst
 gen' :: Git.Repo -> UUID -> Maybe RemoteConfig -> Int -> Remote Annex
-gen' r u c cst =
+gen' r u c cst = do
 	encryptableRemote c
 		(storeEncrypted this)
 		(retrieveEncrypted this)
@@ -75,7 +76,6 @@ s3Setup u c = do
 	-- check bucket location to see if the bucket exists, and create it
 	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
 	conn <- s3ConnectionRequired fullconfig
-	
 	showNote "checking bucket"
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
@@ -89,7 +89,7 @@ s3Setup u c = do
 				Left err -> s3Error err
 
 	gitConfigSpecialRemote u fullconfig "s3" "true"
-	return fullconfig
+	s3SetCreds fullconfig
 	where
 		remotename = fromJust (M.lookup "name" c)
 		bucket = remotename ++ "-" ++ u
@@ -108,18 +108,15 @@ store r k = s3Action r False $ \(conn, bucket) -> do
 	s3Bool res
 
 storeEncrypted :: Remote Annex -> (Cipher, Key) -> Key -> Annex Bool
-storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> do
-	g <- Annex.gitRepo
-	let f = gitAnnexLocation g k
+storeEncrypted r (cipher, enck) k = s3Action r False $ \(conn, bucket) -> 
 	-- To get file size of the encrypted content, have to use a temp file.
 	-- (An alternative would be chunking to to a constant size.)
-	let tmp = gitAnnexTmpLocation g enck
-	liftIO $ createDirectoryIfMissing True (parentDir tmp)
-	liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
-	res <- liftIO $ storeHelper (conn, bucket) r enck tmp
-	tmp_exists <- liftIO $ doesFileExist tmp
-	when tmp_exists $ liftIO $ removeFile tmp
-	s3Bool res
+	withTmp enck $ \tmp -> do
+		g <- Annex.gitRepo
+		let f = gitAnnexLocation g k
+		liftIO $ withEncryptedContent cipher (L.readFile f) $ \s -> L.writeFile tmp s
+		res <- liftIO $ storeHelper (conn, bucket) r enck tmp
+		s3Bool res
 
 storeHelper :: (AWSConnection, String) -> Remote Annex -> Key -> FilePath -> IO (AWSResult ())
 storeHelper (conn, bucket) r k file = do
@@ -190,6 +187,19 @@ s3Bool res = do
 		Right _ -> return True
 		Left e -> s3Warning e
 
+s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
+s3Action r noconn action = do
+	when (config r == Nothing) $
+		error $ "Missing configuration for special remote " ++ name r
+	let bucket = M.lookup "bucket" $ fromJust $ config r
+	conn <- s3Connection $ fromJust $ config r
+	case (bucket, conn) of
+		(Just b, Just c) -> action (c, b)
+		_ -> return noconn
+
+bucketKey :: String -> Key -> S3Object
+bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+
 s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
 s3ConnectionRequired c = do
 	conn <- s3Connection c
@@ -199,30 +209,62 @@ s3ConnectionRequired c = do
 
 s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
 s3Connection c = do
-	ak <- getEnvKey "AWS_ACCESS_KEY_ID"
-	sk <- getEnvKey "AWS_SECRET_ACCESS_KEY"
-	if (null ak || null sk)
-		then do
-			warning "Set both AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY to use S3"
+	creds <- s3GetCreds c
+	case creds of
+		Just (ak, sk) -> return $ Just $ AWSConnection host port ak sk
+		_ -> do
+			warning $ "Set both " ++ s3AccessKey ++ " and " ++ s3SecretKey  ++ " to use S3"
 			return Nothing
-		else return $ Just $ AWSConnection host port ak sk
 	where
 		host = fromJust $ (M.lookup "host" c)
 		port = let s = fromJust $ (M.lookup "port" c) in
 			case reads s of
 			[(p, _)] -> p
 			_ -> error $ "bad S3 port value: " ++ s
+
+{- S3 creds come from the environment if set. 
+ - Otherwise, might be stored encrypted in the remote's config. -}
+s3GetCreds :: RemoteConfig -> Annex (Maybe (String, String))
+s3GetCreds c = do
+	ak <- getEnvKey s3AccessKey
+	sk <- getEnvKey s3SecretKey
+	if (null ak || null sk)
+		then do
+			mcipher <- remoteCipher c
+			case (M.lookup "s3creds" c, mcipher) of
+				(Just encrypted, Just cipher) -> do
+					s <- liftIO $ withDecryptedContent cipher
+						(return $ L.pack $ fromB64 encrypted)
+						(return . L.unpack)
+					let line = lines s
+					let ak' = line !! 0
+					let sk' = line !! 1
+					liftIO $ do
+						setEnv s3AccessKey ak True
+						setEnv s3SecretKey sk True
+					return $ Just (ak', sk')
+				_ -> return Nothing
+		else return $ Just (ak, sk)
+	where
 		getEnvKey s = liftIO $ catch (getEnv s) (const $ return "")
 
-s3Action :: Remote Annex -> a -> ((AWSConnection, String) -> Annex a) -> Annex a
-s3Action r noconn action = do
-	when (config r == Nothing) $
-		error $ "Missing configuration for special remote " ++ name r
-	let bucket = M.lookup "bucket" $ fromJust $ config r
-	conn <- s3Connection (fromJust $ config r)
-	case (bucket, conn) of
-		(Just b, Just c) -> action (c, b)
-		_ -> return noconn
+{- Stores S3 creds encrypted in the remote's config if possible. -}
+s3SetCreds :: RemoteConfig -> Annex RemoteConfig
+s3SetCreds c = do
+	creds <- s3GetCreds c
+	case creds of
+		Just (ak, sk) -> do
+			mcipher <- remoteCipher c
+			case mcipher of
+				Just cipher -> do
+					s <- liftIO $ withEncryptedContent cipher
+						(return $ L.pack $ unlines [ak, sk])
+						(return . L.unpack)
+					return $ M.insert "s3creds" (toB64 s) c
+				Nothing -> return c
+		_ -> return c
 
-bucketKey :: String -> Key -> S3Object
-bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+s3AccessKey :: String
+s3AccessKey = "AWS_ACCESS_KEY_ID"
+s3SecretKey :: String
+s3SecretKey = "AWS_SECRET_ACCESS_KEY"

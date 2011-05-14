@@ -16,6 +16,7 @@ module Utility (
 	relPathCwdToFile,
 	relPathDirToFile,
 	boolSystem,
+	boolSystemEnv,
 	shellEscape,
 	shellUnEscape,
 	unsetFileMode,
@@ -73,7 +74,10 @@ toCommand l = concat $ map unwrap l
  - SIGINT(ctrl-c) is allowed to propigate and will terminate the program.
  -}
 boolSystem :: FilePath -> [CommandParam] -> IO Bool
-boolSystem command params = do
+boolSystem command params = boolSystemEnv command params Nothing
+
+boolSystemEnv :: FilePath -> [CommandParam] -> Maybe [(String, String)] -> IO Bool
+boolSystemEnv command params env = do
 	-- Going low-level because all the high-level system functions
 	-- block SIGINT etc. We need to block SIGCHLD, but allow
 	-- SIGINT to do its default program termination.
@@ -93,10 +97,11 @@ boolSystem command params = do
 			setSignalMask oldset
 		childaction oldint oldset = do
 			restoresignals oldint oldset
-			executeFile command True (toCommand params) Nothing
+			executeFile command True (toCommand params) env
 
-{- Escapes a filename to be safely able to be exposed to the shell. -}
-shellEscape :: FilePath -> String
+{- Escapes a filename or other parameter to be safely able to be exposed to
+ - the shell. -}
+shellEscape :: String -> String
 shellEscape f = "'" ++ escaped ++ "'"
 	where
 		-- replace ' with '"'"'

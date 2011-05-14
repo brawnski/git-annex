@@ -1,0 +1,28 @@
+This special remote type rsyncs file contents to somewhere else.
+
+Setup example:
+
+	# git annex initremote myrsync type=rsync rsyncurl=rsync://rsync.example.com/myrsync encryption=joey@kitenet.net
+	# git annex describe myrsync "rsync server"
+
+Or for using rsync over SSH
+
+	# git annex initremote myrsync type=rsync rsyncurl=ssh.example.com:/myrsync encryption=joey@kitenet.net
+	# git annex describe myrsync "rsync server"
+
+## configuration
+
+These parameters can be passed to `git annex initremote` to configure rsync:
+
+* `encryption` - Required. Either "none" to disable encryption of content
+  stored in rsync, 
+  or a value that can be looked up (using gpg -k) to find a gpg encryption
+  key that will be given access to the remote. Note that additional gpg
+  keys can be given access to a remote by rerunning initremote with
+  the new key id. See [[encryption]].
+
+* `rsyncurl` - Required. This is the url or `hostname:/directory` to 
+  pass to rsync to tell it where to store content.
+
+The `annex-rsync-options` git configuration setting can be used to pass
+parameters to rsync.

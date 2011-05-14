@@ -158,7 +158,7 @@ rsynchelper :: Git.Repo -> Bool -> Key -> FilePath -> Annex (Bool)
 rsynchelper r sending key file = do
 	showProgress -- make way for progress bar
 	p <- rsyncParams r sending key file
-	res <- liftIO $ boolSystem "rsync" p
+	res <- liftIO $ rsync p
 	if res
 		then return res
 		else do

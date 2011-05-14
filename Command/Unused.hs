@@ -7,7 +7,7 @@
 
 module Command.Unused where
 
-import Control.Monad (filterM, unless, forM_)
+import Control.Monad (filterM, unless, forM_, when)
 import Control.Monad.State (liftIO)
 import qualified Data.Set as S
 import Data.Maybe
@@ -51,14 +51,17 @@ perform = do
 
 checkUnused :: Annex ()
 checkUnused = do
-	(unused, staletmp) <- unusedKeys
-	let unusedlist = number 0 unused
-	let staletmplist = number (length unused) staletmp
-	let list = unusedlist ++ staletmplist
-	writeUnusedFile list
-	unless (null unused) $ showLongNote $ unusedMsg unusedlist
-	unless (null staletmp) $ showLongNote $ staleTmpMsg staletmplist
-	unless (null list) $ showLongNote $ "\n"
+	(unused, stalebad, staletmp) <- unusedKeys
+	n  <- list "" unusedMsg unused 0
+	n' <- list "bad" staleBadMsg stalebad n
+	_  <- list "tmp" staleTmpMsg staletmp n'
+	return ()
+	where
+		list file msg l c = do
+			let unusedlist = number c l
+			when (not $ null l) $ showLongNote $ msg unusedlist
+			writeUnusedFile file unusedlist
+			return $ length l
 
 checkRemoteUnused :: Remote.Remote Annex -> Annex ()
 checkRemoteUnused r = do
@@ -69,7 +72,7 @@ checkRemoteUnused r = do
 	remotehas <- filterM isthere logged
 	let remoteunused = remotehas `exclude` referenced
 	let list = number 0 remoteunused
-	writeUnusedFile list
+	writeUnusedFile "" list
 	unless (null remoteunused) $ do
 		showLongNote $ remoteUnusedMsg r list
 		showLongNote $ "\n"
@@ -80,10 +83,10 @@ checkRemoteUnused r = do
 			return $ uuid `elem` us
 		uuid = Remote.uuid r
 
-writeUnusedFile :: [(Int, Key)] -> Annex ()
-writeUnusedFile l = do
+writeUnusedFile :: FilePath -> [(Int, Key)] -> Annex ()
+writeUnusedFile prefix l = do
 	g <- Annex.gitRepo
-	liftIO $ safeWriteFile (gitAnnexUnusedLog g) $
+	liftIO $ safeWriteFile (gitAnnexUnusedLog prefix g) $
 		unlines $ map (\(n, k) -> show n ++ " " ++ show k) l
 
 table :: [(Int, Key)] -> [String]
@@ -100,7 +103,12 @@ staleTmpMsg :: [(Int, Key)] -> String
 staleTmpMsg t = unlines $ 
 	["Some partially transferred data exists in temporary files:"]
 	++ table t ++ [dropMsg Nothing]
-		
+
+staleBadMsg :: [(Int, Key)] -> String
+staleBadMsg t = unlines $ 
+	["Some corrupted files have been preserved by fsck, just in case:"]
+	++ table t ++ [dropMsg Nothing]
+
 unusedMsg :: [(Int, Key)] -> String
 unusedMsg u = unusedMsg' u
 	["Some annexed data is no longer used by any files in the repository:"]
@@ -127,36 +135,28 @@ dropMsg :: Maybe (Remote.Remote Annex) -> String
 dropMsg Nothing = dropMsg' ""
 dropMsg (Just r) = dropMsg' $ " --from " ++ Remote.name r
 dropMsg' :: String -> String
-dropMsg' s = "(To remove unwanted data: git-annex dropunused" ++ s ++ " NUMBER)"
+dropMsg' s = "(To remove unwanted data: git-annex dropunused" ++ s ++ " NUMBER)\n"
 
 {- Finds keys whose content is present, but that do not seem to be used
- - by any files in the git repo, or that are only present as tmp files. -}
-unusedKeys :: Annex ([Key], [Key])
+ - by any files in the git repo, or that are only present as bad or tmp
+ - files. -}
+unusedKeys :: Annex ([Key], [Key], [Key])
 unusedKeys = do
-	g <- Annex.gitRepo
-	
 	fast <- Annex.getState Annex.fast
 	if fast
 		then do
-			showNote "fast mode enabled; only finding temporary files"
-			tmps <- tmpKeys
-			return ([], tmps)
+			showNote "fast mode enabled; only finding stale files"
+			tmp <- staleKeys' gitAnnexTmpDir
+			bad <- staleKeys' gitAnnexBadDir
+			return ([], bad, tmp)
 		else do
 			showNote "checking for unused data..."
 			present <- getKeysPresent
 			referenced <- getKeysReferenced
-			tmps <- tmpKeys
-	
 			let unused = present `exclude` referenced
-			let staletmp = tmps `exclude` present
-			let duptmp = tmps `exclude` staletmp
-
-			-- Tmp files that are dups of content already present
-			-- can simply be removed.
-			liftIO $ forM_ duptmp $ \t -> removeFile $
-				gitAnnexTmpLocation g t
-
-			return (unused, staletmp)
+			staletmp <- staleKeys gitAnnexTmpDir present
+			stalebad <- staleKeys gitAnnexBadDir present
+			return (unused, stalebad, staletmp)
 
 {- Finds items in the first, smaller list, that are not
  - present in the second, larger list.
@@ -178,16 +178,34 @@ getKeysReferenced = do
 	keypairs <- mapM Backend.lookupFile files
 	return $ map fst $ catMaybes keypairs
 
-{- List of keys that have temp files in the git repo. -}
-tmpKeys :: Annex [Key]
-tmpKeys = do
+{- Looks in the specified directory for bad/tmp keys, and returns a list
+ - of those that might still have value, or might be stale and removable. 
+ - 
+ - When a list of presently available keys is provided, stale keys
+ - that no longer have value are deleted.
+ -}
+staleKeys :: (Git.Repo -> FilePath) -> [Key] -> Annex [Key]
+staleKeys dirspec present = do
+	contents <- staleKeys' dirspec
+		
+	let stale = contents `exclude` present
+	let dup = contents `exclude` stale
+
 	g <- Annex.gitRepo
-	let tmp = gitAnnexTmpDir g
-	exists <- liftIO $ doesDirectoryExist tmp
-	if (not exists)
+	let dir = dirspec g
+	liftIO $ forM_ dup $ \t -> removeFile $ dir </> keyFile t
+
+	return stale
+
+staleKeys' :: (Git.Repo -> FilePath) -> Annex [Key]
+staleKeys' dirspec = do
+	g <- Annex.gitRepo
+	let dir = dirspec g
+	exists <- liftIO $ doesDirectoryExist dir
+	if not exists
 		then return []
 		else do
-			contents <- liftIO $ getDirectoryContents tmp
+			contents <- liftIO $ getDirectoryContents dir
 			files <- liftIO $ filterM doesFileExist $
-				map (tmp </>) contents
+				map (dir </>) contents
 			return $ catMaybes $ map (fileKey . takeFileName) files

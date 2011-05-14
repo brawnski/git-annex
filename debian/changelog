@@ -1,3 +1,32 @@
+git-annex (0.20110504) UNRELEASED; urgency=low
+
+  * Work around a bug in Network.URI's handling of bracketed ipv6 addresses.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 06 May 2011 15:20:38 -0400
+
+git-annex (0.20110503) unstable; urgency=low
+
+  * Fix hasKeyCheap setting for bup and rsync special remotes.
+  * Add hook special remotes.
+  * Avoid crashing when an existing key is readded to the annex.
+  * unused: Now also lists files fsck places in .git/annex/bad/
+  * S3: When encryption is enabled, the Amazon S3 login credentials
+    are stored, encrypted, in .git-annex/remotes.log, so environment
+    variables need not be set after the remote is initialized.
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 03 May 2011 20:56:01 -0400
+
+git-annex (0.20110427) unstable; urgency=low
+
+  * Switch back to haskell SHA library, so git-annex remains buildable on
+    Debian stable.
+  * Added rsync special remotes. This could be used, for example, to 
+    store annexed content on rsync.net (encrypted naturally). Or anywhere else.
+  * Bugfix: Avoid pipeline stall when running git annex drop or fsck on a
+    lot of files. Possibly only occured with ghc 7.
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 27 Apr 2011 22:50:26 -0400
+
 git-annex (0.20110425~bpo60+1) squeeze-backports; urgency=low
 
   * Switch back to haskell SHA library, so git-annex remains buildable on
