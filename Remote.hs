@@ -75,10 +75,10 @@ genList = do
 			return rs'
 		else return rs
 	where
-		process m t = do
-			l <- enumerate t
-			l' <- filterM remoteNotIgnored l
-			mapM (gen m t) l'
+		process m t = 
+			enumerate t >>=
+			filterM remoteNotIgnored >>=
+			mapM (gen m t)
 		gen m t r = do
 			u <- getUUID r
 			generate t r u (M.lookup u m)
@@ -97,9 +97,7 @@ byName n = do
 
 {- Looks up a remote by name (or by UUID), and returns its UUID. -}
 nameToUUID :: String -> Annex UUID
-nameToUUID "." = do -- special case for current repo
-	g <- Annex.gitRepo
-	getUUID g
+nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
 nameToUUID n = liftM uuid (byName n)
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.

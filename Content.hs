@@ -72,8 +72,7 @@ calcGitLink file key = do
  - updated instead. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
-	g <- Annex.gitRepo
-	u <- getUUID g
+	u <- getUUID =<< Annex.gitRepo
 	logStatusFor u key status
 
 {- Updates the LocationLog when a key's presence changes in a repository
