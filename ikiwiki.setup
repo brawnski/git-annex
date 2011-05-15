@@ -126,7 +126,7 @@ allow_symlinks_before_srcdir: 0
 # Allow anyone to branch, check out, and copy this site?
 branchable: 1
 # Allow anyone to git push verified changes to this site?
-#anonpush: 0
+anonpush: 1
 # Display "Branchable" link on action bar?
 branchable_action: 1
 
@@ -270,9 +270,8 @@ po_link_to: default
 
 ######################################################################
 # web plugins
-#   (404, attachment, comments, editdiff, edittemplate, getsource, google,
-#    goto, mirrorlist, remove, rename, repolist, search, theme, websetup,
-#    wmd)
+#   (404, attachment, comments, editdiff, edittemplate, google, goto,
+#    mirrorlist, remove, rename, repolist, search, theme, websetup, wmd)
 ######################################################################
 
 # attachment plugin
@@ -294,10 +293,6 @@ comments_pagename: comment_
 #comments_allowauthor: 0
 # commit comments to the VCS
 comments_commit: 1
-
-# getsource plugin
-# Mime type for returned source.
-#getsource_mimetype: text/plain; charset=utf-8
 
 # mirrorlist plugin
 # list of mirrors
