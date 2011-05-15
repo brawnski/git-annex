@@ -25,9 +25,9 @@ url: http://git-annex.branchable.com
 # url to the ikiwiki.cgi
 cgiurl: http://git-annex.branchable.com/ikiwiki.cgi
 # filename of cgi wrapper to generate
-cgi_wrapper: /home/b-git-annex/public_html/ikiwiki.cgi
+cgi_wrapper: /var/www/b-git-annex/ikiwiki.cgi
 # mode for cgi_wrapper (can safely be made suid)
-cgi_wrappermode: 06755
+cgi_wrappermode: 0755
 # rcs backend to use
 rcs: git
 # plugins to add to the default configuration
@@ -125,6 +125,8 @@ allow_symlinks_before_srcdir: 0
 # branchable plugin
 # Allow anyone to branch, check out, and copy this site?
 branchable: 1
+# Allow anyone to git push verified changes to this site?
+#anonpush: 0
 # Display "Branchable" link on action bar?
 branchable_action: 1
 
@@ -138,7 +140,8 @@ git_wrapper: /home/b-git-annex/source.git/hooks/post-update
 # git pre-receive hook to generate
 #git_test_receive_wrapper: /git/wiki.git/hooks/pre-receive
 # unix users whose commits should be checked by the pre-receive hook
-#untrusted_committers: []
+untrusted_committers:
+  - ikiwiki-anon
 # gitweb url to show file history ([[file]] substituted)
 historyurl: 'http://source.git-annex.branchable.com/?p=source.git;a=history;f=doc/[[file]];hb=HEAD'
 # gitweb url to show a diff ([[file]], [[sha1_to]], [[sha1_from]], [[sha1_commit]], and [[sha1_parent]] substituted)
@@ -267,8 +270,9 @@ po_link_to: default
 
 ######################################################################
 # web plugins
-#   (404, attachment, comments, editdiff, edittemplate, google, goto,
-#    mirrorlist, remove, rename, repolist, search, theme, websetup, wmd)
+#   (404, attachment, comments, editdiff, edittemplate, getsource, google,
+#    goto, mirrorlist, remove, rename, repolist, search, theme, websetup,
+#    wmd)
 ######################################################################
 
 # attachment plugin
@@ -290,6 +294,10 @@ comments_pagename: comment_
 #comments_allowauthor: 0
 # commit comments to the VCS
 comments_commit: 1
+
+# getsource plugin
+# Mime type for returned source.
+#getsource_mimetype: text/plain; charset=utf-8
 
 # mirrorlist plugin
 # list of mirrors
