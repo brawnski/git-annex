@@ -34,7 +34,7 @@ seek = [withFilesInGit start]
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	showStart "unlock" file
-	return $ Just $ perform file key
+	next $ perform file key
 
 perform :: FilePath -> Key -> CommandPerform
 perform dest key = do
@@ -52,5 +52,5 @@ perform dest key = do
         if ok
                 then do
 			liftIO $ allowWrite dest
-			return $ Just $ return True
+			next $ return True
                 else error "copy failed!"

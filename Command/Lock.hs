@@ -26,7 +26,7 @@ seek = [withFilesUnlocked start]
 start :: CommandStartBackendFile
 start (file, _) = do
 	showStart "lock" file
-	return $ Just $ perform file
+	next $ perform file
 
 perform :: FilePath -> CommandPerform
 perform file = do
@@ -36,4 +36,4 @@ perform file = do
 	liftIO $ Git.run g "reset" [Params "-q --", File file]
 	-- checkout the symlink
 	liftIO $ Git.run g "checkout" [Param "--", File file]
-	return $ Just $ return True -- no cleanup needed
+	next $ return True -- no cleanup needed

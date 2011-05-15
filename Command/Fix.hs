@@ -30,17 +30,17 @@ start file = isAnnexed file $ \(key, _) -> do
 	link <- calcGitLink file key
 	l <- liftIO $ readSymbolicLink file
 	if link == l
-		then return Nothing
+		then stop
 		else do
 			showStart "fix" file
-			return $ Just $ perform file link
+			next $ perform file link
 
 perform :: FilePath -> FilePath -> CommandPerform
 perform file link = do
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ removeFile file
 	liftIO $ createSymbolicLink link file
-	return $ Just $ cleanup file
+	next $ cleanup file
 
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do

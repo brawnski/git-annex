@@ -65,11 +65,21 @@ data Command = Command {
 	cmdusesrepo :: Bool
 }
 
+{- Most commands operate on files in a git repo. -}
 repoCommand :: String -> String -> [CommandSeek] -> String -> Command
 repoCommand n p s d = Command n p s d True
 
+{- Others can run anywhere. -}
 standaloneCommand :: String -> String -> [CommandSeek] -> String -> Command
 standaloneCommand n p s d = Command n p s d False
+
+{- For start and perform stages to indicate what step to run next. -}
+next :: a -> Annex (Maybe a)
+next a = return $ Just a
+
+{- Or to indicate nothing needs to be done. -}
+stop :: Annex (Maybe a)
+stop = return Nothing
 
 {- Prepares a list of actions to run to perform a command, based on
  - the parameters passed to it. -}

@@ -49,13 +49,13 @@ start (unused, unusedbad, unusedtmp) s = notBareRepo $ search
 	, (unusedtmp, performOther gitAnnexTmpLocation)
 	]
 	where
-		search [] = return Nothing
+		search [] = stop
 		search ((m, a):rest) = do
 			case M.lookup s m of
 				Nothing -> search rest
 				Just key -> do
 					showStart "dropunused" s
-					return $ Just $ a key
+					next $ a key
 
 perform :: Key -> CommandPerform
 perform key = do
@@ -64,7 +64,7 @@ perform key = do
 		Just name -> do
 			r <- Remote.byName name
 			showNote $ "from " ++ Remote.name r ++ "..."
-			return $ Just $ Command.Move.fromCleanup r True key
+			next $ Command.Move.fromCleanup r True key
 		_ -> do
 			backend <- keyBackend key
 			Command.Drop.perform key backend (Just 0) -- force drop
@@ -75,7 +75,7 @@ performOther filespec key = do
 	let f = filespec g key
 	e <- liftIO $ doesFileExist f
 	when e $ liftIO $ removeFile f
-	return $ Just $ return True
+	next $ return True
 
 readUnusedLog :: FilePath -> Annex UnusedMap
 readUnusedLog prefix = do

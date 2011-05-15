@@ -35,9 +35,8 @@ start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 	if (newbackend /= oldbackend || upgradable) && exists
 		then do
 			showStart "migrate" file
-			return $ Just $ perform file key newbackend
-		else
-			return Nothing
+			next $ perform file key newbackend
+		else stop
 	where
 		choosebackend Nothing = do
 			backends <- Backend.list
@@ -55,7 +54,7 @@ perform file oldkey newbackend = do
 	let src = gitAnnexLocation g oldkey
 	stored <- Backend.storeFileKey src $ Just newbackend
 	case stored of
-		Nothing -> return Nothing
+		Nothing -> stop
 		Just (newkey, _) -> do
 			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
@@ -68,5 +67,5 @@ perform file oldkey newbackend = do
 				then do
 					-- Update symlink to use the new key.
 					liftIO $ removeFile file
-					return $ Just $ Command.Add.cleanup file newkey
-				else return Nothing
+					next $ Command.Add.cleanup file newkey
+				else stop

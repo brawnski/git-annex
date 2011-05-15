@@ -43,16 +43,16 @@ start file = isAnnexed file $ \(key, backend) -> do
 				Annex.changeState $ \s -> s { Annex.force = True }
 
 			showStart "unannex" file
-			return $ Just $ perform file key backend
-		else return Nothing
+			next $ perform file key backend
+		else stop
 
 perform :: FilePath -> Key -> Backend Annex -> CommandPerform
 perform file key backend = do
 	-- force backend to always remove
 	ok <- Backend.removeKey backend key (Just 0)
 	if ok
-		then return $ Just $ cleanup file key
-		else return Nothing
+		then next $ cleanup file key
+		else stop
 
 cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do

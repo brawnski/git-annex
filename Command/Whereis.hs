@@ -26,7 +26,7 @@ seek = [withFilesInGit start]
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	showStart "whereis" file
-	return $ Just $ perform key
+	next $ perform key
 
 perform :: Key -> CommandPerform
 perform key = do
@@ -35,12 +35,12 @@ perform key = do
 	let num = length uuids
 	showNote $ show num ++ " " ++ copiesplural num
 	if null $ uuids
-		then return Nothing
+		then stop
 		else do
 			pp <- prettyPrintUUIDs uuids
 			showLongNote $ pp
 			showProgress	
-			return $ Just $ return True
+			next $ return True
 	where
 		copiesplural 1 = "copy"
 		copiesplural _ = "copies"

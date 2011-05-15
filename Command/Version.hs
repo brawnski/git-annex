@@ -28,6 +28,6 @@ start = do
 	liftIO $ putStrLn $ "default repository version: " ++ defaultVersion
 	liftIO $ putStrLn $ "supported repository versions: " ++ vs supportedVersions
 	liftIO $ putStrLn $ "upgrade supported from repository versions: " ++ vs upgradableVersions
-	return Nothing
+	stop
 	where
 		vs l = join " " l

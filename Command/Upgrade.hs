@@ -24,4 +24,4 @@ start = do
 	showStart "upgrade" ""
 	r <- upgrade
 	checkVersion
-	return $ Just $ return $ Just $ return r
+	next $ next $ return r

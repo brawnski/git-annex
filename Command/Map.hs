@@ -45,7 +45,7 @@ start = do
 	showLongNote $ "running: dot -Tx11 " ++ file
 	showProgress
 	r <- liftIO $ boolSystem "dot" [Param "-Tx11", File file]
-	return $ Just $ return $ Just $ return r
+	next $ next $ return r
 	where
 		file = "map.dot"
 

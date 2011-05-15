@@ -24,9 +24,9 @@ start :: CommandStartString
 start name = notBareRepo $ do
 	showStart "untrust" name
 	u <- Remote.nameToUUID name
-	return $ Just $ perform u
+	next $ perform u
 
 perform :: UUID -> CommandPerform
 perform uuid = do
 	trustSet uuid UnTrusted
-	return $ Just $ return True
+	next $ return True

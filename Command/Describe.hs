@@ -29,9 +29,9 @@ start params = notBareRepo $ do
 	
 	showStart "describe" name
 	u <- Remote.nameToUUID name
-	return $ Just $ perform u description
+	next $ perform u description
 
 perform :: UUID -> String -> CommandPerform
 perform u description = do
 	describeUUID u description
-	return $ Just $ Command.Init.cleanup
+	next $ Command.Init.cleanup

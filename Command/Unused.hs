@@ -37,7 +37,7 @@ seek = [withNothing start]
 start :: CommandStartNothing
 start = notBareRepo $ do
 	showStart "unused" ""
-	return $ Just perform
+	next perform
 
 perform :: CommandPerform
 perform = do
@@ -47,7 +47,7 @@ perform = do
 			r <- Remote.byName name
 			checkRemoteUnused r
 		_ -> checkUnused
-	return $ Just $ return True
+	next $ return True
 
 checkUnused :: Annex ()
 checkUnused = do

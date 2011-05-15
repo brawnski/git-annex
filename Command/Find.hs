@@ -25,4 +25,4 @@ start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
 	exists <- inAnnex key
 	when exists $ liftIO $ putStrLn file
-	return Nothing
+	stop

@@ -29,11 +29,11 @@ seek = [withAttrFilesInGit "annex.numcopies" start]
 start :: CommandStartAttrFile
 start (file, attr) = isAnnexed file $ \(key, backend) -> do
 	inbackend <- Backend.hasKey key
-	if not inbackend
-		then return Nothing
-		else do
+	if inbackend
+		then do
 			showStart "drop" file
-			return $ Just $ perform key backend numcopies
+			next $ perform key backend numcopies
+		else stop
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
@@ -41,8 +41,8 @@ perform :: Key -> Backend Annex -> Maybe Int -> CommandPerform
 perform key backend numcopies = do
 	success <- Backend.removeKey backend key numcopies
 	if success
-		then return $ Just $ cleanup key
-		else return Nothing
+		then next $ cleanup key
+		else stop
 
 cleanup :: Key -> CommandCleanup
 cleanup key = do

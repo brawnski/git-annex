@@ -39,7 +39,7 @@ start params = notBareRepo $ do
 	t <- findType fullconfig
 	
 	showStart "initremote" name
-	return $ Just $ perform t u $ M.union config c
+	next $ perform t u $ M.union config c
 
 	where
 		ws = words params
@@ -49,7 +49,7 @@ start params = notBareRepo $ do
 perform :: RemoteClass.RemoteType Annex -> UUID -> RemoteClass.RemoteConfig -> CommandPerform
 perform t u c = do
 	c' <- RemoteClass.setup t u c
-	return $ Just $ cleanup u c'
+	next $ cleanup u c'
 
 cleanup :: UUID -> RemoteClass.RemoteConfig -> CommandCleanup
 cleanup u c = do
