@@ -14,6 +14,7 @@ import Control.Monad (filterM, liftM, when)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
+import Data.Maybe
 
 import Types
 import qualified Backend
@@ -106,18 +107,10 @@ doCommand start = do
 					return c
 
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
-notAnnexed file a = do
-	r <- Backend.lookupFile file
-	case r of
-		Just _ -> return Nothing
-		Nothing -> a
+notAnnexed file a = maybe a (const $ return Nothing) =<< Backend.lookupFile file
 
 isAnnexed :: FilePath -> ((Key, Backend Annex) -> Annex (Maybe a)) -> Annex (Maybe a)
-isAnnexed file a = do
-	r <- Backend.lookupFile file
-	case r of
-		Just v -> a v
-		Nothing -> return Nothing
+isAnnexed file a = maybe (return Nothing) a =<< Backend.lookupFile file
 
 notBareRepo :: Annex a -> Annex a
 notBareRepo a = do
@@ -183,9 +176,7 @@ withFilesUnlocked' typechanged a params = do
 withKeys :: CommandSeekKeys
 withKeys a params = return $ map a $ map parse params
 	where
-		parse p = case readKey p of
-			Just k -> k
-			Nothing -> error "bad key"
+		parse p = maybe (error "bad key") id $ readKey p
 withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing
@@ -206,9 +197,7 @@ filterFiles l = do
 		else return $ filter (notExcluded $ wildsRegex exclude) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
-		notExcluded r f = case match r f [] of
-			Nothing -> True
-			Just _ -> False
+		notExcluded r f = isJust $ match r f []
 
 wildsRegex :: [String] -> Regex
 wildsRegex ws = compile regex []
@@ -257,11 +246,10 @@ cmdlineKey  = do
 	case k of
 		Nothing -> nokey
 		Just "" -> nokey
-		Just kstring -> case readKey kstring of
-			Nothing -> error "bad key"
-			Just key -> return key
+		Just kstring -> maybe badkey return $ readKey kstring
 	where
 		nokey = error "please specify the key with --key"
+		badkey = error "bad key"
 
 {- Given an original list of files, and an expanded list derived from it,
  - ensures that the original list's ordering is preserved. 

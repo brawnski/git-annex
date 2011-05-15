@@ -84,10 +84,7 @@ repoName umap r
 	| otherwise = M.findWithDefault fallback repouuid umap
 	where
 		repouuid = getUncachedUUID r
-		fallback =
-			case (Git.repoRemoteName r) of
-				Just n -> n
-				Nothing -> "unknown"
+		fallback = maybe "unknown" id $ Git.repoRemoteName r
 
 {- A unique id for the node for a repo. Uses the annex.uuid if available. -}
 nodeId :: Git.Repo -> String
@@ -121,13 +118,10 @@ edge umap fullinfo from to =
 		{- Only name an edge if the name is different than the name
 		 - that will be used for the destination node, and is
 		 - different from its hostname. (This reduces visual clutter.) -}
-		edgename =
-			case (Git.repoRemoteName to) of
-				Nothing -> Nothing
-				Just n ->
-					if (n == repoName umap fullto || n == hostname fullto)
-						then Nothing
-						else Just n
+		edgename = maybe Nothing calcname $ Git.repoRemoteName to
+		calcname n
+			| n == repoName umap fullto || n == hostname fullto = Nothing
+			| otherwise = Just n
 
 unreachable :: String -> String
 unreachable = Dot.fillColor "red"

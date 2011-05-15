@@ -58,14 +58,13 @@ start (unused, unusedbad, unusedtmp) s = notBareRepo $ search
 					next $ a key
 
 perform :: Key -> CommandPerform
-perform key = do
-	from <- Annex.getState Annex.fromremote
-	case from of
-		Just name -> do
+perform key = maybe droplocal dropremote =<< Annex.getState Annex.fromremote
+	where
+		dropremote name = do
 			r <- Remote.byName name
 			showNote $ "from " ++ Remote.name r ++ "..."
 			next $ Command.Move.fromCleanup r True key
-		_ -> do
+		droplocal = do
 			backend <- keyBackend key
 			Command.Drop.perform key backend (Just 0) -- force drop
 

@@ -73,11 +73,10 @@ encryptableRemote c storeKeyEncrypted retrieveKeyFileEncrypted r =
 {- Gets encryption Cipher. The decrypted Cipher is cached in the Annex
  - state. -}
 remoteCipher :: RemoteConfig -> Annex (Maybe Cipher)
-remoteCipher c = do
-	cache <- Annex.getState Annex.cipher
-	case cache of
-		Just cipher -> return $ Just cipher
-		Nothing -> case extractCipher c of
+remoteCipher c = maybe expensive cached =<< Annex.getState Annex.cipher
+	where
+		cached cipher = return $ Just cipher
+		expensive = case extractCipher c of
 			Nothing -> return Nothing
 			Just encipher -> do
 				showNote "gpg"

@@ -68,9 +68,8 @@ gen r u c = do
 bupSetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 bupSetup u c = do
 	-- verify configuration is sane
-	let buprepo = case M.lookup "buprepo" c of
-		Nothing -> error "Specify buprepo="
-		Just r -> r
+	let buprepo = maybe (error "Specify buprepo=") id $
+		M.lookup "buprepo" c
 	c' <- encryptionSetup c
 
 	-- bup init will create the repository.

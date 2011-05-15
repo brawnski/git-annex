@@ -61,9 +61,8 @@ gen r u c = do
 
 hookSetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 hookSetup u c = do
-	let hooktype = case M.lookup "hooktype" c of
-		Nothing -> error "Specify hooktype="
-		Just r -> r
+	let hooktype = maybe (error "Specify hooktype=") id $
+		M.lookup "hooktype" c
 	c' <- encryptionSetup c
 	gitConfigSpecialRemote u c' "hooktype" hooktype
 	return c'
@@ -94,14 +93,12 @@ lookupHook hooktype hook =do
 		hookname =  hooktype ++ "-" ++ hook ++ "-hook"
 
 runHook :: String -> String -> Key -> Maybe FilePath -> Annex Bool -> Annex Bool
-runHook hooktype hook k f a = do
-	command <- lookupHook hooktype hook
-	case command of
-		Nothing -> return False
-		Just c -> do
+runHook hooktype hook k f a = maybe (return False) run =<< lookupHook hooktype hook
+	where
+		run command = do
 			showProgress -- make way for hook output
 			res <- liftIO $ boolSystemEnv
-				"sh" [Param "-c", Param c] $ hookEnv k f
+				"sh" [Param "-c", Param command] $ hookEnv k f
 			if res
 				then a
 				else do

@@ -68,11 +68,11 @@ cleanup u c = do
 findByName :: String -> Annex (UUID, RemoteClass.RemoteConfig)
 findByName name = do
 	m <- Remote.readRemoteLog
-	case findByName' name m of
-		Just i -> return i
-		Nothing -> do
+	maybe generate return $ findByName' name m
+	where
+		generate = do
 			uuid <- liftIO $ genUUID
-			return $ (uuid, M.insert nameKey name M.empty)
+			return (uuid, M.insert nameKey name M.empty)
 
 findByName' :: String ->  M.Map UUID RemoteClass.RemoteConfig -> Maybe (UUID, RemoteClass.RemoteConfig)
 findByName' n m = if null matches then Nothing else Just $ head matches
@@ -86,12 +86,13 @@ findByName' n m = if null matches then Nothing else Just $ head matches
 
 {- find the specified remote type -}
 findType :: RemoteClass.RemoteConfig -> Annex (RemoteClass.RemoteType Annex)
-findType config = 
-	case M.lookup typeKey config of
-		Nothing -> error "Specify the type of remote with type="
-		Just s -> case filter (\i -> RemoteClass.typename i == s) Remote.remoteTypes of
+findType config = maybe unspecified specified $ M.lookup typeKey config
+	where
+		unspecified = error "Specify the type of remote with type="
+		specified s = case filter (findtype s) Remote.remoteTypes of
 			[] -> error $ "Unknown remote type " ++ s
 			(t:_) -> return t
+		findtype s i = RemoteClass.typename i == s
 
 {- The name of a configured remote is stored in its config using this key. -}
 nameKey :: String

@@ -123,11 +123,7 @@ storeHelper (conn, bucket) r k file = do
 	content <- liftIO $ L.readFile file
 	-- size is provided to S3 so the whole content does not need to be
 	-- buffered to calculate it
-	size <- case keySize k of
-		Just s -> return $ fromIntegral s
-		Nothing -> do
-			s <- liftIO $ getFileStatus file
-			return $ fileSize s
+	size <- maybe getsize (return . fromIntegral) $ keySize k
 	let object = setStorageClass storageclass $ 
 		S3Object bucket (show k) ""
 			[("Content-Length",(show size))] content
@@ -137,6 +133,9 @@ storeHelper (conn, bucket) r k file = do
 			case fromJust $ M.lookup "storageclass" $ fromJust $ config r of
 				"REDUCED_REDUNDANCY" -> REDUCED_REDUNDANCY
 				_ -> STANDARD
+		getsize = do
+			s <- liftIO $ getFileStatus file
+			return $ fileSize s
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
 retrieve r k f = s3Action r False $ \(conn, bucket) -> do
@@ -201,11 +200,8 @@ bucketKey :: String -> Key -> S3Object
 bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
 
 s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
-s3ConnectionRequired c = do
-	conn <- s3Connection c
-	case conn of
-		Nothing -> error "Cannot connect to S3"
-		Just conn' -> return conn'
+s3ConnectionRequired c =
+	maybe (error "Cannot connect to S3") return =<< s3Connection c
 
 s3Connection :: RemoteConfig -> Annex (Maybe AWSConnection)
 s3Connection c = do

@@ -71,9 +71,7 @@ instance Read LogLine where
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
 		if length w == 3
-			then case pdate of
-				Just v -> good v
-				Nothing -> bad
+			then maybe bad good pdate
 			else bad
 		where
 			w = words string

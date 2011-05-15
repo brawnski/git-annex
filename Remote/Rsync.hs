@@ -82,9 +82,8 @@ genRsyncOpts r = do
 rsyncSetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 rsyncSetup u c = do
 	-- verify configuration is sane
-	let url = case M.lookup "rsyncurl" c of
-		Nothing -> error "Specify rsyncurl="
-		Just d -> d
+	let url = maybe (error "Specify rsyncurl=") id $
+		M.lookup "rsyncurl" c
 	c' <- encryptionSetup c
 
 	-- The rsyncurl is stored in git config, not only in this remote's

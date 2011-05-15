@@ -60,9 +60,8 @@ gen r u c = do
 directorySetup :: UUID -> RemoteConfig -> Annex RemoteConfig
 directorySetup u c = do
 	-- verify configuration is sane
-	let dir = case M.lookup "directory" c of
-		Nothing -> error "Specify directory="
-		Just d -> d
+	let dir = maybe (error "Specify directory=") id $
+		M.lookup "directory" c
 	e <- liftIO $ doesDirectoryExist dir
 	when (not e) $ error $ "Directory does not exist: " ++ dir
 	c' <- encryptionSetup c

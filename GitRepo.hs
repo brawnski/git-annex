@@ -122,9 +122,8 @@ repoFromUrl url
 	| startswith "file://" url = repoFromAbsPath $ uriPath u
 	| otherwise = return $ newFrom $ Url u
 		where
-			u = case (parseURI url) of
-				Just v -> v
-				Nothing -> error $ "bad url " ++ url
+			u = maybe bad id $ parseURI url
+			bad = error $ "bad url " ++ url
 
 {- Creates a repo that has an unknown location. -}
 repoFromUnknown :: Repo
@@ -264,9 +263,7 @@ workTreeFile repo@(Repo { location = Dir d }) file = do
 		absrepo = case (absNormPath "/" d) of
 			Just f -> addTrailingPathSeparator f
 			Nothing -> error $ "bad repo" ++ repoDescribe repo
-		absfile c = case (secureAbsNormPath c file) of
-			Just f -> f
-			Nothing -> file
+		absfile c = maybe file id $ secureAbsNormPath c file
 		inrepo f = absrepo `isPrefixOf` f
 workTreeFile repo _ = assertLocal repo $ error "internal"
 
@@ -352,9 +349,7 @@ reap :: IO ()
 reap = do
 	-- throws an exception when there are no child processes
 	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
-	case r of
-		Nothing -> return ()
-		Just _ -> reap
+	maybe (return ()) (const reap) r
 
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]

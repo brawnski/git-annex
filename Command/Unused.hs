@@ -41,12 +41,7 @@ start = notBareRepo $ do
 
 perform :: CommandPerform
 perform = do
-	from <- Annex.getState Annex.fromremote
-	case from of
-		Just name -> do
-			r <- Remote.byName name
-			checkRemoteUnused r
-		_ -> checkUnused
+	maybe checkUnused checkRemoteUnused =<< Annex.getState Annex.fromremote
 	next $ return True
 
 checkUnused :: Annex ()
@@ -63,8 +58,11 @@ checkUnused = do
 			writeUnusedFile file unusedlist
 			return $ length l
 
-checkRemoteUnused :: Remote.Remote Annex -> Annex ()
-checkRemoteUnused r = do
+checkRemoteUnused :: String -> Annex ()
+checkRemoteUnused name = checkRemoteUnused' =<< Remote.byName name
+
+checkRemoteUnused' :: Remote.Remote Annex -> Annex ()
+checkRemoteUnused' r = do
 	g <- Annex.gitRepo
 	showNote $ "checking for unused data on " ++ Remote.name r ++ "..."
 	referenced <- getKeysReferenced

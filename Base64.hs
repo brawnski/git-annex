@@ -14,7 +14,5 @@ toB64 :: String -> String
 toB64 = encode . s2w8
 
 fromB64 :: String -> String
-fromB64 s =
-	case decode s of
-		Nothing -> error "bad base64 encoded data"
-		Just ws -> w82s ws
+fromB64 s = maybe bad w82s $ decode s
+	where bad = error "bad base64 encoded data"
