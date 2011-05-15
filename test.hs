@@ -466,7 +466,7 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	where
 		checkunused expectedkeys = do
 			git_annex "unused" ["-q"] @? "unused failed"
-			unusedmap <- annexeval $ Command.DropUnused.readUnusedLog
+			unusedmap <- annexeval $ Command.DropUnused.readUnusedLog ""
 			let unusedkeys = M.elems unusedmap
 			assertEqual "unused keys differ"
 				(sort expectedkeys) (sort unusedkeys)
