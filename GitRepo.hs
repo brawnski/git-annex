@@ -210,9 +210,9 @@ assertUrl repo action =
 				" not supported"
 
 configBare :: Repo -> Bool
-configBare repo = case Map.lookup "core.bare" $ config repo of
-	Just v -> configTrue v
-	Nothing -> error $ "it is not known if git repo " ++
+configBare repo = maybe unknown configTrue $ Map.lookup "core.bare" $ config repo
+	where
+		unknown = error $ "it is not known if git repo " ++
 			repoDescribe repo ++
 			" is a bare repository; config not read"
 
@@ -260,11 +260,10 @@ workTreeFile repo@(Repo { location = Dir d }) file = do
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
-		absrepo = case (absNormPath "/" d) of
-			Just f -> addTrailingPathSeparator f
-			Nothing -> error $ "bad repo" ++ repoDescribe repo
+		absrepo = maybe bad addTrailingPathSeparator $ absNormPath "/" d
 		absfile c = maybe file id $ secureAbsNormPath c file
 		inrepo f = absrepo `isPrefixOf` f
+		bad = error $ "bad repo" ++ repoDescribe repo
 workTreeFile repo _ = assertLocal repo $ error "internal"
 
 {- Path of an URL repo. -}
@@ -627,23 +626,19 @@ expandTilde = expandt True
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo
-repoFromCwd = do
-	cwd <- getCurrentDirectory
-	top <- seekUp cwd isRepoTop
-	case top of
-		-- repoFromAbsPath is not used to avoid looking for
-		-- "dir.git" directories.
-		(Just dir) -> return $ newFrom $ Dir dir
-		Nothing -> error "Not in a git repository."
+repoFromCwd = getCurrentDirectory >>= seekUp isRepoTop >>= maybe norepo makerepo
+	where
+		makerepo = return . newFrom . Dir
+		norepo = error "Not in a git repository."
 
-seekUp :: FilePath -> (FilePath -> IO Bool) -> IO (Maybe FilePath)
-seekUp dir want = do
+seekUp :: (FilePath -> IO Bool) -> FilePath -> IO (Maybe FilePath)
+seekUp want dir = do
 	ok <- want dir
 	if ok
 		then return (Just dir)
 		else case (parentDir dir) of
 			"" -> return Nothing
-			d -> seekUp d want
+			d -> seekUp want d
 
 isRepoTop :: FilePath -> IO Bool
 isRepoTop dir = do
