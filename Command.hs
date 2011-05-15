@@ -58,20 +58,20 @@ type CommandSeekNothing = CommandStart -> CommandSeek
 type CommandStartNothing = CommandStart
 
 data Command = Command {
+	cmdusesrepo :: Bool,
 	cmdname :: String,
 	cmdparams :: String,
 	cmdseek :: [CommandSeek],
-	cmddesc :: String,
-	cmdusesrepo :: Bool
+	cmddesc :: String
 }
 
 {- Most commands operate on files in a git repo. -}
 repoCommand :: String -> String -> [CommandSeek] -> String -> Command
-repoCommand n p s d = Command n p s d True
+repoCommand = Command True
 
 {- Others can run anywhere. -}
 standaloneCommand :: String -> String -> [CommandSeek] -> String -> Command
-standaloneCommand n p s d = Command n p s d False
+standaloneCommand = Command False
 
 {- For start and perform stages to indicate what step to run next. -}
 next :: a -> Annex (Maybe a)
@@ -102,13 +102,8 @@ doCommand start = do
 					return False
 				Just cleanup -> do
 					c <- cleanup
-					if c
-						then do
-							showEndOk
-							return True
-						else do
-							showEndFail
-							return False
+					if c then showEndOk else showEndFail
+					return c
 
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
 notAnnexed file a = do
