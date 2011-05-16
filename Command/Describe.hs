@@ -18,20 +18,20 @@ command = [repoCommand "describe" (paramPair paramRemote paramDesc) seek
 	"change description of a repository"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
-start :: CommandStartString
-start params = notBareRepo $ do
+start :: CommandStartWords
+start ws = notBareRepo $ do
 	let (name, description) =
-		case (words params) of
+		case ws of
 			(n:d) -> (n,unwords d)
 			_ -> error "Specify a repository and a description."
 	
 	showStart "describe" name
 	u <- Remote.nameToUUID name
-	return $ Just $ perform u description
+	next $ perform u description
 
 perform :: UUID -> String -> CommandPerform
 perform u description = do
 	describeUUID u description
-	return $ Just $ Command.Init.cleanup
+	next $ Command.Init.cleanup

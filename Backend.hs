@@ -76,10 +76,9 @@ list = do
 
 {- Looks up a backend in a list. May fail if unknown. -}
 lookupBackendName :: [Backend Annex] -> String -> Backend Annex
-lookupBackendName bs s =
-	case maybeLookupBackendName bs s of
-		Just b -> b
-		Nothing -> error $ "unknown backend " ++ s
+lookupBackendName bs s = maybe unknown id $ maybeLookupBackendName bs s
+	where
+		unknown = error $ "unknown backend " ++ s
 maybeLookupBackendName :: [Backend Annex] -> String -> Maybe (Backend Annex)
 maybeLookupBackendName bs s =
 	if 1 /= length matches
@@ -91,23 +90,18 @@ maybeLookupBackendName bs s =
 storeFileKey :: FilePath -> Maybe (Backend Annex) -> Annex (Maybe (Key, Backend Annex))
 storeFileKey file trybackend = do
 	bs <- list
-	let bs' = case trybackend of
-		Nothing -> bs
-		Just backend -> backend:bs
+	let bs' = maybe bs (:bs) trybackend
 	storeFileKey' bs' file
 storeFileKey' :: [Backend Annex] -> FilePath -> Annex (Maybe (Key, Backend Annex))
 storeFileKey' [] _ = return Nothing
-storeFileKey' (b:bs) file = do
-	result <- (B.getKey b) file
-	case result of
-		Nothing -> nextbackend
-		Just key -> do
+storeFileKey' (b:bs) file = maybe nextbackend store =<< (B.getKey b) file
+	where
+		nextbackend = storeFileKey' bs file
+		store key = do
 			stored <- (B.storeFileKey b) file key
 			if (not stored)
 				then nextbackend
 				else return $ Just (key, b)
-	where
-		nextbackend = storeFileKey' bs file
 
 {- Attempts to retrieve an key from one of the backends, saving it to
  - a specified location. -}
@@ -148,11 +142,8 @@ lookupFile file = do
 		getsymlink = do
 			l <- readSymbolicLink file
 			return $ takeFileName l
-		makekey bs l =
-			case fileKey l of
-				Just k -> makeret k l bs
-				Nothing -> return Nothing
-		makeret k l bs =
+		makekey bs l = maybe (return Nothing) (makeret bs l) (fileKey l)
+		makeret bs l k =
 			case maybeLookupBackendName bs bname of
 					Just backend -> return $ Just (k, backend)
 					Nothing -> do

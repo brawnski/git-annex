@@ -20,10 +20,7 @@ graphNode nodeid desc = label desc $ quote nodeid
 
 {- an edge between two nodes -}
 graphEdge :: String -> String -> Maybe String -> String
-graphEdge fromid toid desc = indent $
-	case desc of
-		Nothing -> edge
-		Just d -> label d edge
+graphEdge fromid toid desc = indent $ maybe edge (\d -> label d edge) desc
 	where
 		edge = quote fromid ++ " -> " ++ quote toid
 

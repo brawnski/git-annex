@@ -79,8 +79,7 @@ getUncachedUUID r = Git.configGet r configkey ""
 {- Make sure that the repo has an annex.uuid setting. -}
 prepUUID :: Annex ()
 prepUUID = do
-	g <- Annex.gitRepo
-	u <- getUUID g
+	u <- getUUID =<< Annex.gitRepo
 	when ("" == u) $ do
 		uuid <- liftIO $ genUUID
 		setConfig configkey uuid
@@ -88,8 +87,7 @@ prepUUID = do
 {- Pretty-prints a list of UUIDs -}
 prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
-	g <- Annex.gitRepo
-	here <- getUUID g
+	here <- getUUID =<< Annex.gitRepo
 	m <- uuidMap
 	return $ unwords $ map (\u -> "\t" ++ prettify m u here ++ "\n") uuids
 	where

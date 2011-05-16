@@ -26,7 +26,7 @@ seek = [withTempFile start]
 start :: CommandStartString
 start file = do
 	showStart "setkey" file
-	return $ Just $ perform file
+	next $ perform file
 
 perform :: FilePath -> CommandPerform
 perform file = do
@@ -40,7 +40,7 @@ perform file = do
 				boolSystem "mv" [File file, File dest]
 			else return True
 	if ok
-		then return $ Just $ cleanup
+		then next cleanup
 		else error "mv failed!"
 
 cleanup :: CommandCleanup

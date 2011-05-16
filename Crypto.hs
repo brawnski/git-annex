@@ -238,10 +238,8 @@ configKeyIds c = do
 		keyIdField s = (split ":" s) !! 4
 
 configGet :: RemoteConfig -> String -> String
-configGet c key =
-	case M.lookup key c of
-		Just v -> v
-		Nothing -> error $ "missing " ++ key ++ " in remote config"
+configGet c key = maybe missing id $ M.lookup key c
+	where missing = error $ "missing " ++ key ++ " in remote config"
 
 hmacWithCipher :: Cipher -> String -> String
 hmacWithCipher c = hmacWithCipher' (cipherHmac c) 

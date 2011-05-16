@@ -14,6 +14,7 @@ import Control.Monad (filterM, liftM, when)
 import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
+import Data.Maybe
 
 import Types
 import qualified Backend
@@ -46,6 +47,8 @@ type CommandCleanup = Annex Bool
  - functions. -}
 type CommandSeekStrings = CommandStartString -> CommandSeek
 type CommandStartString = String -> CommandStart
+type CommandSeekWords = CommandStartWords -> CommandSeek
+type CommandStartWords = [String] -> CommandStart
 type CommandSeekKeys = CommandStartKey -> CommandSeek
 type CommandStartKey = Key -> CommandStart
 type BackendFile = (FilePath, Maybe (Backend Annex))
@@ -58,18 +61,28 @@ type CommandSeekNothing = CommandStart -> CommandSeek
 type CommandStartNothing = CommandStart
 
 data Command = Command {
+	cmdusesrepo :: Bool,
 	cmdname :: String,
 	cmdparams :: String,
 	cmdseek :: [CommandSeek],
-	cmddesc :: String,
-	cmdusesrepo :: Bool
+	cmddesc :: String
 }
 
+{- Most commands operate on files in a git repo. -}
 repoCommand :: String -> String -> [CommandSeek] -> String -> Command
-repoCommand n p s d = Command n p s d True
+repoCommand = Command True
 
+{- Others can run anywhere. -}
 standaloneCommand :: String -> String -> [CommandSeek] -> String -> Command
-standaloneCommand n p s d = Command n p s d False
+standaloneCommand = Command False
+
+{- For start and perform stages to indicate what step to run next. -}
+next :: a -> Annex (Maybe a)
+next a = return $ Just a
+
+{- Or to indicate nothing needs to be done. -}
+stop :: Annex (Maybe a)
+stop = return Nothing
 
 {- Prepares a list of actions to run to perform a command, based on
  - the parameters passed to it. -}
@@ -80,39 +93,18 @@ prepCommand Command { cmdseek = seek } params = do
 
 {- Runs a command through the start, perform and cleanup stages -}
 doCommand :: CommandStart -> CommandCleanup
-doCommand start = do
-	s <- start
-	case s of
-		Nothing -> return True
-		Just perform -> do
-			p <- perform
-			case p of
-				Nothing -> do
-					showEndFail
-					return False
-				Just cleanup -> do
-					c <- cleanup
-					if c
-						then do
-							showEndOk
-							return True
-						else do
-							showEndFail
-							return False
+doCommand = start
+	where
+		start   = stage $ maybe (return True) perform
+		perform = stage $ maybe (showEndFail >> return False) cleanup
+		cleanup = stage $ \r -> showEndResult r >> return r
+		stage a b = b >>= a
 
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
-notAnnexed file a = do
-	r <- Backend.lookupFile file
-	case r of
-		Just _ -> return Nothing
-		Nothing -> a
+notAnnexed file a = maybe a (const $ return Nothing) =<< Backend.lookupFile file
 
 isAnnexed :: FilePath -> ((Key, Backend Annex) -> Annex (Maybe a)) -> Annex (Maybe a)
-isAnnexed file a = do
-	r <- Backend.lookupFile file
-	case r of
-		Just v -> a v
-		Nothing -> return Nothing
+isAnnexed file a = maybe (return Nothing) a =<< Backend.lookupFile file
 
 notBareRepo :: Annex a -> Annex a
 notBareRepo a = do
@@ -153,8 +145,8 @@ withFilesNotInGit a params = do
 	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
-withString :: CommandSeekStrings
-withString a params = return [a $ unwords params]
+withWords :: CommandSeekWords
+withWords a params = return [a params]
 withStrings :: CommandSeekStrings
 withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings
@@ -178,9 +170,7 @@ withFilesUnlocked' typechanged a params = do
 withKeys :: CommandSeekKeys
 withKeys a params = return $ map a $ map parse params
 	where
-		parse p = case readKey p of
-			Just k -> k
-			Nothing -> error "bad key"
+		parse p = maybe (error "bad key") id $ readKey p
 withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing
@@ -201,9 +191,7 @@ filterFiles l = do
 		else return $ filter (notExcluded $ wildsRegex exclude) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
-		notExcluded r f = case match r f [] of
-			Nothing -> True
-			Just _ -> False
+		notExcluded r f = isJust $ match r f []
 
 wildsRegex :: [String] -> Regex
 wildsRegex ws = compile regex []
@@ -252,11 +240,10 @@ cmdlineKey  = do
 	case k of
 		Nothing -> nokey
 		Just "" -> nokey
-		Just kstring -> case readKey kstring of
-			Nothing -> error "bad key"
-			Just key -> return key
+		Just kstring -> maybe badkey return $ readKey kstring
 	where
 		nokey = error "please specify the key with --key"
+		badkey = error "bad key"
 
 {- Given an original list of files, and an expanded list derived from it,
  - ensures that the original list's ordering is preserved. 

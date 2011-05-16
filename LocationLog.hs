@@ -71,9 +71,7 @@ instance Read LogLine where
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
 		if length w == 3
-			then case pdate of
-				Just v -> good v
-				Nothing -> bad
+			then maybe bad good pdate
 			else bad
 		where
 			w = words string
@@ -152,16 +150,13 @@ mapLog m l =
 		then Map.insert u l m
 		else m
 	where
-		better = case Map.lookup u m of
-			Just l' -> (date l' <= date l)
-			Nothing -> True
+		better = maybe True (\l' -> date l' <= date l) $ Map.lookup u m
 		u = uuid l
 
 {- Finds all keys that have location log information.
  - (There may be duplicate keys in the list.) -}
 loggedKeys :: Git.Repo -> IO [Key]
 loggedKeys repo = do
-	let dir = gitStateDir repo
 	exists <- doesDirectoryExist dir
 	if exists
 		then do
@@ -174,3 +169,4 @@ loggedKeys repo = do
 		else return []
 	where
 		tryDirContents d = catch (dirContents d) (return . const [])
+		dir = gitStateDir repo

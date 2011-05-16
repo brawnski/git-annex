@@ -6,7 +6,7 @@ But, git-annex also extends git's concept of remotes, with these special
 types of remotes. These can be used just like any normal remote by git-annex.
 They cannot be used by other git commands though.
 
-* [[Amazon_S3]]
+* [[S3]] (Amazon S3, and other compatible services)
 * [[bup]]
 * [[directory]]
 * [[rsync]]

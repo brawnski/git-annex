@@ -57,11 +57,11 @@ calcGitLink :: FilePath -> Key -> Annex FilePath
 calcGitLink file key = do
 	g <- Annex.gitRepo
 	cwd <- liftIO $ getCurrentDirectory
-	let absfile = case absNormPath cwd file of
-		Just f -> f
-		Nothing -> error $ "unable to normalize " ++ file
+	let absfile = maybe whoops id $ absNormPath cwd file
 	return $ relPathDirToFile (parentDir absfile) 
 			(Git.workTree g) </> ".git" </> annexLocation key
+	where
+		whoops = error $ "unable to normalize " ++ file
 
 {- Updates the LocationLog when a key's presence changes in the current
  - repository.
@@ -72,8 +72,7 @@ calcGitLink file key = do
  - updated instead. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
-	g <- Annex.gitRepo
-	u <- getUUID g
+	u <- getUUID =<< Annex.gitRepo
 	logStatusFor u key status
 
 {- Updates the LocationLog when a key's presence changes in a repository
@@ -148,9 +147,7 @@ checkDiskSpace' :: Integer -> Key -> Annex ()
 checkDiskSpace' adjustment key = do
 	g <- Annex.gitRepo
 	r <- getConfig g "diskreserve" ""
-	let reserve = case readSize dataUnits r of
-		Nothing -> megabyte
-		Just v -> v
+	let reserve = maybe megabyte id $ readSize dataUnits r
 	stats <- liftIO $ getFileSystemStats (gitAnnexDir g)
 	case (stats, keySize key) of
 		(Nothing, _) -> return ()

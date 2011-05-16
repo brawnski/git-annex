@@ -30,7 +30,7 @@ seek = [withFilesInGit Command.Unannex.start, withNothing start]
 start :: CommandStartNothing
 start = do
 	showStart "uninit" ""
-	return $ Just $ perform
+	next perform
 
 perform :: CommandPerform
 perform = do
@@ -39,7 +39,7 @@ perform = do
 	gitPreCommitHookUnWrite g
 	liftIO $ gitAttributesUnWrite g
 
-	return $ Just $ return True
+	next $ return True
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do

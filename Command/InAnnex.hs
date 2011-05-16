@@ -24,5 +24,5 @@ start :: CommandStartKey
 start key = do
 	present <- inAnnex key
 	if present
-		then return Nothing
+		then stop
 		else liftIO $ exitFailure

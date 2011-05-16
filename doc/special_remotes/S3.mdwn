@@ -1,10 +1,16 @@
 This special remote type stores file contents in a bucket in Amazon S3
-or a similar service, such as 
-[Archive.org's S3 API](http://www.archive.org/help/abouts3.txt).
+or a similar service.
 
-See [[walkthrough/using_Amazon_S3]] for usage examples.
+See [[walkthrough/using_Amazon_S3]] and
+[[walkthrough/Internet_Archive_via_S3]] for usage examples.
 
 ## configuration
+
+The standard environment variables `ANNEX_S3_ACCESS_KEY_ID` and 
+`ANNEX_S3_SECRET_ACCESS_KEY` are used to supply login credentials
+for Amazon. When encryption is enabled, they are stored in encrypted form
+by `git annex initremote`, so you do not need to keep the environment
+variables set after the initial initalization of the remote.
 
 A number of parameters can be passed to `git annex initremote` to configure
 the S3 remote.
@@ -30,8 +36,5 @@ the S3 remote.
   so by default, a bucket name is chosen based on the remote name
   and UUID. This can be specified to pick a bucket name.
 
-The standard environment variables `ANNEX_S3_ACCESS_KEY_ID` and 
-`ANNEX_S3_SECRET_ACCESS_KEY` can be used to supply login credentials
-for Amazon. When encryption is enabled, they are stored in encrypted form
-by `git annex initremote`, so you do not need to keep the environment
-variables set after the initial initalization of the remote.
+* `x-amz-*` are passed through as http headers when storing keys
+  in S3.

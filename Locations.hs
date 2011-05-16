@@ -175,7 +175,7 @@ prop_idempotent_fileKey s = Just k == fileKey (keyFile k)
 hashDirMixed :: Key -> FilePath
 hashDirMixed k = addTrailingPathSeparator $ take 2 dir </> drop 2 dir
 	where
-		dir = take 4 $ concat $ map display_32bits_as_dir [a,b,c,d]
+		dir = take 4 $ display_32bits_as_dir =<< [a,b,c,d]
 		ABCD (a,b,c,d) = md5 $ Str $ show k
 
 {- Generates a hash directory that is all lower case. -}

@@ -8,9 +8,10 @@
 module Command.Migrate where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import System.Posix.Files
 import System.Directory
+import System.FilePath
 
 import Command
 import qualified Annex
@@ -35,9 +36,8 @@ start (file, b) = isAnnexed file $ \(key, oldbackend) -> do
 	if (newbackend /= oldbackend || upgradable) && exists
 		then do
 			showStart "migrate" file
-			return $ Just $ perform file key newbackend
-		else
-			return Nothing
+			next $ perform file key newbackend
+		else stop
 	where
 		choosebackend Nothing = do
 			backends <- Backend.list
@@ -53,9 +53,12 @@ perform file oldkey newbackend = do
 	-- The old backend's key is not dropped from it, because there may
 	-- be other files still pointing at that key.
 	let src = gitAnnexLocation g oldkey
-	stored <- Backend.storeFileKey src $ Just newbackend
+	let tmpfile = gitAnnexTmpDir g </> takeFileName file
+	liftIO $ createLink src tmpfile
+	stored <- Backend.storeFileKey tmpfile $ Just newbackend
+	liftIO $ cleantmp tmpfile
 	case stored of
-		Nothing -> return Nothing
+		Nothing -> stop
 		Just (newkey, _) -> do
 			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
@@ -68,5 +71,9 @@ perform file oldkey newbackend = do
 				then do
 					-- Update symlink to use the new key.
 					liftIO $ removeFile file
-					return $ Just $ Command.Add.cleanup file newkey
-				else return Nothing
+					next $ Command.Add.cleanup file newkey
+				else stop
+	where
+		cleantmp t = do
+			exists <- doesFileExist t
+			when exists $ removeFile t

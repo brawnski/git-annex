@@ -34,7 +34,7 @@ start file = notBareRepo $ do
 	unless inbackend $ error $
 		"key ("++keyName key++") is not present in backend"
 	showStart "fromkey" file
-	return $ Just $ perform file
+	next $ perform file
 
 perform :: FilePath -> CommandPerform
 perform file = do
@@ -42,7 +42,7 @@ perform file = do
 	link <- calcGitLink file key
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 	liftIO $ createSymbolicLink link file
-	return $ Just $ cleanup file
+	next $ cleanup file
 
 cleanup :: FilePath -> CommandCleanup
 cleanup file = do

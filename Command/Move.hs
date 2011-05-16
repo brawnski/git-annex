@@ -7,6 +7,8 @@
 
 module Command.Move where
 
+import Control.Monad (when)
+
 import Command
 import qualified Command.Drop
 import qualified Annex
@@ -73,10 +75,10 @@ toStart dest move file = isAnnexed file $ \(key, _) -> do
 	u <- getUUID g
 	ishere <- inAnnex key
 	if not ishere || u == Remote.uuid dest
-		then return Nothing -- not here, so nothing to do
+		then stop -- not here, so nothing to do
 		else do
 			showAction move file
-			return $ Just $ toPerform dest move key
+			next $ toPerform dest move key
 toPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 toPerform dest move key = do
 	-- Checking the remote is expensive, so not done in the start step.
@@ -84,7 +86,8 @@ toPerform dest move key = do
 	-- and an explicit check is not done, when copying. When moving,
 	-- it has to be done, to avoid inaverdent data loss.
 	fast <- Annex.getState Annex.fast
-	isthere <- if fast && not move && not (Remote.hasKeyCheap dest)
+	let fastcheck = fast && not move && not (Remote.hasKeyCheap dest)
+	isthere <- if fastcheck
 		then do
 			(remotes, _) <- Remote.keyPossibilities key
 			return $ Right $ dest `elem` remotes
@@ -92,14 +95,17 @@ toPerform dest move key = do
 	case isthere of
 		Left err -> do
 			showNote $ show err
-			return Nothing
+			stop
 		Right False -> do
 			showNote $ "to " ++ Remote.name dest ++ "..."
 			ok <- Remote.storeKey dest key
 			if ok
-				then return $ Just $ toCleanup dest move key
-				else return Nothing -- failed
-		Right True -> return $ Just $ toCleanup dest move key
+				then next $ toCleanup dest move key
+				else do
+					when fastcheck $
+						warning "This could have failed because --fast is enabled."
+					stop
+		Right True -> next $ toCleanup dest move key
 toCleanup :: Remote.Remote Annex -> Bool -> Key -> CommandCleanup
 toCleanup dest move key = do
 	remoteHasKey dest key True
@@ -119,21 +125,21 @@ fromStart src move file = isAnnexed file $ \(key, _) -> do
 	u <- getUUID g
 	(remotes, _) <- Remote.keyPossibilities key
 	if (u == Remote.uuid src) || (null $ filter (== src) remotes)
-		then return Nothing
+		then stop
 		else do
 			showAction move file
-			return $ Just $ fromPerform src move key
+			next $ fromPerform src move key
 fromPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 fromPerform src move key = do
 	ishere <- inAnnex key
 	if ishere
-		then return $ Just $ fromCleanup src move key
+		then next $ fromCleanup src move key
 		else do
 			showNote $ "from " ++ Remote.name src ++ "..."
 			ok <- getViaTmp key $ Remote.retrieveKeyFile src key
 			if ok
-				then return $ Just $ fromCleanup src move key
-				else return Nothing -- fail
+				then next $ fromCleanup src move key
+				else stop -- fail
 fromCleanup :: Remote.Remote Annex -> Bool -> Key -> CommandCleanup
 fromCleanup src True key = do
 	ok <- Remote.removeKey src key

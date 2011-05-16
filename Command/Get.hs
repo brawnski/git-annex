@@ -25,15 +25,14 @@ start :: CommandStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
 	if inannex
-		then return Nothing
+		then stop
 		else do
 			showStart "get" file
-			return $ Just $ perform key backend
+			next $ perform key backend
 
 perform :: Key -> Backend Annex -> CommandPerform
 perform key backend = do
 	ok <- getViaTmp key (Backend.retrieveKeyFile backend key)
 	if ok
-		then return $ Just $ return True -- no cleanup needed
-		else return Nothing
-
+		then next $ return True -- no cleanup needed
+		else stop

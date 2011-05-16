@@ -59,7 +59,7 @@ data CommandParam = Params String | Param String | File FilePath
 {- Used to pass a list of CommandParams to a function that runs
  - a command and expects Strings. -}
 toCommand :: [CommandParam] -> [String]
-toCommand l = concat $ map unwrap l
+toCommand = (>>= unwrap)
 	where
 		unwrap (Param s) = [s]
 		unwrap (Params s) = filter (not . null) (split " " s)
@@ -165,9 +165,7 @@ prop_parentDir_basics dir
 dirContains :: FilePath -> FilePath -> Bool
 dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
 	where
-		norm p = case (absNormPath p ".") of
-			Just r -> r
-			Nothing -> ""
+		norm p = maybe "" id $ absNormPath p "."
 		a' = norm a
 		b' = norm b
 
@@ -180,10 +178,9 @@ absPath file = do
 {- Converts a filename into a normalized, absolute path
  - from the specified cwd. -}
 absPathFrom :: FilePath -> FilePath -> FilePath
-absPathFrom cwd file =
-	case absNormPath cwd file of
-		Just f -> f
-		Nothing -> error $ "unable to normalize " ++ file
+absPathFrom cwd file = maybe bad id $ absNormPath cwd file
+	where
+		bad = error $ "unable to normalize " ++ file
 
 {- Constructs a relative path from the CWD to a file.
  -

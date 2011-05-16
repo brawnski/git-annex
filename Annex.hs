@@ -86,9 +86,7 @@ getState c = liftM c get
  - Example: changeState (\s -> s { quiet = True })
  -}
 changeState :: (AnnexState -> AnnexState) -> Annex ()
-changeState a = do
-	state <- get
-	put (a state)
+changeState a = put . a =<< get
 
 {- Returns the git repository being acted on -}
 gitRepo :: Annex Git.Repo

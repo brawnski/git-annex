@@ -75,6 +75,7 @@ quickcheck = TestLabel "quickcheck" $ TestList
 	, qctest "prop_idempotent_key_read_show" Key.prop_idempotent_key_read_show
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
+	, qctest "prop_idempotent_configEscape" Remote.prop_idempotent_configEscape
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
 	, qctest "prop_relPathDirToFile_basics" Utility.prop_relPathDirToFile_basics
 	, qctest "prop_cost_sane" Config.prop_cost_sane
@@ -466,7 +467,7 @@ test_unused = "git-annex unused/dropunused" ~: intmpclonerepo $ do
 	where
 		checkunused expectedkeys = do
 			git_annex "unused" ["-q"] @? "unused failed"
-			unusedmap <- annexeval $ Command.DropUnused.readUnusedLog
+			unusedmap <- annexeval $ Command.DropUnused.readUnusedLog ""
 			let unusedkeys = M.elems unusedmap
 			assertEqual "unused keys differ"
 				(sort expectedkeys) (sort unusedkeys)

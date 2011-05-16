@@ -1,8 +1,16 @@
-git-annex (0.20110504) UNRELEASED; urgency=low
+git-annex (0.20110516) unstable; urgency=low
 
+  * Add a few tweaks to make it easy to use the Internet Archive's variant
+    of S3. In particular, munge key filenames to comply with the IA's filename
+    limits, disable encryption, support their nonstandard way of creating
+    buckets, and allow x-archive-* headers to be specified in initremote to
+    set item metadata.
+  * Added filename extension preserving variant backends SHA1E, SHA256E, etc.
+  * migrate: Use current filename when generating new key, for backends
+    where the filename affects the key name.
   * Work around a bug in Network.URI's handling of bracketed ipv6 addresses.
 
- -- Joey Hess <joeyh@debian.org>  Fri, 06 May 2011 15:20:38 -0400
+ -- Joey Hess <joeyh@debian.org>  Mon, 16 May 2011 14:16:52 -0400
 
 git-annex (0.20110503) unstable; urgency=low
 

@@ -54,30 +54,22 @@ encryptableRemote c storeKeyEncrypted retrieveKeyFileEncrypted r =
 		cost = cost r + encryptedRemoteCostAdj
 	}
 	where
-		store k = do
-			v <- cipherKey c k
-			case v of
-				Nothing -> (storeKey r) k
-				Just x -> storeKeyEncrypted x k
-		retrieve k f = do
-			v <- cipherKey c k
-			case v of
-				Nothing -> (retrieveKeyFile r) k f
-				Just x -> retrieveKeyFileEncrypted x f
-		withkey a k = do
-			v <- cipherKey c k
-			case v of
-				Nothing -> a k
-				Just (_, k') -> a k'
+		store k = cip k >>= maybe
+			(storeKey r k)
+			(\x -> storeKeyEncrypted x k)
+		retrieve k f = cip k >>= maybe
+			(retrieveKeyFile r k f)
+			(\x -> retrieveKeyFileEncrypted x f)
+		withkey a k = cip k >>= maybe (a k) (a . snd)
+		cip = cipherKey c
 
 {- Gets encryption Cipher. The decrypted Cipher is cached in the Annex
  - state. -}
 remoteCipher :: RemoteConfig -> Annex (Maybe Cipher)
-remoteCipher c = do
-	cache <- Annex.getState Annex.cipher
-	case cache of
-		Just cipher -> return $ Just cipher
-		Nothing -> case extractCipher c of
+remoteCipher c = maybe expensive cached =<< Annex.getState Annex.cipher
+	where
+		cached cipher = return $ Just cipher
+		expensive = case extractCipher c of
 			Nothing -> return Nothing
 			Just encipher -> do
 				showNote "gpg"
@@ -88,10 +80,8 @@ remoteCipher c = do
 {- Gets encryption Cipher, and encrypted version of Key. -}
 cipherKey :: Maybe RemoteConfig -> Key -> Annex (Maybe (Cipher, Key))
 cipherKey Nothing _ = return Nothing
-cipherKey (Just c) k = do
-	cipher <- remoteCipher c
-	case cipher of	
-		Just ciphertext -> do
+cipherKey (Just c) k = remoteCipher c >>= maybe (return Nothing) encrypt
+	where
+		encrypt ciphertext = do
 			k' <- liftIO $ encryptKey ciphertext k
 			return $ Just (ciphertext, k')
-		Nothing -> return Nothing

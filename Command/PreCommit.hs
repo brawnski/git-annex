@@ -27,13 +27,13 @@ seek = [withFilesToBeCommitted Command.Fix.start,
 	withFilesUnlockedToBeCommitted start]
 
 start :: CommandStartBackendFile
-start pair = return $ Just $ perform pair
+start pair = next $ perform pair
 
 perform :: BackendFile -> CommandPerform
 perform pair@(file, _) = do
 	ok <- doCommand $ Command.Add.start pair
 	if ok
-		then return $ Just $ cleanup file
+		then next $ cleanup file
 		else error $ "failed to add " ++ file ++ "; canceling commit"
 
 cleanup :: FilePath -> CommandCleanup

@@ -31,7 +31,7 @@ seek = [withAttrFilesInGit "annex.numcopies" start]
 start :: CommandStartAttrFile
 start (file, attr) = notBareRepo $ isAnnexed file $ \(key, backend) -> do
 	showStart "fsck" file
-	return $ Just $ perform key file backend numcopies
+	next $ perform key file backend numcopies
 	where
 		numcopies = readMaybe attr :: Maybe Int
 
@@ -42,8 +42,8 @@ perform key file backend numcopies = do
 	locationlogok <- verifyLocationLog key file
 	backendok <- Backend.fsckKey backend key (Just file) numcopies
 	if locationlogok && backendok
-		then return $ Just $ return True
-		else return Nothing
+		then next $ return True
+		else stop
 
 {- Checks that the location log reflects the current status of the key,
    in this repository only. -}

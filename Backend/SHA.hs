@@ -14,6 +14,7 @@ import System.IO
 import System.Directory
 import Data.Maybe
 import System.Posix.Files
+import System.FilePath
 
 import qualified Backend.File
 import BackendClass
@@ -27,11 +28,14 @@ import qualified SysConfig
 import Key
 
 type SHASize = Int
- 
+
+sizes :: [Int]
+sizes = [1, 256, 512, 224, 384]
+
 backends :: [Backend Annex]
 -- order is slightly significant; want sha1 first ,and more general
 -- sizes earlier
-backends = catMaybes $ map genBackend [1, 256, 512, 224, 384]
+backends = catMaybes $ map genBackend sizes ++ map genBackendE sizes
 
 genBackend :: SHASize -> Maybe (Backend Annex)
 genBackend size
@@ -44,6 +48,15 @@ genBackend size
 			, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
 			}
 
+genBackendE :: SHASize -> Maybe (Backend Annex)
+genBackendE size =
+	case genBackend size of
+		Nothing -> Nothing
+		Just b -> Just $ b
+			{ name = shaNameE size
+			, getKey = keyValueE size
+			}
+
 shaCommand :: SHASize -> Maybe String
 shaCommand 1 = SysConfig.sha1
 shaCommand 256 = SysConfig.sha256
@@ -54,6 +67,9 @@ shaCommand _ = Nothing
 
 shaName :: SHASize -> String
 shaName size = "SHA" ++ show size
+
+shaNameE :: SHASize -> String
+shaNameE size = shaName size ++ "E"
 
 shaN :: SHASize -> FilePath -> Annex String
 shaN size file = do
@@ -72,11 +88,25 @@ keyValue :: SHASize -> FilePath -> Annex (Maybe Key)
 keyValue size file = do
 	s <- shaN size file	
 	stat <- liftIO $ getFileStatus file
-	return $ Just $ stubKey {
-		keyName = s,
-		keyBackendName = shaName size,
-		keySize = Just $ fromIntegral $ fileSize stat
-	}
+	return $ Just $ stubKey
+		{ keyName = s
+		, keyBackendName = shaName size
+		, keySize = Just $ fromIntegral $ fileSize stat
+		}
+
+{- Extension preserving keys. -}
+keyValueE :: SHASize -> FilePath -> Annex (Maybe Key)
+keyValueE size file = keyValue size file >>= maybe (return Nothing) addE
+	where
+		addE k = return $ Just $ k
+			{ keyName = keyName k ++ extension
+			, keyBackendName = shaNameE size
+			}
+		naiveextension = takeExtension file
+		extension = 
+			if length naiveextension > 6
+				then "" -- probably not really an extension
+				else naiveextension
 
 -- A key's checksum is checked during fsck.
 checkKeyChecksum :: SHASize -> Key -> Annex Bool

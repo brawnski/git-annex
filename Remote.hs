@@ -25,7 +25,10 @@ module Remote (
 	remoteLog,
 	readRemoteLog,
 	configSet,
-	keyValToConfig
+	keyValToConfig,
+	configToKeyVal,
+	
+	prop_idempotent_configEscape
 ) where
 
 import Control.Monad.State (liftIO)
@@ -33,6 +36,7 @@ import Control.Monad (when, liftM, filterM)
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Char
 
 import RemoteClass
 import Types
@@ -75,10 +79,10 @@ genList = do
 			return rs'
 		else return rs
 	where
-		process m t = do
-			l <- enumerate t
-			l' <- filterM remoteNotIgnored l
-			mapM (gen m t) l'
+		process m t = 
+			enumerate t >>=
+			filterM remoteNotIgnored >>=
+			mapM (gen m t)
 		gen m t r = do
 			u <- getUUID r
 			generate t r u (M.lookup u m)
@@ -97,9 +101,7 @@ byName n = do
 
 {- Looks up a remote by name (or by UUID), and returns its UUID. -}
 nameToUUID :: String -> Annex UUID
-nameToUUID "." = do -- special case for current repo
-	g <- Annex.gitRepo
-	getUUID g
+nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
 nameToUUID n = liftM uuid (byName n)
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
@@ -178,9 +180,37 @@ keyValToConfig ws = M.fromList $ map (/=/) ws
 		(/=/) s = (k, v)
 			where
 				k = takeWhile (/= '=') s
-				v = drop (1 + length k) s
+				v = configUnEscape $ drop (1 + length k) s
 
 configToKeyVal :: M.Map String String -> [String]
 configToKeyVal m = map toword $ sort $ M.toList m
 	where
-		toword (k, v) = k ++ "=" ++ v
+		toword (k, v) = k ++ "=" ++ configEscape v
+
+configEscape :: String -> String
+configEscape = (>>= escape)
+	where
+		escape c
+			| isSpace c || c `elem` "&" = "&" ++ show (ord c) ++ ";"
+			| otherwise = [c]
+
+configUnEscape :: String -> String
+configUnEscape = unescape
+	where
+		unescape [] = []
+		unescape (c:rest)
+			| c == '&' = entity rest
+			| otherwise = c : unescape rest
+		entity s = if ok
+				then chr (read num) : unescape rest
+				else '&' : unescape s
+			where
+				num = takeWhile isNumber s
+				r = drop (length num) s
+				rest = drop 1 r
+				ok = not (null num) && 
+					not (null r) && r !! 0 == ';'
+
+{- for quickcheck -}
+prop_idempotent_configEscape :: String -> Bool
+prop_idempotent_configEscape s = s == (configUnEscape $ configEscape s)

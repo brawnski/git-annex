@@ -27,15 +27,17 @@ command = [repoCommand "init" paramDesc seek
 		"initialize git-annex with repository description"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
 {- Stores description for the repository etc. -}
-start :: CommandStartString
-start description = do
+start :: CommandStartWords
+start ws = do
 	when (null description) $
 		error "please specify a description of this repository\n"
 	showStart "init" description
-	return $ Just $ perform description
+	next $ perform description
+	where
+		description = unwords ws
 
 perform :: String -> CommandPerform
 perform description = do
@@ -48,12 +50,12 @@ perform description = do
 				"This is a bare repository, so its description cannot be committed.\n" ++
 				"To record the description, run this command in a clone of this repository:\n" ++
 				"   git annex describe " ++ show u ++ " " ++ show description ++ "\n\n"
-			return $ Just $ return True
+			next $ return True
 		else do
 			describeUUID u description
 			liftIO $ gitAttributesWrite g
 			gitPreCommitHookWrite g
-			return $ Just cleanup
+			next cleanup
 
 cleanup :: CommandCleanup
 cleanup = do

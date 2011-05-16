@@ -25,4 +25,4 @@ start = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	liftIO $ putStrLn $ "annex.uuid=" ++ u
-	return Nothing
+	stop

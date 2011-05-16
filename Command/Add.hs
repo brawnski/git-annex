@@ -34,19 +34,19 @@ start :: CommandStartBackendFile
 start pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
 	if (isSymbolicLink s) || (not $ isRegularFile s)
-		then return Nothing
+		then stop
 		else do
 			showStart "add" file
-			return $ Just $ perform pair
+			next $ perform pair
 
 perform :: BackendFile -> CommandPerform
 perform (file, backend) = do
 	stored <- Backend.storeFileKey file backend
 	case stored of
-		Nothing -> return Nothing
+		Nothing -> stop
 		Just (key, _) -> do
 			moveAnnex key file
-			return $ Just $ cleanup file key
+			next $ cleanup file key
 
 cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do

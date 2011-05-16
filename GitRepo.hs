@@ -122,9 +122,8 @@ repoFromUrl url
 	| startswith "file://" url = repoFromAbsPath $ uriPath u
 	| otherwise = return $ newFrom $ Url u
 		where
-			u = case (parseURI url) of
-				Just v -> v
-				Nothing -> error $ "bad url " ++ url
+			u = maybe bad id $ parseURI url
+			bad = error $ "bad url " ++ url
 
 {- Creates a repo that has an unknown location. -}
 repoFromUnknown :: Repo
@@ -211,9 +210,9 @@ assertUrl repo action =
 				" not supported"
 
 configBare :: Repo -> Bool
-configBare repo = case Map.lookup "core.bare" $ config repo of
-	Just v -> configTrue v
-	Nothing -> error $ "it is not known if git repo " ++
+configBare repo = maybe unknown configTrue $ Map.lookup "core.bare" $ config repo
+	where
+		unknown = error $ "it is not known if git repo " ++
 			repoDescribe repo ++
 			" is a bare repository; config not read"
 
@@ -261,13 +260,10 @@ workTreeFile repo@(Repo { location = Dir d }) file = do
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
-		absrepo = case (absNormPath "/" d) of
-			Just f -> addTrailingPathSeparator f
-			Nothing -> error $ "bad repo" ++ repoDescribe repo
-		absfile c = case (secureAbsNormPath c file) of
-			Just f -> f
-			Nothing -> file
+		absrepo = maybe bad addTrailingPathSeparator $ absNormPath "/" d
+		absfile c = maybe file id $ secureAbsNormPath c file
 		inrepo f = absrepo `isPrefixOf` f
+		bad = error $ "bad repo" ++ repoDescribe repo
 workTreeFile repo _ = assertLocal repo $ error "internal"
 
 {- Path of an URL repo. -}
@@ -352,9 +348,7 @@ reap :: IO ()
 reap = do
 	-- throws an exception when there are no child processes
 	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
-	case r of
-		Nothing -> return ()
-		Just _ -> reap
+	maybe (return ()) (const reap) r
 
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]
@@ -583,8 +577,7 @@ encodeGitFile s = foldl (++) "\"" (map echar s) ++ "\""
 				e_num c = showoctal $ ord c
 				-- unicode character is decomposed to
 				-- Word8s and each is shown in octal
-				e_utf c = concat $ map showoctal $
-						(encode [c] :: [Word8])
+				e_utf c = showoctal =<< (encode [c] :: [Word8])
 
 {- for quickcheck -}
 prop_idempotent_deencode :: String -> Bool
@@ -632,23 +625,19 @@ expandTilde = expandt True
 
 {- Finds the current git repository, which may be in a parent directory. -}
 repoFromCwd :: IO Repo
-repoFromCwd = do
-	cwd <- getCurrentDirectory
-	top <- seekUp cwd isRepoTop
-	case top of
-		-- repoFromAbsPath is not used to avoid looking for
-		-- "dir.git" directories.
-		(Just dir) -> return $ newFrom $ Dir dir
-		Nothing -> error "Not in a git repository."
+repoFromCwd = getCurrentDirectory >>= seekUp isRepoTop >>= maybe norepo makerepo
+	where
+		makerepo = return . newFrom . Dir
+		norepo = error "Not in a git repository."
 
-seekUp :: FilePath -> (FilePath -> IO Bool) -> IO (Maybe FilePath)
-seekUp dir want = do
+seekUp :: (FilePath -> IO Bool) -> FilePath -> IO (Maybe FilePath)
+seekUp want dir = do
 	ok <- want dir
 	if ok
 		then return (Just dir)
 		else case (parentDir dir) of
 			"" -> return Nothing
-			d -> seekUp d want
+			d -> seekUp want d
 
 isRepoTop :: FilePath -> IO Bool
 isRepoTop dir = do

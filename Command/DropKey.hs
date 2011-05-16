@@ -26,20 +26,19 @@ start key = do
 	present <- inAnnex key
 	force <- Annex.getState Annex.force
 	if not present
-		then return Nothing
+		then stop
 		else if not force
 			then error "dropkey is can cause data loss; use --force if you're sure you want to do this"
 			else do
 				showStart "dropkey" (show key)
-				return $ Just $ perform key
+				next $ perform key
 
 perform :: Key -> CommandPerform
 perform key = do
 	removeAnnex key
-	return $ Just $ cleanup key
+	next $ cleanup key
 
 cleanup :: Key -> CommandCleanup
 cleanup key = do
 	logStatus key ValueMissing
 	return True
-
