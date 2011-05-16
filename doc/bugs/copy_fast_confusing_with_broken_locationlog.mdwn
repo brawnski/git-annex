@@ -1,0 +1,2 @@
+Conversation moved from [[walkthrough/recover_data_from_lost+found]]
+to a proper bug. --[[Joey]]
