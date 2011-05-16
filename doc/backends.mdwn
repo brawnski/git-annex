@@ -23,6 +23,9 @@ these backends.
 * `SHA512`, `SHA384`, `SHA256`, `SHA224` -- Like SHA1, but larger
   checksums. Mostly useful for the very paranoid, or anyone who is
   researching checksum collisions and wants to annex their colliding data. ;)
+* `SHA1E`, `SHA512E`, etc -- Variants that preserve filename extension as
+  part of the key. Useful for archival tasks where the filename extension
+  contains metadata that should be preserved.
 
 These backends store file contents in other key/value stores.
 

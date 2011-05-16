@@ -32,20 +32,18 @@ specify `x-archive-meta*` headers to add metadata as explained in their
 
 Then you can annex files and copy them to the remote as usual:
 
-	# git annex add photo1.jpeg
-	add photo1.jpeg ok
+	# git annex add photo1.jpeg --backend=SHA1E
+	add photo1.jpeg (checksum...) ok
 	# git annex copy photo1.jpeg --fast --to archive-panama
 	copy (to archive-panama...) ok
 
------
+Note the use of the SHA1E [[backend|backends]]. It makes most sense 
+to use the WORM or SHA1E backend for files that will be stored in
+the Internet Archive, since the key name will be exposed as the filename
+there, and since the Archive does special processing of files based on
+their extension.
 
-Note that it probably makes the most sense to use the WORM backend
-for files, since that exposes the original filename in the key stored
-in the Archive, which allows its special processing for sound files,
-movies, etc to be done. 
-
-Also, the Internet Archive has restrictions on what is allowed in a
-filename; particularly no spaces are allowed. 
+----
 
 There seems to be a bug in either hS3 or the archive that breaks
 authentication when the bucket name contains spaces or upper-case letters..
