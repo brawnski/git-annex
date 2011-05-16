@@ -47,6 +47,8 @@ type CommandCleanup = Annex Bool
  - functions. -}
 type CommandSeekStrings = CommandStartString -> CommandSeek
 type CommandStartString = String -> CommandStart
+type CommandSeekWords = CommandStartWords -> CommandSeek
+type CommandStartWords = [String] -> CommandStart
 type CommandSeekKeys = CommandStartKey -> CommandSeek
 type CommandStartKey = Key -> CommandStart
 type BackendFile = (FilePath, Maybe (Backend Annex))
@@ -143,8 +145,8 @@ withFilesNotInGit a params = do
 	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
-withString :: CommandSeekStrings
-withString a params = return [a $ unwords params]
+withWords :: CommandSeekWords
+withWords a params = return [a params]
 withStrings :: CommandSeekStrings
 withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings

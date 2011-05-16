@@ -18,10 +18,11 @@ command = [repoCommand "untrust" (paramRepeating paramRemote) seek
 	"do not trust a repository"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
-start :: CommandStartString
-start name = notBareRepo $ do
+start :: CommandStartWords
+start ws = notBareRepo $ do
+	let name = unwords ws
 	showStart "untrust" name
 	u <- Remote.nameToUUID name
 	next $ perform u

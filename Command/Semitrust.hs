@@ -18,10 +18,11 @@ command = [repoCommand "semitrust" (paramRepeating paramRemote) seek
 	"return repository to default trust level"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
-start :: CommandStartString
-start name = notBareRepo $ do
+start :: CommandStartWords
+start ws = notBareRepo $ do
+	let name = unwords ws
 	showStart "semitrust" name
 	u <- Remote.nameToUUID name
 	next $ perform u

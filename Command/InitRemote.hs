@@ -28,21 +28,22 @@ command = [repoCommand "initremote"
 	"sets up a special (non-git) remote"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
-start :: CommandStartString
-start params = notBareRepo $ do
+start :: CommandStartWords
+start ws = notBareRepo $ do
 	when (null ws) $ error "Specify a name for the remote"
 
 	(u, c) <- findByName name
 	let fullconfig = M.union config c	
 	t <- findType fullconfig
 	
+	liftIO $ putStrLn $ show fullconfig
+
 	showStart "initremote" name
 	next $ perform t u $ M.union config c
 
 	where
-		ws = words params
 		name = head ws
 		config = Remote.keyValToConfig $ tail ws
 

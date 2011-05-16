@@ -18,12 +18,12 @@ command = [repoCommand "describe" (paramPair paramRemote paramDesc) seek
 	"change description of a repository"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
-start :: CommandStartString
-start params = notBareRepo $ do
+start :: CommandStartWords
+start ws = notBareRepo $ do
 	let (name, description) =
-		case (words params) of
+		case ws of
 			(n:d) -> (n,unwords d)
 			_ -> error "Specify a repository and a description."
 	

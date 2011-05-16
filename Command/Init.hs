@@ -27,15 +27,17 @@ command = [repoCommand "init" paramDesc seek
 		"initialize git-annex with repository description"]
 
 seek :: [CommandSeek]
-seek = [withString start]
+seek = [withWords start]
 
 {- Stores description for the repository etc. -}
-start :: CommandStartString
-start description = do
+start :: CommandStartWords
+start ws = do
 	when (null description) $
 		error "please specify a description of this repository\n"
 	showStart "init" description
 	next $ perform description
+	where
+		description = unwords ws
 
 perform :: String -> CommandPerform
 perform description = do
