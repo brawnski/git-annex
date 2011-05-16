@@ -1,7 +1,0 @@
-git-annex 0.20110419 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Don't run gpg in batch mode, so it can prompt for passphrase when
-     there is no agent.
-   * Add missing build dep on dataenc.
-   * S3: Fix stalls when transferring encrypted data.
-   * bup: Avoid memory leak when transferring encrypted data."""]]
