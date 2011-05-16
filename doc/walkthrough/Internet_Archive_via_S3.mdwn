@@ -32,7 +32,7 @@ use all lowercase and no spaces when making the bucket with `initremote`.
 		x-archive-meta-mediatype=texts x-archive-meta-language=eng \
 		x-archive-meta-title="original Panama Canal lock design blueprints"
 	initremote archive-panama (Internet Archive mode) ok
-	# git annex describe archive-panama "Internet Archive item for my grandfather's Panama Canal lock design blueprints"
+	# git annex describe archive-panama "a man, a plan, a canal: panama"
 	describe archive-panama ok
 
 Then you can annex files and copy them to the remote as usual:
