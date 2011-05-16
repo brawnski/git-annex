@@ -15,6 +15,9 @@ import Network.AWS.AWSResult
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Map as M
 import Data.Maybe
+import Data.List
+import Data.Char
+import Data.String.Utils
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Environment
@@ -68,24 +71,53 @@ gen' r u c cst = do
 		}
 
 s3Setup :: UUID -> RemoteConfig -> Annex RemoteConfig
-s3Setup u c = do
-	-- verify configuration is sane
-	c' <- encryptionSetup c
-	let fullconfig = M.union c' defaults
-
-	genBucket fullconfig
-	gitConfigSpecialRemote u fullconfig "s3" "true"
-	s3SetCreds fullconfig
+s3Setup u c = handlehost $ M.lookup "host" c
 	where
 		remotename = fromJust (M.lookup "name" c)
-		bucket = remotename ++ "-" ++ u
+		defbucket = remotename ++ "-" ++ u
 		defaults = M.fromList
 			[ ("datacenter", "US")
 			, ("storageclass", "STANDARD")
 			, ("host", defaultAmazonS3Host)
 			, ("port", show defaultAmazonS3Port)
-			, ("bucket", bucket)
+			, ("bucket", defbucket)
 			]
+		
+		handlehost Nothing = defaulthost
+		handlehost (Just h)
+			| ".archive.org" `isSuffixOf` (map toLower h) = archiveorg
+			| otherwise = defaulthost
+
+		use fullconfig = do
+			genBucket fullconfig
+			gitConfigSpecialRemote u fullconfig "s3" "true"
+			s3SetCreds fullconfig	
+
+		defaulthost = do
+			c' <- encryptionSetup c
+			use $ M.union c' defaults
+
+		archiveorg = do
+			showNote $ "Internet Archive mode"
+			maybe (error "specify bucket=") (const $ return ()) $
+				M.lookup "bucket" archiveconfig
+			use archiveconfig
+			where
+				archiveconfig =
+					-- hS3 does not pass through
+					-- x-archive-* headers
+					M.mapKeys (replace "x-archive-" "x-amz-") $
+					-- encryption does not make sense here
+					M.insert "encryption" "none" $
+					M.union c $
+					-- special constraints on key names
+					M.insert "mungekeys" "ia" $
+					-- buckets created only as files
+					-- are uploaded
+					M.insert "x-amz-auto-make-bucket" "1" $
+					-- no default bucket name; should
+					-- be human-readable
+					M.delete "bucket" defaults
 
 store :: Remote Annex -> Key -> Annex Bool
 store r k = s3Action r False $ \(conn, bucket) -> do
@@ -111,8 +143,8 @@ storeHelper (conn, bucket) r k file = do
 	-- buffered to calculate it
 	size <- maybe getsize (return . fromIntegral) $ keySize k
 	let object = setStorageClass storageclass $ 
-		S3Object bucket (show k) ""
-			[("Content-Length",(show size)), ("x-amz-auto-make-bucket","1")] content
+		S3Object bucket (bucketFile r k) ""
+			(("Content-Length", show size) : xheaders) content
 	sendObject conn object
 	where
 		storageclass =
@@ -122,10 +154,13 @@ storeHelper (conn, bucket) r k file = do
 		getsize = do
 			s <- liftIO $ getFileStatus file
 			return $ fileSize s
+		
+		xheaders = filter isxheader $ M.assocs $ fromJust $ config r
+		isxheader (h, _) = "x-amz-" `isPrefixOf` h
 
 retrieve :: Remote Annex -> Key -> FilePath -> Annex Bool
 retrieve r k f = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ getObject conn $ bucketKey bucket k
+	res <- liftIO $ getObject conn $ bucketKey r bucket k
 	case res of
 		Right o -> do
 			liftIO $ L.writeFile f $ obj_data o
@@ -134,7 +169,7 @@ retrieve r k f = s3Action r False $ \(conn, bucket) -> do
 
 retrieveEncrypted :: Remote Annex -> (Cipher, Key) -> FilePath -> Annex Bool
 retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ getObject conn $ bucketKey bucket enck
+	res <- liftIO $ getObject conn $ bucketKey r bucket enck
 	case res of
 		Right o -> liftIO $ 
 			withDecryptedContent cipher (return $ obj_data o) $ \content -> do
@@ -144,13 +179,13 @@ retrieveEncrypted r (cipher, enck) f = s3Action r False $ \(conn, bucket) -> do
 
 remove :: Remote Annex -> Key -> Annex Bool
 remove r k = s3Action r False $ \(conn, bucket) -> do
-	res <- liftIO $ deleteObject conn $ bucketKey bucket k
+	res <- liftIO $ deleteObject conn $ bucketKey r bucket k
 	s3Bool res
 
 checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
 checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
 	showNote ("checking " ++ name r ++ "...")
-	res <- liftIO $ getObjectInfo conn $ bucketKey bucket k
+	res <- liftIO $ getObjectInfo conn $ bucketKey r bucket k
 	case res of
 		Right _ -> return $ Right True
 		Left (AWSError _ _) -> return $ Right False
@@ -182,8 +217,27 @@ s3Action r noconn action = do
 		(Just b, Just c) -> action (c, b)
 		_ -> return noconn
 
-bucketKey :: String -> Key -> S3Object
-bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+bucketFile :: Remote Annex -> Key -> FilePath
+bucketFile r k = (munge $ show k)
+	where
+		munge s = case M.lookup "mungekeys" $ fromJust $ config r of
+			Just "ia" -> iaMunge s
+			_ -> s
+
+bucketKey :: Remote Annex -> String -> Key -> S3Object
+bucketKey r bucket k = S3Object bucket (bucketFile r k) "" [] L.empty
+
+{- Internet Archive limits filenames to a subset of ascii,
+ - with no whitespace. Other characters are xml entity
+ - encoded. -}
+iaMunge :: String -> String
+iaMunge = concat . (map munge)
+	where
+		munge c
+			| isAsciiUpper c || isAsciiLower c || isNumber c = [c]
+			| c `elem` "_-.\"" = [c]
+			| isSpace c = []
+			| otherwise = "&" ++ show (ord c) ++ ";"
 
 genBucket :: RemoteConfig -> Annex ()
 genBucket c = do
