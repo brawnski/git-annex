@@ -7,6 +7,8 @@
 
 module Command.Move where
 
+import Control.Monad (when)
+
 import Command
 import qualified Command.Drop
 import qualified Annex
@@ -84,7 +86,8 @@ toPerform dest move key = do
 	-- and an explicit check is not done, when copying. When moving,
 	-- it has to be done, to avoid inaverdent data loss.
 	fast <- Annex.getState Annex.fast
-	isthere <- if fast && not move && not (Remote.hasKeyCheap dest)
+	let fastcheck = fast && not move && not (Remote.hasKeyCheap dest)
+	isthere <- if fastcheck
 		then do
 			(remotes, _) <- Remote.keyPossibilities key
 			return $ Right $ dest `elem` remotes
@@ -98,7 +101,10 @@ toPerform dest move key = do
 			ok <- Remote.storeKey dest key
 			if ok
 				then next $ toCleanup dest move key
-				else stop -- failed
+				else do
+					when fastcheck $
+						warning "This could have failed because --fast is enabled."
+					stop
 		Right True -> next $ toCleanup dest move key
 toCleanup :: Remote.Remote Annex -> Bool -> Key -> CommandCleanup
 toCleanup dest move key = do
