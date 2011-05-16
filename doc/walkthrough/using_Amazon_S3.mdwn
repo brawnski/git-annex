@@ -34,4 +34,4 @@ Now the remote can be used like any other remote.
 	# git annex move video/hackity_hack_and_kaxxt.mov --to cloud
 	move video/hackity_hack_and_kaxxt.mov (checking cloud...) (to cloud...) ok
 
-See [[special_remotes/Amazon_S3]] for details.
+See [[special_remotes/S3]] for details.

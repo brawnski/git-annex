@@ -1,0 +1,48 @@
+[The Internet Archive](http://www.archive.org/) allows members to upload
+collections using an Amazon S3 
+[compatible API](http://www.archive.org/help/abouts3.txt), and this can
+be used with git-annex's [[special_remotes/S3]] support. 
+
+So, if you're an archivist, you can locally archive things with git-annex,
+and define remotes that correspond to "items" at the Internet Archive,
+and use git-annex to upload your files to there.
+Of course, your use of the Internet Archive must comply with their
+[terms of service](http://www.archive.org/about/terms.php).
+
+## step 0
+
+Sign up for an account, and get your access keys here:
+<http://www.archive.org/account/s3.php>
+	
+	# export AWS_ACCESS_KEY_ID=blahblah
+	# export AWS_SECRET_ACCESS_KEY=xxxxxxx
+
+Now go to <http://www.archive.org/create/> and create the item.
+This allows you to fill in metadata which git-annex cannot provide to the
+Internet Archive. (It also works around a bug with bucket creation.)
+
+(Note that there seems to be a bug in either hS3 or the archive that
+breaks authentication when the item name contains spaces or upper-case
+letters.. use all lowercase and no spaces.)
+
+Specify `host=s3.us.archive.org` when doing initremote to set up
+a remote at the Archive. It does not make sense to use encryption.
+For the bucket name, specify the item name created in step 1.
+
+	# git annex initremote panama type=S3 encryption=none host=s3.us.archive.org bucket=panama-canal-lock-blueprints
+	initremote archive-panama (checking bucket) (creating bucket in US) ok
+	# git annex describe archive-panama "Internet Archive item for my grandfather's Panama Canal lock design blueprints"
+	describe archive-panama ok
+
+Then you can annex files and copy them to the remote as usual:
+
+	# git annex add photo1.jpeg
+	add photo1.jpeg ok
+	# git annex copy photo1.jpeg --to archive-panama
+	copy (checking archive-panama...) (to archive-panama...) ok
+
+Note that it probably makes the most sense to use the WORM backend
+for files, since that exposes the original filename in the key stored
+in the Archive, which allows its special processing for sound files,
+movies, etc to be done. Also, the Internet Archive has restrictions
+on what is allowed in a filename; particularly no spaces are allowed.

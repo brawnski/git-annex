@@ -11,4 +11,5 @@ A suppliment to the [[walkthrough]].
 	walkthrough/untrusted_repositories
 	walkthrough/what_to_do_when_you_lose_a_repository
 	walkthrough/recover_data_from_lost+found
+	walkthrough/Internet_Archive_via_S3
 """]]
