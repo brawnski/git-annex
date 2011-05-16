@@ -9,8 +9,6 @@ and use git-annex to upload your files to there.
 Of course, your use of the Internet Archive must comply with their
 [terms of service](http://www.archive.org/about/terms.php).
 
-## step 0
-
 Sign up for an account, and get your access keys here:
 <http://www.archive.org/account/s3.php>
 	
