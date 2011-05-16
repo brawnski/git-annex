@@ -188,7 +188,7 @@ configToKeyVal m = map toword $ sort $ M.toList m
 		toword (k, v) = k ++ "=" ++ configEscape v
 
 configEscape :: String -> String
-configEscape = concat . (map escape)
+configEscape = (>>= escape)
 	where
 		escape c
 			| isSpace c || c `elem` "&" = "&" ++ show (ord c) ++ ";"
