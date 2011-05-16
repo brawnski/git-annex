@@ -17,7 +17,7 @@ Sign up for an account, and get your access keys here:
 Specify `host=s3.us.archive.org` when doing `initremote` to set up
 a remote at the Archive. This will enable a special Internet Archive mode:
 Encryption is not allowed; you are required to specify a bucket name
-rather than letting git-annex pick a random one; and you can optionally
+rather than having git-annex pick a random one; and you can optionally
 specify `x-archive-meta*` headers to add metadata as explained in their
 [documentation](http://www.archive.org/help/abouts3.txt).
 
