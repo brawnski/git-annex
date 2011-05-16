@@ -37,8 +37,6 @@ start ws = notBareRepo $ do
 	(u, c) <- findByName name
 	let fullconfig = M.union config c	
 	t <- findType fullconfig
-	
-	liftIO $ putStrLn $ show fullconfig
 
 	showStart "initremote" name
 	next $ perform t u $ M.union config c
