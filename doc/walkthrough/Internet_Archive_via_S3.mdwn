@@ -25,7 +25,7 @@ letters.. use all lowercase and no spaces.)
 
 Specify `host=s3.us.archive.org` when doing initremote to set up
 a remote at the Archive. It does not make sense to use encryption.
-For the bucket name, specify the item name created in step 1.
+For the bucket name, specify the item name you created earlier.
 
 	# git annex initremote panama type=S3 encryption=none host=s3.us.archive.org bucket=panama-canal-lock-blueprints
 	initremote archive-panama (checking bucket) (creating bucket in US) ok
