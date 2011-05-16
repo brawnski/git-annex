@@ -7,6 +7,8 @@ git-annex (0.20110504) UNRELEASED; urgency=low
     buckets, and allow x-archive-* headers to be specified in initremote to
     set item metadata.
   * Added filename extension preserving variant backends SHA1E, SHA256E, etc.
+  * migrate: Use current filename when generating new key, for backends
+    where the filename affects the key name.
 
  -- Joey Hess <joeyh@debian.org>  Fri, 06 May 2011 15:20:38 -0400
 
