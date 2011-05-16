@@ -31,7 +31,7 @@ use all lowercase and no spaces when making the bucket with `initremote`.
 		host=s3.us.archive.org bucket=panama-canal-lock-blueprints \
 		x-archive-meta-mediatype=texts x-archive-meta-language=eng \
 		x-archive-meta-title="original Panama Canal lock design blueprints"
-	initremote archive-panama (Internet Archive mode) (checking bucket) (creating bucket in US) ok
+	initremote archive-panama (Internet Archive mode) ok
 	# git annex describe archive-panama "Internet Archive item for my grandfather's Panama Canal lock design blueprints"
 	describe archive-panama ok
 

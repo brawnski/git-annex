@@ -89,13 +89,14 @@ s3Setup u c = handlehost $ M.lookup "host" c
 			| otherwise = defaulthost
 
 		use fullconfig = do
-			genBucket fullconfig
 			gitConfigSpecialRemote u fullconfig "s3" "true"
 			s3SetCreds fullconfig	
 
 		defaulthost = do
 			c' <- encryptionSetup c
-			use $ M.union c' defaults
+			let fullconfig = M.union c' defaults
+			genBucket fullconfig
+			use fullconfig
 
 		archiveorg = do
 			showNote $ "Internet Archive mode"
@@ -112,7 +113,7 @@ s3Setup u c = handlehost $ M.lookup "host" c
 					M.union c $
 					-- special constraints on key names
 					M.insert "mungekeys" "ia" $
-					-- buckets created only as files
+					-- bucket created only when files
 					-- are uploaded
 					M.insert "x-amz-auto-make-bucket" "1" $
 					-- no default bucket name; should
