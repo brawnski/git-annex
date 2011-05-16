@@ -232,7 +232,7 @@ bucketKey r bucket k = S3Object bucket (bucketFile r k) "" [] L.empty
  - with no whitespace. Other characters are xml entity
  - encoded. -}
 iaMunge :: String -> String
-iaMunge = concat . (map munge)
+iaMunge = (>>= munge)
 	where
 		munge c
 			| isAsciiUpper c || isAsciiLower c || isNumber c = [c]

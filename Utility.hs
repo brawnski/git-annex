@@ -59,7 +59,7 @@ data CommandParam = Params String | Param String | File FilePath
 {- Used to pass a list of CommandParams to a function that runs
  - a command and expects Strings. -}
 toCommand :: [CommandParam] -> [String]
-toCommand l = concat $ map unwrap l
+toCommand = (>>= unwrap)
 	where
 		unwrap (Param s) = [s]
 		unwrap (Params s) = filter (not . null) (split " " s)
