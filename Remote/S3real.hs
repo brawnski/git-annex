@@ -73,21 +73,7 @@ s3Setup u c = do
 	c' <- encryptionSetup c
 	let fullconfig = M.union c' defaults
 
-	-- check bucket location to see if the bucket exists, and create it
-	let datacenter = fromJust $ M.lookup "datacenter" fullconfig
-	conn <- s3ConnectionRequired fullconfig
-	showNote "checking bucket"
-	loc <- liftIO $ getBucketLocation conn bucket 
-	case loc of
-		Right _ -> return ()
-		Left err@(NetworkError _) -> s3Error err
-		Left (AWSError _ _) -> do
-			showNote $ "creating bucket in " ++ datacenter
-			res <- liftIO $ createBucketIn conn bucket datacenter
-			case res of
-				Right _ -> return ()
-				Left err -> s3Error err
-
+	genBucket fullconfig
 	gitConfigSpecialRemote u fullconfig "s3" "true"
 	s3SetCreds fullconfig
 	where
@@ -126,7 +112,7 @@ storeHelper (conn, bucket) r k file = do
 	size <- maybe getsize (return . fromIntegral) $ keySize k
 	let object = setStorageClass storageclass $ 
 		S3Object bucket (show k) ""
-			[("Content-Length",(show size))] content
+			[("Content-Length",(show size)), ("x-amz-auto-make-bucket","1")] content
 	sendObject conn object
 	where
 		storageclass =
@@ -198,6 +184,24 @@ s3Action r noconn action = do
 
 bucketKey :: String -> Key -> S3Object
 bucketKey bucket k = S3Object bucket (show k) "" [] L.empty
+
+genBucket :: RemoteConfig -> Annex ()
+genBucket c = do
+	conn <- s3ConnectionRequired c
+	showNote "checking bucket"
+	loc <- liftIO $ getBucketLocation conn bucket 
+	case loc of
+		Right _ -> return ()
+		Left err@(NetworkError _) -> s3Error err
+		Left (AWSError _ _) -> do
+			showNote $ "creating bucket in " ++ datacenter
+			res <- liftIO $ createBucketIn conn bucket datacenter
+			case res of
+				Right _ -> return ()
+				Left err -> s3Error err
+	where
+		bucket = fromJust $ M.lookup "bucket" c
+		datacenter = fromJust $ M.lookup "datacenter" c
 
 s3ConnectionRequired :: RemoteConfig -> Annex AWSConnection
 s3ConnectionRequired c =
