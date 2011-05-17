@@ -18,17 +18,18 @@ import qualified BackendClass
 import qualified RemoteClass
 import qualified Remote
 import qualified Command.Unused
+import qualified GitRepo as Git
 import Command
 import Types
 import DataUnits
 import Content
 import Key
+import Locations
 
 -- a named computation that produces a statistic
-type Stat = (String, StatState String)
+type Stat = StatState (Maybe (String, StatState String))
 
 -- cached info that multiple Stats may need
-type SizeList a = ([a], Int)
 data StatInfo = StatInfo
 	{ keysPresentCache :: (Maybe (SizeList Key))
 	, keysReferencedCache :: (Maybe (SizeList Key))
@@ -36,6 +37,11 @@ data StatInfo = StatInfo
 
 -- a state monad for running Stats in
 type StatState = StateT StatInfo Annex
+
+type SizeList a = ([a], Int)
+
+sizeList :: [a] -> SizeList a
+sizeList l = (l, length l)
 
 command :: [Command]
 command = [repoCommand "status" (paramNothing) seek
@@ -53,6 +59,8 @@ faststats =
 	, supported_remote_types
 	, local_annex_keys
 	, local_annex_size
+	, tmp_size
+	, bad_data_size
 	]
 slowstats :: [Stat]
 slowstats =
@@ -69,14 +77,19 @@ start = do
 	stop
 
 stat :: String -> StatState String -> Stat
-stat desc a = (desc, a)
+stat desc a = return $ Just (desc, a)
+
+nostat :: Stat
+nostat = return $ Nothing
 
 showStat :: Stat -> StatState ()
-showStat (desc, a) = do
-	liftIO $ putStr $ desc ++ ": "
-	liftIO $ hFlush stdout
-	liftIO . putStrLn =<< a
-
+showStat s = calc =<< s
+	where
+		calc (Just (desc, a)) = do
+			liftIO $ putStr $ desc ++ ": "
+			liftIO $ hFlush stdout
+			liftIO . putStrLn =<< a
+		calc Nothing = return ()
 
 supported_backends :: Stat
 supported_backends = stat "supported backends" $
@@ -103,6 +116,12 @@ total_annex_keys :: Stat
 total_annex_keys = stat "total annex keys" $
 	return . show . snd =<< cachedKeysReferenced
 
+tmp_size :: Stat
+tmp_size = staleSize "temporary directory size" gitAnnexTmpDir
+
+bad_data_size :: Stat
+bad_data_size = staleSize "bad keys size" gitAnnexBadDir
+
 backend_usage :: Stat
 backend_usage = stat "backend usage" $
 	return . usage =<< cachedKeysReferenced
@@ -115,6 +134,7 @@ backend_usage = stat "backend usage" $
 		pp c [] = c
 		pp c ((n, b):xs) = "\n\t" ++ b ++ ": " ++ show n ++ pp c xs
 
+
 cachedKeysPresent :: StatState (SizeList Key)
 cachedKeysPresent = do
 	s <- get
@@ -122,7 +142,7 @@ cachedKeysPresent = do
 		Just v -> return v
 		Nothing -> do
 			keys <- lift $ getKeysPresent
-			let v = (keys, length keys)
+			let v = sizeList keys
 			put s { keysPresentCache = Just v }
 			return v
 
@@ -135,8 +155,7 @@ cachedKeysReferenced = do
 			keys <- lift $ Command.Unused.getKeysReferenced
 			-- A given key may be referenced repeatedly.
 			-- nub does not seem too slow (yet)..
-			let uniques = nub keys
-			let v = (uniques, length uniques)
+			let v = sizeList $ nub keys
 			put s { keysReferencedCache = Just v }
 			return v
 
@@ -149,3 +168,12 @@ keySizeSum (keys, len) = do
 		if missing > 0
 			then " (but " ++ show missing ++ " keys have unknown size)"
 			else ""
+
+staleSize :: String -> (Git.Repo -> FilePath) -> Stat
+staleSize label dirspec = do
+	keys <- lift (Command.Unused.staleKeys dirspec)
+	if null keys
+		then nostat
+		else stat label $ do
+			s <- keySizeSum $ sizeList keys
+			return $ s ++ " (clean up with git-annex unused)"
