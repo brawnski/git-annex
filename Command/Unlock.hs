@@ -7,7 +7,6 @@
 
 module Command.Unlock where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Directory hiding (copyFile)
 
@@ -19,6 +18,7 @@ import Messages
 import Locations
 import Content
 import CopyFile
+import Utility
 
 command :: [Command]
 command =
@@ -38,9 +38,7 @@ start file = isAnnexed file $ \(key, _) -> do
 
 perform :: FilePath -> Key -> CommandPerform
 perform dest key = do
-	inbackend <- Backend.hasKey key
-	when (not inbackend) $
-		error "content not present"
+	unlessM (Backend.hasKey key) $ error "content not present"
 	
 	checkDiskSpace key
 

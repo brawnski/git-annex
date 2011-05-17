@@ -1,4 +1,4 @@
-{- git-annex utility functions
+{- general purpose utility functions
  -
  - Copyright 2010-2011 Joey Hess <joey@kitenet.net>
  -
@@ -26,6 +26,10 @@ module Utility (
 	dirContents,
 	myHomeDir,
 	catchBool,
+	whenM,
+	(<&>),
+	unlessM,
+	(<|>),
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -46,7 +50,8 @@ import System.FilePath
 import System.Directory
 import Foreign (complement)
 import Data.List
-import Control.Monad (liftM2)
+import Data.Maybe
+import Control.Monad (liftM2, when, unless)
 
 {- A type for parameters passed to a shell command. A command can
  - be passed either some Params (multiple parameters can be included,
@@ -110,7 +115,7 @@ shellEscape f = "'" ++ escaped ++ "'"
 {- Unescapes a set of shellEscaped words or filenames. -}
 shellUnEscape :: String -> [String]
 shellUnEscape [] = []
-shellUnEscape s = word:(shellUnEscape rest)
+shellUnEscape s = word : shellUnEscape rest
 	where
 		(word, rest) = findword "" s
 		findword w [] = (w, "")
@@ -165,7 +170,7 @@ prop_parentDir_basics dir
 dirContains :: FilePath -> FilePath -> Bool
 dirContains a b = a == b || a' == b' || (a'++"/") `isPrefixOf` b'
 	where
-		norm p = maybe "" id $ absNormPath p "."
+		norm p = fromMaybe "" $ absNormPath p "."
 		a' = norm a
 		b' = norm b
 
@@ -178,7 +183,7 @@ absPath file = do
 {- Converts a filename into a normalized, absolute path
  - from the specified cwd. -}
 absPathFrom :: FilePath -> FilePath -> FilePath
-absPathFrom cwd file = maybe bad id $ absNormPath cwd file
+absPathFrom cwd file = fromMaybe bad $ absNormPath cwd file
 	where
 		bad = error $ "unable to normalize " ++ file
 
@@ -258,3 +263,20 @@ myHomeDir = do
 {- Catches IO errors and returns a Bool -}
 catchBool :: IO Bool -> IO Bool
 catchBool = flip catch (const $ return False)
+
+{- when with a monadic conditional -}
+whenM :: Monad m => m Bool -> m () -> m ()
+whenM c a = c >>= flip when a
+
+unlessM :: Monad m => m Bool -> m () -> m ()
+unlessM c a = c >>= flip unless a
+
+(<&>) :: Monad m => m Bool -> m () -> m ()
+(<&>) = whenM
+
+(<|>) :: Monad m => m Bool -> m () -> m ()
+(<|>) = unlessM
+
+-- low fixity allows eg, foo bar <|> error $ "failed " ++ meep
+infixr 0 <&>
+infixr 0 <|>

@@ -6,7 +6,6 @@
  -}
 
 import System.Environment
-import Control.Monad (when)
 import Data.List
 
 import qualified GitRepo as Git
@@ -66,8 +65,7 @@ builtin cmd dir params = do
 
 external :: [String] -> IO ()
 external params = do
-	ret <- boolSystem "git-shell" $ map Param $ ("-c":filterparams params)
-	when (not ret) $
+	unlessM (boolSystem "git-shell" $ map Param $ "-c":filterparams params) $
 		error "git-shell failed"
 
 -- Drop all args after "--".

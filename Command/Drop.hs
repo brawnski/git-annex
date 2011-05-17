@@ -7,8 +7,6 @@
 
 module Command.Drop where
 
-import Control.Monad (when)
-
 import Command
 import qualified Backend
 import LocationLog
@@ -46,7 +44,6 @@ perform key backend numcopies = do
 
 cleanup :: Key -> CommandCleanup
 cleanup key = do
-	inannex <- inAnnex key
-	when inannex $ removeAnnex key
+	whenM (inAnnex key) $ removeAnnex key
 	logStatus key ValueMissing
 	return True

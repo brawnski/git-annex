@@ -134,8 +134,7 @@ withTmp key action = do
 	let tmp = gitAnnexTmpLocation g key
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)
 	res <- action tmp
-	tmp_exists <- liftIO $ doesFileExist tmp
-	when tmp_exists $ liftIO $ removeFile tmp
+	liftIO $ whenM (doesFileExist tmp) $ liftIO $ removeFile tmp
 	return res
 
 {- Checks that there is disk space available to store a given key,
@@ -160,8 +159,7 @@ checkDiskSpace' adjustment key = do
 		megabyte :: Integer
 		megabyte = 1000000
 		needmorespace n = do
-			force <- Annex.getState Annex.force
-			unless force $ 
+			unlessM (Annex.getState Annex.force) $
 				error $ "not enough free space, need " ++ 
 					roughSize storageUnits True n ++
 					" more (use --force to override this check or adjust annex.diskreserve)"

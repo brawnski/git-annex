@@ -7,13 +7,13 @@
 
 module Command.RecvKey where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Exit
 
 import Command
 import CmdLine
 import Content
+import Utility
 import RsyncFile
 
 command :: [Command]
@@ -25,9 +25,7 @@ seek = [withKeys start]
 
 start :: CommandStartKey
 start key = do
-	present <- inAnnex key
-	when present $
-		error "key is already present in annex"
+	whenM (inAnnex key) $ error "key is already present in annex"
 	
 	ok <- getViaTmp key (liftIO . rsyncServerReceive)
 	if ok

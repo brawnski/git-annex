@@ -10,7 +10,7 @@ module Remote.Rsync (remote) where
 import qualified Data.ByteString.Lazy.Char8 as L
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
-import Control.Monad.State (liftIO, when)
+import Control.Monad.State (liftIO)
 import System.FilePath
 import System.Directory
 import System.Posix.Files
@@ -168,9 +168,8 @@ withRsyncScratchDir a = do
 	nuke tmp
 	return res
 	where
-		nuke d = liftIO $ do
-			e <- doesDirectoryExist d
-			when e $ liftIO $ removeDirectoryRecursive d
+		nuke d = liftIO $ 
+			doesDirectoryExist d <&> removeDirectoryRecursive d
 
 rsyncRemote :: RsyncOpts -> [CommandParam] -> Annex Bool
 rsyncRemote o params = do

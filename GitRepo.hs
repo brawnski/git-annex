@@ -329,9 +329,9 @@ gitCommandLine repo _ = assertLocal repo $ error "internal"
 
 {- Runs git in the specified repo, throwing an error if it fails. -}
 run :: Repo -> String -> [CommandParam] -> IO ()
-run repo subcommand params = assertLocal repo $ do
-	ok <- boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
-	unless ok $ error $ "git " ++ show params ++ " failed"
+run repo subcommand params = assertLocal repo $
+	boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
+		<|> error $ "git " ++ show params ++ " failed"
 
 {- Runs a git subcommand and returns it output, lazily. 
  -

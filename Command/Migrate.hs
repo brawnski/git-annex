@@ -8,7 +8,6 @@
 module Command.Migrate where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (unless, when)
 import System.Posix.Files
 import System.Directory
 import System.FilePath
@@ -20,6 +19,7 @@ import Locations
 import Types
 import Content
 import Messages
+import Utility
 import qualified Command.Add
 
 command :: [Command]
@@ -63,9 +63,7 @@ perform file oldkey newbackend = do
 			ok <- getViaTmpUnchecked newkey $ \t -> do
 				-- Make a hard link to the old backend's
 				-- cached key, to avoid wasting disk space.
-				liftIO $ do
-					exists <- doesFileExist t
-					unless exists $ createLink src t
+				liftIO $ unlessM (doesFileExist t) $ createLink src t
 				return True
 			if ok
 				then do
@@ -74,6 +72,4 @@ perform file oldkey newbackend = do
 					next $ Command.Add.cleanup file newkey
 				else stop
 	where
-		cleantmp t = do
-			exists <- doesFileExist t
-			when exists $ removeFile t
+		cleantmp t = whenM (doesFileExist t) $ removeFile t
