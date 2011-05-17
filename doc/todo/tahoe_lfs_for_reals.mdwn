@@ -5,7 +5,7 @@ hash subdirectories in Tahoe is expensive. Instead it would be good to use
 it as a key/value store directly. The catch is that doing so involves
 sending the content to Tahoe, and getting back a key identifier.
 
-This would be fairly easy to do as a [[backend]], which can assign its
+This would be fairly easy to do as a [[backend|backends]], which can assign its
 own key names (although typically done before data is stored in it),
 but a tahoe-lafs special remote would be more flexible.
 
