@@ -38,10 +38,13 @@ data StatInfo = StatInfo
 -- a state monad for running Stats in
 type StatState = StateT StatInfo Annex
 
-type SizeList a = ([a], Int)
+-- a list with a known length
+-- (Integer is used for the length to avoid
+-- blowing up if someone annexed billions of files..)
+type SizeList a = ([a], Integer)
 
 sizeList :: [a] -> SizeList a
-sizeList l = (l, length l)
+sizeList l = (l, genericLength l)
 
 command :: [Command]
 command = [repoCommand "status" (paramNothing) seek
@@ -163,7 +166,7 @@ keySizeSum :: SizeList Key -> StatState String
 keySizeSum (keys, len) = do
 	let knownsize = catMaybes $ map keySize keys
 	let total = roughSize storageUnits False $ foldl (+) 0 knownsize
-	let missing = len - length knownsize
+	let missing = len - genericLength knownsize
 	return $ total ++
 		if missing > 0
 			then " (but " ++ show missing ++ " keys have unknown size)"
