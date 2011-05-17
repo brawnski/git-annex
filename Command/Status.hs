@@ -57,14 +57,14 @@ faststats :: [Stat]
 faststats = 
 	[ supported_backends
 	, supported_remote_types
-	, local_annex_keys
-	, local_annex_size
 	, tmp_size
 	, bad_data_size
 	]
 slowstats :: [Stat]
 slowstats =
-	[ total_annex_keys
+	[ local_annex_keys
+	, local_annex_size
+	, total_annex_keys
 	, total_annex_size
 	, backend_usage
 	]
