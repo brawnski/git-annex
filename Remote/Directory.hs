@@ -63,7 +63,7 @@ directorySetup u c = do
 	let dir = maybe (error "Specify directory=") id $
 		M.lookup "directory" c
 	liftIO $ doesDirectoryExist dir
-		<|> error $ "Directory does not exist: " ++ dir
+		>>! error $ "Directory does not exist: " ++ dir
 	c' <- encryptionSetup c
 
 	-- The directory is stored in git config, not in this remote's

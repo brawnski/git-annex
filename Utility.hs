@@ -27,9 +27,9 @@ module Utility (
 	myHomeDir,
 	catchBool,
 	whenM,
-	(<&>),
+	(>>?),
 	unlessM,
-	(<|>),
+	(>>!),
 	
 	prop_idempotent_shellEscape,
 	prop_idempotent_shellEscape_multiword,
@@ -271,12 +271,12 @@ whenM c a = c >>= flip when a
 unlessM :: Monad m => m Bool -> m () -> m ()
 unlessM c a = c >>= flip unless a
 
-(<&>) :: Monad m => m Bool -> m () -> m ()
-(<&>) = whenM
+(>>?) :: Monad m => m Bool -> m () -> m ()
+(>>?) = whenM
 
-(<|>) :: Monad m => m Bool -> m () -> m ()
-(<|>) = unlessM
+(>>!) :: Monad m => m Bool -> m () -> m ()
+(>>!) = unlessM
 
 -- low fixity allows eg, foo bar <|> error $ "failed " ++ meep
-infixr 0 <&>
-infixr 0 <|>
+infixr 0 >>?
+infixr 0 >>!

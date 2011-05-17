@@ -169,7 +169,7 @@ withRsyncScratchDir a = do
 	return res
 	where
 		nuke d = liftIO $ 
-			doesDirectoryExist d <&> removeDirectoryRecursive d
+			doesDirectoryExist d >>? removeDirectoryRecursive d
 
 rsyncRemote :: RsyncOpts -> [CommandParam] -> Annex Bool
 rsyncRemote o params = do

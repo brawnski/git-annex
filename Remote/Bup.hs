@@ -75,7 +75,7 @@ bupSetup u c = do
 	-- bup init will create the repository.
 	-- (If the repository already exists, bup init again appears safe.)
 	showNote "bup init"
-	bup "init" buprepo [] <|> error "bup init failed"
+	bup "init" buprepo [] >>! error "bup init failed"
 
 	storeBupUUID u buprepo
 
@@ -173,7 +173,7 @@ storeBupUUID u buprepo = do
 			showNote "storing uuid"
 			onBupRemote r boolSystem "git"
 				[Params $ "config annex.uuid " ++ u]
-				<|> error "ssh failed"
+					>>! error "ssh failed"
 		else liftIO $ do
 			r' <- Git.configRead r
 			let olduuid = Git.configGet r' "annex.uuid" ""
