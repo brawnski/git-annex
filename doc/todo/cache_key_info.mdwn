@@ -10,7 +10,7 @@ But currently two git-annex commands are quite slow when annexes become large
 in quantity of files. These are unused and stats
 (Both have --fast versions that don't do as much).
 
-Both are slow because both need two peices of information that are not
+Both are slow because both need two pieces of information that are not
 quick to look up, and require examining the whole repo, very seekily:
 
 1. The keys present in the annex. Found by looking thru .git/annex/objects.
