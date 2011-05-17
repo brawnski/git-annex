@@ -169,7 +169,7 @@ keySizeSum (keys, len) = do
 	let missing = len - genericLength knownsize
 	return $ total ++
 		if missing > 0
-			then " (but " ++ show missing ++ " keys have unknown size)"
+			then aside $ "but " ++ show missing ++ " keys have unknown size"
 			else ""
 
 staleSize :: String -> (Git.Repo -> FilePath) -> Stat
@@ -179,4 +179,7 @@ staleSize label dirspec = do
 		then nostat
 		else stat label $ do
 			s <- keySizeSum $ sizeList keys
-			return $ s ++ " (clean up with git-annex unused)"
+			return $ s ++ aside "clean up with git-annex unused"
+
+aside :: String -> String
+aside s = "\t(" ++ s ++ ")"
