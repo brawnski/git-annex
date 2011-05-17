@@ -144,16 +144,16 @@ unusedKeys = do
 	if fast
 		then do
 			showNote "fast mode enabled; only finding stale files"
-			tmp <- staleKeys' gitAnnexTmpDir
-			bad <- staleKeys' gitAnnexBadDir
+			tmp <- staleKeys gitAnnexTmpDir
+			bad <- staleKeys gitAnnexBadDir
 			return ([], bad, tmp)
 		else do
 			showNote "checking for unused data..."
 			present <- getKeysPresent
 			referenced <- getKeysReferenced
 			let unused = present `exclude` referenced
-			staletmp <- staleKeys gitAnnexTmpDir present
-			stalebad <- staleKeys gitAnnexBadDir present
+			staletmp <- staleKeysPrune gitAnnexTmpDir present
+			stalebad <- staleKeysPrune gitAnnexBadDir present
 			return (unused, stalebad, staletmp)
 
 {- Finds items in the first, smaller list, that are not
@@ -182,9 +182,9 @@ getKeysReferenced = do
  - When a list of presently available keys is provided, stale keys
  - that no longer have value are deleted.
  -}
-staleKeys :: (Git.Repo -> FilePath) -> [Key] -> Annex [Key]
-staleKeys dirspec present = do
-	contents <- staleKeys' dirspec
+staleKeysPrune :: (Git.Repo -> FilePath) -> [Key] -> Annex [Key]
+staleKeysPrune dirspec present = do
+	contents <- staleKeys dirspec
 		
 	let stale = contents `exclude` present
 	let dup = contents `exclude` stale
@@ -195,8 +195,8 @@ staleKeys dirspec present = do
 
 	return stale
 
-staleKeys' :: (Git.Repo -> FilePath) -> Annex [Key]
-staleKeys' dirspec = do
+staleKeys :: (Git.Repo -> FilePath) -> Annex [Key]
+staleKeys dirspec = do
 	g <- Annex.gitRepo
 	let dir = dirspec g
 	exists <- liftIO $ doesDirectoryExist dir

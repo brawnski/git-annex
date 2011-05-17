@@ -1,0 +1,151 @@
+{- git-annex command
+ -
+ - Copyright 2011 Joey Hess <joey@kitenet.net>
+ -
+ - Licensed under the GNU GPL version 3 or higher.
+ -}
+
+module Command.Status where
+
+import Control.Monad.State
+import Data.Maybe
+import System.IO
+import Data.List
+import qualified Data.Map as M
+
+import qualified Annex
+import qualified BackendClass
+import qualified RemoteClass
+import qualified Remote
+import qualified Command.Unused
+import Command
+import Types
+import DataUnits
+import Content
+import Key
+
+-- a named computation that produces a statistic
+type Stat = (String, StatState String)
+
+-- cached info that multiple Stats may need
+type SizeList a = ([a], Int)
+data StatInfo = StatInfo
+	{ keysPresentCache :: (Maybe (SizeList Key))
+	, keysReferencedCache :: (Maybe (SizeList Key))
+	}
+
+-- a state monad for running Stats in
+type StatState = StateT StatInfo Annex
+
+command :: [Command]
+command = [repoCommand "status" (paramNothing) seek
+	"shows status information about the annex"]
+
+seek :: [CommandSeek]
+seek = [withNothing start]
+
+{- Order is significant. Less expensive operations, and operations
+ - that share data go together.
+ -}
+faststats :: [Stat]
+faststats = 
+	[ supported_backends
+	, supported_remote_types
+	, local_annex_keys
+	, local_annex_size
+	]
+slowstats :: [Stat]
+slowstats =
+	[ total_annex_keys
+	, total_annex_size
+	, backend_usage
+	]
+
+start :: CommandStartNothing
+start = do
+	fast <- Annex.getState Annex.fast
+	let todo = if fast then faststats else faststats ++ slowstats
+	evalStateT (mapM_ showStat todo) (StatInfo Nothing Nothing)
+	stop
+
+stat :: String -> StatState String -> Stat
+stat desc a = (desc, a)
+
+showStat :: Stat -> StatState ()
+showStat (desc, a) = do
+	liftIO $ putStr $ desc ++ ": "
+	liftIO $ hFlush stdout
+	liftIO . putStrLn =<< a
+
+
+supported_backends :: Stat
+supported_backends = stat "supported backends" $
+	lift (Annex.getState Annex.supportedBackends) >>=
+		return . unwords . (map BackendClass.name)
+
+supported_remote_types :: Stat
+supported_remote_types = stat "supported remote types" $
+	return $ unwords $ map RemoteClass.typename Remote.remoteTypes
+
+local_annex_size :: Stat
+local_annex_size = stat "local annex size" $
+	cachedKeysPresent >>= keySizeSum
+
+total_annex_size :: Stat
+total_annex_size = stat "total annex size" $
+	cachedKeysReferenced >>= keySizeSum
+
+local_annex_keys :: Stat
+local_annex_keys = stat "local annex keys" $ 
+	return . show . snd =<< cachedKeysPresent
+
+total_annex_keys :: Stat
+total_annex_keys = stat "total annex keys" $
+	return . show . snd =<< cachedKeysReferenced
+
+backend_usage :: Stat
+backend_usage = stat "backend usage" $
+	return . usage =<< cachedKeysReferenced
+	where
+		usage (ks, _) = pp "" $ sort $ map tflip $ splits ks
+		splits :: [Key] -> [(String, Integer)]
+		splits ks = M.toList $ M.fromListWith (+) $ map tcount ks
+		tcount k = (keyBackendName k, 1)
+		tflip (a, b) = (b, a)
+		pp c [] = c
+		pp c ((n, b):xs) = "\n\t" ++ b ++ ": " ++ show n ++ pp c xs
+
+cachedKeysPresent :: StatState (SizeList Key)
+cachedKeysPresent = do
+	s <- get
+	case keysPresentCache s of
+		Just v -> return v
+		Nothing -> do
+			keys <- lift $ getKeysPresent
+			let v = (keys, length keys)
+			put s { keysPresentCache = Just v }
+			return v
+
+cachedKeysReferenced :: StatState (SizeList Key)
+cachedKeysReferenced = do
+	s <- get
+	case keysReferencedCache s of
+		Just v -> return v
+		Nothing -> do
+			keys <- lift $ Command.Unused.getKeysReferenced
+			-- A given key may be referenced repeatedly.
+			-- nub does not seem too slow (yet)..
+			let uniques = nub keys
+			let v = (uniques, length uniques)
+			put s { keysReferencedCache = Just v }
+			return v
+
+keySizeSum :: SizeList Key -> StatState String
+keySizeSum (keys, len) = do
+	let knownsize = catMaybes $ map keySize keys
+	let total = roughSize storageUnits False $ foldl (+) 0 knownsize
+	let missing = len - length knownsize
+	return $ total ++
+		if missing > 0
+			then " (but " ++ show missing ++ " keys have unknown size)"
+			else ""
