@@ -11,6 +11,7 @@ import Control.Monad.State
 import Data.Maybe
 import System.IO
 import Data.List
+import Data.Tuple
 import qualified Data.Map as M
 
 import qualified Annex
@@ -129,11 +130,10 @@ backend_usage :: Stat
 backend_usage = stat "backend usage" $
 	return . usage =<< cachedKeysReferenced
 	where
-		usage (ks, _) = pp "" $ sort $ map tflip $ splits ks
+		usage (ks, _) = pp "" $ sort $ map swap $ splits ks
 		splits :: [Key] -> [(String, Integer)]
 		splits ks = M.toList $ M.fromListWith (+) $ map tcount ks
 		tcount k = (keyBackendName k, 1)
-		tflip (a, b) = (b, a)
 		pp c [] = c
 		pp c ((n, b):xs) = "\n\t" ++ b ++ ": " ++ show n ++ pp c xs
 
