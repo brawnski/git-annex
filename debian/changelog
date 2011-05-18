@@ -1,6 +1,7 @@
 git-annex (0.20110517) UNRELEASED; urgency=low
 
   * status: New subcommand to show info about an annex, including its size.
+  * --backend now overrides any backend configured in .gitattributes files.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 16 May 2011 20:27:46 -0400
 

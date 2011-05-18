@@ -33,6 +33,7 @@ module Backend (
 ) where
 
 import Control.Monad.State (liftIO, when)
+import Control.Monad (liftM)
 import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files
@@ -56,7 +57,7 @@ list = do
 		then return l
 		else do
 			s <- getstandard
-			d <- Annex.getState Annex.defaultbackend
+			d <- Annex.getState Annex.forcebackend
 			handle d s
 	where
 		parseBackendList l [] = l
@@ -161,9 +162,15 @@ lookupFile file = do
 chooseBackends :: [FilePath] -> Annex [(FilePath, Maybe (Backend Annex))]
 chooseBackends fs = do
 	g <- Annex.gitRepo
-	bs <- Annex.getState Annex.supportedBackends
-	pairs <- liftIO $ Git.checkAttr g "annex.backend" fs
-	return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
+	forced <- Annex.getState Annex.forcebackend
+	if forced /= Nothing
+		then do
+			l <- list
+			return $ map (\f -> (f, Just $ head l)) fs
+		else do
+			bs <- Annex.getState Annex.supportedBackends
+			pairs <- liftIO $ Git.checkAttr g "annex.backend" fs
+			return $ map (\(f,b) -> (f, maybeLookupBackendName bs b)) pairs
 
 {- Returns the backend to use for a key. -}
 keyBackend :: Key -> Annex (Backend Annex)

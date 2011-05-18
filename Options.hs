@@ -28,11 +28,11 @@ commonOptions =
 		"avoid verbose output"
 	, Option ['v'] ["verbose"] (NoArg (setquiet False))
 		"allow verbose output"
-	, Option ['b'] ["backend"] (ReqArg setdefaultbackend paramName)
-		"specify default key-value backend to use"
+	, Option ['b'] ["backend"] (ReqArg setforcebackend paramName)
+		"specify key-value backend to use"
 	]
 	where
 		setforce v = Annex.changeState $ \s -> s { Annex.force = v }
 		setfast v = Annex.changeState $ \s -> s { Annex.fast = v }
 		setquiet v = Annex.changeState $ \s -> s { Annex.quiet = v }
-		setdefaultbackend v = Annex.changeState $ \s -> s { Annex.defaultbackend = Just v }
+		setforcebackend v = Annex.changeState $ \s -> s { Annex.forcebackend = Just v }
