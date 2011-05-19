@@ -4,7 +4,7 @@ The main git repository for git-annex is `git://git-annex.branchable.com/`
 
 Other mirrors of the git repository:
 
-* `git://git.kitenet.net/git-annex` [[gitweb](http://git.kitenet.net/?p=git-annex;a=summary)]
+* `git://git.kitenet.net/git-annex` [[gitweb](http://git.kitenet.net/?p=git-annex.git;a=summary)]
 * [at github](https://github.com/joeyh/git-annex)
 
 Some operating systems include git-annex in easily prepackaged form and
