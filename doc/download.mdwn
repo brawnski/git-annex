@@ -1,6 +1,11 @@
-The main git repository for git-annex is `git://git.kitenet.net/git-annex`
-[[gitweb](http://git.kitenet.net/?p=git-annex;a=summary)]
-(The repo is mirrored [at github](https://github.com/joeyh/git-annex).)
+The main git repository for git-annex is `git://git-annex.branchable.com/`
+
+(You can push changes to this wiki from that anonymous git checkout.)
+
+Other mirrors of the git repository:
+
+* `git://git.kitenet.net/git-annex` [[gitweb](http://git.kitenet.net/?p=git-annex;a=summary)]
+* [at github](https://github.com/joeyh/git-annex)
 
 Some operating systems include git-annex in easily prepackaged form and
 others need some manual work. See [[install]] for details.
