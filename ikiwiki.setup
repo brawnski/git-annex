@@ -138,7 +138,7 @@ git_wrapper: /home/b-git-annex/source.git/hooks/post-update
 # mode for git_wrapper (can safely be made suid)
 #git_wrappermode: 06755
 # git pre-receive hook to generate
-#git_test_receive_wrapper: /git/wiki.git/hooks/pre-receive
+git_test_receive_wrapper: /home/b-git-annex/source.git/hooks/pre-receive
 # unix users whose commits should be checked by the pre-receive hook
 untrusted_committers:
   - ikiwiki-anon
@@ -155,6 +155,7 @@ gitmaster_branch: master
 # git repository urls that changes are pushed to
 git_push_to:
   - git@github.com:joeyh/git-annex.git
+  - joey@git.kitenet.net:/srv/git/git-annex
 
 # htmlscrubber plugin
 # PageSpec specifying pages not to scrub
