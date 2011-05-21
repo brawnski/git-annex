@@ -9,11 +9,12 @@ module CryptoTypes where
 
 import Data.String.Utils
 
-data Cipher = Cipher String -- XXX ideally, this would be a locked memory region
+-- XXX ideally, this would be a locked memory region
+newtype Cipher = Cipher String
 
 data EncryptedCipher = EncryptedCipher String KeyIds
 
-data KeyIds = KeyIds [String]
+newtype KeyIds = KeyIds [String]
 
 instance Show KeyIds where
 	show (KeyIds ks) = join "," ks

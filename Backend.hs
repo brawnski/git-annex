@@ -33,7 +33,6 @@ module Backend (
 ) where
 
 import Control.Monad.State (liftIO, when)
-import Control.Monad (liftM)
 import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files

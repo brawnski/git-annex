@@ -16,7 +16,7 @@ module Touch (
 import Foreign
 import Foreign.C
 
-data TimeSpec = TimeSpec CTime
+newtype TimeSpec = TimeSpec CTime
 
 {- Changes the access and modification times of an existing file.
    Can follow symlinks, or not. Throws IO error on failure. -}
