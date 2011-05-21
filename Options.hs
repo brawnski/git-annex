@@ -8,6 +8,8 @@
 module Options where
 
 import System.Console.GetOpt
+import System.Log.Logger
+import Control.Monad.State (liftIO)
 
 import qualified Annex
 import Types
@@ -27,7 +29,9 @@ commonOptions =
 	, Option ['q'] ["quiet"] (NoArg (setquiet True))
 		"avoid verbose output"
 	, Option ['v'] ["verbose"] (NoArg (setquiet False))
-		"allow verbose output"
+		"allow verbose output (default)"
+	, Option ['d'] ["debug"] (NoArg (setdebug))
+		"show debug messages"
 	, Option ['b'] ["backend"] (ReqArg setforcebackend paramName)
 		"specify key-value backend to use"
 	]
@@ -36,3 +40,4 @@ commonOptions =
 		setfast v = Annex.changeState $ \s -> s { Annex.fast = v }
 		setquiet v = Annex.changeState $ \s -> s { Annex.quiet = v }
 		setforcebackend v = Annex.changeState $ \s -> s { Annex.forcebackend = Just v }
+		setdebug = liftIO $ updateGlobalLogger "" $ setLevel DEBUG

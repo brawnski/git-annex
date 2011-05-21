@@ -17,6 +17,7 @@ module Utility (
 	relPathDirToFile,
 	boolSystem,
 	boolSystemEnv,
+	executeFile,
 	shellEscape,
 	shellUnEscape,
 	unsetFileMode,
@@ -39,7 +40,8 @@ module Utility (
 
 import System.IO
 import System.Exit
-import System.Posix.Process
+import qualified System.Posix.Process
+import System.Posix.Process hiding (executeFile)
 import System.Posix.Signals
 import System.Posix.Files
 import System.Posix.Types
@@ -52,6 +54,7 @@ import Foreign (complement)
 import Data.List
 import Data.Maybe
 import Control.Monad (liftM2, when, unless)
+import System.Log.Logger
 
 {- A type for parameters passed to a shell command. A command can
  - be passed either some Params (multiple parameters can be included,
@@ -103,6 +106,13 @@ boolSystemEnv command params env = do
 		childaction oldint oldset = do
 			restoresignals oldint oldset
 			executeFile command True (toCommand params) env
+
+{- executeFile with debug logging -}
+executeFile :: FilePath -> Bool -> [String] -> Maybe [(String, String)] -> IO a
+executeFile c path p e = do
+	debugM "Utility.executeFile" $
+		"Running: " ++ c ++ " " ++ show p ++ " " ++ maybe "" show e
+	System.Posix.Process.executeFile c path p e
 
 {- Escapes a filename or other parameter to be safely able to be exposed to
  - the shell. -}

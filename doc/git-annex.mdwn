@@ -330,6 +330,10 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
   Enable verbose logging.
 
+* --debug
+
+  Show debug messages.
+
 * --from=repository
 
   Specifies a repository that content will be retrieved from, or that

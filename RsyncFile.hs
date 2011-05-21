@@ -7,7 +7,6 @@
 
 module RsyncFile where
 
-import System.Posix.Process
 import Data.String.Utils
 
 import Utility
