@@ -5,6 +5,7 @@ Build-Depends:
 	debhelper (>= 7.0.50),
 	ghc,
 	libghc-missingh-dev,
+	ligghc-hslogger-dev,
 	libghc-pcre-light-dev,
 	libghc-sha-dev,
 	libghc-dataenc-dev,
