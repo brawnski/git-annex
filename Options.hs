@@ -40,4 +40,5 @@ commonOptions =
 		setfast v = Annex.changeState $ \s -> s { Annex.fast = v }
 		setquiet v = Annex.changeState $ \s -> s { Annex.quiet = v }
 		setforcebackend v = Annex.changeState $ \s -> s { Annex.forcebackend = Just v }
-		setdebug = liftIO $ updateGlobalLogger "" $ setLevel DEBUG
+		setdebug = liftIO $ updateGlobalLogger rootLoggerName $
+			setLevel DEBUG
