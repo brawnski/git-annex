@@ -32,7 +32,7 @@ cmds = map adddirparam $ concat
 		adddirparam c = c { cmdparams = "DIRECTORY " ++ cmdparams c }
 
 header :: String
-header = "Usage: git-annex-shell [-c] command [option ..]"
+header = "Usage: git-annex-shell [-c] command [parameters ...] [option ..]"
 
 main :: IO ()
 main = do
