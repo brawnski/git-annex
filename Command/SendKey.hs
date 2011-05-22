@@ -16,6 +16,7 @@ import Command
 import Content
 import Utility
 import RsyncFile
+import Messages
 
 command :: [Command]
 command = [repoCommand "sendkey" paramKey seek
@@ -30,4 +31,5 @@ start key = do
 	let file = gitAnnexLocation g key
 	whenM (inAnnex key) $
 		liftIO $ rsyncServerSend file -- does not return
+	warning "requested key is not present"
 	liftIO exitFailure
