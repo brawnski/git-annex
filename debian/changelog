@@ -1,3 +1,10 @@
+git-annex (0.20110522) UNRELEASED; urgency=low
+
+  * Closer emulation of git's behavior when told to use "foo/.git" as a
+    git repository instead of just "foo". Closes: #627563
+
+ -- Joey Hess <joeyh@debian.org>  Sun, 22 May 2011 14:03:42 -0400
+
 git-annex (0.20110521) unstable; urgency=low
 
   * status: New subcommand to show info about an annex, including its size.
