@@ -38,7 +38,7 @@ data AnnexState = AnnexState
 	, quiet :: Bool
 	, force :: Bool
 	, fast :: Bool
-	, defaultbackend :: Maybe String
+	, forcebackend :: Maybe String
 	, defaultkey :: Maybe String
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
@@ -56,7 +56,7 @@ newState gitrepo allbackends = AnnexState
 	, quiet = False
 	, force = False
 	, fast = False
-	, defaultbackend = Nothing
+	, forcebackend = Nothing
 	, defaultkey = Nothing
 	, toremote = Nothing
 	, fromremote = Nothing

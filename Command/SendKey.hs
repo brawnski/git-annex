@@ -7,7 +7,6 @@
 
 module Command.SendKey where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Exit
 
@@ -15,6 +14,7 @@ import Locations
 import qualified Annex
 import Command
 import Content
+import Utility
 import RsyncFile
 
 command :: [Command]
@@ -26,9 +26,8 @@ seek = [withKeys start]
 
 start :: CommandStartKey
 start key = do
-	present <- inAnnex key
 	g <- Annex.gitRepo
 	let file = gitAnnexLocation g key
-	when present $
-		liftIO $ rsyncServerSend file
+	whenM (inAnnex key) $
+		liftIO $ rsyncServerSend file -- does not return
 	liftIO exitFailure

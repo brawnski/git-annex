@@ -7,11 +7,11 @@
 
 module Command.Find where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 
 import Command
 import Content
+import Utility
 
 command :: [Command]
 command = [repoCommand "find" (paramOptional $ paramRepeating paramPath) seek
@@ -23,6 +23,5 @@ seek = [withFilesInGit start]
 {- Output a list of files. -}
 start :: CommandStartString
 start file = isAnnexed file $ \(key, _) -> do
-	exists <- inAnnex key
-	when exists $ liftIO $ putStrLn file
+	whenM (inAnnex key) $ liftIO $ putStrLn file
 	stop

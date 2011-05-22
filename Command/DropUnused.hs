@@ -7,7 +7,6 @@
 
 module Command.DropUnused where
 
-import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Directory
@@ -24,6 +23,7 @@ import qualified Remote
 import qualified GitRepo as Git
 import Backend
 import Key
+import Utility
 
 type UnusedMap = M.Map String Key
 
@@ -72,8 +72,7 @@ performOther :: (Git.Repo -> Key -> FilePath) -> Key -> CommandPerform
 performOther filespec key = do
 	g <- Annex.gitRepo
 	let f = filespec g key
-	e <- liftIO $ doesFileExist f
-	when e $ liftIO $ removeFile f
+	liftIO $ whenM (doesFileExist f) $ removeFile f
 	next $ return True
 
 readUnusedLog :: FilePath -> Annex UnusedMap

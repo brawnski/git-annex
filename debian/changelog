@@ -1,3 +1,11 @@
+git-annex (0.20110521) unstable; urgency=low
+
+  * status: New subcommand to show info about an annex, including its size.
+  * --backend now overrides any backend configured in .gitattributes files.
+  * Add --debug option. Closes: #627499
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 21 May 2011 11:52:53 -0400
+
 git-annex (0.20110516~bpo60+1) squeeze-backports; urgency=low
 
   * Add a few tweaks to make it easy to use the Internet Archive's variant

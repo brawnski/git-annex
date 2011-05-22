@@ -11,7 +11,7 @@ import qualified Data.ByteString.Lazy.Char8 as L
 import IO
 import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
-import Control.Monad (unless, when)
+import Control.Monad (when)
 import Control.Monad.State (liftIO)
 import System.Process
 import System.Exit
@@ -75,8 +75,7 @@ bupSetup u c = do
 	-- bup init will create the repository.
 	-- (If the repository already exists, bup init again appears safe.)
 	showNote "bup init"
-	ok <- bup "init" buprepo []
-	unless ok $ error "bup init failed"
+	bup "init" buprepo [] >>! error "bup init failed"
 
 	storeBupUUID u buprepo
 
@@ -172,9 +171,9 @@ storeBupUUID u buprepo = do
 	if Git.repoIsUrl r
 		then do
 			showNote "storing uuid"
-			ok <- onBupRemote r boolSystem "git"
+			onBupRemote r boolSystem "git"
 				[Params $ "config annex.uuid " ++ u]
-			unless ok $ do error "ssh failed"
+					>>! error "ssh failed"
 		else liftIO $ do
 			r' <- Git.configRead r
 			let olduuid = Git.configGet r' "annex.uuid" ""

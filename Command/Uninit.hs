@@ -8,7 +8,6 @@
 module Command.Uninit where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when)
 import System.Directory
 
 import Command
@@ -44,8 +43,7 @@ perform = do
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do
 	let hook = Command.Init.preCommitHook repo
-	hookexists <- liftIO $ doesFileExist hook
-	when hookexists $ do
+	whenM (liftIO $ doesFileExist hook) $ do
 		c <- liftIO $ readFile hook
 		if c == Command.Init.preCommitScript
 			then liftIO $ removeFile hook
@@ -56,8 +54,7 @@ gitPreCommitHookUnWrite repo = do
 gitAttributesUnWrite :: Git.Repo -> IO ()
 gitAttributesUnWrite repo = do
 	let attributes = Git.attributes repo
-	attrexists <- doesFileExist attributes
-	when attrexists $ do
+	whenM (doesFileExist attributes) $ do
 		c <- readFileStrict attributes
 		safeWriteFile attributes $ unlines $
 			filter (\l -> not $ l `elem` Command.Init.attrLines) $ lines c

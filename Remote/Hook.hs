@@ -12,7 +12,7 @@ import Control.Exception.Extensible (IOException)
 import qualified Data.Map as M
 import Control.Monad.State (liftIO)
 import System.FilePath
-import System.Posix.Process
+import System.Posix.Process hiding (executeFile)
 import System.Posix.IO
 import System.IO
 import System.IO.Error (try)

@@ -20,3 +20,5 @@ and you forget to drop it from S3, cruft can build up there.
 This could be fixed by adding a hook to list all keys present in a remote.
 Then unused could scan remotes for keys, and if they were not used locally,
 offer the possibility to drop them from the remote.
+
+[[done]]
