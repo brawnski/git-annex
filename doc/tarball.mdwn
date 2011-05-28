@@ -1,1 +1,1 @@
-[[!meta redir="http://git.kitenet.net/?p=git-annex.git;a=snapshot;sf=tgz;h=refs/tags/[[!inline raw=yes files=latest-version]]"]]
+[[!meta redir="http://git.kitenet.net/?p=git-annex.git;a=snapshot;sf=tgz;h=refs/tags/[[!inline raw=yes pages=latest-version]]"]]
