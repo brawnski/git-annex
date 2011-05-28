@@ -15,6 +15,7 @@ import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
 import Data.Maybe
+import Data.String.Utils
 
 import Types
 import qualified Backend
@@ -195,11 +196,9 @@ filterFiles l = do
 
 wildsRegex :: [String] -> Regex
 wildsRegex ws = compile regex []
-	where regex = "^(" ++ wildsRegex' ws "" ++ ")"
-wildsRegex' :: [String] -> String -> String
-wildsRegex' [] c = c
-wildsRegex' (w:ws) "" = wildsRegex' ws (wildToRegex w)
-wildsRegex' (w:ws) c = wildsRegex' ws (c ++ "|" ++ wildToRegex w)
+	where
+		regex = "^(" ++ alternatives ++ ")"
+		alternatives = join "|" $ map wildToRegex ws
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
