@@ -1,10 +1,10 @@
-git-annex (0.20110522) UNRELEASED; urgency=low
+git-annex (0.20110522) unstable; urgency=low
 
   * Closer emulation of git's behavior when told to use "foo/.git" as a
     git repository instead of just "foo". Closes: #627563
   * Fix bug in --exclude introduced in 0.20110516.
 
- -- Joey Hess <joeyh@debian.org>  Sun, 22 May 2011 14:03:42 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 27 May 2011 20:20:41 -0400
 
 git-annex (0.20110521) unstable; urgency=low
 
