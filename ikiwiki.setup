@@ -159,7 +159,7 @@ git_push_to:
 
 # htmlscrubber plugin
 # PageSpec specifying pages not to scrub
-#htmlscrubber_skip: '!*/Discussion'
+htmlscrubber_skip: tarball
 
 # ikiwikihosting plugin
 # list of urls that alias to the main url
@@ -215,7 +215,7 @@ blogspam_pagespec: postcomment(*)
 
 # lockedit plugin
 # PageSpec controlling which pages are locked
-#locked_pages: '!*/Discussion'
+locked_pages: tarball
 
 # moderatedcomments plugin
 # PageSpec matching users or comment locations to moderate
