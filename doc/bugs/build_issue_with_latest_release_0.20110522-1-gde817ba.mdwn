@@ -1,0 +1,9 @@
+<pre>
+[70 of 81] Compiling Command.DropUnused ( Command/DropUnused.hs, Command/DropUnused.o )
+[71 of 81] Compiling Command.Status   ( Command/Status.hs, Command/Status.o )
+
+Command/Status.hs:133:37: Not in scope: `swap'
+make: *** [git-annex] Error 1
+</pre>
+
+it fails on OSX 10.6.x with ghc 6.12.3 and a corresponding haskell-platform install.
