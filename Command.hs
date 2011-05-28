@@ -191,7 +191,7 @@ filterFiles l = do
 		else return $ filter (notExcluded $ wildsRegex exclude) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
-		notExcluded r f = isJust $ match r f []
+		notExcluded r f = isNothing $ match r f []
 
 wildsRegex :: [String] -> Regex
 wildsRegex ws = compile regex []
