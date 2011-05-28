@@ -7,8 +7,8 @@ Other mirrors of the git repository:
 * `git://git.kitenet.net/git-annex` [[gitweb](http://git.kitenet.net/?p=git-annex.git;a=summary)]
 * [at github](https://github.com/joeyh/git-annex)
 
-Or download a [tarball](http://git.kitenet.net/?p=git-annex.git;a=snapshot;sf=tgz;h=refs/tags/[[!inline raw=yes pages=latest-version]])
-of the latest release.
+To download a tarball of a particular release, use an url like
+<http://git.kitenet.net/?p=git-annex.git;a=snapshot;sf=tgz;h=refs/tags/0.20110522>
 
 Some operating systems include git-annex in easily prepackaged form and
 others need some manual work. See [[install]] for details.
