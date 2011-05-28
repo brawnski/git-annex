@@ -182,10 +182,13 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Displays a list of repositories known to contain the content of the
   specified file or files.
 
-* status
+* status [path ...]
 
-  Displays some statistics and other information, including how much data
-  is in the annex.
+  With a path specified, displays some statistics about annexed files in the
+  path.
+
+  When no parameters are specified, displays more information,
+  including how much data is in the annex in total.
 
   Some of the statistics can take a while to generate, and those
   come last. You can ctrl-c this command once it's displayed the

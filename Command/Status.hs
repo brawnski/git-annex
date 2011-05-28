@@ -47,7 +47,7 @@ sizeList :: [a] -> SizeList a
 sizeList l = (l, genericLength l)
 
 command :: [Command]
-command = [repoCommand "status" (paramNothing) seek
+command = [repoCommand "status" (paramOptional $ paramRepeating paramPath) seek
 	"shows status information about the annex"]
 
 seek :: [CommandSeek]
