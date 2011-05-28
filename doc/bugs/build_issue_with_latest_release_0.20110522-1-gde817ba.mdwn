@@ -1,3 +1,5 @@
+A recent checkout of git-annex fails to build for me (I've installed the new dependancies as well)
+
 <pre>
 [70 of 81] Compiling Command.DropUnused ( Command/DropUnused.hs, Command/DropUnused.o )
 [71 of 81] Compiling Command.Status   ( Command/Status.hs, Command/Status.o )
