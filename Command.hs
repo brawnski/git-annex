@@ -176,7 +176,7 @@ withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing
 withNothing a [] = return [a]
-withNothing _ _ = return []
+withNothing _ _ = error "This command takes no parameters."
 
 backendPairs :: CommandSeekBackendFiles
 backendPairs a files = liftM (map a) $ Backend.chooseBackends files
