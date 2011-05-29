@@ -48,9 +48,9 @@ start = notBareRepo $ do
 checkUnused :: CommandPerform
 checkUnused = do
 	(unused, stalebad, staletmp) <- unusedKeys
-	n  <- list "" unusedMsg unused 0
-	n' <- list "bad" staleBadMsg stalebad n
-	_  <- list "tmp" staleTmpMsg staletmp n'
+	_ <- list "" unusedMsg unused 0 >>=
+		list "bad" staleBadMsg stalebad >>=
+			list "tmp" staleTmpMsg staletmp
 	next $ return True
 	where
 		list file msg l c = do
