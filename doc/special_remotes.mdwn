@@ -21,7 +21,7 @@ repository is found by running `git annex unused`. To detect unused content
 on special remotes, instead use `git annex unused --from`. Example:
 
 	$ git annex unused --from mys3
-	unused  (checking for unused data on mys3...) 
+	unused mys3 (checking for unused data...) 
 	  Some annexed data on mys3 is not used by any files in this repository.
 	    NUMBER  KEY
 	    1       WORM-s3-m1301674316--foo

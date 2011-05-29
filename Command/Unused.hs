@@ -36,21 +36,22 @@ seek = [withNothing start]
 {- Finds unused content in the annex. -} 
 start :: CommandStartNothing
 start = notBareRepo $ do
-	showStart "unused" ""
-	next perform
+	from <- Annex.getState Annex.fromremote
+	case from of
+		Nothing -> pass "." checkUnused
+		Just n -> pass n $ checkRemoteUnused n
+	where
+		pass n a = do
+			showStart "unused" n
+			next a
 
-perform :: CommandPerform
-perform = do
-	maybe checkUnused checkRemoteUnused =<< Annex.getState Annex.fromremote
-	next $ return True
-
-checkUnused :: Annex ()
+checkUnused :: CommandPerform
 checkUnused = do
 	(unused, stalebad, staletmp) <- unusedKeys
 	n  <- list "" unusedMsg unused 0
 	n' <- list "bad" staleBadMsg stalebad n
 	_  <- list "tmp" staleTmpMsg staletmp n'
-	return ()
+	next $ return True
 	where
 		list file msg l c = do
 			let unusedlist = number c l
@@ -58,13 +59,15 @@ checkUnused = do
 			writeUnusedFile file unusedlist
 			return $ length l
 
-checkRemoteUnused :: String -> Annex ()
-checkRemoteUnused name = checkRemoteUnused' =<< Remote.byName name
+checkRemoteUnused :: String -> CommandPerform
+checkRemoteUnused name = do
+	checkRemoteUnused' =<< Remote.byName name
+	next $ return True
 
 checkRemoteUnused' :: Remote.Remote Annex -> Annex ()
 checkRemoteUnused' r = do
+	showNote $ "checking for unused data..."
 	g <- Annex.gitRepo
-	showNote $ "checking for unused data on " ++ Remote.name r ++ "..."
 	referenced <- getKeysReferenced
 	logged <- liftIO $ loggedKeys g
 	remotehas <- filterM isthere logged
