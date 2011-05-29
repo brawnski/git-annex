@@ -10,6 +10,8 @@ module Command.InitRemote where
 import qualified Data.Map as M
 import Control.Monad (when)
 import Control.Monad.State (liftIO)
+import Data.Maybe
+import Data.String.Utils
 
 import Command
 import qualified Annex
@@ -32,7 +34,7 @@ seek = [withWords start]
 
 start :: CommandStartWords
 start ws = notBareRepo $ do
-	when (null ws) $ error "Specify a name for the remote"
+	when (null ws) $ needname
 
 	(u, c) <- findByName name
 	let fullconfig = M.union config c	
@@ -44,6 +46,13 @@ start ws = notBareRepo $ do
 	where
 		name = head ws
 		config = Remote.keyValToConfig $ tail ws
+		needname = do
+			let err s = error $ "Specify a name for the remote. " ++ s
+			names <- remoteNames
+			if null names
+				then err ""
+				else err $ "Either a new name, or one of these existing special remotes: " ++ join " " names
+			
 
 perform :: RemoteClass.RemoteType Annex -> UUID -> RemoteClass.RemoteConfig -> CommandPerform
 perform t u c = do
@@ -82,6 +91,11 @@ findByName' n m = if null matches then Nothing else Just $ head matches
 			Just n'
 				| n' == n -> True
 				| otherwise -> False
+
+remoteNames :: Annex [String]
+remoteNames = do
+	m <- Remote.readRemoteLog
+	return $ catMaybes $ map ((M.lookup nameKey) . snd) $ M.toList m
 
 {- find the specified remote type -}
 findType :: RemoteClass.RemoteConfig -> Annex (RemoteClass.RemoteType Annex)
