@@ -1,3 +1,9 @@
+git-annex (0.20110523) UNRELEASED; urgency=low
+
+  * Minor bugfixes and error message improvements.
+
+ -- Joey Hess <joeyh@debian.org>  Sat, 28 May 2011 22:29:37 -0400
+
 git-annex (0.20110522) unstable; urgency=low
 
   * Closer emulation of git's behavior when told to use "foo/.git" as a

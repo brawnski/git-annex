@@ -57,7 +57,7 @@ checkUnused = do
 			let unusedlist = number c l
 			when (not $ null l) $ showLongNote $ msg unusedlist
 			writeUnusedFile file unusedlist
-			return $ length l
+			return $ c + length l
 
 checkRemoteUnused :: String -> CommandPerform
 checkRemoteUnused name = do
