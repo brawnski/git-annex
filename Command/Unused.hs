@@ -37,13 +37,12 @@ seek = [withNothing start]
 start :: CommandStartNothing
 start = notBareRepo $ do
 	from <- Annex.getState Annex.fromremote
-	case from of
-		Nothing -> pass "." checkUnused
-		Just n -> pass n $ checkRemoteUnused n
-	where
-		pass n a = do
-			showStart "unused" n
-			next a
+	let (name, action) = case from of
+		Nothing -> (".", checkUnused)
+		Just "." -> (".", checkUnused)
+		Just n -> (n, checkRemoteUnused n)
+	showStart "unused" name
+	next action
 
 checkUnused :: CommandPerform
 checkUnused = do
