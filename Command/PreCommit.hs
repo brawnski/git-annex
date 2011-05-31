@@ -33,15 +33,5 @@ perform :: BackendFile -> CommandPerform
 perform pair@(file, _) = do
 	ok <- doCommand $ Command.Add.start pair
 	if ok
-		then next $ cleanup file
+		then next $ return True
 		else error $ "failed to add " ++ file ++ "; canceling commit"
-
-cleanup :: FilePath -> CommandCleanup
-cleanup file = do
-	-- git commit will have staged the file's content;
-	-- drop that and run command queued by Add.state to
-	-- stage the symlink
-	g <- Annex.gitRepo
-	liftIO $ Git.run g "reset" [Params "-q --", File file]
-	AnnexQueue.flush True
-	return True
