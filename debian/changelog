@@ -1,6 +1,9 @@
 git-annex (0.20110523) UNRELEASED; urgency=low
 
   * Minor bugfixes and error message improvements.
+  * Massively sped up `git annex lock` by avoiding use of the uber-slow
+    `git reset`, and only running `git checkout` once, even when many files
+    are being locked.
 
  -- Joey Hess <joeyh@debian.org>  Sat, 28 May 2011 22:29:37 -0400
 
