@@ -19,7 +19,7 @@ command :: [Command]
 command = [repoCommand "lock" paramPath seek "undo unlock command"]
 
 seek :: [CommandSeek]
-seek = [withFilesUnlocked start]
+seek = [withFilesUnlocked start, withFilesUnlockedToBeCommitted start]
 
 {- Undo unlock -}
 start :: CommandStartBackendFile
