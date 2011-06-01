@@ -1,0 +1,20 @@
+I'm soliciting ideas for new small features that let git-annex do things that currently have to be done manually or whatever.
+
+Here are a few I've been considering:
+
+--
+
+* --numcopies would be a useful command line switch.
+* A way to make `drop` and other commands temporarily trust a given remote, or possibly all remotes. 
+
+Combined, this would allow `git annex drop --numcopies=2 --trust=repoa --trust=repob` to remove files that have been replicated out to the other 2 repositories, which could be offline. (Slightly unsafe, but in this case the files are podcasts so not really.)
+
+---
+
+[[wishlist:_git-annex_replicate]] suggests some way for git-annex to have the smarts to copy content around on its own to ensure numcopies is satisfied. I'd be satisfied with a `git annex copy --to foo --if-needed-by-numcopies`
+
+---
+
+Along similar lines, it might be nice to have a mode where git-annex tries to fill up a disk up to the `annex.diskreserve` with files, preferring files that have relatively few copies. Then as storage prices continue to fall, new large drives could just be plopped in and git-annex used to fill it up in a way that improves the overall redundancy without needing to manually pick and choose.
+
+--[[Joey]]
