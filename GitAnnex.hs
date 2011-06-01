@@ -16,6 +16,7 @@ import Options
 import Utility
 import TrustLevel
 import qualified Annex
+import qualified Remote
 
 import qualified Command.Add
 import qualified Command.Unannex
@@ -104,10 +105,12 @@ options = commonOptions ++
 	where
 		setto v = Annex.changeState $ \s -> s { Annex.toremote = Just v }
 		setfrom v = Annex.changeState $ \s -> s { Annex.fromremote = Just v }
-		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:(Annex.exclude s) }
+		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:Annex.exclude s }
 		setnumcopies v = Annex.changeState $ \s -> s {Annex.forcenumcopies = readMaybe v }
 		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
-		settrust t v = Annex.changeState $ \s -> s { Annex.forcetrust = (v, t):(Annex.forcetrust s) }
+		settrust t v = do
+			r <- Remote.nameToUUID v
+			Annex.changeState $ \s -> s { Annex.forcetrust = (r, t):Annex.forcetrust s }
 
 header :: String
 header = "Usage: git-annex command [option ..]"

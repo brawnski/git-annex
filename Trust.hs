@@ -23,7 +23,6 @@ import Types
 import UUID
 import Locations
 import qualified Annex
-import qualified Remote
 import Utility
 
 {- Filename of trust.log. -}
@@ -43,14 +42,11 @@ trustGet level = do
 trustMap :: Annex (M.Map UUID TrustLevel)
 trustMap = do
 	logfile <- trustLog
-	overrides <- Annex.getState Annex.forcetrust >>= mapM findoverride
+	overrides <- Annex.getState Annex.forcetrust
 	s <- liftIO $ catch (readFile logfile) ignoreerror
 	return $ M.fromList $ trustMapParse s ++ overrides
 	where
                 ignoreerror _ = return ""
-		findoverride (name, t) = do
-			uuid <- Remote.nameToUUID name
-			return (uuid, t)
 
 {- Trust map parser. -}
 trustMapParse :: String -> [(UUID, TrustLevel)]

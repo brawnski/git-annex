@@ -20,11 +20,12 @@ import Control.Monad.State
 	(liftIO, StateT, runStateT, evalStateT, liftM, get, put)
 
 import qualified GitRepo as Git
-import qualified GitQueue
-import qualified BackendClass
-import qualified RemoteClass
-import qualified CryptoTypes
+import GitQueue
+import BackendClass
+import RemoteClass
+import CryptoTypes
 import TrustLevel
+import UUIDType
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -32,10 +33,10 @@ type Annex = StateT AnnexState IO
 -- internal state storage
 data AnnexState = AnnexState
 	{ repo :: Git.Repo
-	, backends :: [BackendClass.Backend Annex]
-	, supportedBackends :: [BackendClass.Backend Annex]
-	, remotes :: [RemoteClass.Remote Annex]
-	, repoqueue :: GitQueue.Queue
+	, backends :: [Backend Annex]
+	, supportedBackends :: [Backend Annex]
+	, remotes :: [Remote Annex]
+	, repoqueue :: Queue
 	, quiet :: Bool
 	, force :: Bool
 	, fast :: Bool
@@ -45,17 +46,17 @@ data AnnexState = AnnexState
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
 	, exclude :: [String]
-	, forcetrust :: [(String, TrustLevel)]
-	, cipher :: Maybe CryptoTypes.Cipher
+	, forcetrust :: [(UUID, TrustLevel)]
+	, cipher :: Maybe Cipher
 	}
 
-newState :: Git.Repo -> [BackendClass.Backend Annex] -> AnnexState
+newState :: Git.Repo -> [Backend Annex] -> AnnexState
 newState gitrepo allbackends = AnnexState
 	{ repo = gitrepo
 	, backends = []
 	, remotes = []
 	, supportedBackends = allbackends
-	, repoqueue = GitQueue.empty
+	, repoqueue = empty
 	, quiet = False
 	, force = False
 	, fast = False
@@ -70,7 +71,7 @@ newState gitrepo allbackends = AnnexState
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [BackendClass.Backend Annex] -> IO AnnexState
+new :: Git.Repo -> [Backend Annex] -> IO AnnexState
 new gitrepo allbackends = do
 	gitrepo' <- liftIO $ Git.configRead gitrepo
 	return $ newState gitrepo' allbackends

@@ -36,8 +36,7 @@ import qualified Annex
 import Utility
 import qualified SysConfig
 import Config
-
-type UUID = String
+import UUIDType
 
 configkey :: String
 configkey = "annex.uuid"
