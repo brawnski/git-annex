@@ -1,9 +1,0 @@
-git-annex 0.20110503 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Fix hasKeyCheap setting for bup and rsync special remotes.
-   * Add hook special remotes.
-   * Avoid crashing when an existing key is readded to the annex.
-   * unused: Now also lists files fsck places in .git/annex/bad/
-   * S3: When encryption is enabled, the Amazon S3 login credentials
-     are stored, encrypted, in .git-annex/remotes.log, so environment
-     variables need not be set after the remote is initialized."""]]
