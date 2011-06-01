@@ -5,6 +5,9 @@ Here are a few I've been considering:
 ---
 
 * --numcopies would be a useful command line switch.
+  > Update: Added. Also allows for things like `git annex drop
+  > --numcopies=2` when in a repo that normally needs 3 copies, if you need
+  > to urgently free up space.
 * A way to make `drop` and other commands temporarily trust a given remote, or possibly all remotes. 
 
 Combined, this would allow `git annex drop --numcopies=2 --trust=repoa --trust=repob` to remove files that have been replicated out to the other 2 repositories, which could be offline. (Slightly unsafe, but in this case the files are podcasts so not really.)

@@ -1,3 +1,9 @@
+git-annex (0.20110602) UNRELEASED; urgency=low
+
+  * Add --numcopies option.
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 01 Jun 2011 16:26:48 -0400
+
 git-annex (0.20110601) unstable; urgency=low
 
   * Minor bugfixes and error message improvements.

@@ -152,12 +152,16 @@ showTriedRemotes remotes =
 	showLongNote $ "Unable to access these remotes: " ++
 		(join ", " $ map Remote.name remotes)
 
+{- If a value is specified, it is used; otherwise the default is looked up
+ - in git config. forcenumcopies overrides everything. -}
 getNumCopies :: Maybe Int -> Annex Int
-getNumCopies (Just n) = return n
-getNumCopies Nothing = do
-	g <- Annex.gitRepo
-	return $ read $ Git.configGet g config "1"
+getNumCopies v = 
+	Annex.getState Annex.forcenumcopies >>= maybe (use v) (return . id)
 	where
+		use (Just n) = return n
+		use Nothing = do
+			g <- Annex.gitRepo
+			return $ read $ Git.configGet g config "1"
 		config = "annex.numcopies"
 
 {- Ideally, all keys have file size metadata. Old keys may not. -}
