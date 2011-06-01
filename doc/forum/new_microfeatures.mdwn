@@ -2,7 +2,7 @@ I'm soliciting ideas for new small features that let git-annex do things that cu
 
 Here are a few I've been considering:
 
---
+---
 
 * --numcopies would be a useful command line switch.
 * A way to make `drop` and other commands temporarily trust a given remote, or possibly all remotes. 
