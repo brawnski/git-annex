@@ -7,15 +7,9 @@
 
 module Command.PreCommit where
 
-import Control.Monad.State (liftIO)
-
 import Command
-import qualified Annex
-import qualified AnnexQueue
-import qualified GitRepo as Git
 import qualified Command.Add
 import qualified Command.Fix
-import Utility
 
 command :: [Command]
 command = [repoCommand "pre-commit" paramPath seek "run by git pre-commit hook"]
