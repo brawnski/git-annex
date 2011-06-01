@@ -1,8 +1,0 @@
-git-annex 0.20110427 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Switch back to haskell SHA library, so git-annex remains buildable on
-     Debian stable.
-   * Added rsync special remotes. This could be used, for example, to
-     store annexed content on rsync.net (encrypted naturally). Or anywhere else.
-   * Bugfix: Avoid pipeline stall when running git annex drop or fsck on a
-     lot of files. Possibly only occured with ghc 7."""]]

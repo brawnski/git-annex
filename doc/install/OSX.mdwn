@@ -1,12 +1,12 @@
 <pre>
-sudo port install haskell-platform git-core ossp-uuid md5sha1sum coreutils
+sudo port install haskell-platform git-core ossp-uuid md5sha1sum coreutils pcre
 sudo cabal update
 sudo cabal install missingh
 sudo cabal install utf8-string
-sudo port install pcre
 sudo cabal install pcre-light
 sudo cabal install quickcheck  
-sudo cabal install SHA  
+sudo cabal install SHA
+sudo cabal install dataenc
 
 # optional: this will enable the gnu tools, (to give sha224sum etc..., it does not override the BSD userland)
 export PATH=$PATH:/opt/local/libexec/gnubin

@@ -9,7 +9,7 @@ preserving it. So from time to time, you may want to check for such data and
 eliminate it to save space.
 
 	# git annex unused
-	unused  (checking for unused data...) 
+	unused . (checking for unused data...) 
 	  Some annexed data is no longer used by any files in the repository.
 	    NUMBER  KEY
 	    1       WORM-s3-m1289672605--file

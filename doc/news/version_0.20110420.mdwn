@@ -1,8 +1,0 @@
-git-annex 0.20110420 released with [[!toggle text="these changes"]]
-[[!toggleable text="""
-   * Update Debian build dependencies for ghc 7.
-   * Debian package is now built with S3 support.
-     Thanks Joachim Breitner for making this possible.
-   * Somewhat improved memory usage of S3, still work to do.
-     Thanks Greg Heartsfield for ongoing work to improve the hS3 library
-     for git-annex."""]]

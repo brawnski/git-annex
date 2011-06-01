@@ -1,3 +1,23 @@
+git-annex (0.20110601~bpo60+1) squeeze-backports; urgency=low
+
+  * Minor bugfixes and error message improvements.
+  * Massively sped up `git annex lock` by avoiding use of the uber-slow
+    `git reset`, and only running `git checkout` once, even when many files
+    are being locked.
+  * Fix locking of files with staged changes.
+  * Somewhat sped up `git commit` of modifications to unlocked files.
+  * Build fix for older ghc.
+
+ -- Joey Hess <joeyh@debian.org>  Wed, 01 Jun 2011 11:50:47 -0400
+
+git-annex (0.20110522) unstable; urgency=low
+
+  * Closer emulation of git's behavior when told to use "foo/.git" as a
+    git repository instead of just "foo". Closes: #627563
+  * Fix bug in --exclude introduced in 0.20110516.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 27 May 2011 20:20:41 -0400
+
 git-annex (0.20110521) unstable; urgency=low
 
   * status: New subcommand to show info about an annex, including its size.

@@ -77,7 +77,7 @@ import Data.Char
 import Data.Word (Word8)
 import Codec.Binary.UTF8.String (encode)
 import Text.Printf
-import Data.List (isInfixOf, isPrefixOf)
+import Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import System.Exit
 
 import Utility
@@ -111,10 +111,24 @@ repoFromAbsPath dir
 	| "/" `isPrefixOf` dir = do
  		-- Git always looks for "dir.git" in preference to
 		-- to "dir", even if dir ends in a "/".
-		let dir' = (dropTrailingPathSeparator dir) ++ ".git"
+		let canondir = dropTrailingPathSeparator dir
+		let dir' = canondir ++ ".git"
 		e <- doesDirectoryExist dir'
-		return $ newFrom $ Dir $ if e then dir' else dir
+		if e
+			then ret dir'
+			else if "/.git" `isSuffixOf` canondir
+				then do
+					-- When dir == "foo/.git", git looks
+					-- for "foo/.git/.git", and failing
+					-- that, uses "foo" as the repository.
+					e' <- doesDirectoryExist $ dir </> ".git"
+					if e'
+						then ret dir
+						else ret $ takeDirectory canondir
+				else ret dir
 	| otherwise = error $ "internal error, " ++ dir ++ " is not absolute"
+	where
+		ret = return . newFrom . Dir
 
 {- Remote Repo constructor. Throws exception on invalid url. -}
 repoFromUrl :: String -> IO Repo

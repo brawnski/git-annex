@@ -5,7 +5,7 @@ the checksums of your files are good. Fsck also checks that the annex.numcopies
 setting is satisfied for all files.
 
 	# git annex fsck
-	unused  (checking for unused data...) ok
+	fsck some_file (checksum...) ok
 	fsck my_cool_big_file (checksum...) ok
 	...
 

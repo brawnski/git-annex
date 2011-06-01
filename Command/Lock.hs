@@ -12,15 +12,14 @@ import System.Directory
 
 import Command
 import Messages
-import qualified Annex
-import qualified GitRepo as Git
+import qualified AnnexQueue
 import Utility
 	
 command :: [Command]
 command = [repoCommand "lock" paramPath seek "undo unlock command"]
 
 seek :: [CommandSeek]
-seek = [withFilesUnlocked start]
+seek = [withFilesUnlocked start, withFilesUnlockedToBeCommitted start]
 
 {- Undo unlock -}
 start :: CommandStartBackendFile
@@ -31,9 +30,8 @@ start (file, _) = do
 perform :: FilePath -> CommandPerform
 perform file = do
 	liftIO $ removeFile file
-	g <- Annex.gitRepo
-	-- first reset the file to drop any changes checked into the index
-	liftIO $ Git.run g "reset" [Params "-q --", File file]
-	-- checkout the symlink
-	liftIO $ Git.run g "checkout" [Param "--", File file]
+	-- Checkout from HEAD to get rid of any changes that might be 
+	-- staged in the index, and get back to the previous symlink to
+	-- the content.
+	AnnexQueue.add "checkout" [Param "HEAD", Param "--"] file
 	next $ return True -- no cleanup needed

@@ -1,0 +1,5 @@
+git-annex 0.20110521 released with [[!toggle text="these changes"]]
+[[!toggleable text="""
+   * status: New subcommand to show info about an annex, including its size.
+   * --backend now overrides any backend configured in .gitattributes files.
+   * Add --debug option. Closes: #[627499](http://bugs.debian.org/627499)"""]]

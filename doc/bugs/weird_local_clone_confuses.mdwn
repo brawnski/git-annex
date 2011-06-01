@@ -16,3 +16,5 @@ Just tested, and the new support for bare repositories didn't solve this.
 I think this is not something git-annex should go out of its way to
 support. [[done]]
 --[[Joey]] 
+
+Later.. Fixed this after all. --[[Joey]] 

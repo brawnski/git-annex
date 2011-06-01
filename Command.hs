@@ -15,6 +15,7 @@ import System.Path.WildMatch
 import Text.Regex.PCRE.Light.Char8
 import Data.List
 import Data.Maybe
+import Data.String.Utils
 
 import Types
 import qualified Backend
@@ -175,7 +176,7 @@ withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing
 withNothing a [] = return [a]
-withNothing _ _ = return []
+withNothing _ _ = error "This command takes no parameters."
 
 backendPairs :: CommandSeekBackendFiles
 backendPairs a files = liftM (map a) $ Backend.chooseBackends files
@@ -191,15 +192,13 @@ filterFiles l = do
 		else return $ filter (notExcluded $ wildsRegex exclude) l'
 	where
 		notState f = not $ stateDir `isPrefixOf` f
-		notExcluded r f = isJust $ match r f []
+		notExcluded r f = isNothing $ match r f []
 
 wildsRegex :: [String] -> Regex
 wildsRegex ws = compile regex []
-	where regex = "^(" ++ wildsRegex' ws "" ++ ")"
-wildsRegex' :: [String] -> String -> String
-wildsRegex' [] c = c
-wildsRegex' (w:ws) "" = wildsRegex' ws (wildToRegex w)
-wildsRegex' (w:ws) c = wildsRegex' ws (c ++ "|" ++ wildToRegex w)
+	where
+		regex = "^(" ++ alternatives ++ ")"
+		alternatives = join "|" $ map wildToRegex ws
 
 {- filter out symlinks -}	
 notSymlink :: FilePath -> IO Bool
