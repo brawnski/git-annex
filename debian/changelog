@@ -1,4 +1,4 @@
-git-annex (0.20110523) UNRELEASED; urgency=low
+git-annex (0.20110601) unstable; urgency=low
 
   * Minor bugfixes and error message improvements.
   * Massively sped up `git annex lock` by avoiding use of the uber-slow
@@ -6,8 +6,9 @@ git-annex (0.20110523) UNRELEASED; urgency=low
     are being locked.
   * Fix locking of files with staged changes.
   * Somewhat sped up `git commit` of modifications to unlocked files.
+  * Build fix for older ghc.
 
- -- Joey Hess <joeyh@debian.org>  Sat, 28 May 2011 22:29:37 -0400
+ -- Joey Hess <joeyh@debian.org>  Wed, 01 Jun 2011 11:50:47 -0400
 
 git-annex (0.20110522) unstable; urgency=low
 
