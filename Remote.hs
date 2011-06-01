@@ -16,9 +16,9 @@ module Remote (
 	hasKeyCheap,
 
 	remoteTypes,
+	genList,
 	byName,
 	nameToUUID,
-	keyPossibilities,
 	remotesWithUUID,
 	remotesWithoutUUID,
 
@@ -42,8 +42,6 @@ import RemoteClass
 import Types
 import UUID
 import qualified Annex
-import Trust
-import LocationLog
 import Locations
 import Utility
 import Config
@@ -103,30 +101,6 @@ byName n = do
 nameToUUID :: String -> Annex UUID
 nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
 nameToUUID n = liftM uuid (byName n)
-
-{- Cost ordered lists of remotes that the LocationLog indicate may have a key.
- -
- - Also returns a list of UUIDs that are trusted to have the key
- - (some may not have configured remotes).
- -}
-keyPossibilities :: Key -> Annex ([Remote Annex], [UUID])
-keyPossibilities key = do
-	g <- Annex.gitRepo
-	u <- getUUID g
-	trusted <- trustGet Trusted
-
-	-- get uuids of all remotes that are recorded to have the key
-	uuids <- liftIO $ keyLocations g key
-	let validuuids = filter (/= u) uuids
-
-	-- note that validuuids is assumed to not have dups
-	let validtrusteduuids = intersect validuuids trusted
-
-	-- remotes that match uuids that have the key
-	allremotes <- genList
-	let validremotes = remotesWithUUID allremotes validuuids
-
-	return (sort validremotes, validtrusteduuids)
 
 {- Filters a list of remotes to ones that have the listed uuids. -}
 remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]

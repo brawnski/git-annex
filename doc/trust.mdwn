@@ -20,7 +20,9 @@ depended on to retain a copy of the file content; possibly the only
 [[copy|copies]].
 
 (Being semitrusted is the default. The `git annex semitrust` command
-restores a repository to this default, when it has been overridden.)
+restores a repository to this default, when it has been overridden.
+The `--semitrust` option can temporarily restore a repository to this
+default.)
 
 ## untrusted
 
@@ -42,7 +44,8 @@ archival drive, from which you rarely or never remove content. Deciding
 when it makes sense to trust the tracking info is up to you.
 
 One way to handle this is just to use `--force` when a command cannot
-access a remote you trust.
+access a remote you trust. Or to use `--trust` to specify a repisitory to
+trust temporarily.
 
-To configure a repository as fully trusted, use the `git annex trust`
-command.
+To configure a repository as fully and permanently trusted,
+use the `git annex trust` command.

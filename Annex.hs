@@ -24,6 +24,7 @@ import qualified GitQueue
 import qualified BackendClass
 import qualified RemoteClass
 import qualified CryptoTypes
+import TrustLevel
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -44,6 +45,7 @@ data AnnexState = AnnexState
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
 	, exclude :: [String]
+	, forcetrust :: [(String, TrustLevel)]
 	, cipher :: Maybe CryptoTypes.Cipher
 	}
 
@@ -63,6 +65,7 @@ newState gitrepo allbackends = AnnexState
 	, toremote = Nothing
 	, fromremote = Nothing
 	, exclude = []
+	, forcetrust = []
 	, cipher = Nothing
 	}
 
