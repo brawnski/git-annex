@@ -113,6 +113,4 @@ header :: String
 header = "Usage: git-annex command [option ..]"
 
 run :: [String] -> IO ()
-run args = do
-	gitrepo <- Git.repoFromCwd
-	dispatch gitrepo args cmds options header
+run args = dispatch args cmds options header =<< Git.repoFromCwd
