@@ -2,4 +2,4 @@ If using Ubuntu natty or newer:
 
 	sudo apt-get install git-annex
 
-Otherwise, see [[Debian]] manual installation instructions.
+Otherwise, see [[manual_installation_instructions|install]].
