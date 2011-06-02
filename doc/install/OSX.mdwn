@@ -11,7 +11,7 @@ sudo cabal install dataenc
 # optional: this will enable the gnu tools, (to give sha224sum etc..., it does not override the BSD userland)
 export PATH=$PATH:/opt/local/libexec/gnubin
 
-git clone  git://git.kitenet.net/git-annex
+git clone  git://git-annex.branchable.com/
 
 cd git-annex
 make
