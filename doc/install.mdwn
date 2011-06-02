@@ -3,6 +3,7 @@
 * [[OSX]]
 * [[Debian]]
 * [[Ubuntu]]
+* [[Fedora]]
 
 ## Generic instructions
 
