@@ -19,15 +19,16 @@ To build and use git-annex, you will need:
   * [TestPack](http://hackage.haskell.org/cgi-bin/hackage-scripts/package/testpack)
   * [QuickCheck 2](http://hackage.haskell.org/package/QuickCheck)
   * [hS3](http://hackage.haskell.org/package/hS3) (optional, but recommended)
-* [git](http://git-scm.com/)
-* [uuid](http://www.ossp.org/pkg/lib/uuid/)
-  (or `uuidgen` from util-linux)
-* [xargs](http://savannah.gnu.org/projects/findutils/)
-* [rsync](http://rsync.samba.org/)
-* [curl](http://http://curl.haxx.se/) (optional, but recommended)
-* [sha1sum](ftp://ftp.gnu.org/gnu/coreutils/) (optional, but recommended;
-  a sha1 command will also do)
-* [gpg](http://gnupg.org/) (optional; needed for encryption)
-* [Ikiwiki](http://ikiwiki.info) (optional; used to build the docs)
+* Shell commands
+  * [git](http://git-scm.com/)
+  * [uuid](http://www.ossp.org/pkg/lib/uuid/)
+    (or `uuidgen` from util-linux)
+  * [xargs](http://savannah.gnu.org/projects/findutils/)
+  * [rsync](http://rsync.samba.org/)
+  * [curl](http://http://curl.haxx.se/) (optional, but recommended)
+  * [sha1sum](ftp://ftp.gnu.org/gnu/coreutils/) (optional, but recommended;
+    a sha1 command will also do)
+  * [gpg](http://gnupg.org/) (optional; needed for encryption)
+  * [ikiwiki](http://ikiwiki.info) (optional; used to build the docs)
 
 Then just [[download]] git-annex and run: `make; make install`
