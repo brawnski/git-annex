@@ -13,7 +13,7 @@ import Data.String.Utils
 import Control.Monad.State (liftIO)
 
 import Types
-import RemoteClass
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import UUID

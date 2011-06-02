@@ -16,8 +16,8 @@ import Control.Monad.State (liftIO)
 import System.Directory hiding (copyFile)
 import System.FilePath
 
-import RemoteClass
 import Types
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import UUID

@@ -31,7 +31,7 @@ import qualified Backend
 import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
-import qualified BackendClass
+import qualified Type.Backend
 import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
@@ -40,7 +40,7 @@ import qualified Trust
 import qualified Remote
 import qualified Content
 import qualified Command.DropUnused
-import qualified Key
+import qualified Type.Key
 import qualified Config
 import qualified Crypto
 

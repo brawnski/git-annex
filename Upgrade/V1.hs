@@ -18,7 +18,7 @@ import System.Posix.Types
 import Data.Maybe
 import Data.Char
 
-import Key
+import Types.Key
 import Content
 import Types
 import Locations

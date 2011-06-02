@@ -12,8 +12,8 @@ import Control.Monad.State (liftIO)
 import qualified Data.Map as M
 import System.Cmd.Utils
 
-import RemoteClass
 import Types
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import qualified AnnexQueue

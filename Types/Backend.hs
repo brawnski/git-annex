@@ -7,9 +7,9 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module BackendClass where
+module Types.Backend where
 
-import Key
+import Types.Key
 
 data Backend a = Backend {
 	-- name of this backend

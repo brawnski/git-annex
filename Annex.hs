@@ -21,11 +21,11 @@ import Control.Monad.State
 
 import qualified GitRepo as Git
 import GitQueue
-import BackendClass
-import RemoteClass
-import CryptoTypes
+import Types.Backend
+import Types.Remote
+import Types.Crypto
 import TrustLevel
-import UUIDType
+import Types.UUID
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO

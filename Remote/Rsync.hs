@@ -16,8 +16,8 @@ import System.Directory
 import System.Posix.Files
 import System.Posix.Process
 
-import RemoteClass
 import Types
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import UUID

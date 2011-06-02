@@ -39,8 +39,8 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Char
 
-import RemoteClass
 import Types
+import Types.Remote
 import UUID
 import qualified Annex
 import Locations

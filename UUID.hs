@@ -31,12 +31,12 @@ import Data.Maybe
 
 import qualified GitRepo as Git
 import Types
+import Types.UUID
 import Locations
 import qualified Annex
 import Utility
 import qualified SysConfig
 import Config
-import UUIDType
 
 configkey :: String
 configkey = "annex.uuid"

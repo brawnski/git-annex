@@ -17,15 +17,15 @@ import System.Posix.Files
 import System.FilePath
 
 import qualified Backend.File
-import BackendClass
 import Messages
 import qualified Annex
 import Locations
 import Content
 import Types
+import Types.Backend
+import Types.Key
 import Utility
 import qualified SysConfig
-import Key
 
 type SHASize = Int
 

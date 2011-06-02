@@ -18,8 +18,8 @@ import System.IO
 import System.IO.Error (try)
 import System.Exit
 
-import RemoteClass
 import Types
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import UUID

@@ -24,8 +24,9 @@ import System.Environment
 import System.Posix.Files
 import System.Posix.Env (setEnv)
 
-import RemoteClass
 import Types
+import Types.Remote
+import Types.Key
 import qualified GitRepo as Git
 import qualified Annex
 import UUID
@@ -35,7 +36,6 @@ import Config
 import Remote.Special
 import Remote.Encryptable
 import Crypto
-import Key
 import Content
 import Base64
 

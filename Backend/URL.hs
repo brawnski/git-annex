@@ -10,10 +10,10 @@ module Backend.URL (backends) where
 import Control.Monad.State (liftIO)
 
 import Types
-import BackendClass
+import Types.Backend
 import Utility
 import Messages
-import Key
+import Types.Key
 
 backends :: [Backend Annex]
 backends = [backend]

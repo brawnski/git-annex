@@ -43,11 +43,11 @@ import System.Exit
 import System.Environment
 
 import Types
-import Key
-import RemoteClass
+import Types.Key
+import Types.Remote
 import Utility
 import Base64
-import CryptoTypes
+import Types.Crypto
 
 {- The first half of a Cipher is used for HMAC; the remainder
  - is used as the GPG symmetric encryption passphrase.

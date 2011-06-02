@@ -18,7 +18,7 @@ import Control.Monad.State (liftIO)
 import Data.List
 import Data.String.Utils
 
-import BackendClass
+import Types.Backend
 import LocationLog
 import qualified Remote
 import qualified GitRepo as Git
@@ -28,7 +28,7 @@ import Types
 import UUID
 import Messages
 import Trust
-import Key
+import Types.Key
 
 backend :: Backend Annex
 backend = Backend {

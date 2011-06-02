@@ -14,8 +14,8 @@ import Data.List
 import qualified Data.Map as M
 
 import qualified Annex
-import qualified BackendClass
-import qualified RemoteClass
+import qualified Types.Backend as B
+import qualified Types.Remote as R
 import qualified Remote
 import qualified Command.Unused
 import qualified GitRepo as Git
@@ -23,7 +23,7 @@ import Command
 import Types
 import DataUnits
 import Content
-import Key
+import Types.Key
 import Locations
 
 -- a named computation that produces a statistic
@@ -97,11 +97,11 @@ showStat s = calc =<< s
 supported_backends :: Stat
 supported_backends = stat "supported backends" $
 	lift (Annex.getState Annex.supportedBackends) >>=
-		return . unwords . (map BackendClass.name)
+		return . unwords . (map B.name)
 
 supported_remote_types :: Stat
 supported_remote_types = stat "supported remote types" $
-	return $ unwords $ map RemoteClass.typename Remote.remoteTypes
+	return $ unwords $ map R.typename Remote.remoteTypes
 
 local_annex_size :: Stat
 local_annex_size = stat "local annex size" $

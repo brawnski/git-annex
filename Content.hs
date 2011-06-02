@@ -41,7 +41,7 @@ import qualified Annex
 import qualified AnnexQueue
 import Utility
 import StatFS
-import Key
+import Types.Key
 import DataUnits
 import Config
 
