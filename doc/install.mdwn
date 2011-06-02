@@ -11,11 +11,11 @@ To build and use git-annex, you will need:
 
 * Haskell stuff
   * [The Haskell Platform](http://haskell.org/platform/)
-  * [MissingH](http://github.com/jgoerzen/missingh/wiki
+  * [MissingH](http://github.com/jgoerzen/missingh/wiki)
   * [pcre-light](http://hackage.haskell.org/package/pcre-light)
   * [utf8-string](http://hackage.haskell.org/package/utf8-string)
-  * [SHA](<http://hackage.haskell.org/package/SHA)
-  * [dataenc](<http://hackage.haskell.org/package/dataenc>)
+  * [SHA](http://hackage.haskell.org/package/SHA)
+  * [dataenc](http://hackage.haskell.org/package/dataenc)
   * [TestPack](http://hackage.haskell.org/cgi-bin/hackage-scripts/package/testpack)
   * [QuickCheck 2](http://hackage.haskell.org/package/QuickCheck)
   * [hS3](http://hackage.haskell.org/package/hS3) (optional, but recommended)
