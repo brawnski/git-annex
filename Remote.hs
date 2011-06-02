@@ -15,6 +15,7 @@ module Remote (
 	hasKey,
 	hasKeyCheap,
 	keyPossibilities,
+	forceTrust,
 
 	remoteTypes,
 	genList,
@@ -137,6 +138,11 @@ keyPossibilities key = do
 
 	return (sort validremotes, validtrusteduuids)
 
+forceTrust :: TrustLevel -> String -> Annex ()
+forceTrust level remotename = do
+	r <- Remote.nameToUUID remotename
+	Annex.changeState $ \s ->
+		s { Annex.forcetrust = (r, level):Annex.forcetrust s }
 
 {- Filename of remote.log. -}
 remoteLog :: Annex FilePath

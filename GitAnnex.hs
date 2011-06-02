@@ -95,11 +95,11 @@ options = commonOptions ++
 		"skip files matching the glob pattern"
 	, Option ['N'] ["numcopies"] (ReqArg setnumcopies paramNumber)
 		"override default number of copies"
-	, Option [] ["trust"] (ReqArg (settrust Trusted) paramRemote)
+	, Option [] ["trust"] (ReqArg (Remote.forceTrust Trusted) paramRemote)
 		"override trust setting"
-	, Option [] ["semitrust"] (ReqArg (settrust SemiTrusted) paramRemote)
+	, Option [] ["semitrust"] (ReqArg (Remote.forceTrust SemiTrusted) paramRemote)
 		"override trust setting back to default value"
-	, Option [] ["untrust"] (ReqArg (settrust UnTrusted) paramRemote)
+	, Option [] ["untrust"] (ReqArg (Remote.forceTrust UnTrusted) paramRemote)
 		"override trust setting to untrusted"
 	]
 	where
@@ -108,9 +108,6 @@ options = commonOptions ++
 		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:Annex.exclude s }
 		setnumcopies v = Annex.changeState $ \s -> s {Annex.forcenumcopies = readMaybe v }
 		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
-		settrust t v = do
-			r <- Remote.nameToUUID v
-			Annex.changeState $ \s -> s { Annex.forcetrust = (r, t):Annex.forcetrust s }
 
 header :: String
 header = "Usage: git-annex command [option ..]"
