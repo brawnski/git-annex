@@ -81,7 +81,7 @@ copyKeyFile key file = do
 						Left _ -> return False
 				else return True
 		docopy r continue = do
-			showNote $ "copying from " ++ Remote.name r ++ "..."
+			showNote $ "from " ++ Remote.name r ++ "..."
 			copied <- Remote.retrieveKeyFile r key file
 			if copied
 				then return True

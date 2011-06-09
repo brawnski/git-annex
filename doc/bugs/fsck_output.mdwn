@@ -30,7 +30,7 @@ The newline is in the wrong place and confuses the user. It should be printed _a
 > A related problem occurs if an error message is unexpetedly printed.
 > Dummying up an example:
 > 
-> O get test1 (copying from foo...) E git-annex: failed to run ssh
+> O get test1 (from foo...) E git-annex: failed to run ssh
 > failed
 > 
 > --[[Joey]] 

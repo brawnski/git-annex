@@ -41,7 +41,7 @@ content from the key-value store.
 	# sudo mount /media/usb
 	# git remote add usbdrive /media/usb
 	# git annex get video/hackity_hack_and_kaxxt.mov
-	get video/hackity_hack_and_kaxxt.mov (copying from usbdrive...) ok
+	get video/hackity_hack_and_kaxxt.mov (from usbdrive...) ok
 	# git commit -a -m "got a video I want to rewatch on the plane"
 	
 	# git annex add iso

@@ -8,8 +8,8 @@ USB drive.
 	# cd /media/usb/annex
 	# git pull laptop master
 	# git annex get .
-	get my_cool_big_file (copying from laptop...) ok
-	get iso/debian.iso (copying from laptop...) ok
+	get my_cool_big_file (from laptop...) ok
+	get iso/debian.iso (from laptop...) ok
 
 Notice that you had to git pull from laptop first, this lets git-annex know
 what has changed in laptop, and so it knows about the files present there and
