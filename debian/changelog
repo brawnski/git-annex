@@ -1,4 +1,4 @@
-git-annex (0.20110610) unstable; urgency=low
+git-annex (0.20110610~bpo60+1) squeeze-backports; urgency=low
 
   * Add --numcopies option.
   * Add --trust, --untrust, and --semitrust options.
