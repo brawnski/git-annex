@@ -1,7 +1,7 @@
 -- stub for when hS3 is not available
 module Remote.S3 (remote) where
 
-import RemoteClass
+import Types.Remote
 import Types
 
 remote :: RemoteType Annex
