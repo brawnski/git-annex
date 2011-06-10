@@ -119,7 +119,7 @@ checkKeyChecksum size key = do
 		then return True
 		else do
 			s <- shaN size file
-			if s == keyName key
+			if s == dropExtension (keyName key)
 				then return True
 				else do
 					dest <- moveBad key
