@@ -1,4 +1,4 @@
-{- git-annex trust levels
+{- git-annex trust
  -
  - Copyright 2010 Joey Hess <joey@kitenet.net>
  -
@@ -17,25 +17,13 @@ module Trust (
 import Control.Monad.State
 import qualified Data.Map as M
 
+import TrustLevel
 import qualified GitRepo as Git
 import Types
 import UUID
 import Locations
 import qualified Annex
 import Utility
-
-data TrustLevel = SemiTrusted | UnTrusted | Trusted
-	deriving Eq
-
-instance Show TrustLevel where
-        show SemiTrusted = "?"
-        show UnTrusted = "0"
-        show Trusted = "1"
-
-instance Read TrustLevel where
-        readsPrec _ "1" = [(Trusted, "")]
-        readsPrec _ "0" = [(UnTrusted, "")]
-	readsPrec _ _ = [(SemiTrusted, "")]
 
 {- Filename of trust.log. -}
 trustLog :: Annex FilePath
@@ -49,18 +37,20 @@ trustGet level = do
 	m <- trustMap
 	return $ M.keys $ M.filter (== level) m
 
-{- Read the trustLog into a map. -}
+{- Read the trustLog into a map, overriding with any
+ - values from forcetrust -}
 trustMap :: Annex (M.Map UUID TrustLevel)
 trustMap = do
 	logfile <- trustLog
+	overrides <- Annex.getState Annex.forcetrust
 	s <- liftIO $ catch (readFile logfile) ignoreerror
-	return $ trustMapParse s
+	return $ M.fromList $ trustMapParse s ++ overrides
 	where
                 ignoreerror _ = return ""
 
 {- Trust map parser. -}
-trustMapParse :: String -> M.Map UUID TrustLevel
-trustMapParse s = M.fromList $ map pair $ filter (not . null) $ lines s
+trustMapParse :: String -> [(UUID, TrustLevel)]
+trustMapParse s = map pair $ filter (not . null) $ lines s
 	where
 		pair l
 			| length w > 1 = (w !! 0, read (w !! 1) :: TrustLevel)

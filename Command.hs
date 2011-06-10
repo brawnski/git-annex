@@ -24,7 +24,7 @@ import qualified Annex
 import qualified GitRepo as Git
 import Locations
 import Utility
-import Key
+import Types.Key
 
 {- A command runs in four stages.
  -

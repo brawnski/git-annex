@@ -13,7 +13,10 @@ import qualified GitRepo as Git
 import CmdLine
 import Command
 import Options
+import Utility
+import TrustLevel
 import qualified Annex
+import qualified Remote
 
 import qualified Command.Add
 import qualified Command.Unannex
@@ -90,17 +93,24 @@ options = commonOptions ++
 		"specify from where to transfer content"
 	, Option ['x'] ["exclude"] (ReqArg addexclude paramGlob)
 		"skip files matching the glob pattern"
+	, Option ['N'] ["numcopies"] (ReqArg setnumcopies paramNumber)
+		"override default number of copies"
+	, Option [] ["trust"] (ReqArg (Remote.forceTrust Trusted) paramRemote)
+		"override trust setting"
+	, Option [] ["semitrust"] (ReqArg (Remote.forceTrust SemiTrusted) paramRemote)
+		"override trust setting back to default value"
+	, Option [] ["untrust"] (ReqArg (Remote.forceTrust UnTrusted) paramRemote)
+		"override trust setting to untrusted"
 	]
 	where
-		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
 		setto v = Annex.changeState $ \s -> s { Annex.toremote = Just v }
 		setfrom v = Annex.changeState $ \s -> s { Annex.fromremote = Just v }
-		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:(Annex.exclude s) }
+		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:Annex.exclude s }
+		setnumcopies v = Annex.changeState $ \s -> s {Annex.forcenumcopies = readMaybe v }
+		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
 
 header :: String
 header = "Usage: git-annex command [option ..]"
 
 run :: [String] -> IO ()
-run args = do
-	gitrepo <- Git.repoFromCwd
-	dispatch gitrepo args cmds options header
+run args = dispatch args cmds options header =<< Git.repoFromCwd

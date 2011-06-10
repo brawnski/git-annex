@@ -16,7 +16,7 @@ import Data.String.Utils
 import Command
 import qualified Annex
 import qualified Remote
-import qualified RemoteClass
+import qualified Types.Remote as R
 import qualified GitRepo as Git
 import Utility
 import Types
@@ -54,12 +54,12 @@ start ws = notBareRepo $ do
 				else err $ "Either a new name, or one of these existing special remotes: " ++ join " " names
 			
 
-perform :: RemoteClass.RemoteType Annex -> UUID -> RemoteClass.RemoteConfig -> CommandPerform
+perform :: R.RemoteType Annex -> UUID -> R.RemoteConfig -> CommandPerform
 perform t u c = do
-	c' <- RemoteClass.setup t u c
+	c' <- R.setup t u c
 	next $ cleanup u c'
 
-cleanup :: UUID -> RemoteClass.RemoteConfig -> CommandCleanup
+cleanup :: UUID -> R.RemoteConfig -> CommandCleanup
 cleanup u c = do
 	Remote.configSet u c
 	g <- Annex.gitRepo
@@ -73,7 +73,7 @@ cleanup u c = do
         return True
 
 {- Look up existing remote's UUID and config by name, or generate a new one -}
-findByName :: String -> Annex (UUID, RemoteClass.RemoteConfig)
+findByName :: String -> Annex (UUID, R.RemoteConfig)
 findByName name = do
 	m <- Remote.readRemoteLog
 	maybe generate return $ findByName' name m
@@ -82,7 +82,7 @@ findByName name = do
 			uuid <- liftIO $ genUUID
 			return (uuid, M.insert nameKey name M.empty)
 
-findByName' :: String ->  M.Map UUID RemoteClass.RemoteConfig -> Maybe (UUID, RemoteClass.RemoteConfig)
+findByName' :: String ->  M.Map UUID R.RemoteConfig -> Maybe (UUID, R.RemoteConfig)
 findByName' n m = if null matches then Nothing else Just $ head matches
 	where
 		matches = filter (matching . snd) $ M.toList m
@@ -98,14 +98,14 @@ remoteNames = do
 	return $ catMaybes $ map ((M.lookup nameKey) . snd) $ M.toList m
 
 {- find the specified remote type -}
-findType :: RemoteClass.RemoteConfig -> Annex (RemoteClass.RemoteType Annex)
+findType :: R.RemoteConfig -> Annex (R.RemoteType Annex)
 findType config = maybe unspecified specified $ M.lookup typeKey config
 	where
 		unspecified = error "Specify the type of remote with type="
 		specified s = case filter (findtype s) Remote.remoteTypes of
 			[] -> error $ "Unknown remote type " ++ s
 			(t:_) -> return t
-		findtype s i = RemoteClass.typename i == s
+		findtype s i = R.typename i == s
 
 {- The name of a configured remote is stored in its config using this key. -}
 nameKey :: String

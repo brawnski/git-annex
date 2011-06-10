@@ -19,8 +19,8 @@ import System.FilePath
 import Data.List.Utils
 import System.Cmd.Utils
 
-import RemoteClass
 import Types
+import Types.Remote
 import qualified GitRepo as Git
 import qualified Annex
 import UUID

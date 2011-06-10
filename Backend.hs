@@ -42,8 +42,8 @@ import Locations
 import qualified GitRepo as Git
 import qualified Annex
 import Types
-import Key
-import qualified BackendClass as B
+import Types.Key
+import qualified Types.Backend as B
 import Messages
 import Content
 import DataUnits

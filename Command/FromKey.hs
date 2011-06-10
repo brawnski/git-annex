@@ -18,7 +18,7 @@ import Utility
 import qualified Backend
 import Content
 import Messages
-import Key
+import Types.Key
 
 command :: [Command]
 command = [repoCommand "fromkey" paramPath seek

@@ -7,11 +7,12 @@ sudo cabal install pcre-light
 sudo cabal install quickcheck  
 sudo cabal install SHA
 sudo cabal install dataenc
+sudo cabal install hS3   # stub S3 class (used if you don't have hS3 installed) has a bug, so you want to install this
 
 # optional: this will enable the gnu tools, (to give sha224sum etc..., it does not override the BSD userland)
 export PATH=$PATH:/opt/local/libexec/gnubin
 
-git clone  git://git.kitenet.net/git-annex
+git clone  git://git-annex.branchable.com/
 
 cd git-annex
 make

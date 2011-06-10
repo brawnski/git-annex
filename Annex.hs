@@ -20,10 +20,12 @@ import Control.Monad.State
 	(liftIO, StateT, runStateT, evalStateT, liftM, get, put)
 
 import qualified GitRepo as Git
-import qualified GitQueue
-import qualified BackendClass
-import qualified RemoteClass
-import qualified CryptoTypes
+import GitQueue
+import Types.Backend
+import Types.Remote
+import Types.Crypto
+import TrustLevel
+import Types.UUID
 
 -- git-annex's monad
 type Annex = StateT AnnexState IO
@@ -31,41 +33,45 @@ type Annex = StateT AnnexState IO
 -- internal state storage
 data AnnexState = AnnexState
 	{ repo :: Git.Repo
-	, backends :: [BackendClass.Backend Annex]
-	, supportedBackends :: [BackendClass.Backend Annex]
-	, remotes :: [RemoteClass.Remote Annex]
-	, repoqueue :: GitQueue.Queue
+	, backends :: [Backend Annex]
+	, supportedBackends :: [Backend Annex]
+	, remotes :: [Remote Annex]
+	, repoqueue :: Queue
 	, quiet :: Bool
 	, force :: Bool
 	, fast :: Bool
 	, forcebackend :: Maybe String
+	, forcenumcopies :: Maybe Int
 	, defaultkey :: Maybe String
 	, toremote :: Maybe String
 	, fromremote :: Maybe String
 	, exclude :: [String]
-	, cipher :: Maybe CryptoTypes.Cipher
+	, forcetrust :: [(UUID, TrustLevel)]
+	, cipher :: Maybe Cipher
 	}
 
-newState :: Git.Repo -> [BackendClass.Backend Annex] -> AnnexState
+newState :: Git.Repo -> [Backend Annex] -> AnnexState
 newState gitrepo allbackends = AnnexState
 	{ repo = gitrepo
 	, backends = []
 	, remotes = []
 	, supportedBackends = allbackends
-	, repoqueue = GitQueue.empty
+	, repoqueue = empty
 	, quiet = False
 	, force = False
 	, fast = False
 	, forcebackend = Nothing
+	, forcenumcopies = Nothing
 	, defaultkey = Nothing
 	, toremote = Nothing
 	, fromremote = Nothing
 	, exclude = []
+	, forcetrust = []
 	, cipher = Nothing
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [BackendClass.Backend Annex] -> IO AnnexState
+new :: Git.Repo -> [Backend Annex] -> IO AnnexState
 new gitrepo allbackends = do
 	gitrepo' <- liftIO $ Git.configRead gitrepo
 	return $ newState gitrepo' allbackends

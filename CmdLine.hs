@@ -28,8 +28,8 @@ import Messages
 import UUID
 
 {- Runs the passed command line. -}
-dispatch :: Git.Repo -> [String] -> [Command] -> [Option] -> String -> IO ()
-dispatch gitrepo args cmds options header = do
+dispatch :: [String] -> [Command] -> [Option] -> String -> Git.Repo -> IO ()
+dispatch args cmds options header gitrepo = do
 	setupConsole
 	state <- Annex.new gitrepo allBackends
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options

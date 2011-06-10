@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module CryptoTypes where
+module Types.Crypto where
 
 import Data.String.Utils
 

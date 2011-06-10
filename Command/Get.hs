@@ -9,9 +9,12 @@ module Command.Get where
 
 import Command
 import qualified Backend
+import qualified Annex
+import qualified Remote
 import Types
 import Content
 import Messages
+import qualified Command.Move
 
 command :: [Command]
 command = [repoCommand "get" paramPath seek
@@ -20,7 +23,6 @@ command = [repoCommand "get" paramPath seek
 seek :: [CommandSeek]
 seek = [withFilesInGit start]
 
-{- Gets an annexed file from one of the backends. -}
 start :: CommandStartString
 start file = isAnnexed file $ \(key, backend) -> do
 	inannex <- inAnnex key
@@ -28,7 +30,12 @@ start file = isAnnexed file $ \(key, backend) -> do
 		then stop
 		else do
 			showStart "get" file
-			next $ perform key backend
+			from <- Annex.getState Annex.fromremote
+			case from of
+				Nothing -> next $ perform key backend
+				Just name -> do
+					src <- Remote.byName name
+					next $ Command.Move.fromPerform src False key
 
 perform :: Key -> Backend Annex -> CommandPerform
 perform key backend = do

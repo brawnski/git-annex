@@ -11,6 +11,6 @@ module Types (
 	Key
 ) where
 
-import BackendClass
 import Annex
-import Key
+import Types.Backend
+import Types.Key

@@ -1,4 +1,4 @@
-{- git-annex remotes class
+{- git-annex remotes types
  -
  - Most things should not need this, using Remote instead
  -
@@ -7,13 +7,13 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module RemoteClass where
+module Types.Remote where
 
 import Control.Exception
 import Data.Map as M
 
 import qualified GitRepo as Git
-import Key
+import Types.Key
 
 type RemoteConfig = M.Map String String
 

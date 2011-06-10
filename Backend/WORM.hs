@@ -12,9 +12,9 @@ import System.FilePath
 import System.Posix.Files
 
 import qualified Backend.File
-import BackendClass
+import Types.Backend
 import Types
-import Key
+import Types.Key
 
 backends :: [Backend Annex]
 backends = [backend]

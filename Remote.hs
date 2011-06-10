@@ -14,11 +14,13 @@ module Remote (
 	removeKey,
 	hasKey,
 	hasKeyCheap,
+	keyPossibilities,
+	forceTrust,
 
 	remoteTypes,
+	genList,
 	byName,
 	nameToUUID,
-	keyPossibilities,
 	remotesWithUUID,
 	remotesWithoutUUID,
 
@@ -38,15 +40,15 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.Char
 
-import RemoteClass
 import Types
+import Types.Remote
 import UUID
 import qualified Annex
-import Trust
-import LocationLog
 import Locations
 import Utility
 import Config
+import Trust
+import LocationLog
 
 import qualified Remote.Git
 import qualified Remote.S3
@@ -104,6 +106,14 @@ nameToUUID :: String -> Annex UUID
 nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
 nameToUUID n = liftM uuid (byName n)
 
+{- Filters a list of remotes to ones that have the listed uuids. -}
+remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
+remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
+
+{- Filters a list of remotes to ones that do not have the listed uuids. -}
+remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
+remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
+
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
  -
  - Also returns a list of UUIDs that are trusted to have the key
@@ -128,13 +138,11 @@ keyPossibilities key = do
 
 	return (sort validremotes, validtrusteduuids)
 
-{- Filters a list of remotes to ones that have the listed uuids. -}
-remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
-remotesWithUUID rs us = filter (\r -> uuid r `elem` us) rs
-
-{- Filters a list of remotes to ones that do not have the listed uuids. -}
-remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
-remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
+forceTrust :: TrustLevel -> String -> Annex ()
+forceTrust level remotename = do
+	r <- Remote.nameToUUID remotename
+	Annex.changeState $ \s ->
+		s { Annex.forcetrust = (r, level):Annex.forcetrust s }
 
 {- Filename of remote.log. -}
 remoteLog :: Annex FilePath

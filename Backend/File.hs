@@ -18,7 +18,7 @@ import Control.Monad.State (liftIO)
 import Data.List
 import Data.String.Utils
 
-import BackendClass
+import Types.Backend
 import LocationLog
 import qualified Remote
 import qualified GitRepo as Git
@@ -28,7 +28,7 @@ import Types
 import UUID
 import Messages
 import Trust
-import Key
+import Types.Key
 
 backend :: Backend Annex
 backend = Backend {
@@ -81,7 +81,7 @@ copyKeyFile key file = do
 						Left _ -> return False
 				else return True
 		docopy r continue = do
-			showNote $ "copying from " ++ Remote.name r ++ "..."
+			showNote $ "from " ++ Remote.name r ++ "..."
 			copied <- Remote.retrieveKeyFile r key file
 			if copied
 				then return True
@@ -152,12 +152,16 @@ showTriedRemotes remotes =
 	showLongNote $ "Unable to access these remotes: " ++
 		(join ", " $ map Remote.name remotes)
 
+{- If a value is specified, it is used; otherwise the default is looked up
+ - in git config. forcenumcopies overrides everything. -}
 getNumCopies :: Maybe Int -> Annex Int
-getNumCopies (Just n) = return n
-getNumCopies Nothing = do
-	g <- Annex.gitRepo
-	return $ read $ Git.configGet g config "1"
+getNumCopies v = 
+	Annex.getState Annex.forcenumcopies >>= maybe (use v) (return . id)
 	where
+		use (Just n) = return n
+		use Nothing = do
+			g <- Annex.gitRepo
+			return $ read $ Git.configGet g config "1"
 		config = "annex.numcopies"
 
 {- Ideally, all keys have file size metadata. Old keys may not. -}

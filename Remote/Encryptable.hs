@@ -11,7 +11,7 @@ import qualified Data.Map as M
 import Control.Monad.State (liftIO)
 
 import Types
-import RemoteClass
+import Types.Remote
 import Crypto
 import qualified Annex
 import Messages

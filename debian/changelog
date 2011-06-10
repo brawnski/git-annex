@@ -1,3 +1,12 @@
+git-annex (0.20110610) unstable; urgency=low
+
+  * Add --numcopies option.
+  * Add --trust, --untrust, and --semitrust options.
+  * get --from is the same as copy --from
+  * Bugfix: Fix fsck to not think all SHAnE keys are bad.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 10 Jun 2011 11:48:40 -0400
+
 git-annex (0.20110601~bpo60+1) squeeze-backports; urgency=low
 
   * Minor bugfixes and error message improvements.

@@ -22,7 +22,7 @@ import qualified Command.Move
 import qualified Remote
 import qualified GitRepo as Git
 import Backend
-import Key
+import Types.Key
 import Utility
 
 type UnusedMap = M.Map String Key
