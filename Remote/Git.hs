@@ -169,8 +169,8 @@ rsyncHelper p = do
  - filesystem. Then cp could be faster. -}
 rsyncOrCopyFile :: Git.Repo -> FilePath -> FilePath -> Annex Bool
 rsyncOrCopyFile r src dest = do
-	ss <- liftIO $ getFileStatus src
-	ds <- liftIO $ getFileStatus dest
+	ss <- liftIO $ getFileStatus $ parentDir src
+	ds <- liftIO $ getFileStatus $ parentDir dest
 	if deviceID ss == deviceID ds
 		then liftIO $ copyFile src dest
 		else do
