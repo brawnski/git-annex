@@ -10,3 +10,6 @@ See http://lists.madduck.net/pipermail/vcs-home/2011-June/000433.html
 > So this may be another thing blocked by [[todo/branching]], assuming
 > that is fixed in a way that makes `.git-annex` available to bare repos.
 > --[[Joey]] 
+
+>> Even if there is nothing it can _do_, knowing that the data is intact,
+>> or not, is valuable in and as of itself. -- RichiH
