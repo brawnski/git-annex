@@ -1,0 +1,10 @@
+a [[!taglink minor]] <!-- (a suggestion for introducing severity tags on bugs,
+feel free to discard) --> issue: `git annex initremote` (in particular, adding
+a key as described in [[encryption]] -- `git annex initremote my_remote
+encryption=my_key`) seems to iterate over the `.git-annex/???/???/*.log` files
+with lstat (tested using strace).
+
+in a 50k key git-annex on a slow disk, this takes quite a while, while not
+seeming necessary (it's just re-encrypting the shared secret, is it?).
+
+could you verify the observed behavior?
