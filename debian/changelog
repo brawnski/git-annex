@@ -4,6 +4,8 @@ git-annex (0.20110611) UNRELEASED; urgency=low
     cp is still used when copying file from repos on the same filesystem,
     since --reflink=auto can make it significantly faster on filesystems
     such as btrfs.
+  * Allow --trust etc to specify a repository by name, for temporarily 
+    trusting repositories that are not configured remotes.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Jun 2011 19:53:24 -0400
 

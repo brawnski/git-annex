@@ -34,7 +34,7 @@ module Remote (
 ) where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when, liftM, filterM)
+import Control.Monad (filterM)
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -91,20 +91,35 @@ genList = do
 
 {- Looks up a remote by name. (Or by UUID.) -}
 byName :: String -> Annex (Remote Annex)
-byName "" = error "no remote specified"
 byName n = do
+	res <- byName' n
+	case res of
+		Left e -> error e
+		Right r -> return r
+byName' :: String -> Annex (Either String (Remote Annex))
+byName' "" = return $ Left "no remote specified"
+byName' n = do
 	allremotes <- genList
 	let match = filter matching allremotes
-	when (null match) $ error $
-		"there is no git remote named \"" ++ n ++ "\""
-	return $ head match
+	if (null match)
+		then return $ Left $ "there is no git remote named \"" ++ n ++ "\""
+		else return $ Right $ head match
 	where
 		matching r = n == name r || n == uuid r
 
-{- Looks up a remote by name (or by UUID), and returns its UUID. -}
+{- Looks up a remote by name (or by UUID, or even by description),
+ - and returns its UUID. -}
 nameToUUID :: String -> Annex UUID
 nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
-nameToUUID n = liftM uuid (byName n)
+nameToUUID n = do
+	res <- byName' n
+	case res of
+		Left e -> return . (maybe (error e) id) =<< byDescription
+		Right r -> return $ uuid r
+	where
+		byDescription = return . M.lookup n . invertMap =<< uuidMap
+		invertMap = M.fromList . map swap . M.toList
+		swap (a, b) = (b, a)
 
 {- Filters a list of remotes to ones that have the listed uuids. -}
 remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
