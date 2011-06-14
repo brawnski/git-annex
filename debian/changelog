@@ -1,3 +1,12 @@
+git-annex (0.20110611) UNRELEASED; urgency=low
+
+  * rsync is now used when copying files from repos on other filesystems.
+    cp is still used when copying file from repos on the same filesystem,
+    since --reflink=auto can make it significantly faster on filesystems
+    such as btrfs.
+
+ -- Joey Hess <joeyh@debian.org>  Mon, 13 Jun 2011 19:53:24 -0400
+
 git-annex (0.20110610) unstable; urgency=low
 
   * Add --numcopies option.
