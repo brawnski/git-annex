@@ -31,7 +31,7 @@ import qualified Backend
 import qualified GitRepo as Git
 import qualified Locations
 import qualified Utility
-import qualified Type.Backend
+import qualified Types.Backend
 import qualified Types
 import qualified GitAnnex
 import qualified LocationLog
@@ -40,20 +40,20 @@ import qualified Trust
 import qualified Remote
 import qualified Content
 import qualified Command.DropUnused
-import qualified Type.Key
+import qualified Types.Key
 import qualified Config
 import qualified Crypto
 
 -- for quickcheck
-instance Arbitrary Key.Key where
+instance Arbitrary Types.Key.Key where
 	arbitrary = do
 		n <- arbitrary
 		b <- elements ['A'..'Z']
-		return $ Key.Key {
-			Key.keyName = n,
-			Key.keyBackendName = [b],
-			Key.keySize = Nothing,
-			Key.keyMtime = Nothing
+		return $ Types.Key.Key {
+			Types.Key.keyName = n,
+			Types.Key.keyBackendName = [b],
+			Types.Key.keySize = Nothing,
+			Types.Key.keyMtime = Nothing
 		}
 
 main :: IO ()
@@ -72,7 +72,7 @@ quickcheck :: Test
 quickcheck = TestLabel "quickcheck" $ TestList
 	[ qctest "prop_idempotent_deencode" Git.prop_idempotent_deencode
 	, qctest "prop_idempotent_fileKey" Locations.prop_idempotent_fileKey
-	, qctest "prop_idempotent_key_read_show" Key.prop_idempotent_key_read_show
+	, qctest "prop_idempotent_key_read_show" Types.Key.prop_idempotent_key_read_show
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
 	, qctest "prop_idempotent_configEscape" Remote.prop_idempotent_configEscape
@@ -139,7 +139,7 @@ test_add = "git-annex add" ~: TestList [basic, sha1dup]
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
 	writeFile tmp $ content sha1annexedfile
-	r <- annexeval $ BackendClass.getKey backendSHA1 tmp
+	r <- annexeval $ Types.Backend.getKey backendSHA1 tmp
 	let key = show $ fromJust r
 	git_annex "setkey" ["-q", "--key", key, tmp] @? "setkey failed"
 	git_annex "fromkey" ["-q", "--key", key, sha1annexedfile] @? "fromkey failed"
