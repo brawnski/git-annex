@@ -17,7 +17,6 @@ module Annex (
 ) where
 
 import Control.Monad.State
-	(liftIO, StateT, runStateT, evalStateT, liftM, get, put)
 
 import qualified GitRepo as Git
 import GitQueue
@@ -50,8 +49,8 @@ data AnnexState = AnnexState
 	, cipher :: Maybe Cipher
 	}
 
-newState :: Git.Repo -> [Backend Annex] -> AnnexState
-newState gitrepo allbackends = AnnexState
+newState :: [Backend Annex] -> Git.Repo -> AnnexState
+newState allbackends gitrepo = AnnexState
 	{ repo = gitrepo
 	, backends = []
 	, remotes = []
@@ -72,27 +71,26 @@ newState gitrepo allbackends = AnnexState
 
 {- Create and returns an Annex state object for the specified git repo. -}
 new :: Git.Repo -> [Backend Annex] -> IO AnnexState
-new gitrepo allbackends = do
-	gitrepo' <- liftIO $ Git.configRead gitrepo
-	return $ newState gitrepo' allbackends
+new gitrepo allbackends =
+	newState allbackends `liftM` (liftIO . Git.configRead) gitrepo
 
 {- performs an action in the Annex monad -}
 run :: AnnexState -> Annex a -> IO (a, AnnexState)
-run state action = runStateT action state
+run = flip runStateT
 eval :: AnnexState -> Annex a -> IO a
-eval state action = evalStateT action state
+eval = flip evalStateT
 
 {- Gets a value from the internal state, selected by the passed value
  - constructor. -}
 getState :: (AnnexState -> a) -> Annex a
-getState c = liftM c get
+getState = gets
 
 {- Applies a state mutation function to change the internal state. 
  -
- - Example: changeState (\s -> s { quiet = True })
+ - Example: changeState $ \s -> s { quiet = True }
  -}
 changeState :: (AnnexState -> AnnexState) -> Annex ()
-changeState a = put . a =<< get
+changeState = modify
 
 {- Returns the git repository being acted on -}
 gitRepo :: Annex Git.Repo
