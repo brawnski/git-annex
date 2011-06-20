@@ -38,6 +38,7 @@ module GitRepo (
 	gitCommandLine,
 	run,
 	pipeRead,
+	pipeNullSplit,
 	attributes,
 	remotes,
 	remotesAdd,
@@ -412,7 +413,7 @@ typeChangedFiles' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 		end = [Param "--"] ++ map File l
 
 {- Reads null terminated output of a git command (as enabled by the -z 
- - parameter), and splits it into a list of files. -}
+ - parameter), and splits it into a list of files/lines/whatever. -}
 pipeNullSplit :: Repo -> [CommandParam] -> IO [FilePath]
 pipeNullSplit repo params = do
 	fs0 <- pipeRead repo params

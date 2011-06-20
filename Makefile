@@ -6,8 +6,8 @@ GHCFLAGS=-prof -auto-all -rtsopts -caf-all -fforce-recomp $(IGNORE)
 endif
 GHCMAKE=ghc $(GHCFLAGS) --make
 
-bins=git-annex git-annex-shell
-mans=git-annex.1 git-annex-shell.1
+bins=git-annex git-annex-shell git-union-merge
+mans=git-annex.1 git-annex-shell.1 git-union-merge.1
 
 all: $(bins) $(mans) docs
 
@@ -33,6 +33,8 @@ git-annex.1: doc/git-annex.mdwn
 	./mdwn2man git-annex 1 doc/git-annex.mdwn > git-annex.1
 git-annex-shell.1: doc/git-annex-shell.mdwn
 	./mdwn2man git-annex-shell 1 doc/git-annex-shell.mdwn > git-annex-shell.1
+git-union-merge.1: doc/git-union-merge.mdwn
+	./mdwn2man git-union-merge 1 doc/git-union-merge.mdwn > git-union-merge.1
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/bin

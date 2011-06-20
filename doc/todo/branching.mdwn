@@ -148,10 +148,8 @@ problem generically. Something like this:
 * For remotes, there are also `origin/B`, `otherremote/B`, etc.
 * To merge two branches `B` and `foo/B`, construct a merge commit that
   makes each file have all lines that were in either version of the file,
-  with duplicates removed (probably). Do this without checking out a tree,
-  or using a temporary directory. (One easy but expensive way is to just
-  check out the branch to a temp dir, union merge into it, and remove the
-  temp dir ... but it should be possible to do it without using a temp dir.)
+  with duplicates removed (probably). Do this without checking out a tree.
+  -- now implemented as git-union-merge
 * As a `post-merge` hook, merge `*/B` into `B`. This will ensure `B`
   is always up-to-date after a pull from a remote.
 * When pushing to a remote, nothing need to be done, except ensure
