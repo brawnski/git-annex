@@ -118,6 +118,13 @@ still mean all the log files are on-disk, which annoys some. It would
 require some tighter integration with git, so that after a pull, the log
 repo is updated with the data pulled. --[[Joey]] 
 
+> Seems I can't use git fake bare exactly. Instead, the best option
+> seems to be `git clone --shared` to make a clone that uses
+> `.git/annex/logs/.git` to hold its index etc, but (mostly) uses
+> objects from the main repo. There would be some bloat,
+> as commits to the logs made in there would not be shared with the main
+> repo. Using `GIT_OBJECT_DIRECTORY` might be a way to avoid that bloat.
+
 ## notes
 
 Another approach could be to use git-notes. It supports merging branches
