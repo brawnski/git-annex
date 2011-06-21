@@ -4,7 +4,7 @@ git-union-merge - Join branches together using a union merge
 
 # SYNOPSIS
 
-git union-merge newref ref ref
+git union-merge ref ref newref
 
 # DESCRIPTION
 
@@ -20,7 +20,7 @@ entirely on git refs and branches.
 
 # EXAMPLE
 
-	git union-merge refs/heads/git-annex git-annex origin/git-annex
+	git union-merge git-annex origin/git-annex refs/heads/git-annex 
 
 Merges the current git-annex branch, and a version from origin,
 storing the result in the git-annex branch.

@@ -26,10 +26,10 @@ usage = error $ "bad parameters\n\n" ++ header
 
 main :: IO ()
 main = do
-	[branch, aref, bref] <- parseArgs
+	[aref, bref, newref] <- parseArgs
 	g <- setup
 	stage g aref bref
-	commit g branch aref bref
+	commit g aref bref newref
 	cleanup g
 
 parseArgs :: IO [String]
@@ -103,13 +103,13 @@ stage g aref bref = do
 
 {- Commits the index into the specified branch. -}
 commit :: Git.Repo -> String -> String -> String -> IO ()
-commit g branch aref bref = do
+commit g aref bref newref = do
 	tree <- getSha "write-tree"  $
 		pipeFrom "git" ["write-tree"]
 	sha <- getSha "commit-tree" $
 		pipeBoth "git" ["commit-tree", tree, "-p", aref, "-p", bref]
 			"union merge"
-	Git.run g "update-ref" [Param branch, Param sha]
+	Git.run g "update-ref" [Param newref, Param sha]
 
 {- Runs an action that causes a git subcommand to emit a sha, and strips
    any trailing newline, returning the sha. -}
