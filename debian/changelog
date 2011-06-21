@@ -6,6 +6,7 @@ git-annex (0.20110611) UNRELEASED; urgency=low
     such as btrfs.
   * Allow --trust etc to specify a repository by name, for temporarily 
     trusting repositories that are not configured remotes.
+  * unlock: Made atomic.
   * git-union-merge: New git subcommand, that does a generic union merge
     operation, and operates efficiently without touching the working tree.
 

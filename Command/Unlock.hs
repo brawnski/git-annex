@@ -44,11 +44,15 @@ perform dest key = do
 
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g key
-	liftIO $ removeFile dest
+	let tmpdest = gitAnnexTmpLocation g key
+	liftIO $ createDirectoryIfMissing True (parentDir tmpdest)
 	showNote "copying..."
-	ok <- liftIO $ copyFile src dest
+	ok <- liftIO $ copyFile src tmpdest
         if ok
                 then do
-			liftIO $ allowWrite dest
+			liftIO $ do
+				removeFile dest
+				renameFile tmpdest dest
+				allowWrite dest
 			next $ return True
                 else error "copy failed!"
