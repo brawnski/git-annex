@@ -42,7 +42,7 @@ main :: IO ()
 main = do
 	[aref, bref, newref] <- parseArgs
 	g <- Git.configRead =<< Git.repoFromCwd
-	Git.withIndex (tmpIndex g) $ do
-		setup g
-		unionMerge g aref bref newref
-		cleanup g
+	Git.useIndex (tmpIndex g)
+	setup g
+	unionMerge g aref bref newref False
+	cleanup g

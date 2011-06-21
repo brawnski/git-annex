@@ -58,12 +58,16 @@ module GitRepo (
 	typeChangedStagedFiles,
 	repoAbsPath,
 	reap,
-	withIndex,
+	useIndex,
+	useDefaultIndex,
+	hashObject,
+	getSha,
+	shaSize,
 
 	prop_idempotent_deencode
 ) where
 
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import System.Directory
 import System.FilePath
 import System.Posix.Directory
@@ -381,13 +385,41 @@ reap = do
 	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
 	maybe (return ()) (const reap) r
 
-{- Runs an action using a specified index file. -}
-withIndex :: FilePath -> IO a -> IO a
-withIndex index a = do
-	setEnv "GIT_INDEX_FILE" index True
-	r <- a
-	unsetEnv "GIT_INDEX_FILE"
-	return r
+{- Forces git to use the specified index file. -}
+useIndex :: FilePath -> IO ()
+useIndex index = setEnv "GIT_INDEX_FILE" index True
+
+{- Undoes useIndex -}
+useDefaultIndex :: IO ()
+useDefaultIndex = unsetEnv "GIT_INDEX_FILE"
+
+{- Injects some content into git, returning its hash. -}
+hashObject :: Repo -> String -> IO String
+hashObject repo content = getSha subcmd $ do
+	(h, s) <- pipeWriteRead repo (map Param params) content
+	length s `seq` do
+		forceSuccess h
+		reap -- XXX unsure why this is needed
+		return s
+	where
+		subcmd = "hash-object"
+		params = [subcmd, "-w", "--stdin"]
+
+{- Runs an action that causes a git subcommand to emit a sha, and strips
+   any trailing newline, returning the sha. -}
+getSha :: String -> IO String -> IO String
+getSha subcommand a = do
+	t <- a
+	let t' = if last t == '\n'
+		then take (length t - 1) t
+		else t
+	when (length t' /= shaSize) $
+		error $ "failed to read sha from git " ++ subcommand ++ " (" ++ t' ++ ")"
+	return t'
+
+{- Size of a git sha. -}
+shaSize :: Int
+shaSize = 40
 
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]
