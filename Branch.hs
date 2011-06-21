@@ -7,7 +7,9 @@
 
 module Branch (
 	update,
-	change
+	get,
+	change,
+	commit
 ) where
 
 import Control.Monad (unless)
@@ -17,8 +19,8 @@ import System.Directory
 import Data.String.Utils
 import System.Cmd.Utils
 
-import GitUnionMerge
 import qualified GitRepo as Git
+import qualified GitUnionMerge
 import qualified Annex
 import Utility
 import Types
@@ -91,7 +93,7 @@ updateRef ref
 
 {- Stages the content of a file into the branch's index. -}
 change :: FilePath -> String -> Annex ()
-change file content = update >> do
+change file content = do
 	g <- Annex.gitRepo
 	sha <- liftIO $ Git.hashObject g content
 	withIndex $ liftIO $ Git.run g "update-index"
@@ -102,17 +104,15 @@ change file content = update >> do
 commit :: String -> Annex ()
 commit message = withIndex $ do
 	g <- Annex.gitRepo
-	-- It would be expensive to check if anything needs to be
-	-- committed, so --allow-empty is used.
-	liftIO $ Git.run g "commit"
-		[Param "--allow-empty", Param "-m", Param message]
+	liftIO $ GitUnionMerge.commit g message branch []
 
 {- Gets the content of a file on the branch, or content staged in the index
  - if it's newer. Returns an empty string if the file didn't exist yet. -}
 get :: FilePath -> Annex String
-get file = withIndex $ do
-	g <- Annex.gitRepo
-	liftIO $ catch (cat g) (const $ return "")
+get file = update >> do
+	withIndex $ do
+		g <- Annex.gitRepo
+		liftIO $ catch (cat g) (const $ return "")
 	where
 		-- To avoid stderr from cat-file when file does not exist,
 		-- first run it with -e to check that it exists.
