@@ -8,12 +8,12 @@
 import System.Environment
 import System.FilePath
 import System.Directory
-import System.Cmd
 import System.Cmd.Utils
 import System.Posix.Env (setEnv)
-import System.Posix.Directory (changeWorkingDirectory)
-import Control.Monad (when, unless)
+import Control.Monad (when)
 import Data.List
+import Data.Maybe
+import Data.String.Utils
 
 import qualified GitRepo as Git
 import Utility
@@ -39,82 +39,89 @@ parseArgs = do
 		then usage
 		else return args
 
-tmpDir :: Git.Repo -> FilePath
-tmpDir g = Git.workTree g </> Git.gitDir g </> "tmp" </> "git-union-merge"
-
 tmpIndex :: Git.Repo -> FilePath
-tmpIndex g = Git.workTree g </> Git.gitDir g </> "tmp" </> "git-union-merge.index"
+tmpIndex g = Git.workTree g </> Git.gitDir g </> "index.git-union-merge"
 
-{- Moves to a temporary directory, and configures git to use it as its
- - working tree, and to use a temporary index file as well. -}
+{- Configures git to use a temporary index file. -}
 setup :: IO Git.Repo
 setup = do
 	g <- Git.configRead =<< Git.repoFromCwd
 	cleanup g -- idempotency
-	let tmp = tmpDir g
-	createDirectoryIfMissing True tmp
-	changeWorkingDirectory tmp
-	-- Note that due to these variables being set, Git.run and
-	-- similar helpers cannot be used, as they override the work tree.
-	-- It is only safe to use Git.run etc when doing things that do
-	-- not operate on the work tree.
-	setEnv "GIT_WORK_TREE" tmp True
 	setEnv "GIT_INDEX_FILE" (tmpIndex g) True
 	return g
 
 cleanup :: Git.Repo -> IO ()
 cleanup g = do
-	e <- doesDirectoryExist (tmpDir g)
-	when e $ removeDirectoryRecursive (tmpDir g)
 	e' <- doesFileExist (tmpIndex g)
 	when e' $ removeFile (tmpIndex g)
 
 {- Stages the content of both refs into the index. -}
 stage :: Git.Repo -> String -> String -> IO ()
 stage g aref bref = do
-	-- populate index with the contents of aref, as a starting point
-	_ <- system $ "git ls-tree -r --full-name --full-tree " ++ aref ++ 
-		" | git update-index --index-info"
-	-- identify files that are different in bref, and stage merged files
-	diff <- Git.pipeNullSplit g $ map Param
-		["diff-tree", "--raw", "-z", "--no-renames", "-l0", aref, bref]
-	mapM_ genfile (pairs diff)
-	_ <- system "git add ."
-	return ()
+	-- Get the contents of aref, as a starting point.
+	ls <- fromgit
+		["ls-tree", "-z", "-r", "--full-tree", aref]
+	-- Identify files that are different between aref and bref, and
+	-- inject merged versions into git.
+	diff <- fromgit
+		["diff-tree", "--raw", "-z", "-r", "--no-renames", "-l0", aref, bref]
+	ls' <- mapM mergefile (pairs diff)
+	-- Populate the index file. Later lines override earlier ones.
+	togit ["update-index", "-z", "--index-info"]
+		(join "\0" $ ls++catMaybes ls')
 	where
+		fromgit l = Git.pipeNullSplit g (map Param l)
+		togit l content = Git.pipeWrite g (map Param l) content
+			>>= forceSuccess
+		tofromgit l content = do
+			(h, s) <- Git.pipeWriteRead g (map Param l) content
+			length s `seq` do
+				forceSuccess h
+				Git.reap
+				return ((), s)
+
 		pairs [] = []
 		pairs (_:[]) = error "parse error"
 		pairs (a:b:rest) = (a,b):pairs rest
-
-		nullsha = take 40 $ repeat '0'
-
-		genfile (info, file) = do
+		
+		nullsha = take shaSize $ repeat '0'
+		ls_tree_line sha file = "100644 blob " ++ sha ++ "\t" ++ file
+		unionmerge = unlines . nub . lines
+		
+		mergefile (info, file) = do
 			let [_colonamode, _bmode, asha, bsha, _status] = words info
-			let shas = 
-				if bsha == nullsha
-					then [] -- staged from aref
-					else
-						if asha == nullsha
-							then [bsha]
-							else [asha, bsha]
-			unless (null shas) $ do
-				content <- Git.pipeRead g $ map Param ("show":shas)
-				writeFile file $ unlines $ nub $ lines content
+			if bsha == nullsha
+				then return Nothing -- already staged from aref
+				else mergefile' file asha bsha
+		mergefile' file asha bsha = do
+			let shas = filter (/= nullsha) [asha, bsha]
+			content <- Git.pipeRead g $ map Param ("show":shas)
+			sha <- getSha "hash-object" $
+				tofromgit ["hash-object", "-w", "--stdin"] $
+					unionmerge content
+			return $ Just $ ls_tree_line sha file
 
 {- Commits the index into the specified branch. -}
 commit :: Git.Repo -> String -> String -> String -> IO ()
 commit g branch aref bref = do
-	tree <- getsha $
+	tree <- getSha "write-tree"  $
 		pipeFrom "git" ["write-tree"]
-	sha <- getsha $ 
+	sha <- getSha "commit-tree" $
 		pipeBoth "git" ["commit-tree", tree, "-p", aref, "-p", bref]
 			"union merge"
 	Git.run g "update-ref" [Param $ "refs/heads/" ++ branch, Param sha]
-	where
-		getsha a = do
-			(_, t) <- a
-			let t' = if last t == '\n'
-				then take (length t - 1) t
-				else t
-			when (null t') $ error "failed to read sha from git"
-			return t'
+
+{- Runs an action that causes a git subcommand to emit a sha, and strips
+   any trailing newline, returning the sha. -}
+getSha :: String -> IO (a, String) -> IO String
+getSha subcommand a = do
+	(_, t) <- a
+	let t' = if last t == '\n'
+		then take (length t - 1) t
+		else t
+	when (length t' /= shaSize) $
+		error $ "failed to read sha from git " ++ subcommand ++ " (" ++ t' ++ ")"
+	return t'
+
+shaSize :: Int
+shaSize = 40

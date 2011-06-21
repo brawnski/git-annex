@@ -38,6 +38,8 @@ module GitRepo (
 	gitCommandLine,
 	run,
 	pipeRead,
+	pipeWrite,
+	pipeWriteRead,
 	pipeNullSplit,
 	attributes,
 	remotes,
@@ -348,7 +350,7 @@ run repo subcommand params = assertLocal repo $
 	boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
 		>>! error $ "git " ++ show params ++ " failed"
 
-{- Runs a git subcommand and returns it output, lazily. 
+{- Runs a git subcommand and returns its output, lazily. 
  -
  - Note that this leaves the git process running, and so zombies will
  - result unless reap is called.
@@ -357,6 +359,18 @@ pipeRead :: Repo -> [CommandParam] -> IO String
 pipeRead repo params = assertLocal repo $ do
 	(_, s) <- pipeFrom "git" $ toCommand $ gitCommandLine repo params
 	return s
+
+{- Runs a git subcommand, feeding it input.
+ - You should call either getProcessStatus or forceSuccess on the PipeHandle. -}
+pipeWrite :: Repo -> [CommandParam] -> String -> IO PipeHandle
+pipeWrite repo params s = assertLocal repo $
+	pipeTo "git" (toCommand $ gitCommandLine repo params) s
+
+{- Runs a git subcommand, feeding it input, and returning its output.
+ - You should call either getProcessStatus or forceSuccess on the PipeHandle. -}
+pipeWriteRead :: Repo -> [CommandParam] -> String -> IO (PipeHandle, String)
+pipeWriteRead repo params s = assertLocal repo $
+	pipeBoth "git" (toCommand $ gitCommandLine repo params) s
 
 {- Reaps any zombie git processes. -}
 reap :: IO ()
