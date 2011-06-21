@@ -20,13 +20,13 @@ import Config
 type Version = String
 
 defaultVersion :: Version
-defaultVersion = "2"
+defaultVersion = "3"
 
 supportedVersions :: [Version]
 supportedVersions = [defaultVersion]
 
 upgradableVersions :: [Version]
-upgradableVersions = ["0", "1"]
+upgradableVersions = ["0", "1", "2"]
 
 versionField :: String
 versionField = "annex.version"
