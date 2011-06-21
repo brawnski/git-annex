@@ -19,7 +19,7 @@ import qualified GitRepo as Git
 import Utility
 
 header :: String
-header = "Usage: git-union-merge branch ref ref"
+header = "Usage: git-union-merge newref ref ref"
 
 usage :: IO a
 usage = error $ "bad parameters\n\n" ++ header
@@ -109,7 +109,7 @@ commit g branch aref bref = do
 	sha <- getSha "commit-tree" $
 		pipeBoth "git" ["commit-tree", tree, "-p", aref, "-p", bref]
 			"union merge"
-	Git.run g "update-ref" [Param $ "refs/heads/" ++ branch, Param sha]
+	Git.run g "update-ref" [Param branch, Param sha]
 
 {- Runs an action that causes a git subcommand to emit a sha, and strips
    any trailing newline, returning the sha. -}
