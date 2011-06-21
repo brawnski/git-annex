@@ -12,12 +12,13 @@ module Branch (
 	commit
 ) where
 
-import Control.Monad (unless)
+import Control.Monad (unless, liftM)
 import Control.Monad.State (liftIO)
 import System.FilePath
 import System.Directory
 import Data.String.Utils
 import System.Cmd.Utils
+import Data.Maybe
 
 import qualified GitRepo as Git
 import qualified GitUnionMerge
@@ -72,14 +73,18 @@ update = do
 	updated <- Annex.getState Annex.updated
 	unless updated $ withIndex $ do
 		g <- Annex.gitRepo
-		refs <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
-		mapM_ updateRef $ map (last . words) (lines refs)
+		r <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
+		let refs = map (last . words) (lines r)
+		updated <- catMaybes `liftM` mapM updateRef refs
+		unless (null updated) $ liftIO $
+			GitUnionMerge.commit g "update" fullname
+				(fullname:updated)
 		Annex.changeState $ \s -> s { Annex.updated = True }
 
-{- Ensures that a given ref has been merged into the local git-annex branch. -}
-updateRef :: String -> Annex ()
+{- Ensures that a given ref has been merged into the index. -}
+updateRef :: String -> Annex (Maybe String)
 updateRef ref
-	| ref == fullname = return ()
+	| ref == fullname = return Nothing
 	| otherwise = do
 		g <- Annex.gitRepo
 		diffs <- liftIO $ Git.pipeRead g [
@@ -87,9 +92,15 @@ updateRef ref
 			Param (name++".."++ref),
 			Params "--oneline -n1"
 			]
-		unless (null diffs) $ do
-			showSideAction $ "merging " ++ ref ++ " into " ++ name ++ "..."
-			liftIO $ unionMerge g fullname ref fullname True
+		if (null diffs)
+			then return Nothing
+			else do
+				showSideAction $ "merging " ++ ref ++ " into " ++ name ++ "..."
+				-- By passing only one ref, it is actually
+				-- merged into the index, preserving any
+				-- changes that may already be staged.
+				liftIO $ GitUnionMerge.merge g [ref]
+				return $ Just ref
 
 {- Stages the content of a file into the branch's index. -}
 change :: FilePath -> String -> Annex ()
@@ -104,7 +115,7 @@ change file content = do
 commit :: String -> Annex ()
 commit message = withIndex $ do
 	g <- Annex.gitRepo
-	liftIO $ GitUnionMerge.commit g message branch []
+	liftIO $ GitUnionMerge.commit g message fullname []
 
 {- Gets the content of a file on the branch, or content staged in the index
  - if it's newer. Returns an empty string if the file didn't exist yet. -}

@@ -7,7 +7,6 @@
 
 module GitUnionMerge (
 	merge,
-	stage,
 	commit
 ) where
 
@@ -19,38 +18,54 @@ import Data.String.Utils
 import qualified GitRepo as Git
 import Utility
 
-{- Performs a union merge. Should be run with a temporary index file
- - configured by Git.useIndex.
+{- Performs a union merge between two branches, staging it in the index.
+ - Any previously staged changes in the index will be lost.
  -
- - Use indexpopulated only if the index file already contains exactly the
- - contents of aref.
+ - When only one branch is specified, it is merged into the index.
+ - In this case, previously staged changes in the index are preserved.
+ -
+ - Should be run with a temporary index file configured by Git.useIndex.
  -}
-merge :: Git.Repo -> String -> String -> String -> Bool -> IO ()
-merge g aref bref newref indexpopulated = do
-	stage g aref bref indexpopulated
-	commit g "union merge" newref [aref, bref]
+merge :: Git.Repo -> [String] -> IO ()
+merge g (x:y:[]) = do
+	a <- ls_tree g x
+	b <- merge_trees g x y
+	update_index g (a++b)
+merge g [x] = merge_tree_index g x >>= update_index g
+merge _ _ = error "wrong number of branches to merge"
 
-{- Stages the content of both refs into the index. -}
-stage :: Git.Repo -> String -> String -> Bool -> IO ()
-stage g aref bref indexpopulated = do
-	-- Get the contents of aref, as a starting point, unless
-	-- the index is already populated with it.
-	ls <- if indexpopulated
-		then return []
-		else fromgit ["ls-tree", "-z", "-r", "--full-tree", aref]
-	-- Identify files that are different between aref and bref, and
-	-- inject merged versions into git.
-	diff <- fromgit
-		["diff-tree", "--raw", "-z", "-r", "--no-renames", "-l0", aref, bref]
-	ls' <- mapM mergefile (pairs diff)
-	-- Populate the index file. Later lines override earlier ones.
-	togit ["update-index", "-z", "--index-info"]
-		(join "\0" $ ls++catMaybes ls')
+{- Feeds a list into update-index. Later items in the list can override
+ - earlier ones, so the list can be generated from any combination of
+ - ls_tree, merge_trees, and merge_tree. -}
+update_index :: Git.Repo -> [String] -> IO ()
+update_index g l =  togit ["update-index", "-z", "--index-info"] (join "\0" l)
 	where
-		fromgit l = Git.pipeNullSplit g (map Param l)
-		togit l content = Git.pipeWrite g (map Param l) content
+		togit ps content = Git.pipeWrite g (map Param ps) content
 			>>= forceSuccess
 
+{- Gets the contents of a tree in a format suitable for update_index. -}
+ls_tree :: Git.Repo -> String -> IO [String]
+ls_tree g x = Git.pipeNullSplit g $ 
+	map Param ["ls-tree", "-z", "-r", "--full-tree", x]
+
+{- For merging two trees. -}
+merge_trees :: Git.Repo -> String -> String -> IO [String]
+merge_trees g x y = calc_merge g
+	["diff-tree", "--raw", "-z", "-r", "--no-renames", "-l0", x, y]
+
+{- For merging a single tree into the index. -}
+merge_tree_index :: Git.Repo -> String -> IO [String]
+merge_tree_index g x = calc_merge g
+	["diff-index", "--raw", "-z", "-r", "--no-renames", "-l0", x]
+
+{- Calculates how to perform a merge, using git to get a raw diff,
+ - and returning a list suitable for update_index. -}
+calc_merge :: Git.Repo -> [String] -> IO [String]
+calc_merge g differ = do
+	diff <- Git.pipeNullSplit g $ map Param differ
+	l <- mapM mergefile (pairs diff)
+	return $ catMaybes l
+	where
 		pairs [] = []
 		pairs (_:[]) = error "parse error"
 		pairs (a:b:rest) = (a,b):pairs rest
@@ -62,7 +77,7 @@ stage g aref bref indexpopulated = do
 		mergefile (info, file) = do
 			let [_colonamode, _bmode, asha, bsha, _status] = words info
 			if bsha == nullsha
-				then return Nothing -- already staged from aref
+				then return Nothing -- already staged
 				else mergefile' file asha bsha
 		mergefile' file asha bsha = do
 			let shas = filter (/= nullsha) [asha, bsha]
@@ -70,10 +85,10 @@ stage g aref bref indexpopulated = do
 			sha <- Git.hashObject g $ unionmerge content
 			return $ Just $ ls_tree_line sha file
 
-{- Commits the index into the specified branch. If refs are specified,
- - commits a merge. -}
+{- Commits the index into the specified branch, 
+ - with the specified parent refs. -}
 commit :: Git.Repo -> String -> String -> [String] -> IO ()
-commit g message newref mergedrefs = do
+commit g message newref parentrefs = do
 	tree <- Git.getSha "write-tree" $ ignorehandle $
 		pipeFrom "git" ["write-tree"]
 	sha <- Git.getSha "commit-tree" $ ignorehandle $ 
@@ -81,4 +96,4 @@ commit g message newref mergedrefs = do
 	Git.run g "update-ref" [Param newref, Param sha]
 	where
 		ignorehandle a = return . snd =<< a
-		ps = concatMap (\r -> ["-p", r]) mergedrefs
+		ps = concatMap (\r -> ["-p", r]) parentrefs
