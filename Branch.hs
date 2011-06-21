@@ -1,11 +1,14 @@
-{- git-annex branch management
+{- management of the git-annex branch
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Branch where
+module Branch (
+	update,
+	change
+) where
 
 import Control.Monad (unless)
 import Control.Monad.State (liftIO)
@@ -48,3 +51,10 @@ updateRef ref
 		unless (null diffs) $ do
 			showSideAction "merging " ++ ref ++ " into " ++ name ++ "..."
 			liftIO $ unionMerge g fullname ref fullname
+
+{- Stages the content of a file to be committed to the branch. -}
+change :: FilePath -> String -> Annex ()
+change file content = do
+	update
+
+{- Commits staged changes to the branch. -}

@@ -12,7 +12,6 @@ module GitUnionMerge (
 import System.FilePath
 import System.Directory
 import System.Cmd.Utils
-import System.Posix.Env (setEnv, unsetEnv)
 import Control.Monad (when)
 import Data.List
 import Data.Maybe
@@ -21,27 +20,12 @@ import Data.String.Utils
 import qualified GitRepo as Git
 import Utility
 
+{- Performs a union merge. Should be run with a temporary index file
+ - configured by Git.withIndex. -}
 unionMerge :: Git.Repo -> String -> String -> String -> IO ()
 unionMerge g aref bref newref = do
-	setup g
 	stage g aref bref
 	commit g aref bref newref
-	cleanup g
-
-tmpIndex :: Git.Repo -> FilePath
-tmpIndex g = Git.workTree g </> Git.gitDir g </> "index.git-union-merge"
-
-{- Configures git to use a temporary index file. -}
-setup :: Git.Repo -> IO ()
-setup g = do
-	cleanup g -- idempotency
-	setEnv "GIT_INDEX_FILE" (tmpIndex g) True
-
-cleanup :: Git.Repo -> IO ()
-cleanup g = do
-	unsetEnv "GIT_INDEX_FILE"
-	e' <- doesFileExist (tmpIndex g)
-	when e' $ removeFile (tmpIndex g)
 
 {- Stages the content of both refs into the index. -}
 stage :: Git.Repo -> String -> String -> IO ()
@@ -89,7 +73,7 @@ stage g aref bref = do
 					unionmerge content
 			return $ Just $ ls_tree_line sha file
 
-{- Commits the index into the specified branch. -}
+{- Commits the index into the specified branch, as a merge commit. -}
 commit :: Git.Repo -> String -> String -> String -> IO ()
 commit g aref bref newref = do
 	tree <- getSha "write-tree"  $

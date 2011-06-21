@@ -58,6 +58,7 @@ module GitRepo (
 	typeChangedStagedFiles,
 	repoAbsPath,
 	reap,
+	withIndex,
 
 	prop_idempotent_deencode
 ) where
@@ -82,6 +83,7 @@ import Codec.Binary.UTF8.String (encode)
 import Text.Printf
 import Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import System.Exit
+import System.Posix.Env (setEnv, unsetEnv)
 
 import Utility
 
@@ -378,6 +380,14 @@ reap = do
 	-- throws an exception when there are no child processes
 	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
 	maybe (return ()) (const reap) r
+
+{- Runs an action using a specified index file. -}
+withIndex :: FilePath -> IO a -> IO a
+withIndex index a = do
+	setEnv "GIT_INDEX_FILE" index True
+	r <- a
+	unsetEnv "GIT_INDEX_FILE"
+	return r
 
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]

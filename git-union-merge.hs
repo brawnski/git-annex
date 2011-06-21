@@ -6,6 +6,9 @@
  -}
 
 import System.Environment
+import System.FilePath
+import System.Directory
+import Control.Monad (when)
 
 import GitUnionMerge
 import qualified GitRepo as Git
@@ -15,6 +18,18 @@ header = "Usage: git-union-merge ref ref newref"
 
 usage :: IO a
 usage = error $ "bad parameters\n\n" ++ header
+
+tmpIndex :: Git.Repo -> FilePath
+tmpIndex g = Git.workTree g </> Git.gitDir g </> "index.git-union-merge"
+
+setup :: Git.Repo -> IO ()
+setup g = do
+	cleanup g -- idempotency
+
+cleanup :: Git.Repo -> IO ()
+cleanup g = do
+	e' <- doesFileExist (tmpIndex g)
+	when e' $ removeFile (tmpIndex g)
 
 parseArgs :: IO [String]
 parseArgs = do
@@ -27,4 +42,7 @@ main :: IO ()
 main = do
 	[aref, bref, newref] <- parseArgs
 	g <- Git.configRead =<< Git.repoFromCwd
-	unionMerge g aref bref newref
+	Git.withIndex (tmpIndex g) $ do
+		setup g
+		unionMerge g aref bref newref
+		cleanup g
