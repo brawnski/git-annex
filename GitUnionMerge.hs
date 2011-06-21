@@ -6,7 +6,9 @@
  -}
 
 module GitUnionMerge (
-	unionMerge
+	merge,
+	stage,
+	commit
 ) where
 
 import System.Cmd.Utils
@@ -23,10 +25,10 @@ import Utility
  - Use indexpopulated only if the index file already contains exactly the
  - contents of aref.
  -}
-unionMerge :: Git.Repo -> String -> String -> String -> Bool -> IO ()
-unionMerge g aref bref newref indexpopulated = do
+merge :: Git.Repo -> String -> String -> String -> Bool -> IO ()
+merge g aref bref newref indexpopulated = do
 	stage g aref bref indexpopulated
-	commit g aref bref newref
+	commit g "union merge" newref [aref, bref]
 
 {- Stages the content of both refs into the index. -}
 stage :: Git.Repo -> String -> String -> Bool -> IO ()
@@ -68,14 +70,15 @@ stage g aref bref indexpopulated = do
 			sha <- Git.hashObject g $ unionmerge content
 			return $ Just $ ls_tree_line sha file
 
-{- Commits the index into the specified branch, as a merge commit. -}
-commit :: Git.Repo -> String -> String -> String -> IO ()
-commit g aref bref newref = do
+{- Commits the index into the specified branch. If refs are specified,
+ - commits a merge. -}
+commit :: Git.Repo -> String -> String -> [String] -> IO ()
+commit g message newref mergedrefs = do
 	tree <- Git.getSha "write-tree" $ ignorehandle $
 		pipeFrom "git" ["write-tree"]
 	sha <- Git.getSha "commit-tree" $ ignorehandle $ 
-		pipeBoth "git" ["commit-tree", tree, "-p", aref, "-p", bref]
-			"union merge"
+		pipeBoth "git" (["commit-tree", tree] ++ ps) message
 	Git.run g "update-ref" [Param newref, Param sha]
 	where
 		ignorehandle a = return . snd =<< a
+		ps = concatMap (\r -> ["-p", r]) mergedrefs
