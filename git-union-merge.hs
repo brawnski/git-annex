@@ -19,7 +19,7 @@ import qualified GitRepo as Git
 import Utility
 
 header :: String
-header = "Usage: git-union-merge newref ref ref"
+header = "Usage: git-union-merge ref ref newref"
 
 usage :: IO a
 usage = error $ "bad parameters\n\n" ++ header
