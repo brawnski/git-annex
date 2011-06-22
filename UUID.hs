@@ -30,11 +30,10 @@ import qualified Data.Map as M
 import Data.Maybe
 
 import qualified GitRepo as Git
+import qualified Branch
 import Types
 import Types.UUID
-import Locations
 import qualified Annex
-import Utility
 import qualified SysConfig
 import Config
 
@@ -103,26 +102,21 @@ describeUUID :: UUID -> String -> Annex ()
 describeUUID uuid desc = do
 	m <- uuidMap
 	let m' = M.insert uuid desc m
-	logfile <- uuidLog
-	liftIO $ safeWriteFile logfile (serialize m')
+	Branch.change uuidLog (serialize m')
 	where
 		serialize m = unlines $ map (\(u, d) -> u++" "++d) $ M.toList m
 
 {- Read and parse the uuidLog into a Map -}
 uuidMap :: Annex (M.Map UUID String)
 uuidMap = do
-	logfile <- uuidLog
-	s <- liftIO $ catch (readFile logfile) ignoreerror
+	s <- Branch.get uuidLog
 	return $ M.fromList $ map pair $ lines s
 	where
 		pair l =
 			if 1 < length (words l)
 				then (head $ words l, unwords $ drop 1 $ words l)
 				else ("", "")
-		ignoreerror _ = return ""
 
 {- Filename of uuid.log. -}
-uuidLog :: Annex FilePath
-uuidLog = do
-	g <- Annex.gitRepo
-	return $ gitStateDir g ++ "uuid.log"
+uuidLog :: FilePath
+uuidLog = "uuid.log"
