@@ -19,7 +19,6 @@ import System.IO.Error
 import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
-import Control.Monad.State (liftIO)
 import Maybe
 import qualified Data.Map as M
 import System.Path (recurseDir)
@@ -152,8 +151,6 @@ test_unannex = "git-annex unannex" ~: TestList [nocopy, withcopy]
 			annexed_notpresent annexedfile
 		withcopy = "with content" ~: intmpclonerepo $ do
 			git_annex "get" ["-q", annexedfile] @? "get failed"
-			Utility.boolSystem "git" [Utility.Params "commit -q -a -m statechanged"]
-				@? "git commit of state failed"
 			annexed_present annexedfile
 			git_annex "unannex" ["-q", annexedfile, sha1annexedfile] @? "unannex failed"
 			unannexed annexedfile
@@ -167,8 +164,6 @@ test_drop = "git-annex drop" ~: TestList [noremote, withremote, untrustedremote]
 	where
 		noremote = "no remotes" ~: TestCase $ intmpclonerepo $ do
 			git_annex "get" ["-q", annexedfile] @? "get failed"
-			Utility.boolSystem "git" [Utility.Params "commit -q -a -m statechanged"]
-				@? "git commit of state failed"
 			Utility.boolSystem "git" [Utility.Params "remote rm origin"]
 				@? "git remote rm origin failed"
 			r <- git_annex "drop" ["-q", annexedfile]
