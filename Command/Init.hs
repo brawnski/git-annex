@@ -15,6 +15,7 @@ import System.FilePath
 import Command
 import qualified Annex
 import qualified GitRepo as Git
+import qualified Branch
 import UUID
 import Version
 import Messages
@@ -29,7 +30,6 @@ command = [repoCommand "init" paramDesc seek
 seek :: [CommandSeek]
 seek = [withWords start]
 
-{- Stores description for the repository etc. -}
 start :: CommandStartWords
 start ws = do
 	when (null description) $
@@ -41,65 +41,13 @@ start ws = do
 
 perform :: String -> CommandPerform
 perform description = do
+	Branch.create
 	g <- Annex.gitRepo
 	u <- getUUID g
 	setVersion
-	if Git.repoIsLocalBare g
-		then do
-			showLongNote $
-				"This is a bare repository, so its description cannot be committed.\n" ++
-				"To record the description, run this command in a clone of this repository:\n" ++
-				"   git annex describe " ++ show u ++ " " ++ show description ++ "\n\n"
-			next $ return True
-		else do
-			describeUUID u description
-			liftIO $ gitAttributesWrite g
-			gitPreCommitHookWrite g
-			next cleanup
-
-cleanup :: CommandCleanup
-cleanup = do
-	g <- Annex.gitRepo
-	logfile <- uuidLog
-	liftIO $ Git.run g "add" [File logfile]
-	liftIO $ Git.run g "commit" 
-		[ Params "-q -m"
-		, Param "git annex repository description"
-		, File logfile
-		]
-	return True
-
-{- configure git to use union merge driver on state files, if it is not
- - already -}
-gitAttributesWrite :: Git.Repo -> IO ()
-gitAttributesWrite repo = do
-	exists <- doesFileExist attributes
-	if not exists
-		then do
-			safeWriteFile attributes $ unlines attrLines
-			commit
-		else do
-			content <- readFile attributes
-			let present = lines content
-			let missing = filter (\l -> not $ l `elem` present) attrLines
-			unless (null missing) $ do
-				appendFile attributes $ unlines missing
-				commit
-	where
-		attributes = Git.attributes repo
-		commit = do
-			Git.run repo "add" [Param attributes]
-			Git.run repo "commit"
-				[ Params "-q -m"
-				, Param "git-annex setup"
-				, Param attributes
-				]
-
-attrLines :: [String]
-attrLines =
-	[ stateDir </> "*.log merge=union"
-	, stateDir </> "*/*/*.log merge=union"
-	]
+	describeUUID u description
+	gitPreCommitHookWrite g
+	next $ return True
 
 {- set up a git pre-commit hook, if one is not already present -}
 gitPreCommitHookWrite :: Git.Repo -> Annex ()

@@ -11,7 +11,6 @@ import Command
 import qualified Remote
 import UUID
 import Messages
-import qualified Command.Init
 
 command :: [Command]
 command = [repoCommand "describe" (paramPair paramRemote paramDesc) seek
@@ -34,4 +33,4 @@ start ws = notBareRepo $ do
 perform :: UUID -> String -> CommandPerform
 perform u description = do
 	describeUUID u description
-	next $ Command.Init.cleanup
+	next $ return True
