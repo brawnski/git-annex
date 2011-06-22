@@ -497,18 +497,6 @@ These files are used by git-annex, in your git repository:
 `.git/annex/objects/` contains the annexed file contents that are currently
 available. Annexed files in your git repository symlink to that content.
 
-`.git-annex/uuid.log` is used to map between repository UUID and
-descriptions.
-
-`.git-annex/trust.log` is used to indicate which repositories are trusted
-and untrusted.
-
-`.git-annex/*.log` is where git-annex records its content tracking
-information. These files should be committed to git.
-
-`.gitattributes` is configured to use git's union merge driver
-to avoid conflicts when merging files in the `.git-annex` directory.
-
 # SEE ALSO
 
 Most of git-annex's documentation is available on its web site, 
