@@ -34,10 +34,7 @@ start = do
 perform :: CommandPerform
 perform = do
 	g <- Annex.gitRepo
-
 	gitPreCommitHookUnWrite g
-	liftIO $ gitAttributesUnWrite g
-
 	next $ return True
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
@@ -50,11 +47,3 @@ gitPreCommitHookUnWrite repo = do
 			else warning $ "pre-commit hook (" ++ hook ++ 
 				") contents modified; not deleting." ++
 				" Edit it to remove call to git annex."
-
-gitAttributesUnWrite :: Git.Repo -> IO ()
-gitAttributesUnWrite repo = do
-	let attributes = Git.attributes repo
-	whenM (doesFileExist attributes) $ do
-		c <- readFileStrict attributes
-		safeWriteFile attributes $ unlines $
-			filter (\l -> not $ l `elem` Command.Init.attrLines) $ lines c
