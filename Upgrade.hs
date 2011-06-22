@@ -11,6 +11,7 @@ import Types
 import Version
 import qualified Upgrade.V0
 import qualified Upgrade.V1
+import qualified Upgrade.V2
 
 {- Uses the annex.version git config setting to automate upgrades. -}
 upgrade :: Annex Bool
@@ -19,4 +20,5 @@ upgrade = do
 	case version of
 		"0" -> Upgrade.V0.upgrade
 		"1" -> Upgrade.V1.upgrade
+		"2" -> Upgrade.V2.upgrade
 		_ -> return True

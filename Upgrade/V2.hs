@@ -5,32 +5,22 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Upgrade.V1 where
+module Upgrade.V2 where
 
-import System.IO.Error (try)
 import System.Directory
-import Control.Monad.State (liftIO)
-import Control.Monad (filterM, forM_, unless)
-import System.Posix.Files
 import System.FilePath
-import Data.String.Utils
-import System.Posix.Types
-import Data.Maybe
-import Data.Char
 
 import Types.Key
-import Content
 import Types
-import Locations
-import LocationLog
-import qualified Annex
-import qualified AnnexQueue
 import qualified GitRepo as Git
-import Backend
 import Messages
-import Version
 import Utility
-import qualified Command.Init
+import Locations
+
+upgrade :: Annex Bool
+upgrade = do
+	showNote "v2 to v3"
+	error "TODO"
 
 {- Old .gitattributes contents, not needed anymore. -}
 attrLines :: [String]

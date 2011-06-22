@@ -23,6 +23,7 @@ module Locations (
 	logFile,
 	logFileKey,
 	hashDirMixed,
+	hashDirLower,
 
 	prop_idempotent_fileKey
 ) where
