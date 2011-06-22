@@ -18,7 +18,7 @@ upgrade :: Annex Bool
 upgrade = do
 	version <- getVersion
 	case version of
-		"0" -> Upgrade.V0.upgrade
-		"1" -> Upgrade.V1.upgrade
-		"2" -> Upgrade.V2.upgrade
+		Just "0" -> Upgrade.V0.upgrade
+		Just "1" -> Upgrade.V1.upgrade
+		Just "2" -> Upgrade.V2.upgrade
 		_ -> return True
