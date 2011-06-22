@@ -10,7 +10,8 @@ module Branch (
 	update,
 	get,
 	change,
-	commit
+	commit,
+	shortref
 ) where
 
 import Control.Monad (unless, when, liftM)
@@ -20,6 +21,7 @@ import System.Directory
 import Data.String.Utils
 import System.Cmd.Utils
 import Data.Maybe
+import Data.List
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -36,6 +38,13 @@ name = "git-annex"
 {- Fully qualified name of the branch. -}
 fullname :: String
 fullname = "refs/heads/" ++ name
+
+shortref :: String -> String
+shortref = remove "refs/heads/" . remove "refs/remotes/"
+	where
+		remove prefix s
+			| prefix `isPrefixOf` s = drop (length prefix) s
+			| otherwise = s
 
 {- A separate index file for the branch. -}
 index :: Git.Repo -> FilePath
@@ -151,7 +160,7 @@ updateRef ref
 		if (null diffs)
 			then return Nothing
 			else do
-				showSideAction $ "merging " ++ ref ++ " into " ++ name ++ "..."
+				showSideAction $ "merging " ++ shortref ref ++ " into " ++ name ++ "..."
 				-- By passing only one ref, it is actually
 				-- merged into the index, preserving any
 				-- changes that may already be staged.
