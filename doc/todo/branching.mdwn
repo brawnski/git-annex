@@ -1,3 +1,5 @@
+[[done]] !!!
+
 The use of `.git-annex` to store logs means that if a repo has branches 
 and the user switched between them, git-annex will see different logs in
 the different branches, and so may miss info about what remotes have which
