@@ -30,7 +30,6 @@ import Backend
 import Messages
 import Version
 import Utility
-import qualified Command.Init
 
 -- v2 adds hashing of filenames of content and location log files.
 -- Key information is encoded in filenames differently, so
@@ -71,10 +70,6 @@ upgrade = do
 	
 			AnnexQueue.flush True
 			setVersion
-
-			-- add new line to auto-merge hashed location logs
-			-- this commits, so has to come after the upgrade
-			liftIO $ Command.Init.gitAttributesWrite g
 
 	return True
 
