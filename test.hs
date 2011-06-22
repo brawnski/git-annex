@@ -105,12 +105,7 @@ blackbox = TestLabel "blackbox" $ TestList
 test_init :: Test
 test_init = "git-annex init" ~: TestCase $ innewrepo $ do
 	git_annex "init" ["-q", reponame] @? "init failed"
-	e <- doesFileExist annexlog
-	e @? (annexlog ++ " not created")
-	c <- readFile annexlog
-	reponame `isInfixOf` c @? annexlog ++ " does not contain repo name"
 	where
-		annexlog = ".git-annex/uuid.log"
 		reponame = "test repo"
 
 test_add :: Test
@@ -609,26 +604,9 @@ checklocationlog f expected = do
 	r <- annexeval $ Backend.lookupFile f
 	case r of
 		Just (k, _) -> do
-			uuids <- annexeval $ do
-				g <- Annex.gitRepo
-				LocationLog.keyLocations g k
+			uuids <- annexeval $ LocationLog.keyLocations k
 			assertEqual ("bad content in location log for " ++ f ++ " key " ++ (show k) ++ " uuid " ++ thisuuid)
 				expected (thisuuid `elem` uuids)
-
-			-- Location log files should always be checked
-			-- into git, and any modifications staged for
-			-- commit. This is a regression test, as some
-			-- commands forgot to.
-			(fs, ufs) <- annexeval $ do
-				g <- Annex.gitRepo
-				let lf = LocationLog.logFile g k
-				fs <- liftIO $ Git.inRepo g [lf]
-				ufs <- liftIO $ Git.changedUnstagedFiles g [lf]
-				return (fs, ufs)
-			when (null fs) $
-				assertFailure $ f ++ " logfile not added to git repo"
-			when (not $ null ufs) $
-				assertFailure $ f ++ " logfile changes not staged"
 		_ -> assertFailure $ f ++ " failed to look up key"
 
 inlocationlog :: FilePath -> Assertion
