@@ -6,13 +6,14 @@
  -}
 
 module Branch (
+	create,
 	update,
 	get,
 	change,
 	commit
 ) where
 
-import Control.Monad (unless, liftM)
+import Control.Monad (unless, when, liftM)
 import Control.Monad.State (liftIO)
 import System.FilePath
 import System.Directory
@@ -20,7 +21,7 @@ import Data.String.Utils
 import System.Cmd.Utils
 import Data.Maybe
 
-import Types.Branch
+import Types.BranchState
 import qualified GitRepo as Git
 import qualified GitUnionMerge
 import qualified Annex
@@ -45,8 +46,8 @@ index g = Git.workTree g </> Git.gitDir g </> "index." ++ name
  - Usually, this is only done when the index doesn't yet exist, and
  - the index is used to build up changes to be commited to the branch.
  -}
-genIndex :: FilePath -> Git.Repo -> IO ()
-genIndex f g = do
+genIndex :: Git.Repo -> IO ()
+genIndex g = do
 	ls <- Git.pipeNullSplit g $
 		map Param ["ls-tree", "-z", "-r", "--full-tree", fullname]
 	forceSuccess =<< Git.pipeWrite g
@@ -61,26 +62,71 @@ withIndex a = do
 	liftIO $ Git.useIndex f
 
 	e <- liftIO $ doesFileExist f
-	unless e $ liftIO $ genIndex f g
+	unless e $ liftIO $ genIndex g
 
 	r <- a
 	liftIO $ Git.useDefaultIndex
 	return r
 
-{- There is a small cache of the most recently accessed item from the
- - branch. git-annex has good locality, so that is enough. -}
+withIndexUpdate :: Annex a -> Annex a
+withIndexUpdate a = update >> withIndex a
+
+getState :: Annex BranchState
+getState = Annex.getState Annex.branchstate
+
+setState :: BranchState -> Annex ()
+setState state = Annex.changeState $ \s -> s { Annex.branchstate = state }
+
 setCache :: FilePath -> String -> Annex ()
-setCache file content = Annex.changeState $ \s -> s { Annex.branchcache = BranchCache (Just file) content }
+setCache file content = do
+	state <- getState
+	setState state { cachedFile = Just file, cachedContent = content }
+
+setCacheChanged :: FilePath -> String -> Annex ()
+setCacheChanged file content = do
+	state <- getState
+	setState state { cachedFile = Just file, cachedContent = content, branchChanged = True }
 
 invalidateCache :: Annex ()
-invalidateCache = Annex.changeState $ \s -> s { Annex.branchcache = emptyBranchCache }
+invalidateCache = do
+	state <- getState
+	setState state { cachedFile = Nothing, cachedContent = "" }
+
+getCache :: FilePath -> Annex (Maybe String)
+getCache file = getState >>= handle
+	where
+		handle state
+			| cachedFile state == Just file =
+				return $ Just $ cachedContent state
+			| otherwise = return Nothing
+
+{- Creates the branch, if it does not already exist. -}
+create :: Annex ()
+create = do
+	exists <- refexists fullname
+	unless exists $ do
+		g <- Annex.gitRepo
+		inorigin <- refexists origin
+		if inorigin
+			then liftIO $ Git.run g "branch" [Param name, Param origin]
+			else liftIO $ do
+				let f = index g
+				liftIO $ Git.useIndex f
+				GitUnionMerge.commit g "branch created" fullname []
+				liftIO $ Git.useDefaultIndex
+	where
+		origin = "origin/" ++ name
+		refexists ref = do
+			g <- Annex.gitRepo
+			liftIO $ Git.runBool g "show-ref"
+				[Param "--verify", Param "-q", Param ref]
 
 {- Ensures that the branch is up-to-date; should be called before
  - data is read from it. Runs only once per git-annex run. -}
 update :: Annex ()
 update = do
-	updated <- Annex.getState Annex.branchupdated
-	unless updated $ withIndex $ do
+	state <- Annex.getState Annex.branchstate
+	unless (branchUpdated state) $ withIndex $ do
 		g <- Annex.gitRepo
 		r <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
 		let refs = map (last . words) (lines r)
@@ -88,7 +134,7 @@ update = do
 		unless (null updated) $ liftIO $
 			GitUnionMerge.commit g "update" fullname
 				(fullname:updated)
-		Annex.changeState $ \s -> s { Annex.branchupdated = True }
+		Annex.changeState $ \s -> s { Annex.branchstate = state { branchUpdated = True } }
 		invalidateCache
 
 {- Ensures that a given ref has been merged into the index. -}
@@ -120,27 +166,29 @@ change file content = do
 	withIndex $ liftIO $ Git.run g "update-index"
 		[ Param "--add", Param "--cacheinfo", Param "100644",
 		  Param sha, File file]
-	setCache file content
+	setCacheChanged file content
 
-{- Commits staged changes to the branch. -}
+{- Commits any staged changes to the branch. -}
 commit :: String -> Annex ()
-commit message = withIndex $ do
-	g <- Annex.gitRepo
-	liftIO $ GitUnionMerge.commit g message fullname []
+commit message = do
+	state <- getState
+	when (branchChanged state) $ do
+		g <- Annex.gitRepo
+		withIndex $ liftIO $
+			GitUnionMerge.commit g message fullname [fullname]
 
 {- Gets the content of a file on the branch, or content staged in the index
  - if it's newer. Returns an empty string if the file didn't exist yet. -}
 get :: FilePath -> Annex String
-get file = update >> do
-	withIndex $ do
-		g <- Annex.gitRepo
-		content <- liftIO $ catch (cat g) (const $ return "")
-		setCache file content
-		return content
+get file = do
+	cached <- getCache file
+	case cached of
+		Just content -> return content
+		Nothing -> withIndexUpdate $ do
+			g <- Annex.gitRepo
+			content <- liftIO $ catch (cat g) (const $ return "")
+			setCache file content
+			return content
 	where
-		-- To avoid stderr from cat-file when file does not exist,
-		-- first run it with -e to check that it exists.
-		cat g = do
-			Git.run g "cat-file" [Param "-e", catfile]
-			Git.pipeRead g [Param "cat-file", Param "blob", catfile]
+		cat g = Git.pipeRead g [Param "cat-file", Param "blob", catfile]
 		catfile = Param $ ':':file
