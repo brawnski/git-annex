@@ -20,6 +20,7 @@ module Locations (
 	gitAnnexBadLocation,
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
+	uuidLog,
 	logFile,
 	logFileKey,
 	hashDirMixed,
@@ -116,6 +117,10 @@ gitAnnexUnusedLog prefix r = gitAnnexDir r </> (prefix ++ "unused")
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool
 isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
+
+{- Filename of uuid.log. -}
+uuidLog :: FilePath
+uuidLog = "uuid.log"
 
 {- The filename of the log file for a given key. -}
 logFile :: Key -> String

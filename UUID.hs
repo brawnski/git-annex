@@ -19,7 +19,6 @@ module UUID (
 	genUUID,
 	prettyPrintUUIDs,
 	describeUUID,
-	uuidLog,
 	uuidMap
 ) where
 
@@ -36,6 +35,7 @@ import Types.UUID
 import qualified Annex
 import qualified SysConfig
 import Config
+import Locations
 
 configkey :: String
 configkey = "annex.uuid"
@@ -116,7 +116,3 @@ uuidMap = do
 			if 1 < length (words l)
 				then (head $ words l, unwords $ drop 1 $ words l)
 				else ("", "")
-
-{- Filename of uuid.log. -}
-uuidLog :: FilePath
-uuidLog = "uuid.log"
