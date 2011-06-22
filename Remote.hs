@@ -33,19 +33,17 @@ module Remote (
 	prop_idempotent_configEscape
 ) where
 
-import Control.Monad.State (liftIO)
 import Control.Monad (filterM)
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Char
 
+import qualified Branch
 import Types
 import Types.Remote
 import UUID
 import qualified Annex
-import Locations
-import Utility
 import Config
 import Trust
 import LocationLog
@@ -160,29 +158,21 @@ forceTrust level remotename = do
 		s { Annex.forcetrust = (r, level):Annex.forcetrust s }
 
 {- Filename of remote.log. -}
-remoteLog :: Annex FilePath
-remoteLog = do
-	g <- Annex.gitRepo
-	return $ gitStateDir g ++ "remote.log"
+remoteLog :: FilePath
+remoteLog = "remote.log"
 
 {- Adds or updates a remote's config in the log. -}
 configSet :: UUID -> RemoteConfig -> Annex ()
 configSet u c = do
 	m <- readRemoteLog
-	l <- remoteLog
-	liftIO $ safeWriteFile l $ unlines $ sort $
+	Branch.change remoteLog $ unlines $ sort $
 		map toline $ M.toList $ M.insert u c m
 	where
 		toline (u', c') = u' ++ " " ++ (unwords $ configToKeyVal c')
 
 {- Map of remotes by uuid containing key/value config maps. -}
 readRemoteLog :: Annex (M.Map UUID RemoteConfig)
-readRemoteLog = do
-	l <- remoteLog
-	s <- liftIO $ catch (readFile l) ignoreerror
-	return $ remoteLogParse s
-	where
-		ignoreerror _ = return ""
+readRemoteLog = return . remoteLogParse =<< Branch.get remoteLog
 
 remoteLogParse :: String -> M.Map UUID RemoteConfig
 remoteLogParse s =

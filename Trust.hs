@@ -18,18 +18,14 @@ import Control.Monad.State
 import qualified Data.Map as M
 
 import TrustLevel
-import qualified GitRepo as Git
+import qualified Branch
 import Types
 import UUID
-import Locations
 import qualified Annex
-import Utility
 
 {- Filename of trust.log. -}
-trustLog :: Annex FilePath
-trustLog = do
-	g <- Annex.gitRepo
-	return $ gitStateDir g ++ "trust.log"
+trustLog :: FilePath
+trustLog = "trust.log"
 
 {- Returns a list of UUIDs at the specified trust level. -}
 trustGet :: TrustLevel -> Annex [UUID]
@@ -41,12 +37,9 @@ trustGet level = do
  - values from forcetrust -}
 trustMap :: Annex (M.Map UUID TrustLevel)
 trustMap = do
-	logfile <- trustLog
 	overrides <- Annex.getState Annex.forcetrust
-	s <- liftIO $ catch (readFile logfile) ignoreerror
+	s <- Branch.get trustLog
 	return $ M.fromList $ trustMapParse s ++ overrides
-	where
-                ignoreerror _ = return ""
 
 {- Trust map parser. -}
 trustMapParse :: String -> [(UUID, TrustLevel)]
@@ -60,7 +53,7 @@ trustMapParse s = map pair $ filter (not . null) $ lines s
 			where
 				w = words l
 
-{- Changes the trust level for a uuid in the trustLog, and commits it. -}
+{- Changes the trust level for a uuid in the trustLog. -}
 trustSet :: UUID -> TrustLevel -> Annex ()
 trustSet uuid level = do
 	when (null uuid) $
@@ -68,15 +61,7 @@ trustSet uuid level = do
         m <- trustMap
 	when (M.lookup uuid m /= Just level) $ do
 		let m' = M.insert uuid level m
-	        logfile <- trustLog
-	        liftIO $ safeWriteFile logfile (serialize m')
-		g <- Annex.gitRepo
-		liftIO $ Git.run g "add" [File logfile]
-		liftIO $ Git.run g "commit"
-			[ Params "-q -m"
-			, Param "git annex trust change"
-			, File logfile
-			]
+		Branch.change trustLog (serialize m')
         where
                 serialize m = unlines $ map showpair $ M.toList m
 		showpair (u, t) = u ++ " " ++ show t

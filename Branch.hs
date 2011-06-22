@@ -168,15 +168,6 @@ change file content = do
 		  Param sha, File file]
 	setCacheChanged file content
 
-{- Commits any staged changes to the branch. -}
-commit :: String -> Annex ()
-commit message = do
-	state <- getState
-	when (branchChanged state) $ do
-		g <- Annex.gitRepo
-		withIndex $ liftIO $
-			GitUnionMerge.commit g message fullname [fullname]
-
 {- Gets the content of a file on the branch, or content staged in the index
  - if it's newer. Returns an empty string if the file didn't exist yet. -}
 get :: FilePath -> Annex String
@@ -192,3 +183,12 @@ get file = do
 	where
 		cat g = Git.pipeRead g [Param "cat-file", Param "blob", catfile]
 		catfile = Param $ ':':file
+
+{- Commits any staged changes to the branch. -}
+commit :: String -> Annex ()
+commit message = do
+	state <- getState
+	when (branchChanged state) $ do
+		g <- Annex.gitRepo
+		withIndex $ liftIO $
+			GitUnionMerge.commit g message fullname [fullname]

@@ -14,11 +14,8 @@ import Data.Maybe
 import Data.String.Utils
 
 import Command
-import qualified Annex
 import qualified Remote
 import qualified Types.Remote as R
-import qualified GitRepo as Git
-import Utility
 import Types
 import UUID
 import Messages
@@ -62,14 +59,6 @@ perform t u c = do
 cleanup :: UUID -> R.RemoteConfig -> CommandCleanup
 cleanup u c = do
 	Remote.configSet u c
-	g <- Annex.gitRepo
-	logfile <- Remote.remoteLog
-	liftIO $ Git.run g "add" [File logfile]
-        liftIO $ Git.run g "commit"
-                [ Params "-q --allow-empty -m"
-                , Param "git annex initremote"
-                , File logfile
-                ]
         return True
 
 {- Look up existing remote's UUID and config by name, or generate a new one -}

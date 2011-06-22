@@ -19,7 +19,8 @@ module UUID (
 	genUUID,
 	prettyPrintUUIDs,
 	describeUUID,
-	uuidMap
+	uuidMap,
+	uuidLog
 ) where
 
 import Control.Monad.State
@@ -35,10 +36,13 @@ import Types.UUID
 import qualified Annex
 import qualified SysConfig
 import Config
-import Locations
 
 configkey :: String
 configkey = "annex.uuid"
+
+{- Filename of uuid.log. -}
+uuidLog :: FilePath
+uuidLog = "uuid.log"
 
 {- Generates a UUID. There is a library for this, but it's not packaged,
  - so use the command line tool. -}

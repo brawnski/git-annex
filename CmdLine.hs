@@ -103,8 +103,8 @@ startup = do
 {- Cleanup actions. -}
 shutdown :: Annex Bool
 shutdown = do
-	Branch.commit "update"
 	AnnexQueue.flush False
+	Branch.commit "update"
 
 	liftIO $ Git.reap
 	
