@@ -1,7 +1,8 @@
 git-annex (0.20110611) UNRELEASED; urgency=low
 
   * New repository format, annex.version=3. Use `git annex upgrade` to migrate.
-
+  * git-annex now stores its logs in a git-annex branch.
+  * merge: New subcommand. Auto-merges the new git-annex branch.
   * Improved handling of bare git repos with annexes. Many more commands will
     work in them.
   * rsync is now used when copying files from repos on other filesystems.

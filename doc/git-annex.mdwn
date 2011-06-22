@@ -182,6 +182,13 @@ Many git-annex commands will stage changes for later `git commit` by you.
   Displays a list of repositories known to contain the content of the
   specified file or files.
 
+* merge
+
+  Automatically merges any changes from remotes into the git-annex branch.
+  While git-annex mostly handles keeping the git-annex branch merged
+  automatically, if you find you are unable to push the git-annex branch
+  due non-fast-forward, this will fix it.
+
 * status
 
   Displays some statistics and other information, including how much data
@@ -301,9 +308,7 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * upgrade
 
-  Upgrades the repository to current layout. Upgrades are done automatically
-  whenever a newer git annex encounters an old repository; this command
-  allows explcitly starting an upgrade.
+  Upgrades the repository to current layout.
 
 * version
 
