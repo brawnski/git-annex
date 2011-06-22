@@ -20,6 +20,7 @@ import Data.String.Utils
 import System.Cmd.Utils
 import Data.Maybe
 
+import Types.Branch
 import qualified GitRepo as Git
 import qualified GitUnionMerge
 import qualified Annex
@@ -66,11 +67,19 @@ withIndex a = do
 	liftIO $ Git.useDefaultIndex
 	return r
 
+{- There is a small cache of the most recently accessed item from the
+ - branch. git-annex has good locality, so that is enough. -}
+setCache :: FilePath -> String -> Annex ()
+setCache file content = Annex.changeState $ \s -> s { Annex.branchcache = BranchCache (Just file) content }
+
+invalidateCache :: Annex ()
+invalidateCache = Annex.changeState $ \s -> s { Annex.branchcache = emptyBranchCache }
+
 {- Ensures that the branch is up-to-date; should be called before
  - data is read from it. Runs only once per git-annex run. -}
 update :: Annex ()
 update = do
-	updated <- Annex.getState Annex.updated
+	updated <- Annex.getState Annex.branchupdated
 	unless updated $ withIndex $ do
 		g <- Annex.gitRepo
 		r <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
@@ -79,7 +88,8 @@ update = do
 		unless (null updated) $ liftIO $
 			GitUnionMerge.commit g "update" fullname
 				(fullname:updated)
-		Annex.changeState $ \s -> s { Annex.updated = True }
+		Annex.changeState $ \s -> s { Annex.branchupdated = True }
+		invalidateCache
 
 {- Ensures that a given ref has been merged into the index. -}
 updateRef :: String -> Annex (Maybe String)
@@ -108,8 +118,9 @@ change file content = do
 	g <- Annex.gitRepo
 	sha <- liftIO $ Git.hashObject g content
 	withIndex $ liftIO $ Git.run g "update-index"
-		[ Params "--add --cacheinfo 100644 ",
+		[ Param "--add", Param "--cacheinfo", Param "100644",
 		  Param sha, File file]
+	setCache file content
 
 {- Commits staged changes to the branch. -}
 commit :: String -> Annex ()
@@ -123,7 +134,9 @@ get :: FilePath -> Annex String
 get file = update >> do
 	withIndex $ do
 		g <- Annex.gitRepo
-		liftIO $ catch (cat g) (const $ return "")
+		content <- liftIO $ catch (cat g) (const $ return "")
+		setCache file content
+		return content
 	where
 		-- To avoid stderr from cat-file when file does not exist,
 		-- first run it with -e to check that it exists.

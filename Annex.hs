@@ -23,6 +23,7 @@ import GitQueue
 import Types.Backend
 import Types.Remote
 import Types.Crypto
+import Types.Branch
 import TrustLevel
 import Types.UUID
 
@@ -39,7 +40,8 @@ data AnnexState = AnnexState
 	, quiet :: Bool
 	, force :: Bool
 	, fast :: Bool
-	, updated :: Bool
+	, branchupdated :: Bool
+	, branchcache :: BranchCache
 	, forcebackend :: Maybe String
 	, forcenumcopies :: Maybe Int
 	, defaultkey :: Maybe String
@@ -60,7 +62,8 @@ newState allbackends gitrepo = AnnexState
 	, quiet = False
 	, force = False
 	, fast = False
-	, updated = False
+	, branchupdated = False
+	, branchcache = emptyBranchCache
 	, forcebackend = Nothing
 	, forcenumcopies = Nothing
 	, defaultkey = Nothing
