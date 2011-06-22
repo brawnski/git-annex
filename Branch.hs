@@ -22,6 +22,9 @@ import Data.String.Utils
 import System.Cmd.Utils
 import Data.Maybe
 import Data.List
+import System.IO
+import System.Posix.IO
+import System.Posix.Process
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -130,6 +133,15 @@ create = do
 			liftIO $ Git.runBool g "show-ref"
 				[Param "--verify", Param "-q", Param ref]
 
+{- Commits any staged changes to the branch. -}
+commit :: String -> Annex ()
+commit message = do
+	state <- getState
+	when (branchChanged state) $ do
+		g <- Annex.gitRepo
+		withIndex $ liftIO $
+			GitUnionMerge.commit g message fullname [fullname]
+
 {- Ensures that the branch is up-to-date; should be called before
  - data is read from it. Runs only once per git-annex run. -}
 update :: Annex ()
@@ -190,14 +202,23 @@ get file = do
 			setCache file content
 			return content
 	where
-		cat g = Git.pipeRead g [Param "cat-file", Param "blob", catfile]
-		catfile = Param $ ':':file
+		cat g = cmdOutput "git" $ toCommand $ Git.gitCommandLine g
+			[Param "cat-file", Param "blob", Param $ ':':file]
 
-{- Commits any staged changes to the branch. -}
-commit :: String -> Annex ()
-commit message = do
-	state <- getState
-	when (branchChanged state) $ do
-		g <- Annex.gitRepo
-		withIndex $ liftIO $
-			GitUnionMerge.commit g message fullname [fullname]
+{- Runs a command, returning its output, ignoring nonzero exit
+ - status, and discarding stderr. -}
+cmdOutput :: FilePath -> [String] -> IO String
+cmdOutput cmd params = do
+	pipepair <- createPipe
+	let callfunc _ = do
+		closeFd (snd pipepair)
+		h <- fdToHandle (fst pipepair)
+		x <- hGetContentsStrict h
+		hClose h
+		return $! x
+	pid <- pOpen3Raw Nothing (Just (snd pipepair)) Nothing cmd params
+		(closeFd (fst pipepair) >> closeFd stdError)
+	retval <- callfunc $! pid
+	let rv = seq retval retval
+	_ <- getProcessStatus True False pid
+	return rv
