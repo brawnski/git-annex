@@ -19,6 +19,7 @@ import Control.Monad (when)
 import qualified Annex
 import qualified AnnexQueue
 import qualified GitRepo as Git
+import qualified Branch
 import Types
 import Command
 import BackendList
@@ -102,6 +103,7 @@ startup = do
 {- Cleanup actions. -}
 shutdown :: Annex Bool
 shutdown = do
+	Branch.commit "update"
 	AnnexQueue.flush False
 
 	liftIO $ Git.reap
