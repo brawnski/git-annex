@@ -38,7 +38,6 @@ import LocationLog
 import UUID
 import qualified GitRepo as Git
 import qualified Annex
-import qualified AnnexQueue
 import Utility
 import StatFS
 import Types.Key

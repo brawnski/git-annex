@@ -7,7 +7,6 @@
 
 module Command.Whereis where
 
-import qualified Annex
 import LocationLog
 import Command
 import Messages
@@ -28,8 +27,7 @@ start file = isAnnexed file $ \(key, _) -> do
 
 perform :: Key -> CommandPerform
 perform key = do
-	g <- Annex.gitRepo
-	uuids <- keyLocations g key
+	uuids <- keyLocations key
 	let num = length uuids
 	showNote $ show num ++ " " ++ copiesplural num
 	if null $ uuids

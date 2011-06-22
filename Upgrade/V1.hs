@@ -121,7 +121,7 @@ moveLocationLogs = do
 					else return []
 			move (l, k) = do
 				g <- Annex.gitRepo
-				let dest = logFile g k
+				let dest = logFile k
 				let dir = gitStateDir g
 				let f = dir </> l
 				liftIO $ createDirectoryIfMissing True (parentDir dest)

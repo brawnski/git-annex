@@ -131,7 +131,7 @@ showLocations :: Key -> [UUID] -> Annex ()
 showLocations key exclude = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	uuids <- keyLocations g key
+	uuids <- keyLocations key
 	untrusteduuids <- trustGet UnTrusted
 	let uuidswanted = filteruuids uuids (u:exclude++untrusteduuids) 
 	let uuidsskipped = filteruuids uuids (u:exclude++uuidswanted)
@@ -188,8 +188,7 @@ checkKeyOnly = checkKey (\_ -> return True)
 checkKeyNumCopies :: Key -> Maybe FilePath -> Maybe Int -> Annex Bool
 checkKeyNumCopies key file numcopies = do
 	needed <- getNumCopies numcopies
-	g <- Annex.gitRepo
-	locations <- keyLocations g key
+	locations <- keyLocations key
 	untrusted <- trustGet UnTrusted
 	let untrustedlocations = intersect untrusted locations
 	let safelocations = filter (`notElem` untrusted) locations

@@ -21,7 +21,6 @@ module Locations (
 	gitAnnexUnusedLog,
 	isLinkToAnnex,
 	logFile,
-	logFileOld,
 	logFileKey,
 	hashDirMixed,
 
@@ -119,19 +118,8 @@ isLinkToAnnex :: FilePath -> Bool
 isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
 
 {- The filename of the log file for a given key. -}
-logFile :: Git.Repo -> Key -> String
-logFile = logFile' hashDirLower
-
-{- The old filename of the log file for a key. These can have mixed
- - case, which turned out to be a bad idea for directories whose contents
- - are checked into git. There was no conversion, so these have to be checked
- - for and merged in at runtime. -}
-logFileOld :: Git.Repo -> Key -> String
-logFileOld = logFile' hashDirMixed
-
-logFile' :: (Key -> FilePath) -> Git.Repo -> Key -> String
-logFile' hasher repo key =
-	gitStateDir repo ++ hasher key ++ keyFile key ++ ".log"
+logFile :: Key -> String
+logFile key = hashDirLower key ++ keyFile key ++ ".log"
 
 {- Converts a log filename into a key. -}
 logFileKey :: FilePath -> Maybe Key

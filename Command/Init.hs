@@ -8,9 +8,8 @@
 module Command.Init where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when, unless)
+import Control.Monad (when)
 import System.Directory
-import System.FilePath
 
 import Command
 import qualified Annex
@@ -19,7 +18,6 @@ import qualified Branch
 import UUID
 import Version
 import Messages
-import Locations
 import Types
 import Utility
 	

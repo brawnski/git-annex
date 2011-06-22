@@ -20,8 +20,7 @@ module LocationLog (
 	readLog,
 	writeLog,
 	keyLocations,
-	loggedKeys,
-	logFile
+	loggedKeys
 ) where
 
 import Data.Time.Clock.POSIX
@@ -89,7 +88,7 @@ logChange repo key u s = do
 		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
 			" (have you run git annex init there?)"
 	line <- logNow s u
-	let f = logFile repo key
+	let f = logFile key
 	ls <- readLog f
 	writeLog f (compactLog $ line:ls)
 
@@ -116,9 +115,9 @@ logNow s u = do
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
-keyLocations :: Git.Repo -> Key -> Annex [UUID]
-keyLocations thisrepo key = do
-	ls <- readLog $ logFile thisrepo key
+keyLocations :: Key -> Annex [UUID]
+keyLocations key = do
+	ls <- readLog $ logFile key
 	return $ map uuid $ filterPresent ls
 
 {- Filters the list of LogLines to find ones where the value
@@ -151,7 +150,7 @@ mapLog m l =
  - (There may be duplicate keys in the list.) -}
 loggedKeys :: Git.Repo -> Annex [Key]
 loggedKeys repo = do
-	error "FIXME.. does not look in git-annex branch yet"
+	_ <- error "FIXME.. does not look in git-annex branch yet"
 	exists <- liftIO $ doesDirectoryExist dir
 	if exists
 		then do

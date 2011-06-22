@@ -78,8 +78,7 @@ checkRemoteUnused' r = do
 		showLongNote $ "\n"
 	where
 		isthere k = do
-			g <- Annex.gitRepo
-			us <- keyLocations g k
+			us <- keyLocations k
 			return $ uuid `elem` us
 		uuid = Remote.uuid r
 

@@ -46,3 +46,13 @@ gitAttributesUnWrite repo = do
 		c <- readFileStrict attributes
 		safeWriteFile attributes $ unlines $
 			filter (\l -> not $ l `elem` attrLines) $ lines c
+
+oldlogFile :: Git.Repo -> Key -> String
+oldlogFile = logFile' hashDirLower
+
+oldlogFileOld :: Git.Repo -> Key -> String
+oldlogFileOld = logFile' hashDirMixed
+
+logFile' :: (Key -> FilePath) -> Git.Repo -> Key -> String
+logFile' hasher repo key =
+	gitStateDir repo ++ hasher key ++ keyFile key ++ ".log"
