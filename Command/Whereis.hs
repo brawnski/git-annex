@@ -7,8 +7,6 @@
 
 module Command.Whereis where
 
-import Control.Monad.State (liftIO)
-
 import qualified Annex
 import LocationLog
 import Command
@@ -31,7 +29,7 @@ start file = isAnnexed file $ \(key, _) -> do
 perform :: Key -> CommandPerform
 perform key = do
 	g <- Annex.gitRepo
-	uuids <- liftIO $ keyLocations g key
+	uuids <- keyLocations g key
 	let num = length uuids
 	showNote $ show num ++ " " ++ copiesplural num
 	if null $ uuids

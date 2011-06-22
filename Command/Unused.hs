@@ -68,7 +68,7 @@ checkRemoteUnused' r = do
 	showNote $ "checking for unused data..."
 	g <- Annex.gitRepo
 	referenced <- getKeysReferenced
-	logged <- liftIO $ loggedKeys g
+	logged <- loggedKeys g
 	remotehas <- filterM isthere logged
 	let remoteunused = remotehas `exclude` referenced
 	let list = number 0 remoteunused
@@ -79,7 +79,7 @@ checkRemoteUnused' r = do
 	where
 		isthere k = do
 			g <- Annex.gitRepo
-			us <- liftIO $ keyLocations g k
+			us <- keyLocations g k
 			return $ uuid `elem` us
 		uuid = Remote.uuid r
 

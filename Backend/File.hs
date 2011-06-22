@@ -14,7 +14,6 @@
 
 module Backend.File (backend, checkKey) where
 
-import Control.Monad.State (liftIO)
 import Data.List
 import Data.String.Utils
 
@@ -132,7 +131,7 @@ showLocations :: Key -> [UUID] -> Annex ()
 showLocations key exclude = do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	uuids <- liftIO $ keyLocations g key
+	uuids <- keyLocations g key
 	untrusteduuids <- trustGet UnTrusted
 	let uuidswanted = filteruuids uuids (u:exclude++untrusteduuids) 
 	let uuidsskipped = filteruuids uuids (u:exclude++uuidswanted)
@@ -190,7 +189,7 @@ checkKeyNumCopies :: Key -> Maybe FilePath -> Maybe Int -> Annex Bool
 checkKeyNumCopies key file numcopies = do
 	needed <- getNumCopies numcopies
 	g <- Annex.gitRepo
-	locations <- liftIO $ keyLocations g key
+	locations <- keyLocations g key
 	untrusted <- trustGet UnTrusted
 	let untrustedlocations = intersect untrusted locations
 	let safelocations = filter (`notElem` untrusted) locations

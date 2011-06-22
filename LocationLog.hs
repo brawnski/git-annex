@@ -36,6 +36,7 @@ import System.FilePath
 import qualified Data.Map as Map
 import Control.Monad (when)
 import Data.Maybe
+import Control.Monad.State (liftIO)
 
 import qualified GitRepo as Git
 import Utility
@@ -86,7 +87,7 @@ instance Read LogLine where
 
 {- Log a change in the presence of a key's value in a repository,
  - and returns the filename of the logfile. -}
-logChange :: Git.Repo -> Key -> UUID -> LogStatus -> IO FilePath
+logChange :: Git.Repo -> Key -> UUID -> LogStatus -> Annex FilePath
 logChange repo key u s = do
 	when (null u) $
 		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
@@ -100,8 +101,8 @@ logChange repo key u s = do
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
-readLog :: FilePath -> IO [LogLine]
-readLog file = catch (return . parseLog =<< readFileStrict file) (const $ return [])
+readLog :: FilePath -> Annex [LogLine]
+readLog file = liftIO $ catch (return . parseLog =<< readFileStrict file) (const $ return [])
 
 parseLog :: String -> [LogLine]
 parseLog s = filter parsable $ map read $ lines s
@@ -110,18 +111,18 @@ parseLog s = filter parsable $ map read $ lines s
 		parsable l = status l /= Undefined
 
 {- Writes a set of lines to a log file -}
-writeLog :: FilePath -> [LogLine] -> IO ()
-writeLog file ls = safeWriteFile file (unlines $ map show ls)
+writeLog :: FilePath -> [LogLine] -> Annex ()
+writeLog file ls = liftIO $ safeWriteFile file (unlines $ map show ls)
 
 {- Generates a new LogLine with the current date. -}
-logNow :: LogStatus -> UUID -> IO LogLine
+logNow :: LogStatus -> UUID -> Annex LogLine
 logNow s u = do
-	now <- getPOSIXTime
+	now <- liftIO $ getPOSIXTime
 	return $ LogLine now s u
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}
-keyLocations :: Git.Repo -> Key -> IO [UUID]
+keyLocations :: Git.Repo -> Key -> Annex [UUID]
 keyLocations thisrepo key = do
 	ls <- readLog $ logFile thisrepo key
 	ls' <- readLog $ logFileOld thisrepo key
@@ -155,18 +156,18 @@ mapLog m l =
 
 {- Finds all keys that have location log information.
  - (There may be duplicate keys in the list.) -}
-loggedKeys :: Git.Repo -> IO [Key]
+loggedKeys :: Git.Repo -> Annex [Key]
 loggedKeys repo = do
-	exists <- doesDirectoryExist dir
+	exists <- liftIO $ doesDirectoryExist dir
 	if exists
 		then do
 			-- 2 levels of hashing
-			levela <- dirContents dir
+			levela <- liftIO $ dirContents dir
 			levelb <- mapM tryDirContents levela
 			files <- mapM tryDirContents (concat levelb)
 			return $ catMaybes $
 				map (logFileKey . takeFileName) (concat files)
 		else return []
 	where
-		tryDirContents d = catch (dirContents d) (return . const [])
+		tryDirContents d = liftIO $ catch (dirContents d) (return . const [])
 		dir = gitStateDir repo

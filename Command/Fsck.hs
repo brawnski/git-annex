@@ -60,7 +60,7 @@ verifyLocationLog key file = do
 		preventWrite (parentDir f)
 
 	u <- getUUID g
-        uuids <- liftIO $ keyLocations g key
+        uuids <- keyLocations g key
 
 	case (present, u `elem` uuids) of
 		(True, False) -> do

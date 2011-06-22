@@ -611,7 +611,7 @@ checklocationlog f expected = do
 		Just (k, _) -> do
 			uuids <- annexeval $ do
 				g <- Annex.gitRepo
-				liftIO $ LocationLog.keyLocations g k
+				LocationLog.keyLocations g k
 			assertEqual ("bad content in location log for " ++ f ++ " key " ++ (show k) ++ " uuid " ++ thisuuid)
 				expected (thisuuid `elem` uuids)
 

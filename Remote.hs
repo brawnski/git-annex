@@ -141,7 +141,7 @@ keyPossibilities key = do
 	trusted <- trustGet Trusted
 
 	-- get uuids of all remotes that are recorded to have the key
-	uuids <- liftIO $ keyLocations g key
+	uuids <- keyLocations g key
 	let validuuids = filter (/= u) uuids
 
 	-- note that validuuids is assumed to not have dups

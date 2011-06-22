@@ -81,7 +81,7 @@ logStatusFor :: UUID -> Key -> LogStatus -> Annex ()
 logStatusFor u key status = do
 	g <- Annex.gitRepo
 	unless (Git.repoIsLocalBare g) $ do
-		logfile <- liftIO $ logChange g key u status
+		logfile <- logChange g key u status
 		rellogfile <- liftIO $ Git.workTreeFile g logfile
 		AnnexQueue.add "add" [Param "--"] rellogfile
 

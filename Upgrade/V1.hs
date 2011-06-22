@@ -134,9 +134,9 @@ moveLocationLogs = do
 				-- log files that are not checked into git,
 				-- as well as merging with already upgraded
 				-- logs that have been pulled from elsewhere
-				old <- liftIO $ readLog f
-				new <- liftIO $ readLog dest
-				liftIO $ writeLog dest (old++new)
+				old <- readLog f
+				new <- readLog dest
+				writeLog dest (old++new)
 				AnnexQueue.add "add" [Param "--"] dest
 				AnnexQueue.add "add" [Param "--"] f
 				AnnexQueue.add "rm" [Param "--quiet", Param "-f", Param "--"] f
