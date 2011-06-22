@@ -36,7 +36,7 @@ merge _ _ = error "wrong number of branches to merge"
 
 {- Feeds a list into update-index. Later items in the list can override
  - earlier ones, so the list can be generated from any combination of
- - ls_tree, merge_trees, and merge_tree. -}
+ - ls_tree, merge_trees, and merge_tree_index. -}
 update_index :: Git.Repo -> [String] -> IO ()
 update_index g l =  togit ["update-index", "-z", "--index-info"] (join "\0" l)
 	where
@@ -63,27 +63,29 @@ merge_tree_index g x = calc_merge g
 calc_merge :: Git.Repo -> [String] -> IO [String]
 calc_merge g differ = do
 	diff <- Git.pipeNullSplit g $ map Param differ
-	l <- mapM mergefile (pairs diff)
+	l <- mapM (mergeFile g) (pairs diff)
 	return $ catMaybes l
 	where
 		pairs [] = []
-		pairs (_:[]) = error "parse error"
+		pairs (_:[]) = error "calc_merge parse error"
 		pairs (a:b:rest) = (a,b):pairs rest
-		
+
+{- Given an info line from a git raw diff, and the filename, generates
+ - a line suitable for update_index that union merges the two sides of the
+ - diff. -}
+mergeFile :: Git.Repo -> (String, FilePath) -> IO (Maybe String)
+mergeFile g (info, file) = case filter (/= nullsha) [asha, bsha] of
+	[] -> return Nothing
+	(sha:[]) -> return $ Just $ ls_tree_line sha
+	shas -> do
+		content <- Git.pipeRead g $ map Param ("show":shas)
+		sha <- Git.hashObject g $ unionmerge content
+		return $ Just $ ls_tree_line sha
+	where
+		[_colonamode, _bmode, asha, bsha, _status] = words info
+		ls_tree_line sha = "100644 blob " ++ sha ++ "\t" ++ file
 		nullsha = take Git.shaSize $ repeat '0'
-		ls_tree_line sha file = "100644 blob " ++ sha ++ "\t" ++ file
 		unionmerge = unlines . nub . lines
-		
-		mergefile (info, file) = do
-			let [_colonamode, _bmode, asha, bsha, _status] = words info
-			if bsha == nullsha
-				then return Nothing -- already staged
-				else mergefile' file asha bsha
-		mergefile' file asha bsha = do
-			let shas = filter (/= nullsha) [asha, bsha]
-			content <- Git.pipeRead g $ map Param ("show":shas)
-			sha <- Git.hashObject g $ unionmerge content
-			return $ Just $ ls_tree_line sha file
 
 {- Commits the index into the specified branch, 
  - with the specified parent refs. -}
