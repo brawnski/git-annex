@@ -37,6 +37,7 @@ module GitRepo (
 	configTrue,
 	gitCommandLine,
 	run,
+	runBool,
 	pipeRead,
 	pipeWrite,
 	pipeWriteRead,
@@ -350,10 +351,15 @@ gitCommandLine repo@(Repo { location = Dir d} ) params =
 	] ++ params
 gitCommandLine repo _ = assertLocal repo $ error "internal"
 
+{- Runs git in the specified repo. -}
+runBool :: Repo -> String -> [CommandParam] -> IO Bool
+runBool repo subcommand params = assertLocal repo $
+	boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
+
 {- Runs git in the specified repo, throwing an error if it fails. -}
 run :: Repo -> String -> [CommandParam] -> IO ()
 run repo subcommand params = assertLocal repo $
-	boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
+	runBool repo subcommand params
 		>>! error $ "git " ++ show params ++ " failed"
 
 {- Runs a git subcommand and returns its output, lazily. 
