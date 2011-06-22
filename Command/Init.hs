@@ -8,7 +8,7 @@
 module Command.Init where
 
 import Control.Monad.State (liftIO)
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import System.Directory
 
 import Command
@@ -44,7 +44,8 @@ perform description = do
 	u <- getUUID g
 	setVersion
 	describeUUID u description
-	gitPreCommitHookWrite g
+	unless (Git.repoIsLocalBare g) $
+		gitPreCommitHookWrite g
 	next $ return True
 
 {- set up a git pre-commit hook, if one is not already present -}

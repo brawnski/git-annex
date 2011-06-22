@@ -30,7 +30,7 @@ seek :: [CommandSeek]
 seek = [withWords start]
 
 start :: CommandStartWords
-start ws = notBareRepo $ do
+start ws = do
 	when (null ws) $ needname
 
 	(u, c) <- findByName name

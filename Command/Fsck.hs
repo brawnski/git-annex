@@ -64,11 +64,11 @@ verifyLocationLog key file = do
 
 	case (present, u `elem` uuids) of
 		(True, False) -> do
-				fix u ValuePresent
+				fix g u ValuePresent
 				-- There is no data loss, so do not fail.
 				return True
 		(False, True) -> do
-				fix u ValueMissing
+				fix g u ValueMissing
 				warning $
 					"** Based on the location log, " ++ file
 					++ "\n** was expected to be present, " ++
@@ -77,6 +77,6 @@ verifyLocationLog key file = do
 		_ -> return True
 	
 	where
-		fix u s = do
+		fix g u s = do
 			showNote "fixing location log"
-			logStatusFor u key s
+			logChange g key u s

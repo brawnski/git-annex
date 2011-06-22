@@ -2,6 +2,8 @@ git-annex (0.20110611) UNRELEASED; urgency=low
 
   * New repository format, annex.version=3. Use `git annex upgrade` to migrate.
 
+  * Improved handling of bare git repos with annexes. Many more commands will
+    work in them.
   * rsync is now used when copying files from repos on other filesystems.
     cp is still used when copying file from repos on the same filesystem,
     since --reflink=auto can make it significantly faster on filesystems

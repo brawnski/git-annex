@@ -51,12 +51,12 @@ showAction False file = showStart "copy" file
 {- Used to log a change in a remote's having a key. The change is logged
  - in the local repo, not on the remote. The process of transferring the
  - key to the remote, or removing the key from it *may* log the change
- - on the remote, but this cannot be relied on. For example, it's not done
- - for bare repos. -}
+ - on the remote, but this cannot be relied on. -}
 remoteHasKey :: Remote.Remote Annex -> Key -> Bool -> Annex ()
 remoteHasKey remote key present	= do
 	let remoteuuid = Remote.uuid remote
-	logStatusFor remoteuuid key status
+	g <- Annex.gitRepo
+	logChange g key remoteuuid status
 	where
 		status = if present then ValuePresent else ValueMissing
 

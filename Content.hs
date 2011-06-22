@@ -9,7 +9,6 @@ module Content (
 	inAnnex,
 	calcGitLink,
 	logStatus,
-	logStatusFor,
 	getViaTmp,
 	getViaTmpUnchecked,
 	withTmp,
@@ -27,7 +26,7 @@ import System.IO.Error (try)
 import System.Directory
 import Control.Monad.State (liftIO)
 import System.Path
-import Control.Monad (when, unless, filterM)
+import Control.Monad (when, filterM)
 import System.Posix.Files
 import System.FilePath
 import Data.Maybe
@@ -71,16 +70,9 @@ calcGitLink file key = do
  - updated instead. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
-	u <- getUUID =<< Annex.gitRepo
-	logStatusFor u key status
-
-{- Updates the LocationLog when a key's presence changes in a repository
- - identified by UUID. -}
-logStatusFor :: UUID -> Key -> LogStatus -> Annex ()
-logStatusFor u key status = do
 	g <- Annex.gitRepo
-	unless (Git.repoIsLocalBare g) $ do
-		logChange g key u status
+	u <- getUUID g
+	logChange g key u status
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 

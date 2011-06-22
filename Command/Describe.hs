@@ -20,7 +20,7 @@ seek :: [CommandSeek]
 seek = [withWords start]
 
 start :: CommandStartWords
-start ws = notBareRepo $ do
+start ws = do
 	let (name, description) =
 		case ws of
 			(n:d) -> (n,unwords d)
