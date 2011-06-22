@@ -81,9 +81,7 @@ logStatusFor :: UUID -> Key -> LogStatus -> Annex ()
 logStatusFor u key status = do
 	g <- Annex.gitRepo
 	unless (Git.repoIsLocalBare g) $ do
-		logfile <- logChange g key u status
-		rellogfile <- liftIO $ Git.workTreeFile g logfile
-		AnnexQueue.add "add" [Param "--"] rellogfile
+		logChange g key u status
 
 {- Runs an action, passing it a temporary filename to download,
  - and if the action succeeds, moves the temp file into 

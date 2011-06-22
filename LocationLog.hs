@@ -3,16 +3,12 @@
  - git-annex keeps track of which repositories have the contents of annexed
  - files.
  -
- - Location tracking information is stored in `.git-annex/key.log`.
  - Repositories record their UUID and the date when they --get or --drop
  - a value.
  -
  - A line of the log will look like: "date N UUID"
  - Where N=1 when the repo has the file, and 0 otherwise.
  - 
- - Git is configured to use a union merge for this file,
- - so the lines may be in arbitrary order, but it will never conflict.
- -
  - Copyright 2010-2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
@@ -39,6 +35,7 @@ import Data.Maybe
 import Control.Monad.State (liftIO)
 
 import qualified GitRepo as Git
+import qualified Branch
 import Utility
 import UUID
 import Types
@@ -85,24 +82,21 @@ instance Read LogLine where
 			bad = ret $ LogLine 0 Undefined ""
 			ret v = [(v, "")]
 
-{- Log a change in the presence of a key's value in a repository,
- - and returns the filename of the logfile. -}
-logChange :: Git.Repo -> Key -> UUID -> LogStatus -> Annex FilePath
+{- Log a change in the presence of a key's value in a repository. -}
+logChange :: Git.Repo -> Key -> UUID -> LogStatus -> Annex ()
 logChange repo key u s = do
 	when (null u) $
 		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
 			" (have you run git annex init there?)"
 	line <- logNow s u
 	let f = logFile repo key
-	ls' <- readLog $ logFileOld repo key
 	ls <- readLog f
-	writeLog f (compactLog $ line:ls'++ls)
-	return f
+	writeLog f (compactLog $ line:ls)
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}
 readLog :: FilePath -> Annex [LogLine]
-readLog file = liftIO $ catch (return . parseLog =<< readFileStrict file) (const $ return [])
+readLog file = return . parseLog =<< Branch.get file
 
 parseLog :: String -> [LogLine]
 parseLog s = filter parsable $ map read $ lines s
@@ -110,9 +104,9 @@ parseLog s = filter parsable $ map read $ lines s
 		-- some lines may be unparseable, avoid them
 		parsable l = status l /= Undefined
 
-{- Writes a set of lines to a log file -}
+{- Stores a set of lines in a log file -}
 writeLog :: FilePath -> [LogLine] -> Annex ()
-writeLog file ls = liftIO $ safeWriteFile file (unlines $ map show ls)
+writeLog file ls = Branch.change file (unlines $ map show ls)
 
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> UUID -> Annex LogLine
@@ -125,8 +119,7 @@ logNow s u = do
 keyLocations :: Git.Repo -> Key -> Annex [UUID]
 keyLocations thisrepo key = do
 	ls <- readLog $ logFile thisrepo key
-	ls' <- readLog $ logFileOld thisrepo key
-	return $ map uuid $ filterPresent $ ls'++ls
+	return $ map uuid $ filterPresent ls
 
 {- Filters the list of LogLines to find ones where the value
  - is (or should still be) present. -}
@@ -158,6 +151,7 @@ mapLog m l =
  - (There may be duplicate keys in the list.) -}
 loggedKeys :: Git.Repo -> Annex [Key]
 loggedKeys repo = do
+	error "FIXME.. does not look in git-annex branch yet"
 	exists <- liftIO $ doesDirectoryExist dir
 	if exists
 		then do
