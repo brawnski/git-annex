@@ -27,13 +27,15 @@ Involved moving the .git-annex/ directory into a separate git-annex branch.
 This upgrade is easier (and faster!) than the previous upgrades.
 You don't need to upgrade every repository at once; it's sufficient
 to upgrade each repository only when you next use it.
-
-After the upgrade is complete, commit the changes it staged.
 	
-	git commit -m "upgrade v2 to v3"
+Example upgrade process:
 
-Running `git gc` after this upgrade will likely free up significant disk 
-space. (Tens to hundreds of megabytes.)
+	cd localrepo
+	git pull
+	git annex upgrade
+	git commit -m "upgrade v2 to v3"
+	git push origin git-annex master
+	git gc
 
 ### v1 -> v2 (git-annex version 0.20110316)
 

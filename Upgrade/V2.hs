@@ -50,6 +50,11 @@ upgrade = do
 	liftIO $ do
 		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File olddir]
 		gitAttributesUnWrite g
+
+	showLongNote $
+		"git-annex branch created\n" ++
+		"Now you should push the new branch: git push origin git-annex"
+
 	return True
 
 locationLogs :: Git.Repo -> Annex [(Key, FilePath)]

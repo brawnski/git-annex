@@ -2,7 +2,8 @@ git-annex (3.20110622) unstable; urgency=low
 
   There has been another change to the git-annex data store.
   Use `git annex upgrade` to migrate your repositories to the new
-  layout.
+  layout. See <http://git-annex.branchable.com/upgrades/> or
+  /usr/share/doc/git-annex/html/upgrades.html
 
   The significant change this time is that the .git-annex/ directory
   is gone; instead there is a git-annex branch that is automatically
