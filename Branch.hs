@@ -149,6 +149,21 @@ update :: Annex ()
 update = do
 	state <- Annex.getState Annex.branchstate
 	unless (branchUpdated state) $ withIndex $ do
+		{- Since branches get merged into the index, it's important to
+		 - first stage the journal into the index. Otherwise, any
+		 - changes in the journal would later get staged, and might
+		 - overwrite changes made during the merge.
+		 -
+		 - It would be cleaner to handle the merge by updating the
+		 - journal, not the index, with changes from the branches.
+		 -
+		 - XXX Anything written to the journal during the merge,
+		 - by another process could still race the merge. The
+		 - journal should really be blocking locked during the
+		 - merge.
+		 -}
+		_ <- stageJournalFiles
+
 		g <- Annex.gitRepo
 		r <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
 		let refs = map (last . words) (lines r)
