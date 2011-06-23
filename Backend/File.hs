@@ -205,14 +205,14 @@ checkKeyNumCopies key file numcopies = do
 
 missingNote :: String -> Int -> Int -> String -> String
 missingNote file 0 _ [] = 
-		"** No known copies of " ++ file ++ " exist!"
+		"** No known copies exist of " ++ file
 missingNote file 0 _ untrusted =
 		"Only these untrusted locations may have copies of " ++ file ++
 		"\n" ++ untrusted ++
 		"Back it up to trusted locations with git-annex copy."
 missingNote file present needed [] =
 		"Only " ++ show present ++ " of " ++ show needed ++ 
-		" trustworthy copies of " ++ file ++ " exist." ++
+		" trustworthy copies exist of " ++ file ++
 		"\nBack it up with git-annex copy."
 missingNote file present needed untrusted = 
 		missingNote file present needed [] ++
