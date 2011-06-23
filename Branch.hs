@@ -25,6 +25,7 @@ import Data.List
 import System.IO
 import System.Posix.IO
 import System.Posix.Process
+import System.Log.Logger
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -227,8 +228,16 @@ cmdOutput cmd params = do
 		x <- hGetContentsStrict h
 		hClose h
 		return $! x
-	pid <- pOpen3Raw Nothing (Just (snd pipepair)) Nothing cmd params
-		(closeFd (fst pipepair) >> closeFd stdError)
+	let child = do
+		closeFd (fst pipepair)
+ 		-- disable stderr output by this child,
+		-- and since the logger uses it, also disable it
+		liftIO $ updateGlobalLogger rootLoggerName $ setLevel EMERGENCY
+		closeFd stdError
+
+	debugM "Utility.executeFile" $ cmd ++ " " ++ show params
+	
+	pid <- pOpen3Raw Nothing (Just (snd pipepair)) Nothing cmd params child
 	retval <- callfunc $! pid
 	let rv = seq retval retval
 	_ <- getProcessStatus True False pid
