@@ -17,6 +17,21 @@ import Messages
 import Utility
 import Locations
 
+{- .git-annex/ moved to a git-annex branch.
+ - 
+ - Strategy:
+ - 
+ - * Create the git-annex branch.
+ - * Find each location log file in .git-annex/, and inject its content
+ -   into the git-annex branch, unioning with any content already in
+ -   there. (in passing, this deals with the semi transition that left
+ -   some location logs hashed two different ways; both are found and
+ -   merged).
+ - * Also inject remote.log, trust.log, and uuid.log.
+ - * git rm -rf .git-annex
+ - * Remove stuff that used to be needed in .gitattributes.
+ - * Commit changes.
+ -}
 upgrade :: Annex Bool
 upgrade = do
 	showNote "v2 to v3"

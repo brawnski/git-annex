@@ -5,6 +5,10 @@ git-annex (3.20110611) UNRELEASED; urgency=low
   * merge: New subcommand. Auto-merges the new git-annex branch.
   * Improved handling of bare git repos with annexes. Many more commands will
     work in them.
+  * Sped up many commands.
+  * git-annex is now more robust; it will never leave state files
+    uncommitted when some other git process comes along and locks the index
+    at an inconvenient time.
   * rsync is now used when copying files from repos on other filesystems.
     cp is still used when copying file from repos on the same filesystem,
     since --reflink=auto can make it significantly faster on filesystems
