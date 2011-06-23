@@ -54,7 +54,7 @@ shortref = remove "refs/heads/" . remove "refs/remotes/"
 
 {- A separate index file for the branch. -}
 index :: Git.Repo -> FilePath
-index g = Git.workTree g </> Git.gitDir g </> "index." ++ name
+index g = gitAnnexDir g </> "index"
 
 {- Populates the branch's index file with the current branch contents.
  - 
