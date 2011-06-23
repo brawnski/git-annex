@@ -19,7 +19,8 @@ module Content (
 	removeAnnex,
 	fromAnnex,
 	moveBad,
-	getKeysPresent
+	getKeysPresent,
+	saveState
 ) where
 
 import System.IO.Error (try)
@@ -37,6 +38,8 @@ import LocationLog
 import UUID
 import qualified GitRepo as Git
 import qualified Annex
+import qualified AnnexQueue
+import qualified Branch
 import Utility
 import StatFS
 import Types.Key
@@ -263,3 +266,9 @@ getKeysPresent' dir = do
 			case result of
 				Right s -> return $ isRegularFile s
 				Left _ -> return False
+
+{- Things to do to record changes to content. -}
+saveState :: Annex ()
+saveState = do
+	AnnexQueue.flush False
+	Branch.commit "update"
