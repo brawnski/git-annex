@@ -29,11 +29,6 @@ This upgrade is easier than the previous upgrades. You don't need to
 upgrade every repository at once; it's sufficient to upgrade each
 repository only when you next use it.
 
-This upgrade can be sped up by, before you start, making
-.git/index.git-annex into a symlink to a file on a ramdisk.
-For example: `ln -s /run/shm/index.git-annex.$(git config annex.uuid) .git/index.git-annex`
-but, if you do that, be sure to remove the symlink after the upgrade!
-
 After the upgrade is complete, commit the changes it staged.
 	
 	git commit -m "upgrade v2 to v3"

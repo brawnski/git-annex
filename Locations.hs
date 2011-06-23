@@ -17,6 +17,7 @@ module Locations (
 	gitAnnexBadDir,
 	gitAnnexBadLocation,
 	gitAnnexUnusedLog,
+	gitAnnexJournalDir,
 	isLinkToAnnex,
 	logFile,
 	logFileKey,

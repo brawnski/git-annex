@@ -9,10 +9,9 @@ module Types.BranchState where
 
 data BranchState = BranchState {
 	branchUpdated :: Bool,
-	branchChanged :: Bool,
 	cachedFile :: Maybe FilePath,
 	cachedContent :: String
 }
 
 startBranchState :: BranchState
-startBranchState = BranchState False False Nothing ""
+startBranchState = BranchState False Nothing ""

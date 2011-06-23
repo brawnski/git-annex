@@ -33,6 +33,7 @@ import qualified Annex
 import Utility
 import Types
 import Messages
+import Locations
 
 {- Name of the branch that is used to store git-annex's information. -}
 name :: String
@@ -42,6 +43,8 @@ name = "git-annex"
 fullname :: String
 fullname = "refs/heads/" ++ name
 
+{- Converts a fully qualified git ref into a short version for human
+ - consumptiom. -}
 shortref :: String -> String
 shortref = remove "refs/heads/" . remove "refs/remotes/"
 	where
@@ -56,7 +59,8 @@ index g = Git.workTree g </> Git.gitDir g </> "index." ++ name
 {- Populates the branch's index file with the current branch contents.
  - 
  - Usually, this is only done when the index doesn't yet exist, and
- - the index is used to build up changes to be commited to the branch.
+ - the index is used to build up changes to be commited to the branch,
+ - and merge in changes from other branches.
  -}
 genIndex :: Git.Repo -> IO ()
 genIndex g = do
@@ -97,11 +101,6 @@ setCache file content = do
 	state <- getState
 	setState state { cachedFile = Just file, cachedContent = content }
 
-setCacheChanged :: FilePath -> String -> Annex ()
-setCacheChanged file content = do
-	state <- getState
-	setState state { cachedFile = Just file, cachedContent = content, branchChanged = True }
-
 invalidateCache :: Annex ()
 invalidateCache = do
 	state <- getState
@@ -133,11 +132,11 @@ create = do
 			liftIO $ Git.runBool g "show-ref"
 				[Param "--verify", Param "-q", Param ref]
 
-{- Commits any staged changes to the branch. -}
+{- Stages the journal, and commits staged changes to the branch. -}
 commit :: String -> Annex ()
 commit message = do
-	state <- getState
-	when (branchChanged state) $ do
+	staged <- stageJournalFiles
+	when staged $ do
 		g <- Annex.gitRepo
 		withIndex $ liftIO $
 			GitUnionMerge.commit g message fullname [fullname]
@@ -187,28 +186,32 @@ updateRef ref
 				liftIO $ GitUnionMerge.merge g [ref]
 				return $ Just ref
 
-{- Stages the content of a file into the branch's index. -}
+{- Records changed content of a file into the journal. -}
 change :: FilePath -> String -> Annex ()
 change file content = do
-	g <- Annex.gitRepo
-	sha <- liftIO $ Git.hashObject g content
-	withIndex $ liftIO $ Git.run g "update-index"
-		[ Param "--add", Param "--cacheinfo", Param "100644",
-		  Param sha, File file]
-	setCacheChanged file content
+	setJournalFile file content
+	setCache file content
 
-{- Gets the content of a file on the branch, or content staged in the index
- - if it's newer. Returns an empty string if the file didn't exist yet. -}
+{- Gets the content of a file on the branch, or content from the journal, or
+ - staged in the index.
+ -
+ - Returns an empty string if the file doesn't exist yet. -}
 get :: FilePath -> Annex String
 get file = do
 	cached <- getCache file
 	case cached of
 		Just content -> return content
-		Nothing -> withIndexUpdate $ do
-			g <- Annex.gitRepo
-			content <- liftIO $ catch (cat g) (const $ return "")
-			setCache file content
-			return content
+		Nothing -> do
+			j <- getJournalFile file
+			case j of
+				Just content -> do
+					setCache file content
+					return content
+				Nothing -> withIndexUpdate $ do
+					g <- Annex.gitRepo
+					content <- liftIO $ catch (cat g) (const $ return "")
+					setCache file content
+					return content
 	where
 		cat g = cmdOutput "git" $ toCommand $ Git.gitCommandLine g
 			[Param "cat-file", Param "blob", Param $ ':':file]
@@ -231,9 +234,93 @@ cmdOutput cmd params = do
 	_ <- getProcessStatus True False pid
 	return rv
 
-{- Lists all files on the branch. -}
+{- Lists all files on the branch. There may be duplicates in the list. -}
 files :: Annex [FilePath]
 files = withIndexUpdate $ do
 	g <- Annex.gitRepo
-	liftIO $ Git.pipeNullSplit g
+	bfiles <- liftIO $ Git.pipeNullSplit g
 		[Params "ls-tree --name-only -r -z", Param fullname]
+	jfiles <- getJournalFiles
+	return $ jfiles ++ bfiles
+
+{- Records content for a file in the branch to the journal.
+ -
+ - Using the journal, rather than immediatly staging content to the index
+ - avoids git needing to rewrite the index after every change. -}
+setJournalFile :: FilePath -> String -> Annex ()
+setJournalFile file content = do
+	g <- Annex.gitRepo
+	liftIO $ catch (write g) $ const $ do
+		createDirectoryIfMissing True $ gitAnnexJournalDir g
+		createDirectoryIfMissing True $ gitAnnexTmpDir g
+		write g
+	where
+		-- journal file is written atomically
+		write g = do
+			let jfile = journalFile g file
+			let tmpfile = gitAnnexTmpDir g </> takeFileName jfile
+			writeFile tmpfile content
+			renameFile tmpfile jfile
+
+{- Gets journalled content for a file in the branch. -}
+getJournalFile :: FilePath -> Annex (Maybe String)
+getJournalFile file = do
+	g <- Annex.gitRepo
+	liftIO $ catch (liftM Just . readFileStrict $ journalFile g file)
+		(const $ return Nothing)
+
+{- List of journal files. -}
+getJournalFiles :: Annex [FilePath]
+getJournalFiles = getJournalFilesRaw >>= return . map fileJournal
+
+getJournalFilesRaw :: Annex [FilePath]
+getJournalFilesRaw = do
+	g <- Annex.gitRepo
+	fs <- liftIO $ catch (getDirectoryContents $ gitAnnexJournalDir g)
+		(const $ return [])
+	return $ filter (\f -> f /= "." && f /= "..") fs
+
+{- Stages all journal files into the index, and returns True if the index
+ - was modified. -}
+stageJournalFiles :: Annex Bool
+stageJournalFiles = do
+	l <- getJournalFilesRaw
+	if null l
+		then return False
+		else do
+			g <- Annex.gitRepo
+			withIndex $ liftIO $ stage g l
+			return True
+	where
+		stage g fs = do
+			let dir = gitAnnexJournalDir g
+			let paths = map (dir </>) fs
+			-- inject all the journal files directly into git
+			-- in one quick command
+			(h, s) <- Git.pipeWriteRead g [Param "hash-object",
+				Param "-w", Param "--stdin-paths"] $ unlines paths
+			-- update the index, also in just one command
+			GitUnionMerge.update_index g $
+				index_lines (lines s) $ map fileJournal fs
+			forceSuccess h
+			mapM_ removeFile paths
+		index_lines shas fs = map genline $ zip shas fs
+		genline (sha, file) = GitUnionMerge.update_index_line sha file
+
+{- Produces a filename to use in the journal for a file on the branch.
+ -
+ - The journal typically won't have a lot of files in it, so the hashing
+ - used in the branch is not necessary, and all the files are put directly
+ - in the journal directory.
+ -}
+journalFile :: Git.Repo -> FilePath -> FilePath
+journalFile repo file = gitAnnexJournalDir repo </> concatMap mangle file
+	where
+		mangle '/' = "_"
+		mangle '_' = "__"
+		mangle c = [c]
+
+{- Converts a journal file (relative to the journal dir) back to the
+ - filename on the branch. -}
+fileJournal :: FilePath -> FilePath
+fileJournal = replace "//" "_" . replace "_" "/"

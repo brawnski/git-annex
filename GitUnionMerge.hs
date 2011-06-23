@@ -7,7 +7,9 @@
 
 module GitUnionMerge (
 	merge,
-	commit
+	commit,
+	update_index,
+	update_index_line
 ) where
 
 import System.Cmd.Utils
@@ -43,6 +45,11 @@ update_index g l =  togit ["update-index", "-z", "--index-info"] (join "\0" l)
 		togit ps content = Git.pipeWrite g (map Param ps) content
 			>>= forceSuccess
 
+{- Generates a line suitable to be fed into update-index, to add
+ - a given file with a given sha. -}
+update_index_line :: String -> FilePath -> String
+update_index_line sha file = "100644 blob " ++ sha ++ "\t" ++ file
+
 {- Gets the contents of a tree in a format suitable for update_index. -}
 ls_tree :: Git.Repo -> String -> IO [String]
 ls_tree g x = Git.pipeNullSplit g $ 
@@ -76,14 +83,13 @@ calc_merge g differ = do
 mergeFile :: Git.Repo -> (String, FilePath) -> IO (Maybe String)
 mergeFile g (info, file) = case filter (/= nullsha) [asha, bsha] of
 	[] -> return Nothing
-	(sha:[]) -> return $ Just $ ls_tree_line sha
+	(sha:[]) -> return $ Just $ update_index_line sha file
 	shas -> do
 		content <- Git.pipeRead g $ map Param ("show":shas)
 		sha <- Git.hashObject g $ unionmerge content
-		return $ Just $ ls_tree_line sha
+		return $ Just $ update_index_line sha file
 	where
 		[_colonamode, _bmode, asha, bsha, _status] = words info
-		ls_tree_line sha = "100644 blob " ++ sha ++ "\t" ++ file
 		nullsha = take Git.shaSize $ repeat '0'
 		unionmerge = unlines . nub . lines
 

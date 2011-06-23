@@ -42,7 +42,7 @@ main :: IO ()
 main = do
 	[aref, bref, newref] <- parseArgs
 	g <- Git.configRead =<< Git.repoFromCwd
-	Git.useIndex (tmpIndex g)
+	_ <- Git.useIndex (tmpIndex g)
 	setup g
 	GitUnionMerge.merge g [aref, bref]
 	GitUnionMerge.commit g "union merge" newref [aref, bref]
