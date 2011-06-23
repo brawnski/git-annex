@@ -89,7 +89,7 @@ toPerform dest move key = do
 	let fastcheck = fast && not move && not (Remote.hasKeyCheap dest)
 	isthere <- if fastcheck
 		then do
-			(remotes, _) <- Remote.keyPossibilities key
+			remotes <- Remote.keyPossibilities key
 			return $ Right $ dest `elem` remotes
 		else Remote.hasKey dest key
 	case isthere of
@@ -123,7 +123,7 @@ fromStart :: Remote.Remote Annex -> Bool -> CommandStartString
 fromStart src move file = isAnnexed file $ \(key, _) -> do
 	g <- Annex.gitRepo
 	u <- getUUID g
-	(remotes, _) <- Remote.keyPossibilities key
+	remotes <- Remote.keyPossibilities key
 	if (u == Remote.uuid src) || (null $ filter (== src) remotes)
 		then stop
 		else do

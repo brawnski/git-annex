@@ -15,6 +15,7 @@ module Remote (
 	hasKey,
 	hasKeyCheap,
 	keyPossibilities,
+	keyPossibilitiesTrusted,
 	forceTrust,
 
 	remoteTypes,
@@ -128,12 +129,29 @@ remotesWithoutUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
 remotesWithoutUUID rs us = filter (\r -> uuid r `notElem` us) rs
 
 {- Cost ordered lists of remotes that the LocationLog indicate may have a key.
+ -}
+keyPossibilities :: Key -> Annex [Remote Annex]
+keyPossibilities key = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+
+	-- get uuids of all remotes that are recorded to have the key
+	uuids <- keyLocations key
+	let validuuids = filter (/= u) uuids
+
+	-- remotes that match uuids that have the key
+	allremotes <- genList
+	let validremotes = remotesWithUUID allremotes validuuids
+
+	return $ sort validremotes
+
+{- Cost ordered lists of remotes that the LocationLog indicate may have a key.
  -
  - Also returns a list of UUIDs that are trusted to have the key
  - (some may not have configured remotes).
  -}
-keyPossibilities :: Key -> Annex ([Remote Annex], [UUID])
-keyPossibilities key = do
+keyPossibilitiesTrusted :: Key -> Annex ([Remote Annex], [UUID])
+keyPossibilitiesTrusted key = do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	trusted <- trustGet Trusted

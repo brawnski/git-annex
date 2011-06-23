@@ -52,7 +52,7 @@ dummyStore _ _ = return True
  - and copy it to here. -}
 copyKeyFile :: Key -> FilePath -> Annex Bool
 copyKeyFile key file = do
-	(remotes, _) <- Remote.keyPossibilities key
+	remotes <- Remote.keyPossibilities key
 	if null remotes
 		then do
 			showNote "not available"
@@ -95,7 +95,7 @@ checkRemoveKey key numcopiesM = do
 	if force || numcopiesM == Just 0
 		then return True
 		else do
-			(remotes, trusteduuids) <- Remote.keyPossibilities key
+			(remotes, trusteduuids) <- Remote.keyPossibilitiesTrusted key
 			untrusteduuids <- trustGet UnTrusted
 			let tocheck = Remote.remotesWithoutUUID remotes (trusteduuids++untrusteduuids)
 			numcopies <- getNumCopies numcopiesM
