@@ -47,7 +47,7 @@ install: all
 	fi
 
 test: $(bins)
-	if ! $(GHCMAKE) -O0 test; then \
+	@if ! $(GHCMAKE) -O0 test; then \
 		echo "** not running test suite" >&2; \
 	else \
 		./test; \
