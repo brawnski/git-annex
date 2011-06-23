@@ -32,6 +32,9 @@ After the upgrade is complete, commit the changes it staged.
 	
 	git commit -m "upgrade v2 to v3"
 
+Running `git gc` after this upgrade will likely free up significant disk 
+space. (Tens to hundreds of megabytes.)
+
 ### v1 -> v2 (git-annex version 0.20110316)
 
 Involved adding hashing to .git/annex/ and changing the names of all keys.
