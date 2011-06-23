@@ -7,26 +7,62 @@ There's a committment that git-annex will always support upgrades from all
 past versions. After all, you may have offline drives from an earlier
 git-annex, and might want to use them with a newer git-annex.
 
-## Upgrade process
-
 git-annex will notice if it is run in a repository that
 needs an upgrade, and refuse to do anything. To upgrade,
 use the "git annex upgrade" command. The upgrade can tend
 to take a while, if you have a lot of files.
 
-Each clone of a repository should be individually upgraded.
-Until a repository's remotes have been upgraded, git-annex
-will refuse to communicate with them.
-
-Generally, start by upgrading one repository, and then you can commit
-the changes git-annex staged during upgrade, and push them out to other
-repositories. And then upgrade those other repositories. Doing it this
-way avoids git-annex doing some duplicate work during the upgrade.
-
 The upgrade process is guaranteed to be conflict-free. Unless you
 already have git conflicts in your repository or between repositories.
 Upgrading a repository with conflicts is not recommended; resolve the
 conflicts first before upgrading git-annex.
+
+## Upgrade events, so far
+
+### v2 -> v3 (git-annex version 3.x)
+
+Involved moving the .git-annex/ directory into a separate git-annex branch.
+
+### tips for this upgrade
+
+This upgrade is easier than the previous upgrades. You don't need to
+upgrade every repository at once; it's sufficient to upgrade each
+repository only when you next use it.
+
+This upgrade can be sped up by, before you start, making
+.git/index.git-annex into a symlink to a file on a ramdisk.
+For example: `ln -s /run/shm/index.git-annex.$(git config annex.uuid) .git/index.git-annex`
+but, if you do that, be sure to remove the symlink after the upgrade!
+
+After the upgrade is complete, commit the changes it staged.
+	
+	git commit -m "upgrade v2 to v3"
+
+### v1 -> v2 (git-annex version 0.20110316)
+
+Involved adding hashing to .git/annex/ and changing the names of all keys.
+Symlinks changed.
+
+Also, hashing was added to location log files in .git-annex/.
+And .gitattributes needed to have another line added to it.
+
+Previously, files added to the SHA [[backends]] did not have their file
+size tracked, while files added to the WORM backend did. Files added to
+the SHA backends after the conversion will have their file size tracked,
+and that information will be used by git-annex for disk free space checking.
+To ensure that information is available for all your annexed files, see
+[[upgrades/SHA_size]].
+
+### tips for this upgrade
+
+Each clone of a repository should be individually upgraded.
+Until a repository's remotes have been upgraded, git-annex
+will refuse to communicate with them.
+
+Start by upgrading one repository, and then you can commit
+the changes git-annex staged during upgrade, and push them out to other
+repositories. And then upgrade those other repositories. Doing it this
+way avoids git-annex doing some duplicate work during the upgrade.
 
 Example upgrade process:
 
@@ -43,28 +79,7 @@ Example upgrade process:
 	git annex upgrade
 	...
 
-## Upgrade events, so far
-
-### v2 -> v3 (git-annex version 0.20110610 to version 0.20110622)
-
-Involved moving the .git-annex/ directory into a separate git-annex branch.
-
-### v1 -> v2 (git-annex version 0.23 to version 0.20110316)
-
-Involved adding hashing to .git/annex/ and changing the names of all keys.
-Symlinks changed.
-
-Also, hashing was added to location log files in .git-annex/.
-And .gitattributes needed to have another line added to it.
-
-Previously, files added to the SHA [[backends]] did not have their file
-size tracked, while files added to the WORM backend did. Files added to
-the SHA backends after the conversion will have their file size tracked,
-and that information will be used by git-annex for disk free space checking.
-To ensure that information is available for all your annexed files, see
-[[upgrades/SHA_size]].
-
-### v0 -> v1 (git-annex version 0.03 to version 0.04)
+### v0 -> v1 (git-annex version 0.04)
 
 Involved a reorganisation of the layout of .git/annex/. Symlinks changed.
 

@@ -1,4 +1,4 @@
-{- git-annex v2 -> v2 upgrade support
+{- git-annex v2 -> v3 upgrade support
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
@@ -9,13 +9,21 @@ module Upgrade.V2 where
 
 import System.Directory
 import System.FilePath
+import Control.Monad.State (liftIO)
+import List
+import Data.Maybe
 
 import Types.Key
 import Types
+import qualified Annex
 import qualified GitRepo as Git
+import qualified Branch
 import Messages
 import Utility
 import Locations
+
+olddir :: FilePath
+olddir = ".git-annex"
 
 {- .git-annex/ moved to a git-annex branch.
  - 
@@ -35,7 +43,36 @@ import Locations
 upgrade :: Annex Bool
 upgrade = do
 	showNote "v2 to v3"
-	error "TODO"
+	g <- Annex.gitRepo
+	Branch.create
+	mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
+	mapM_ (\f -> inject f f) =<< logFiles olddir
+	liftIO $ do
+		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File olddir]
+		gitAttributesUnWrite g
+	return True
+
+locationLogs :: Git.Repo -> Annex [(Key, FilePath)]
+locationLogs repo = liftIO $ do
+	levela <- dirContents dir
+	levelb <- mapM tryDirContents levela
+	files <- mapM tryDirContents (concat levelb)
+	return $ catMaybes $ map islogfile (concat files)
+	where
+		tryDirContents d = catch (dirContents d) (return . const [])
+		dir = gitStateDir repo
+		islogfile f = maybe Nothing (\k -> Just $ (k, f)) $
+				logFileKey $ takeFileName f
+
+inject :: FilePath -> FilePath -> Annex ()
+inject source dest = do
+	new <- liftIO (readFile $ olddir </> source)
+	prev <- Branch.get dest
+	Branch.change dest $ unlines $ nub $ lines prev ++ lines new
+
+logFiles :: FilePath -> Annex [FilePath]
+logFiles dir = return . filter (".log" `isSuffixOf`)
+		=<< liftIO (getDirectoryContents dir)
 
 {- Old .gitattributes contents, not needed anymore. -}
 attrLines :: [String]
@@ -49,15 +86,6 @@ gitAttributesUnWrite repo = do
 	let attributes = Git.attributes repo
 	whenM (doesFileExist attributes) $ do
 		c <- readFileStrict attributes
-		safeWriteFile attributes $ unlines $
+		liftIO $ safeWriteFile attributes $ unlines $
 			filter (\l -> not $ l `elem` attrLines) $ lines c
-
-oldlogFile :: Git.Repo -> Key -> String
-oldlogFile = logFile' hashDirLower
-
-oldlogFileOld :: Git.Repo -> Key -> String
-oldlogFileOld = logFile' hashDirMixed
-
-logFile' :: (Key -> FilePath) -> Git.Repo -> Key -> String
-logFile' hasher repo key =
-	gitStateDir repo ++ hasher key ++ keyFile key ++ ".log"
+		Git.run repo "add" [File attributes]

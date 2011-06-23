@@ -30,6 +30,7 @@ import Backend
 import Messages
 import Version
 import Utility
+import qualified Upgrade.V2
 
 -- v2 adds hashing of filenames of content and location log files.
 -- Key information is encoded in filenames differently, so
@@ -70,8 +71,8 @@ upgrade = do
 	
 			AnnexQueue.flush True
 			setVersion
-
-	return True
+	
+	Upgrade.V2.upgrade
 
 moveContent :: Annex ()
 moveContent = do
