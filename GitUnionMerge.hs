@@ -91,10 +91,10 @@ mergeFile g (info, file) = case filter (/= nullsha) [asha, bsha] of
  - with the specified parent refs. -}
 commit :: Git.Repo -> String -> String -> [String] -> IO ()
 commit g message newref parentrefs = do
-	tree <- Git.getSha "write-tree" $ ignorehandle $
-		pipeFrom "git" ["write-tree"]
-	sha <- Git.getSha "commit-tree" $ ignorehandle $ 
-		pipeBoth "git" (["commit-tree", tree] ++ ps) message
+	tree <- Git.getSha "write-tree" $
+		Git.pipeRead g [Param "write-tree"]
+	sha <- Git.getSha "commit-tree" $ ignorehandle $
+		Git.pipeWriteRead g (map Param $ ["commit-tree", tree] ++ ps) message
 	Git.run g "update-ref" [Param newref, Param sha]
 	where
 		ignorehandle a = return . snd =<< a
