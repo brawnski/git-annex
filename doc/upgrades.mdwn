@@ -9,8 +9,7 @@ git-annex, and might want to use them with a newer git-annex.
 
 git-annex will notice if it is run in a repository that
 needs an upgrade, and refuse to do anything. To upgrade,
-use the "git annex upgrade" command. The upgrade can tend
-to take a while, if you have a lot of files.
+use the "git annex upgrade" command.
 
 The upgrade process is guaranteed to be conflict-free. Unless you
 already have git conflicts in your repository or between repositories.
@@ -25,9 +24,9 @@ Involved moving the .git-annex/ directory into a separate git-annex branch.
 
 ### tips for this upgrade
 
-This upgrade is easier than the previous upgrades. You don't need to
-upgrade every repository at once; it's sufficient to upgrade each
-repository only when you next use it.
+This upgrade is easier (and faster!) than the previous upgrades.
+You don't need to upgrade every repository at once; it's sufficient
+to upgrade each repository only when you next use it.
 
 After the upgrade is complete, commit the changes it staged.
 	
@@ -49,6 +48,8 @@ To ensure that information is available for all your annexed files, see
 [[upgrades/SHA_size]].
 
 ### tips for this upgrade
+
+This upgrade can tend to take a while, if you have a lot of files.
 
 Each clone of a repository should be individually upgraded.
 Until a repository's remotes have been upgraded, git-annex
