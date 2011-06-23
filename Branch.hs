@@ -64,12 +64,7 @@ index g = gitAnnexDir g </> "index"
  - and merge in changes from other branches.
  -}
 genIndex :: Git.Repo -> IO ()
-genIndex g = do
-	ls <- Git.pipeNullSplit g $
-		map Param ["ls-tree", "-z", "-r", "--full-tree", fullname]
-	forceSuccess =<< Git.pipeWrite g
-		(map Param ["update-index", "-z", "--index-info"])
-		(join "\0" ls)
+genIndex g = GitUnionMerge.ls_tree g fullname >>= GitUnionMerge.update_index g
 
 {- Runs an action using the branch's index file. -}
 withIndex :: Annex a -> Annex a
