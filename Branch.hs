@@ -11,7 +11,7 @@ module Branch (
 	get,
 	change,
 	commit,
-	shortref
+	files
 ) where
 
 import Control.Monad (unless, when, liftM)
@@ -222,3 +222,10 @@ cmdOutput cmd params = do
 	let rv = seq retval retval
 	_ <- getProcessStatus True False pid
 	return rv
+
+{- Lists all files on the branch. -}
+files :: Annex [FilePath]
+files = withIndexUpdate $ do
+	g <- Annex.gitRepo
+	liftIO $ Git.pipeNullSplit g
+		[Params "ls-tree --name-only -r -z", Param fullname]

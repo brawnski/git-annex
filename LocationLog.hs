@@ -26,7 +26,6 @@ module LocationLog (
 import Data.Time.Clock.POSIX
 import Data.Time
 import System.Locale
-import System.Directory
 import System.FilePath
 import qualified Data.Map as Map
 import Control.Monad (when)
@@ -35,7 +34,6 @@ import Control.Monad.State (liftIO)
 
 import qualified GitRepo as Git
 import qualified Branch
-import Utility
 import UUID
 import Types
 import Locations
@@ -148,19 +146,6 @@ mapLog m l =
 
 {- Finds all keys that have location log information.
  - (There may be duplicate keys in the list.) -}
-loggedKeys :: Git.Repo -> Annex [Key]
-loggedKeys repo = do
-	_ <- error "FIXME.. does not look in git-annex branch yet"
-	exists <- liftIO $ doesDirectoryExist dir
-	if exists
-		then do
-			-- 2 levels of hashing
-			levela <- liftIO $ dirContents dir
-			levelb <- mapM tryDirContents levela
-			files <- mapM tryDirContents (concat levelb)
-			return $ catMaybes $
-				map (logFileKey . takeFileName) (concat files)
-		else return []
-	where
-		tryDirContents d = liftIO $ catch (dirContents d) (return . const [])
-		dir = gitStateDir repo
+loggedKeys :: Annex [Key]
+loggedKeys =
+	return . catMaybes . map (logFileKey . takeFileName) =<< Branch.files

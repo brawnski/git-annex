@@ -66,10 +66,8 @@ checkRemoteUnused name = do
 checkRemoteUnused' :: Remote.Remote Annex -> Annex ()
 checkRemoteUnused' r = do
 	showNote $ "checking for unused data..."
-	g <- Annex.gitRepo
 	referenced <- getKeysReferenced
-	logged <- loggedKeys g
-	remotehas <- filterM isthere logged
+	remotehas <- filterM isthere =<< loggedKeys
 	let remoteunused = remotehas `exclude` referenced
 	let list = number 0 remoteunused
 	writeUnusedFile "" list
