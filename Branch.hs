@@ -68,16 +68,19 @@ genIndex g = do
 
 {- Runs an action using the branch's index file. -}
 withIndex :: Annex a -> Annex a
-withIndex a = do
+withIndex = withIndex' False
+withIndex' :: Bool -> Annex a -> Annex a
+withIndex' bootstrapping a = do
 	g <- Annex.gitRepo
 	let f = index g
-	liftIO $ Git.useIndex f
+	reset <- liftIO $ Git.useIndex f
 
-	e <- liftIO $ doesFileExist f
-	unless e $ liftIO $ genIndex g
+	unless bootstrapping $ do
+		e <- liftIO $ doesFileExist f
+		unless e $ liftIO $ genIndex g
 
 	r <- a
-	liftIO $ Git.useDefaultIndex
+	liftIO reset
 	return r
 
 withIndexUpdate :: Annex a -> Annex a
@@ -121,11 +124,8 @@ create = do
 		inorigin <- refexists origin
 		if inorigin
 			then liftIO $ Git.run g "branch" [Param name, Param origin]
-			else liftIO $ do
-				let f = index g
-				liftIO $ Git.useIndex f
-				GitUnionMerge.commit g "branch created" fullname []
-				liftIO $ Git.useDefaultIndex
+			else withIndex' True $
+				liftIO $ GitUnionMerge.commit g "branch created" fullname []
 	where
 		origin = "origin/" ++ name
 		refexists ref = do

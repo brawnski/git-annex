@@ -60,7 +60,6 @@ module GitRepo (
 	repoAbsPath,
 	reap,
 	useIndex,
-	useDefaultIndex,
 	hashObject,
 	getSha,
 	shaSize,
@@ -79,6 +78,7 @@ import System.Cmd.Utils
 import IO (bracket_)
 import Data.String.Utils
 import System.IO
+import IO (try)
 import qualified Data.Map as Map hiding (map, split)
 import Network.URI
 import Data.Maybe
@@ -88,7 +88,7 @@ import Codec.Binary.UTF8.String (encode)
 import Text.Printf
 import Data.List (isInfixOf, isPrefixOf, isSuffixOf)
 import System.Exit
-import System.Posix.Env (setEnv, unsetEnv)
+import System.Posix.Env (setEnv, unsetEnv, getEnv)
 
 import Utility
 
@@ -391,13 +391,18 @@ reap = do
 	r <- catch (getAnyProcessStatus False True) (\_ -> return Nothing)
 	maybe (return ()) (const reap) r
 
-{- Forces git to use the specified index file. -}
-useIndex :: FilePath -> IO ()
-useIndex index = setEnv "GIT_INDEX_FILE" index True
-
-{- Undoes useIndex -}
-useDefaultIndex :: IO ()
-useDefaultIndex = unsetEnv "GIT_INDEX_FILE"
+{- Forces git to use the specified index file.
+ - Returns an action that will reset back to the default
+ - index file. -}
+useIndex :: FilePath -> IO (IO ())
+useIndex index = do
+	res <- try $ getEnv var
+	setEnv var index True
+	return $ reset res
+	where
+		var = "GIT_INDEX_FILE"
+		reset (Right (Just v)) = setEnv var v True
+		reset _ = unsetEnv var
 
 {- Injects some content into git, returning its hash. -}
 hashObject :: Repo -> String -> IO String
