@@ -54,7 +54,9 @@ checkUnused = do
 	where
 		list file msg l c = do
 			let unusedlist = number c l
-			when (not $ null l) $ showLongNote $ msg unusedlist
+			when (not $ null l) $ do
+				showLongNote $ msg unusedlist
+				showLongNote $ "\n"
 			writeUnusedFile file unusedlist
 			return $ c + length l
 
@@ -108,16 +110,18 @@ staleBadMsg t = unlines $
 
 unusedMsg :: [(Int, Key)] -> String
 unusedMsg u = unusedMsg' u
-	["Some annexed data is no longer used by any files in the repository:"]
-	[dropMsg Nothing]
+	["Some annexed data is no longer used by any files in the current branch:"]
+	[dropMsg Nothing,
+	"Please be cautious -- are you sure that another branch, or another",
+	"repository does not still use this data?"]
 
 remoteUnusedMsg :: Remote.Remote Annex -> [(Int, Key)] -> String
 remoteUnusedMsg r u = unusedMsg' u
 	["Some annexed data on " ++ name ++ 
-	 " is not used by any files in this repository."]
+	 " is not used by any files in the current branch:"]
 	[dropMsg $ Just r,
-	 "Please be cautious -- are you sure that the remote repository",
-	 "does not use this data?"]
+	 "Please be cautious -- Are you sure that the remote repository",
+	 "does not use this data? Or that it's not used by another branch?"]
 	where
 		name = Remote.name r 
 
@@ -132,7 +136,7 @@ dropMsg :: Maybe (Remote.Remote Annex) -> String
 dropMsg Nothing = dropMsg' ""
 dropMsg (Just r) = dropMsg' $ " --from " ++ Remote.name r
 dropMsg' :: String -> String
-dropMsg' s = "(To remove unwanted data: git-annex dropunused" ++ s ++ " NUMBER)\n"
+dropMsg' s = "\nTo remove unwanted data: git-annex dropunused" ++ s ++ " NUMBER\n"
 
 {- Finds keys whose content is present, but that do not seem to be used
  - by any files in the git repo, or that are only present as bad or tmp

@@ -155,13 +155,13 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * unused
 
-  Checks the annex for data that does not correspond to any files currently
-  in the respository, and prints a numbered list of the data.
+  Checks the annex for data that does not correspond to any files present
+  in the currently checked out branch, and prints a numbered list of the data.
 
   To only show unused temp and bad files, specify --fast
 
-  To check data on a remote that does not correspond to any files currently
-  in the local repository, specify --from.
+  To check data on a remote that does not correspond to any files present
+  on the locally checked out branch, specify --from.
 
 * dropunused [number ...]
 
