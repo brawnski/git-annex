@@ -9,7 +9,8 @@ module GitUnionMerge (
 	merge,
 	commit,
 	update_index,
-	update_index_line
+	update_index_line,
+	ls_tree
 ) where
 
 import System.Cmd.Utils
@@ -40,7 +41,7 @@ merge _ _ = error "wrong number of branches to merge"
  - earlier ones, so the list can be generated from any combination of
  - ls_tree, merge_trees, and merge_tree_index. -}
 update_index :: Git.Repo -> [String] -> IO ()
-update_index g l =  togit ["update-index", "-z", "--index-info"] (join "\0" l)
+update_index g l = togit ["update-index", "-z", "--index-info"] (join "\0" l)
 	where
 		togit ps content = Git.pipeWrite g (map Param ps) content
 			>>= forceSuccess
@@ -57,13 +58,14 @@ ls_tree g x = Git.pipeNullSplit g $
 
 {- For merging two trees. -}
 merge_trees :: Git.Repo -> String -> String -> IO [String]
-merge_trees g x y = calc_merge g
-	["diff-tree", "--raw", "-z", "-r", "--no-renames", "-l0", x, y]
+merge_trees g x y = calc_merge g $ "diff-tree":diff_opts ++ [x, y]
 
 {- For merging a single tree into the index. -}
 merge_tree_index :: Git.Repo -> String -> IO [String]
-merge_tree_index g x = calc_merge g
-	["diff-index", "--raw", "-z", "-r", "--no-renames", "-l0", x]
+merge_tree_index g x = calc_merge g $ "diff-index":diff_opts ++ ["--cached", x]
+
+diff_opts :: [String]
+diff_opts = ["--raw", "-z", "-r", "--no-renames", "-l0"]
 
 {- Calculates how to perform a merge, using git to get a raw diff,
  - and returning a list suitable for update_index. -}
