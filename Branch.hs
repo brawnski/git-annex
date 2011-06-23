@@ -156,19 +156,14 @@ update = do
 		 -
 		 - It would be cleaner to handle the merge by updating the
 		 - journal, not the index, with changes from the branches.
-		 -
-		 - XXX Anything written to the journal during the merge,
-		 - by another process could still race the merge. The
-		 - journal should really be blocking locked during the
-		 - merge.
 		 -}
-		_ <- stageJournalFiles
+		staged <- stageJournalFiles
 
 		g <- Annex.gitRepo
 		r <- liftIO $ Git.pipeRead g [Param "show-ref", Param name]
 		let refs = map (last . words) (lines r)
 		updated <- catMaybes `liftM` mapM updateRef refs
-		unless (null updated) $ liftIO $
+		unless (null updated && not staged) $ liftIO $
 			GitUnionMerge.commit g "update" fullname
 				(fullname:updated)
 		Annex.changeState $ \s -> s { Annex.branchstate = state { branchUpdated = True } }
