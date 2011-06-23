@@ -80,9 +80,10 @@ withIndex' bootstrapping a = do
 	let f = index g
 	reset <- liftIO $ Git.useIndex f
 
-	unless bootstrapping $ do
-		e <- liftIO $ doesFileExist f
-		unless e $ liftIO $ genIndex g
+	e <- liftIO $ doesFileExist f
+	unless e $ liftIO $ do
+		createDirectoryIfMissing True $ takeDirectory f
+		unless bootstrapping $ genIndex g
 
 	r <- a
 	liftIO reset
