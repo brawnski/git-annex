@@ -113,7 +113,7 @@ moveLocationLogs = do
 		where
 			oldlocationlogs = do
 				g <- Annex.gitRepo
-				let dir = gitStateDir g
+				let dir = Upgrade.V2.gitStateDir g
 				exists <- liftIO $ doesDirectoryExist dir
 				if exists
 					then do
@@ -123,7 +123,7 @@ moveLocationLogs = do
 			move (l, k) = do
 				g <- Annex.gitRepo
 				let dest = logFile k
-				let dir = gitStateDir g
+				let dir = Upgrade.V2.gitStateDir g
 				let f = dir </> l
 				liftIO $ createDirectoryIfMissing True (parentDir dest)
 				-- could just git mv, but this way deals with
@@ -186,7 +186,7 @@ fileKey1 file = readKey1 $
 	replace "&a" "&" $ replace "&s" "%" $ replace "%" "/" file
 
 logFile1 :: Git.Repo -> Key -> String
-logFile1 repo key = gitStateDir repo ++ keyFile1 key ++ ".log"
+logFile1 repo key = Upgrade.V2.gitStateDir repo ++ keyFile1 key ++ ".log"
 
 lookupFile1 :: FilePath -> Annex (Maybe (Key, Backend Annex))
 lookupFile1 file = do

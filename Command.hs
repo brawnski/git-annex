@@ -22,7 +22,6 @@ import qualified Backend
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
-import Locations
 import Utility
 import Types.Key
 
@@ -181,17 +180,15 @@ withNothing _ _ = error "This command takes no parameters."
 backendPairs :: CommandSeekBackendFiles
 backendPairs a files = liftM (map a) $ Backend.chooseBackends files
 
-{- Filter out files from the state directory, and those matching the
- - exclude glob pattern, if it was specified. -}
+{- Filter out files those matching the exclude glob pattern,
+ - if it was specified. -}
 filterFiles :: [FilePath] -> Annex [FilePath]
 filterFiles l = do
-	let l' = filter notState l
 	exclude <- Annex.getState Annex.exclude
 	if null exclude
-		then return l'
-		else return $ filter (notExcluded $ wildsRegex exclude) l'
+		then return l
+		else return $ filter (notExcluded $ wildsRegex exclude) l
 	where
-		notState f = not $ stateDir `isPrefixOf` f
 		notExcluded r f = isNothing $ match r f []
 
 wildsRegex :: [String] -> Regex

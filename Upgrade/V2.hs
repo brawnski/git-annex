@@ -89,3 +89,9 @@ gitAttributesUnWrite repo = do
 		liftIO $ safeWriteFile attributes $ unlines $
 			filter (\l -> not $ l `elem` attrLines) $ lines c
 		Git.run repo "add" [File attributes]
+
+stateDir :: FilePath
+stateDir = addTrailingPathSeparator $ ".git-annex"
+gitStateDir :: Git.Repo -> FilePath
+gitStateDir repo = addTrailingPathSeparator $ Git.workTree repo </> stateDir
+

@@ -6,8 +6,6 @@
  -}
 
 module Locations (
-	gitStateDir,
-	stateDir,
 	keyFile,
 	fileKey,
 	gitAnnexLocation,
@@ -51,13 +49,6 @@ import qualified GitRepo as Git
  - based on a git repository should return an absolute path.
  - Everything else should use relative paths.
  -}
-
-{- Long-term, cross-repo state is stored in files inside the .git-annex
- - directory, in the git repository's working tree. -}
-stateDir :: FilePath
-stateDir = addTrailingPathSeparator $ ".git-annex"
-gitStateDir :: Git.Repo -> FilePath
-gitStateDir repo = addTrailingPathSeparator $ Git.workTree repo </> stateDir
 
 {- The directory git annex uses for local state, relative to the .git
  - directory -}

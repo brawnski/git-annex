@@ -69,7 +69,6 @@ Example upgrade process:
 	cd localrepo
 	git pull
 	git annex upgrade
-	(Upgrading object directory layout v1 to v2...)
 	git commit -m "upgrade v1 to v2"
 	git push
 
