@@ -105,6 +105,11 @@ gitAnnexBadLocation r key = gitAnnexBadDir r </> keyFile key
 gitAnnexUnusedLog :: FilePath -> Git.Repo -> FilePath
 gitAnnexUnusedLog prefix r = gitAnnexDir r </> (prefix ++ "unused")
 
+{- .git/annex/journal/ is used to journal changes made to the git-annex
+ - branch -}
+gitAnnexJournalDir :: Git.Repo -> FilePath
+gitAnnexJournalDir r = addTrailingPathSeparator $ gitAnnexDir r </> "journal"
+
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool
 isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s

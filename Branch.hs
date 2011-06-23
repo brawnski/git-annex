@@ -164,6 +164,8 @@ updateRef ref
 	| ref == fullname = return Nothing
 	| otherwise = do
 		g <- Annex.gitRepo
+		-- checking with log to see if there have been changes
+		-- is less expensive than always merging
 		diffs <- liftIO $ Git.pipeRead g [
 			Param "log",
 			Param (name++".."++ref),
@@ -176,6 +178,12 @@ updateRef ref
 				-- By passing only one ref, it is actually
 				-- merged into the index, preserving any
 				-- changes that may already be staged.
+				--
+				-- However, any changes in the git-annex
+				-- branch that are *not* reflected in the
+				-- index will be removed. So, documentation
+				-- advises users not to directly modify the
+				-- branch.
 				liftIO $ GitUnionMerge.merge g [ref]
 				return $ Just ref
 

@@ -21,9 +21,14 @@ deleting or changing the file contents.
 
 This branch is managed by git-annex, with the contents listed below.
 
-Note that it assumes only it will modify the branch. If you go in and make
-changes, be sure to remove `.git/index.git-annex` before running git-annex,
-otherwise it will probably revert your changes in its next commit to the branch.
+Note that git-annex assumes only it will modify this branch. If you go in
+and make changes directly, it will probably revert your changes in its next
+commit to the branch.
+
+The best way to make changes to the git-annex branch is instead
+to create a branch of it, with a name like "my/git-annex", and then
+use "git annex merge" to automerge your branch into the main git-annex
+branch.
 
 ### `uuid.log`
 
