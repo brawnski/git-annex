@@ -53,7 +53,7 @@ upgrade = do
 
 	showLongNote $
 		"git-annex branch created\n" ++
-		"Now you should push the new branch: git push origin git-annex"
+		"Now you should push the new branch: git push origin git-annex\n"
 
 	return True
 
