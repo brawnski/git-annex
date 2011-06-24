@@ -47,17 +47,20 @@ upgrade :: Annex Bool
 upgrade = do
 	showNote "v2 to v3"
 	g <- Annex.gitRepo
+	let bare = Git.repoIsLocalBare g
+
 	Branch.create
 	mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
 	mapM_ (\f -> inject f f) =<< logFiles (olddir g)
 	liftIO $ do
 		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
-		unless (Git.repoIsLocalBare g) $ gitAttributesUnWrite g
+		unless bare $ gitAttributesUnWrite g
 
-	showLongNote $
-		"git-annex branch created\n" ++
-		"Now you should push the new branch: git push origin git-annex\n"
-	showProgress
+	unless bare $ do
+		showLongNote $
+			"git-annex branch created\n" ++
+			"Now you should push the new branch: git push origin git-annex\n"
+		showProgress
 
 	return True
 
