@@ -11,7 +11,10 @@ module Branch (
 	get,
 	change,
 	commit,
-	files
+	files,
+	refExists,
+	hasOrigin,
+	name	
 ) where
 
 import Control.Monad (unless, when, liftM)
@@ -43,6 +46,10 @@ name = "git-annex"
 {- Fully qualified name of the branch. -}
 fullname :: String
 fullname = "refs/heads/" ++ name
+
+{- Branch's name in origin. -}
+originname :: String
+originname = "origin/" ++ name
 
 {- Converts a fully qualified git ref into a short version for human
  - consumptiom. -}
@@ -114,20 +121,14 @@ getCache file = getState >>= handle
 {- Creates the branch, if it does not already exist. -}
 create :: Annex ()
 create = do
-	exists <- refexists fullname
+	exists <- refExists fullname
 	unless exists $ do
 		g <- Annex.gitRepo
-		inorigin <- refexists origin
-		if inorigin
-			then liftIO $ Git.run g "branch" [Param name, Param origin]
+		e <- hasOrigin
+		if e
+			then liftIO $ Git.run g "branch" [Param name, Param originname]
 			else withIndex' True $
 				liftIO $ GitUnionMerge.commit g "branch created" fullname []
-	where
-		origin = "origin/" ++ name
-		refexists ref = do
-			g <- Annex.gitRepo
-			liftIO $ Git.runBool g "show-ref"
-				[Param "--verify", Param "-q", Param ref]
 
 {- Stages the journal, and commits staged changes to the branch. -}
 commit :: String -> Annex ()
@@ -163,6 +164,17 @@ update = do
 				(fullname:updated)
 		Annex.changeState $ \s -> s { Annex.branchstate = state { branchUpdated = True } }
 		invalidateCache
+
+{- Does origin/git-annex exist? -}
+hasOrigin :: Annex Bool
+hasOrigin = refExists originname
+
+{- Checks if a git ref exists. -}
+refExists :: String -> Annex Bool
+refExists ref = do
+	g <- Annex.gitRepo
+	liftIO $ Git.runBool g "show-ref"
+		[Param "--verify", Param "-q", Param ref]
 
 {- Ensures that a given ref has been merged into the index. -}
 updateRef :: String -> Annex (Maybe String)

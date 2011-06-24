@@ -9,8 +9,7 @@ module Upgrade.V2 where
 
 import System.Directory
 import System.FilePath
-import Control.Monad.State (liftIO)
-import Control.Monad.State (unless)
+import Control.Monad.State (unless, liftIO)
 import List
 import Data.Maybe
 
@@ -58,12 +57,7 @@ upgrade = do
 		unless bare $ gitAttributesUnWrite g
 
 	saveState
-
-	unless bare $ do
-		showLongNote $
-			"git-annex branch created\n" ++
-			"Now you should push the new branch: git push origin git-annex\n"
-		showProgress
+	unless bare $ push
 
 	return True
 
@@ -90,6 +84,36 @@ logFiles :: FilePath -> Annex [FilePath]
 logFiles dir = return . filter (".log" `isSuffixOf`)
 		=<< liftIO (getDirectoryContents dir)
 
+push :: Annex ()
+push = do
+	origin_master <- Branch.refExists "origin/master"
+	origin_gitannex <- Branch.hasOrigin
+	case (origin_master, origin_gitannex) of
+		(_, True) -> do
+			-- Merge in the origin's git-annex branch,
+			-- so that pushing the git-annex branch
+			-- will immediately work. Not pushed here,
+			-- because it's less obnoxious to let the user
+			-- push.
+			Branch.update
+		(True, False) -> do
+			-- push git-annex to origin, so that
+			-- "git push" will from then on
+			-- automatically push it
+			Branch.update -- just in case
+			showNote "pushing new git-annex branch to origin"
+			showProgress
+			g <- Annex.gitRepo
+			liftIO $ Git.run g "push" [Param "origin", Param Branch.name]
+		_ -> do
+			-- no origin exists, so just let the user
+			-- know about the new branch
+			Branch.update
+			showLongNote $
+				"git-annex branch created\n" ++
+				"Be sure to push this branch when pushing to remotes.\n"
+			showProgress
+
 {- Old .gitattributes contents, not needed anymore. -}
 attrLines :: [String]
 attrLines =
@@ -110,4 +134,3 @@ stateDir :: FilePath
 stateDir = addTrailingPathSeparator $ ".git-annex"
 gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = addTrailingPathSeparator $ Git.workTree repo </> stateDir
-

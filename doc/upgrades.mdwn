@@ -34,7 +34,6 @@ Example upgrade process:
 	git pull
 	git annex upgrade
 	git commit -m "upgrade v2 to v3"
-	git push origin git-annex master
 	git gc
 
 ### v1 -> v2 (git-annex version 0.20110316)
