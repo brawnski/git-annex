@@ -10,6 +10,7 @@ module Upgrade.V2 where
 import System.Directory
 import System.FilePath
 import Control.Monad.State (liftIO)
+import Control.Monad.State (unless)
 import List
 import Data.Maybe
 
@@ -22,8 +23,10 @@ import Messages
 import Utility
 import Locations
 
-olddir :: FilePath
-olddir = ".git-annex"
+olddir :: Git.Repo -> FilePath
+olddir g
+	| Git.repoIsLocalBare g = ""
+	| otherwise = ".git-annex"
 
 {- .git-annex/ moved to a git-annex branch.
  - 
@@ -46,14 +49,15 @@ upgrade = do
 	g <- Annex.gitRepo
 	Branch.create
 	mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
-	mapM_ (\f -> inject f f) =<< logFiles olddir
+	mapM_ (\f -> inject f f) =<< logFiles (olddir g)
 	liftIO $ do
-		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File olddir]
-		gitAttributesUnWrite g
+		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
+		unless (Git.repoIsLocalBare g) $ gitAttributesUnWrite g
 
 	showLongNote $
 		"git-annex branch created\n" ++
 		"Now you should push the new branch: git push origin git-annex\n"
+	showProgress
 
 	return True
 
@@ -71,7 +75,8 @@ locationLogs repo = liftIO $ do
 
 inject :: FilePath -> FilePath -> Annex ()
 inject source dest = do
-	new <- liftIO (readFile $ olddir </> source)
+	g <- Annex.gitRepo
+	new <- liftIO (readFile $ olddir g </> source)
 	prev <- Branch.get dest
 	Branch.change dest $ unlines $ nub $ lines prev ++ lines new
 
