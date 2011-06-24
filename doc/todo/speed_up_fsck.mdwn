@@ -1,0 +1,18 @@
+moving to the git-annex branch has slowed down fsck worse than most
+commands. Actually, some commands have sped up, while others like get
+are slightly slower but are swamped by the normal runtime. 
+
+For fsck though, it has to pull each file's location log info out of git.
+And, it's typically run on the entire tree.
+
+It would be possible to run a single `git cat-file --batch` and pass it
+sha1s of location logs for file that is going to be fsked (gotten via
+`read-tree`). Then just read its output until the next requested sha1 to
+chunk it, and pass this in to fsck in a closure.
+
+The difficulty, besides writing that is that everything that works with
+location logs now reads them out of git, would need to find a way to
+provide the info on a side channel of some sort.
+
+If this is implemented, the same infrastructure could be used for other
+commands like whereis and add. --[[Joey]]
