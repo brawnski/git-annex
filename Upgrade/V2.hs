@@ -22,6 +22,7 @@ import qualified Branch
 import Messages
 import Utility
 import Locations
+import Content
 
 olddir :: Git.Repo -> FilePath
 olddir g
@@ -55,6 +56,8 @@ upgrade = do
 	liftIO $ do
 		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
 		unless bare $ gitAttributesUnWrite g
+
+	saveState
 
 	unless bare $ do
 		showLongNote $
