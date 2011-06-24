@@ -9,7 +9,7 @@ module Upgrade.V2 where
 
 import System.Directory
 import System.FilePath
-import Control.Monad.State (unless, liftIO)
+import Control.Monad.State (unless, when, liftIO)
 import List
 import Data.Maybe
 
@@ -50,11 +50,13 @@ upgrade = do
 	let bare = Git.repoIsLocalBare g
 
 	Branch.create
-	mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
-	mapM_ (\f -> inject f f) =<< logFiles (olddir g)
-	liftIO $ do
-		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
-		unless bare $ gitAttributesUnWrite g
+	e <- liftIO $ doesDirectoryExist (olddir g)
+	when e $ do
+		mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
+		mapM_ (\f -> inject f f) =<< logFiles (olddir g)
+		liftIO $ do
+			Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
+			unless bare $ gitAttributesUnWrite g
 
 	saveState
 	unless bare $ push
