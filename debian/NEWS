@@ -1,4 +1,4 @@
-git-annex (3.20110622) unstable; urgency=low
+git-annex (3.20110624) exerimental; urgency=low
 
   There has been another change to the git-annex data store.
   Use `git annex upgrade` to migrate your repositories to the new

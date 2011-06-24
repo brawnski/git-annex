@@ -1,4 +1,4 @@
-git-annex (3.20110611) UNRELEASED; urgency=low
+git-annex (3.20110624) experimental; urgency=low
 
   * New repository format, annex.version=3. Use `git annex upgrade` to migrate.
   * git-annex now stores its logs in a git-annex branch.
@@ -18,7 +18,7 @@ git-annex (3.20110611) UNRELEASED; urgency=low
   * git-union-merge: New git subcommand, that does a generic union merge
     operation, and operates efficiently without touching the working tree.
 
- -- Joey Hess <joeyh@debian.org>  Mon, 13 Jun 2011 19:53:24 -0400
+ -- Joey Hess <joeyh@debian.org>  Fri, 24 Jun 2011 14:32:18 -0400
 
 git-annex (0.20110610) unstable; urgency=low
 
