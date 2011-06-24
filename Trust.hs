@@ -9,15 +9,13 @@ module Trust (
 	TrustLevel(..),
 	trustLog,
 	trustGet,
-	trustMap,
-	trustMapParse,
 	trustSet
 ) where
 
 import Control.Monad.State
 import qualified Data.Map as M
 
-import TrustLevel
+import Types.TrustLevel
 import qualified Branch
 import Types
 import UUID
@@ -35,11 +33,17 @@ trustGet level = do
 
 {- Read the trustLog into a map, overriding with any
  - values from forcetrust -}
-trustMap :: Annex (M.Map UUID TrustLevel)
+trustMap :: Annex TrustMap
 trustMap = do
-	overrides <- Annex.getState Annex.forcetrust
-	s <- Branch.get trustLog
-	return $ M.fromList $ trustMapParse s ++ overrides
+	cached <- Annex.getState Annex.trustmap
+	case cached of
+		Just m -> return m
+		Nothing -> do
+			overrides <- Annex.getState Annex.forcetrust
+			l <- Branch.get trustLog
+			let m = M.fromList $ trustMapParse l ++ overrides
+			Annex.changeState $ \s -> s { Annex.trustmap = Just m }
+			return m
 
 {- Trust map parser. -}
 trustMapParse :: String -> [(UUID, TrustLevel)]
@@ -62,6 +66,7 @@ trustSet uuid level = do
 	when (M.lookup uuid m /= Just level) $ do
 		let m' = M.insert uuid level m
 		Branch.change trustLog (serialize m')
+		Annex.changeState $ \s -> s { Annex.trustmap = Just m' }
         where
                 serialize m = unlines $ map showpair $ M.toList m
 		showpair (u, t) = u ++ " " ++ show t

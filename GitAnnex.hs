@@ -14,7 +14,7 @@ import CmdLine
 import Command
 import Options
 import Utility
-import TrustLevel
+import Types.TrustLevel
 import qualified Annex
 import qualified Remote
 

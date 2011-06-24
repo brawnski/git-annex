@@ -5,9 +5,14 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module TrustLevel (
+module Types.TrustLevel (
 	TrustLevel(..),
+	TrustMap
 ) where
+
+import qualified Data.Map as M
+
+import Types.UUID
 
 data TrustLevel = SemiTrusted | UnTrusted | Trusted
 	deriving Eq
@@ -21,3 +26,5 @@ instance Read TrustLevel where
         readsPrec _ "1" = [(Trusted, "")]
         readsPrec _ "0" = [(UnTrusted, "")]
 	readsPrec _ _ = [(SemiTrusted, "")]
+
+type TrustMap = M.Map UUID TrustLevel

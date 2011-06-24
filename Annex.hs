@@ -24,7 +24,7 @@ import Types.Backend
 import Types.Remote
 import Types.Crypto
 import Types.BranchState
-import TrustLevel
+import Types.TrustLevel
 import Types.UUID
 
 -- git-annex's monad
@@ -48,6 +48,7 @@ data AnnexState = AnnexState
 	, fromremote :: Maybe String
 	, exclude :: [String]
 	, forcetrust :: [(UUID, TrustLevel)]
+	, trustmap :: Maybe TrustMap
 	, cipher :: Maybe Cipher
 	}
 
@@ -69,6 +70,7 @@ newState allbackends gitrepo = AnnexState
 	, fromremote = Nothing
 	, exclude = []
 	, forcetrust = []
+	, trustmap = Nothing
 	, cipher = Nothing
 	}
 
