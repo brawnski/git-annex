@@ -4,6 +4,7 @@
 * [[Debian]]
 * [[Ubuntu]]
 * [[Fedora]]
+* [[FreeBSD]]
 
 ## Generic instructions
 
