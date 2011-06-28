@@ -8,6 +8,8 @@
  -
  - A line of the log will look like: "date N UUID"
  - Where N=1 when the repo has the file, and 0 otherwise.
+ - (After the UUID can optionally come a white space and other data, 
+ - for future expansion.)
  - 
  - Copyright 2010-2011 Joey Hess <joey@kitenet.net>
  -
@@ -65,7 +67,7 @@ instance Read LogLine where
 	-- read without an exception being thrown.
 	-- Such lines have a status of Undefined.
 	readsPrec _ string = 
-		if length w == 3
+		if length w >= 3
 			then maybe bad good pdate
 			else bad
 		where
