@@ -17,7 +17,7 @@ module Branch (
 	name	
 ) where
 
-import Control.Monad (unless, when, liftM)
+import Control.Monad (unless, liftM)
 import Control.Monad.State (liftIO)
 import System.FilePath
 import System.Directory
@@ -39,21 +39,23 @@ import Types
 import Messages
 import Locations
 
+type GitRef = String
+
 {- Name of the branch that is used to store git-annex's information. -}
-name :: String
+name :: GitRef
 name = "git-annex"
 
 {- Fully qualified name of the branch. -}
-fullname :: String
+fullname :: GitRef
 fullname = "refs/heads/" ++ name
 
 {- Branch's name in origin. -}
-originname :: String
+originname :: GitRef
 originname = "origin/" ++ name
 
 {- Converts a fully qualified git ref into a short version for human
  - consumptiom. -}
-shortref :: String -> String
+shortref :: GitRef -> String
 shortref = remove "refs/heads/" . remove "refs/remotes/"
 	where
 		remove prefix s
@@ -121,24 +123,20 @@ getCache file = getState >>= handle
 
 {- Creates the branch, if it does not already exist. -}
 create :: Annex ()
-create = do
-	exists <- refExists fullname
-	unless exists $ do
-		g <- Annex.gitRepo
-		e <- hasOrigin
-		if e
-			then liftIO $ Git.run g "branch" [Param name, Param originname]
-			else withIndex' True $
-				liftIO $ GitUnionMerge.commit g "branch created" fullname []
+create = unlessM (refExists fullname) $ do
+	g <- Annex.gitRepo
+	e <- hasOrigin
+	if e
+		then liftIO $ Git.run g "branch" [Param name, Param originname]
+		else withIndex' True $
+			liftIO $ GitUnionMerge.commit g "branch created" fullname []
 
 {- Stages the journal, and commits staged changes to the branch. -}
 commit :: String -> Annex ()
-commit message = do
-	staged <- stageJournalFiles
-	when staged $ do
-		g <- Annex.gitRepo
-		withIndex $ liftIO $
-			GitUnionMerge.commit g message fullname [fullname]
+commit message = whenM stageJournalFiles $ do
+	g <- Annex.gitRepo
+	withIndex $ liftIO $
+		GitUnionMerge.commit g message fullname [fullname]
 
 {- Ensures that the branch is up-to-date; should be called before
  - data is read from it. Runs only once per git-annex run. -}
@@ -171,14 +169,14 @@ hasOrigin :: Annex Bool
 hasOrigin = refExists originname
 
 {- Checks if a git ref exists. -}
-refExists :: String -> Annex Bool
+refExists :: GitRef -> Annex Bool
 refExists ref = do
 	g <- Annex.gitRepo
 	liftIO $ Git.runBool g "show-ref"
 		[Param "--verify", Param "-q", Param ref]
 
 {- Ensures that a given ref has been merged into the index. -}
-updateRef :: String -> Annex (Maybe String)
+updateRef :: GitRef -> Annex (Maybe String)
 updateRef ref
 	| ref == fullname = return Nothing
 	| otherwise = do
