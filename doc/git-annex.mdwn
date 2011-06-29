@@ -314,7 +314,8 @@ Many git-annex commands will stage changes for later `git commit` by you.
 * --force
 
   Force unsafe actions, such as dropping a file's content when no other
-  source of it can be verified to still exist. Use with care.
+  source of it can be verified to still exist, or adding ignored files.
+  Use with care.
 
 * --fast
 

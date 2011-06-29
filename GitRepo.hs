@@ -382,13 +382,15 @@ reap = do
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]
 inRepo repo l = pipeNullSplit repo $
-	[Params "ls-files --cached --exclude-standard -z --"] ++ map File l
+	[Params "ls-files --cached -z --"] ++ map File l
 
-{- Scans for files at the specified locations that are not checked into git,
- - and not gitignored. -}
-notInRepo :: Repo -> [FilePath] -> IO [FilePath]
-notInRepo repo l = pipeNullSplit repo $
-	[Params "ls-files --others --exclude-standard -z --"] ++ map File l
+{- Scans for files at the specified locations that are not checked into
+ - git. -}
+notInRepo :: Repo -> Bool -> [FilePath] -> IO [FilePath]
+notInRepo repo include_ignored l =
+	pipeNullSplit repo $ [Params "ls-files --others"]++exclude++[Params "-z --"] ++ map File l
+	where
+		exclude = if include_ignored then [] else [Param "--exclude-standard"]
 
 {- Returns a list of all files that are staged for commit. -}
 stagedFiles :: Repo -> [FilePath] -> IO [FilePath]

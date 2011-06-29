@@ -9,6 +9,7 @@ git-annex (0.20110611) UNRELEASED; urgency=low
   * unlock: Made atomic.
   * git-union-merge: New git subcommand, that does a generic union merge
     operation, and operates efficiently without touching the working tree.
+  * --force will cause add, etc, to operate on ignored files.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 13 Jun 2011 19:53:24 -0400
 
