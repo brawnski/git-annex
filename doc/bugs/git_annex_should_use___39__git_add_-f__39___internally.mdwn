@@ -1,0 +1,6 @@
+I have this line in the .gitignore file of one of my repos:
+*log
+
+So the command 'git annex init name' fails to add the file ".git-annex/uuid.log", and the same problem happens when git-annex-add'ing files.
+
+Also, when a file is git-ignored, it should be possible to 'git annex add' it with a -f/--force option, the same way git does it.
