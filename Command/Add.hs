@@ -11,6 +11,7 @@ import Control.Monad.State (liftIO)
 import System.Posix.Files
 
 import Command
+import qualified Annex
 import qualified AnnexQueue
 import qualified Backend
 import LocationLog
@@ -60,5 +61,8 @@ cleanup file key = do
 	let mtime = modificationTime s
 	liftIO $ touch file (TimeSpec mtime) False
 
-	AnnexQueue.add "add" [Param "--"] file
+	force <- Annex.getState Annex.force
+	if force
+		then AnnexQueue.add "add" [Param "-f", Param "--"] file
+		else AnnexQueue.add "add" [Param "--"] file
 	return True

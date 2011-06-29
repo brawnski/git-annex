@@ -142,7 +142,8 @@ withFilesMissing a params = do
 withFilesNotInGit :: CommandSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
-	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo) params
+	force <- Annex.getState Annex.force
+	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo force) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
 withWords :: CommandSeekWords
