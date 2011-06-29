@@ -26,6 +26,7 @@ import LocationLog
 import qualified Annex
 import qualified AnnexQueue
 import qualified GitRepo as Git
+import qualified GitRepo.LsFiles as LsFiles
 import Backend
 import Messages
 import Version
@@ -92,7 +93,7 @@ updateSymlinks :: Annex ()
 updateSymlinks = do
 	showNote "updating symlinks..."
 	g <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo g [Git.workTree g]
+	files <- liftIO $ LsFiles.inRepo g [Git.workTree g]
 	forM_ files $ fixlink
 	where
 		fixlink f = do

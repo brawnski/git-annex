@@ -22,6 +22,7 @@ import qualified Backend
 import Messages
 import qualified Annex
 import qualified GitRepo as Git
+import qualified GitRepo.LsFiles as LsFiles
 import Utility
 import Types.Key
 
@@ -118,17 +119,17 @@ notBareRepo a = do
 withFilesInGit :: CommandSeekStrings
 withFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (LsFiles.inRepo repo) params
 	liftM (map a) $ filterFiles files
 withAttrFilesInGit :: String -> CommandSeekAttrFiles
 withAttrFilesInGit attr a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (LsFiles.inRepo repo) params
 	liftM (map a) $ liftIO $ Git.checkAttr repo attr files
 withBackendFilesInGit :: CommandSeekBackendFiles
 withBackendFilesInGit a params = do
 	repo <- Annex.gitRepo
-	files <- liftIO $ runPreserveOrder (Git.inRepo repo) params
+	files <- liftIO $ runPreserveOrder (LsFiles.inRepo repo) params
 	files' <- filterFiles files
 	backendPairs a files'
 withFilesMissing :: CommandSeekStrings
@@ -143,7 +144,7 @@ withFilesNotInGit :: CommandSeekBackendFiles
 withFilesNotInGit a params = do
 	repo <- Annex.gitRepo
 	force <- Annex.getState Annex.force
-	newfiles <- liftIO $ runPreserveOrder (Git.notInRepo repo force) params
+	newfiles <- liftIO $ runPreserveOrder (LsFiles.notInRepo repo force) params
 	newfiles' <- filterFiles newfiles
 	backendPairs a newfiles'
 withWords :: CommandSeekWords
@@ -153,12 +154,12 @@ withStrings a params = return $ map a params
 withFilesToBeCommitted :: CommandSeekStrings
 withFilesToBeCommitted a params = do
 	repo <- Annex.gitRepo
-	tocommit <- liftIO $ runPreserveOrder (Git.stagedFilesNotDeleted repo) params
+	tocommit <- liftIO $ runPreserveOrder (LsFiles.stagedNotDeleted repo) params
 	liftM (map a) $ filterFiles tocommit
 withFilesUnlocked :: CommandSeekBackendFiles
-withFilesUnlocked = withFilesUnlocked' Git.typeChangedFiles
+withFilesUnlocked = withFilesUnlocked' LsFiles.typeChanged
 withFilesUnlockedToBeCommitted :: CommandSeekBackendFiles
-withFilesUnlockedToBeCommitted = withFilesUnlocked' Git.typeChangedStagedFiles
+withFilesUnlockedToBeCommitted = withFilesUnlocked' LsFiles.typeChangedStaged
 withFilesUnlocked' :: (Git.Repo -> [FilePath] -> IO [FilePath]) -> CommandSeekBackendFiles
 withFilesUnlocked' typechanged a params = do
 	-- unlocked files have changed type from a symlink to a regular file

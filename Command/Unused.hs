@@ -23,6 +23,7 @@ import Utility
 import LocationLog
 import qualified Annex
 import qualified GitRepo as Git
+import qualified GitRepo.LsFiles as LsFiles
 import qualified Backend
 import qualified Remote
 
@@ -175,7 +176,7 @@ exclude smaller larger = S.toList $ remove larger $ S.fromList smaller
 getKeysReferenced :: Annex [Key]
 getKeysReferenced = do
 	g <- Annex.gitRepo
-	files <- liftIO $ Git.inRepo g [Git.workTree g]
+	files <- liftIO $ LsFiles.inRepo g [Git.workTree g]
 	keypairs <- mapM Backend.lookupFile files
 	return $ map fst $ catMaybes keypairs
 

@@ -20,6 +20,7 @@ import LocationLog
 import Types
 import Content
 import qualified GitRepo as Git
+import qualified GitRepo.LsFiles as LsFiles
 import Messages
 
 command :: [Command]
@@ -37,7 +38,7 @@ start file = isAnnexed file $ \(key, backend) -> do
 			force <- Annex.getState Annex.force
 			unless force $ do
 				g <- Annex.gitRepo
-				staged <- liftIO $ Git.stagedFiles g [Git.workTree g]
+				staged <- liftIO $ LsFiles.staged g [Git.workTree g]
 				unless (null staged) $
 					error "This command cannot be run when there are already files staged for commit."
 				Annex.changeState $ \s -> s { Annex.force = True }
