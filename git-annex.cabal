@@ -28,15 +28,17 @@ Extra-Source-Files: ./.gitattributes, ./.gitignore, ./Annex.hs, ./AnnexQueue.hs,
 
 Executable git-annex
   Main-Is: git-annex.hs
-  Build-Depends: haskell98, base, MissingH, hslogger, directory, filepath,
+  Build-Depends: haskell98, MissingH, hslogger, directory, filepath,
    unix, containers, utf8-string, network, mtl, bytestring, old-locale, time,
-   pcre-light, extensible-exceptions, dataenc, SHA, process, hS3
+   pcre-light, extensible-exceptions, dataenc, SHA, process, hS3,
+   base < 5
 
 Executable git-annex-shell
   Main-Is: git-annex-shell.hs
-  Build-Depends: haskell98, base, MissingH, hslogger, directory, filepath,
+  Build-Depends: haskell98, MissingH, hslogger, directory, filepath,
    unix, containers, utf8-string, network, mtl, bytestring, old-locale, time,
-   pcre-light, extensible-exceptions, dataenc, SHA, process, hS3
+   pcre-light, extensible-exceptions, dataenc, SHA, process, hS3,
+   base < 5
 
 Executable git-union-merge
   Main-Is: git-union-merge.hs
