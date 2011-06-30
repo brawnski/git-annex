@@ -36,3 +36,5 @@ commands like whereis and add. --[[Joey]]
 > Hmm, except that's actually an error message sent to stderr. Unless
 > stderr is connected to stdout, it might be better to look for a known,
 > empty object. Could just add a git-annex:empty file to that end.
+
+[[done]] --[[Joey]] 

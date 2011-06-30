@@ -26,9 +26,6 @@ import System.Cmd.Utils
 import Data.Maybe
 import Data.List
 import System.IO
-import System.Posix.IO
-import System.Posix.Process
-import System.Log.Logger
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -142,7 +139,7 @@ commit message = whenM stageJournalFiles $ do
  - data is read from it. Runs only once per git-annex run. -}
 update :: Annex ()
 update = do
-	state <- Annex.getState Annex.branchstate
+	state <- getState
 	unless (branchUpdated state) $ withIndex $ do
 		{- Since branches get merged into the index, it's important to
 		 - first stage the journal into the index. Otherwise, any
@@ -226,39 +223,48 @@ get file = do
 					setCache file content
 					return content
 				Nothing -> withIndexUpdate $ do
-					g <- Annex.gitRepo
-					content <- liftIO $ catch (cat g) (const $ return "")
+					content <- catFile file
 					setCache file content
 					return content
+
+{- Uses git cat-file in batch mode to read the content of a file.
+ -
+ - Only one process is run, and it persists and is used for all accesses. -}
+catFile :: FilePath -> Annex String
+catFile file = do
+	state <- getState
+	maybe (startup state) ask (catFileHandles state)
 	where
-		cat g = cmdOutput "git" $ toCommand $ Git.gitCommandLine g
-			[Param "cat-file", Param "blob", Param $ ':':file]
-
-{- Runs a command, returning its output, ignoring nonzero exit
- - status, and discarding stderr. -}
-cmdOutput :: FilePath -> [String] -> IO String
-cmdOutput cmd params = do
-	pipepair <- createPipe
-	let callfunc _ = do
-		closeFd (snd pipepair)
-		h <- fdToHandle (fst pipepair)
-		x <- hGetContentsStrict h
-		hClose h
-		return $! x
-	let child = do
-		closeFd (fst pipepair)
- 		-- disable stderr output by this child,
-		-- and since the logger uses it, also disable it
-		liftIO $ updateGlobalLogger rootLoggerName $ setLevel EMERGENCY
-		closeFd stdError
-
-	debugM "Utility.executeFile" $ cmd ++ " " ++ show params
-	
-	pid <- pOpen3Raw Nothing (Just (snd pipepair)) Nothing cmd params child
-	retval <- callfunc $! pid
-	let rv = seq retval retval
-	_ <- getProcessStatus True False pid
-	return rv
+		startup state = do
+			g <- Annex.gitRepo
+			let cmd = Git.gitCommandLine g
+				[Param "cat-file", Param "--batch"]
+			let gitcmd = join " " $ "git" : toCommand cmd
+			(_, from, to) <- liftIO $ hPipeBoth "sh"
+				-- want stderr on stdin for sentinal, and
+				-- to ignore other error messages
+				["-c", gitcmd ++ " 2>&1"]
+			setState state { catFileHandles = Just (from, to) }
+			ask (from, to)
+		ask (from, to) = do
+			_ <- liftIO $ do
+				hPutStr to $
+					fullname ++ ":" ++ file ++ "\n" ++
+					sentinal ++ "\n"
+				hFlush to
+			return . unlines =<< readContent from []
+		readContent from ls = do
+			l <- liftIO $ hGetLine from
+			if l == sentinal_line
+				-- first line is blob info,
+				-- or maybe an error message
+				then return $ drop 1 $ reverse ls
+				else readContent from (l:ls)
+		-- To find the end of a catted file, ask for a sentinal
+		-- value that is always missing, and look for the error
+		-- message. Utterly nasty, probably will break one day.
+		sentinal = ":"
+		sentinal_line = sentinal ++ " missing"
 
 {- Lists all files on the branch. There may be duplicates in the list. -}
 files :: Annex [FilePath]
