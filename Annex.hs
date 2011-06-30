@@ -19,7 +19,7 @@ module Annex (
 import Control.Monad.State
 
 import qualified Git
-import GitQueue
+import Git.Queue
 import Types.Backend
 import Types.Remote
 import Types.Crypto

@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module GitQueue (
+module Git.Queue (
 	Queue,
 	empty,
 	add,
@@ -21,7 +21,7 @@ import Data.String.Utils
 import Control.Monad (unless, forM_)
 import Utility
 
-import qualified Git
+import Git
 
 {- An action to perform in a git repository. The file to act on
  - is not included, and must be able to be appended after the params. -}
@@ -72,7 +72,7 @@ full :: Queue -> Bool
 full (Queue n _) = n > maxSize
 
 {- Runs a queue on a git repository. -}
-flush :: Git.Repo -> Queue -> IO Queue
+flush :: Repo -> Queue -> IO Queue
 flush repo (Queue _ m) = do
 	forM_ (M.toList m) $ uncurry $ runAction repo
 	return empty
@@ -80,10 +80,10 @@ flush repo (Queue _ m) = do
 {- Runs an Action on a list of files in a git repository.
  -
  - Complicated by commandline length limits. -}
-runAction :: Git.Repo -> Action -> [FilePath] -> IO ()
+runAction :: Repo -> Action -> [FilePath] -> IO ()
 runAction repo action files = unless (null files) runxargs
 	where
 		runxargs = pOpen WriteToPipe "xargs" ("-0":"git":params) feedxargs
-		params = toCommand $ Git.gitCommandLine repo
+		params = toCommand $ gitCommandLine repo
 			(Param (getSubcommand action):getParams action)
 		feedxargs h = hPutStr h $ join "\0" files
