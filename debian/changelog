@@ -6,6 +6,8 @@ git-annex (3.20110625) UNRELEASED; urgency=low
   * Sped back up fsck, copy --from, and other commands that often
     have to read a lot of information from the git-annex branch. Should
     now be nearly as fast as before the branch was introduced.
+  * Fix encoding of utf-8 etc when storing the description of repository
+    and other content.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 26 Jun 2011 21:01:06 -0400
 

@@ -26,6 +26,7 @@ import System.Cmd.Utils
 import Data.Maybe
 import Data.List
 import System.IO
+import System.IO.Binary
 import qualified Data.ByteString.Char8 as B
 
 import Types.BranchState
@@ -287,7 +288,7 @@ setJournalFile file content = do
 		write g = do
 			let jfile = journalFile g file
 			let tmpfile = gitAnnexTmpDir g </> takeFileName jfile
-			writeFile tmpfile content
+			writeBinaryFile tmpfile content
 			renameFile tmpfile jfile
 
 {- Gets journalled content for a file in the branch. -}
