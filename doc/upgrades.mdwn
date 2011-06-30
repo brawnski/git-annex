@@ -22,6 +22,9 @@ conflicts first before upgrading git-annex.
 
 Involved moving the .git-annex/ directory into a separate git-annex branch.
 
+After this upgrade, you should make sure you include the git-annex branch
+when git pushing and pulling.
+
 ### tips for this upgrade
 
 This upgrade is easier (and faster!) than the previous upgrades.
