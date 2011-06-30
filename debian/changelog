@@ -9,6 +9,10 @@ git-annex (3.20110625) UNRELEASED; urgency=low
   * --force will cause add, etc, to operate on ignored files.
   * Avoid mangling encoding when storing the description of repository
     and other content.
+  * cabal can now be used to build git-annex. This is substantially
+    slower than using make, does not build or install documentation,
+    does not run the test suite, and is not particularly recommended,
+    but could be useful to some.
 
  -- Joey Hess <joeyh@debian.org>  Sun, 26 Jun 2011 21:01:06 -0400
 

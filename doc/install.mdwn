@@ -33,3 +33,10 @@ To build and use git-annex, you will need:
   * [ikiwiki](http://ikiwiki.info) (optional; used to build the docs)
 
 Then just [[download]] git-annex and run: `make; make install`
+
+## Using cabal
+
+As a haskell package, git-annex can be built using cabal. For example:
+
+	cabal configure
+	cabal install --bindir=$HOME/bin
