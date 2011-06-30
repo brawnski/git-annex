@@ -26,9 +26,7 @@ import System.Cmd.Utils
 import Data.Maybe
 import Data.List
 import System.IO
-import System.IO.Unsafe
-import Foreign
-import Data.Char
+import qualified Data.ByteString.Char8 as B
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -258,23 +256,11 @@ catFile file = do
 				else do
 					let [_sha, _type, size] = words header
 					let bytes = read size
-					fp <- mallocForeignPtrBytes (fromIntegral bytes)
-					len <- withForeignPtr fp $ \buf -> hGetBuf from buf (fromIntegral bytes)
-					when (len /= bytes) $
-						error "short read from git cat-file"
-					content <- lazySlurp fp 0 len
+					content <- B.hGet from bytes
 					c <- hGetChar from
 					when (c /= '\n') $
 						error "missing newline from git cat-file"
-					return content
-
-lazySlurp :: ForeignPtr Word8 -> Int -> Int -> IO String
-lazySlurp fp ix len
-	| ix == len = return []
-	| otherwise = do
-		c <- withForeignPtr fp $ \p -> peekElemOff p ix
-		cs <- unsafeInterleaveIO (lazySlurp fp (ix+1) len)
-		return $ chr (fromIntegral c) : cs
+					return $ B.unpack content
 
 {- Lists all files on the branch. There may be duplicates in the list. -}
 files :: Annex [FilePath]
