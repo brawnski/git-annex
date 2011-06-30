@@ -35,9 +35,7 @@ header :: String
 header = "Usage: git-annex-shell [-c] command [parameters ...] [option ..]"
 
 main :: IO ()
-main = do
-	args <- getArgs
-	main' args
+main = main' =<< getArgs
 
 main' :: [String] -> IO ()
 main' [] = failure
