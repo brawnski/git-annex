@@ -243,8 +243,8 @@ catFile file = do
 				[Param "cat-file", Param "--batch"]
 			let gitcmd = join " " ("git" : toCommand cmd)
 			(_, from, to) <- liftIO $ hPipeBoth "sh"
-				-- want stderr on stdin to handle error messages
-				["-c", "LANG=C exec " ++ gitcmd ++ " 2>&1"]
+				-- want stderr on stdin to see error messages
+				["-c", "exec " ++ gitcmd ++ " 2>&1"]
 			setState state { catFileHandles = Just (from, to) }
 			ask (from, to)
 		ask (from, to) = liftIO $ do
@@ -252,16 +252,22 @@ catFile file = do
 			hPutStrLn to want
 			hFlush to
 			header <- hGetLine from
-			if header == want ++ " missing"
-				then return ""
-				else do
-					let [_sha, _type, size] = words header
-					let bytes = read size
-					content <- B.hGet from bytes
-					c <- hGetChar from
-					when (c /= '\n') $
-						error "missing newline from git cat-file"
-					return $ B.unpack content
+			case words header of
+				[sha, blob, size]
+					| length sha == Git.shaSize &&
+					  blob == "blob" -> handle from size
+					| otherwise -> empty
+				_ -> empty
+		handle from size = case reads size of
+			[(bytes, "")] -> readcontent from bytes
+			_ -> empty
+		readcontent from bytes = do
+			content <- B.hGet from bytes
+			c <- hGetChar from
+			when (c /= '\n') $
+				error "missing newline from git cat-file"
+			return $ B.unpack content
+		empty = return ""
 
 {- Lists all files on the branch. There may be duplicates in the list. -}
 files :: Annex [FilePath]
