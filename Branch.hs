@@ -17,7 +17,7 @@ module Branch (
 	name	
 ) where
 
-import Control.Monad (unless, liftM)
+import Control.Monad (when, unless, liftM)
 import Control.Monad.State (liftIO)
 import System.FilePath
 import System.Directory
@@ -26,6 +26,9 @@ import System.Cmd.Utils
 import Data.Maybe
 import Data.List
 import System.IO
+import System.IO.Unsafe
+import Foreign
+import Data.Char
 
 import Types.BranchState
 import qualified GitRepo as Git
@@ -239,32 +242,39 @@ catFile file = do
 			g <- Annex.gitRepo
 			let cmd = Git.gitCommandLine g
 				[Param "cat-file", Param "--batch"]
-			let gitcmd = join " " $ "git" : toCommand cmd
+			let gitcmd = join " " ("git" : toCommand cmd)
 			(_, from, to) <- liftIO $ hPipeBoth "sh"
-				-- want stderr on stdin for sentinal, and
-				-- to ignore other error messages
-				["-c", gitcmd ++ " 2>&1"]
+				-- want stderr on stdin to handle error messages
+				["-c", "LANG=C exec " ++ gitcmd ++ " 2>&1"]
 			setState state { catFileHandles = Just (from, to) }
 			ask (from, to)
-		ask (from, to) = do
-			_ <- liftIO $ do
-				hPutStr to $
-					fullname ++ ":" ++ file ++ "\n" ++
-					sentinal ++ "\n"
-				hFlush to
-			return . unlines =<< readContent from []
-		readContent from ls = do
-			l <- liftIO $ hGetLine from
-			if l == sentinal_line
-				-- first line is blob info,
-				-- or maybe an error message
-				then return $ drop 1 $ reverse ls
-				else readContent from (l:ls)
-		-- To find the end of a catted file, ask for a sentinal
-		-- value that is always missing, and look for the error
-		-- message. Utterly nasty, probably will break one day.
-		sentinal = ":"
-		sentinal_line = sentinal ++ " missing"
+		ask (from, to) = liftIO $ do
+			let want = fullname ++ ":" ++ file
+			hPutStrLn to want
+			hFlush to
+			header <- hGetLine from
+			if header == want ++ " missing"
+				then return ""
+				else do
+					let [_sha, _type, size] = words header
+					let bytes = read size
+					fp <- mallocForeignPtrBytes (fromIntegral bytes)
+					len <- withForeignPtr fp $ \buf -> hGetBuf from buf (fromIntegral bytes)
+					when (len /= bytes) $
+						error "short read from git cat-file"
+					content <- lazySlurp fp 0 len
+					c <- hGetChar from
+					when (c /= '\n') $
+						error "missing newline from git cat-file"
+					return content
+
+lazySlurp :: ForeignPtr Word8 -> Int -> Int -> IO String
+lazySlurp fp ix len
+	| ix == len = return []
+	| otherwise = do
+		c <- withForeignPtr fp $ \p -> peekElemOff p ix
+		cs <- unsafeInterleaveIO (lazySlurp fp (ix+1) len)
+		return $ chr (fromIntegral c) : cs
 
 {- Lists all files on the branch. There may be duplicates in the list. -}
 files :: Annex [FilePath]
