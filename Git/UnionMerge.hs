@@ -5,9 +5,8 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module GitUnionMerge (
+module Git.UnionMerge (
 	merge,
-	commit,
 	update_index,
 	update_index_line,
 	ls_tree
@@ -18,7 +17,7 @@ import Data.List
 import Data.Maybe
 import Data.String.Utils
 
-import qualified Git
+import Git
 import Utility
 
 {- Performs a union merge between two branches, staging it in the index.
@@ -29,7 +28,7 @@ import Utility
  -
  - Should be run with a temporary index file configured by Git.useIndex.
  -}
-merge :: Git.Repo -> [String] -> IO ()
+merge :: Repo -> [String] -> IO ()
 merge g (x:y:[]) = do
 	a <- ls_tree g x
 	b <- merge_trees g x y
@@ -40,10 +39,10 @@ merge _ _ = error "wrong number of branches to merge"
 {- Feeds a list into update-index. Later items in the list can override
  - earlier ones, so the list can be generated from any combination of
  - ls_tree, merge_trees, and merge_tree_index. -}
-update_index :: Git.Repo -> [String] -> IO ()
+update_index :: Repo -> [String] -> IO ()
 update_index g l = togit ["update-index", "-z", "--index-info"] (join "\0" l)
 	where
-		togit ps content = Git.pipeWrite g (map Param ps) content
+		togit ps content = pipeWrite g (map Param ps) content
 			>>= forceSuccess
 
 {- Generates a line suitable to be fed into update-index, to add
@@ -52,16 +51,16 @@ update_index_line :: String -> FilePath -> String
 update_index_line sha file = "100644 blob " ++ sha ++ "\t" ++ file
 
 {- Gets the contents of a tree in a format suitable for update_index. -}
-ls_tree :: Git.Repo -> String -> IO [String]
-ls_tree g x = Git.pipeNullSplit g $ 
+ls_tree :: Repo -> String -> IO [String]
+ls_tree g x = pipeNullSplit g $ 
 	map Param ["ls-tree", "-z", "-r", "--full-tree", x]
 
 {- For merging two trees. -}
-merge_trees :: Git.Repo -> String -> String -> IO [String]
+merge_trees :: Repo -> String -> String -> IO [String]
 merge_trees g x y = calc_merge g $ "diff-tree":diff_opts ++ [x, y]
 
 {- For merging a single tree into the index. -}
-merge_tree_index :: Git.Repo -> String -> IO [String]
+merge_tree_index :: Repo -> String -> IO [String]
 merge_tree_index g x = calc_merge g $ "diff-index":diff_opts ++ ["--cached", x]
 
 diff_opts :: [String]
@@ -69,9 +68,9 @@ diff_opts = ["--raw", "-z", "-r", "--no-renames", "-l0"]
 
 {- Calculates how to perform a merge, using git to get a raw diff,
  - and returning a list suitable for update_index. -}
-calc_merge :: Git.Repo -> [String] -> IO [String]
+calc_merge :: Repo -> [String] -> IO [String]
 calc_merge g differ = do
-	diff <- Git.pipeNullSplit g $ map Param differ
+	diff <- pipeNullSplit g $ map Param differ
 	l <- mapM (mergeFile g) (pairs diff)
 	return $ catMaybes l
 	where
@@ -82,28 +81,15 @@ calc_merge g differ = do
 {- Given an info line from a git raw diff, and the filename, generates
  - a line suitable for update_index that union merges the two sides of the
  - diff. -}
-mergeFile :: Git.Repo -> (String, FilePath) -> IO (Maybe String)
+mergeFile :: Repo -> (String, FilePath) -> IO (Maybe String)
 mergeFile g (info, file) = case filter (/= nullsha) [asha, bsha] of
 	[] -> return Nothing
 	(sha:[]) -> return $ Just $ update_index_line sha file
 	shas -> do
-		content <- Git.pipeRead g $ map Param ("show":shas)
-		sha <- Git.hashObject g $ unionmerge content
+		content <- pipeRead g $ map Param ("show":shas)
+		sha <- hashObject g $ unionmerge content
 		return $ Just $ update_index_line sha file
 	where
 		[_colonamode, _bmode, asha, bsha, _status] = words info
-		nullsha = take Git.shaSize $ repeat '0'
+		nullsha = take shaSize $ repeat '0'
 		unionmerge = unlines . nub . lines
-
-{- Commits the index into the specified branch, 
- - with the specified parent refs. -}
-commit :: Git.Repo -> String -> String -> [String] -> IO ()
-commit g message newref parentrefs = do
-	tree <- Git.getSha "write-tree" $
-		Git.pipeRead g [Param "write-tree"]
-	sha <- Git.getSha "commit-tree" $ ignorehandle $
-		Git.pipeWriteRead g (map Param $ ["commit-tree", tree] ++ ps) message
-	Git.run g "update-ref" [Param newref, Param sha]
-	where
-		ignorehandle a = return . snd =<< a
-		ps = concatMap (\r -> ["-p", r]) parentrefs

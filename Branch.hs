@@ -31,7 +31,7 @@ import qualified Data.ByteString.Char8 as B
 
 import Types.BranchState
 import qualified Git
-import qualified GitUnionMerge
+import qualified Git.UnionMerge
 import qualified Annex
 import Utility
 import Types
@@ -72,7 +72,7 @@ index g = gitAnnexDir g </> "index"
  - and merge in changes from other branches.
  -}
 genIndex :: Git.Repo -> IO ()
-genIndex g = GitUnionMerge.ls_tree g fullname >>= GitUnionMerge.update_index g
+genIndex g = Git.UnionMerge.ls_tree g fullname >>= Git.UnionMerge.update_index g
 
 {- Runs an action using the branch's index file. -}
 withIndex :: Annex a -> Annex a
@@ -128,14 +128,13 @@ create = unlessM (refExists fullname) $ do
 	if e
 		then liftIO $ Git.run g "branch" [Param name, Param originname]
 		else withIndex' True $
-			liftIO $ GitUnionMerge.commit g "branch created" fullname []
+			liftIO $ Git.commit g "branch created" fullname []
 
 {- Stages the journal, and commits staged changes to the branch. -}
 commit :: String -> Annex ()
 commit message = whenM stageJournalFiles $ do
 	g <- Annex.gitRepo
-	withIndex $ liftIO $
-		GitUnionMerge.commit g message fullname [fullname]
+	withIndex $ liftIO $ Git.commit g message fullname [fullname]
 
 {- Ensures that the branch is up-to-date; should be called before
  - data is read from it. Runs only once per git-annex run. -}
@@ -158,8 +157,7 @@ update = do
 		let refs = map (last . words) (lines r)
 		updated <- catMaybes `liftM` mapM updateRef refs
 		unless (null updated && not staged) $ liftIO $
-			GitUnionMerge.commit g "update" fullname
-				(fullname:updated)
+			Git.commit g "update" fullname (fullname:updated)
 		Annex.changeState $ \s -> s { Annex.branchstate = state { branchUpdated = True } }
 		invalidateCache
 
@@ -200,7 +198,7 @@ updateRef ref
 				-- index will be removed. So, documentation
 				-- advises users not to directly modify the
 				-- branch.
-				liftIO $ GitUnionMerge.merge g [ref]
+				liftIO $ Git.UnionMerge.merge g [ref]
 				return $ Just ref
 
 {- Records changed content of a file into the journal. -}
@@ -335,12 +333,12 @@ stageJournalFiles = do
 			(h, s) <- Git.pipeWriteRead g [Param "hash-object",
 				Param "-w", Param "--stdin-paths"] $ unlines paths
 			-- update the index, also in just one command
-			GitUnionMerge.update_index g $
+			Git.UnionMerge.update_index g $
 				index_lines (lines s) $ map fileJournal fs
 			forceSuccess h
 			mapM_ removeFile paths
 		index_lines shas fs = map genline $ zip shas fs
-		genline (sha, file) = GitUnionMerge.update_index_line sha file
+		genline (sha, file) = Git.UnionMerge.update_index_line sha file
 
 {- Produces a filename to use in the journal for a file on the branch.
  -

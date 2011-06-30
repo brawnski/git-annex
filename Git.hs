@@ -56,6 +56,7 @@ module Git (
 	hashObject,
 	getSha,
 	shaSize,
+	commit,
 
 	prop_idempotent_deencode
 ) where
@@ -424,6 +425,19 @@ getSha subcommand a = do
 {- Size of a git sha. -}
 shaSize :: Int
 shaSize = 40
+
+{- Commits the index into the specified branch, 
+ - with the specified parent refs. -}
+commit :: Repo -> String -> String -> [String] -> IO ()
+commit g message newref parentrefs = do
+	tree <- getSha "write-tree" $
+		pipeRead g [Param "write-tree"]
+	sha <- getSha "commit-tree" $ ignorehandle $
+		pipeWriteRead g (map Param $ ["commit-tree", tree] ++ ps) message
+	run g "update-ref" [Param newref, Param sha]
+	where
+		ignorehandle a = return . snd =<< a
+		ps = concatMap (\r -> ["-p", r]) parentrefs
 
 {- Reads null terminated output of a git command (as enabled by the -z 
  - parameter), and splits it into a list of files/lines/whatever. -}

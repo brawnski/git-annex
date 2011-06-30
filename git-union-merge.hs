@@ -10,7 +10,7 @@ import System.FilePath
 import System.Directory
 import Control.Monad (when)
 
-import qualified GitUnionMerge
+import qualified Git.UnionMerge
 import qualified Git
 
 header :: String
@@ -44,6 +44,6 @@ main = do
 	g <- Git.configRead =<< Git.repoFromCwd
 	_ <- Git.useIndex (tmpIndex g)
 	setup g
-	GitUnionMerge.merge g [aref, bref]
-	GitUnionMerge.commit g "union merge" newref [aref, bref]
+	Git.UnionMerge.merge g [aref, bref]
+	Git.commit g "union merge" newref [aref, bref]
 	cleanup g
