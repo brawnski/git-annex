@@ -2,6 +2,8 @@
 
 import System.Directory
 import Data.List
+import Data.String.Utils
+import System.Cmd.Utils
 
 import TestConfig
 
@@ -56,24 +58,36 @@ unicodeFilePath = do
 {- Pulls package version out of the changelog. -}
 getVersion :: Test
 getVersion = do
+	version <- getVersionString
+	return $ Config "packageversion" (StringConfig version)
+	
+getVersionString :: IO String
+getVersionString = do
 	changelog <- readFile "CHANGELOG"
 	let verline = head $ lines changelog
-	let version = middle (words verline !! 1)
-
-	-- Replace Version field in cabal file, so I don't have to maintain
-	-- the version there too.
-	cabal <- readFile cabalfile
-	writeFile tmpcabalfile $ unlines $ map (setversion version) $ lines cabal
-	renameFile tmpcabalfile cabalfile
-
-	return $ Config "packageversion" (StringConfig version)
+	return $ middle (words verline !! 1)
 	where
 		middle s = drop 1 $ take (length s - 1) s
+
+{- Set up cabal file with version. -}
+cabalSetup :: IO ()
+cabalSetup = do
+	version <- getVersionString
+	(_, filelist) <- pipeLinesFrom "find" (words ". -name .git -prune -o -name dist -prune -o -not -name *.hi -not -name *.o -not -name configure -not -name *.tmp -type f -print")
+	cabal <- readFile cabalfile
+	writeFile tmpcabalfile $ unlines $ 
+		map (setfield "Version" version) $
+		map (setfield "Extra-Source-Files" $ join ", " $ sort filelist) $
+		lines cabal
+	renameFile tmpcabalfile cabalfile
+	where
 		cabalfile = "git-annex.cabal"
 		tmpcabalfile = cabalfile++".tmp"
-		setversion version s
-			| "Version:" `isPrefixOf` s = "Version: " ++ version
+		setfield field value s
+			| fullfield `isPrefixOf` s = fullfield ++ value
 			| otherwise = s
+			where
+				fullfield = field ++ ": "
 
 setup :: IO ()
 setup = do
@@ -90,3 +104,4 @@ main = do
 	config <- runTests tests
 	writeSysConfig config
 	cleanup
+	cabalSetup

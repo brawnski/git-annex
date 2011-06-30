@@ -84,7 +84,7 @@ docs: $(mans)
 clean:
 	rm -rf build $(bins) $(mans) test configure  *.tix .hpc \
 		StatFS.hs Touch.hs SysConfig.hs Remote/S3.hs
-	rm -rf doc/.ikiwiki html
+	rm -rf doc/.ikiwiki html dist
 	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 
 .PHONY: $(bins) test install
