@@ -128,7 +128,7 @@ gitAttributesUnWrite repo = do
 	let attributes = Git.attributes repo
 	whenM (doesFileExist attributes) $ do
 		c <- readFileStrict attributes
-		liftIO $ safeWriteFile attributes $ unlines $
+		liftIO $ viaTmp writeFile attributes $ unlines $
 			filter (\l -> not $ l `elem` attrLines) $ lines c
 		Git.run repo "add" [File attributes]
 

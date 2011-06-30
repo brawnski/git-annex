@@ -55,7 +55,7 @@ gitPreCommitHookWrite repo = do
 	if exists
 		then warning $ "pre-commit hook (" ++ hook ++ ") already exists, not configuring"
 		else liftIO $ do
-			safeWriteFile hook preCommitScript
+			viaTmp writeFile hook preCommitScript
 			p <- getPermissions hook
 			setPermissions hook $ p {executable = True}
 	where

@@ -86,7 +86,7 @@ checkRemoteUnused' r = do
 writeUnusedFile :: FilePath -> [(Int, Key)] -> Annex ()
 writeUnusedFile prefix l = do
 	g <- Annex.gitRepo
-	liftIO $ safeWriteFile (gitAnnexUnusedLog prefix g) $
+	liftIO $ viaTmp writeFile (gitAnnexUnusedLog prefix g) $
 		unlines $ map (\(n, k) -> show n ++ " " ++ show k) l
 
 table :: [(Int, Key)] -> [String]

@@ -22,7 +22,7 @@ module Utility (
 	shellUnEscape,
 	unsetFileMode,
 	readMaybe,
-	safeWriteFile,
+	viaTmp,
 	dirContains,
 	dirContents,
 	myHomeDir,
@@ -243,13 +243,14 @@ readMaybe s = case reads s of
 	((x,_):_) -> Just x
 	_ -> Nothing
 
-{- Writes a file using a temp file that is renamed atomically into place. -}
-safeWriteFile :: FilePath -> String -> IO ()
-safeWriteFile file content = do
+{- Runs an action like writeFile, writing to a tmp file first and
+ - then moving it into place. -}
+viaTmp :: (FilePath -> String -> IO ()) -> FilePath -> String -> IO ()
+viaTmp a file content = do
 	pid <- getProcessID
         let tmpfile = file ++ ".tmp" ++ show pid
 	createDirectoryIfMissing True (parentDir file)
-	writeFile tmpfile content
+	a tmpfile content
 	renameFile tmpfile file
 
 {- Lists the contents of a directory.
