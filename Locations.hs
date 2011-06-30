@@ -36,7 +36,7 @@ import Data.Hash.MD5
 
 import Types
 import Types.Key
-import qualified GitRepo as Git
+import qualified Git
 
 {- Conventions:
  -

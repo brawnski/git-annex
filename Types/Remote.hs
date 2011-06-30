@@ -12,7 +12,7 @@ module Types.Remote where
 import Control.Exception
 import Data.Map as M
 
-import qualified GitRepo as Git
+import qualified Git
 import Types.Key
 
 type RemoteConfig = M.Map String String

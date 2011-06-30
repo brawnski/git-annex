@@ -21,8 +21,8 @@ import Types
 import qualified Backend
 import Messages
 import qualified Annex
-import qualified GitRepo as Git
-import qualified GitRepo.LsFiles as LsFiles
+import qualified Git
+import qualified Git.LsFiles as LsFiles
 import Utility
 import Types.Key
 

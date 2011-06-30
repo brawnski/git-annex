@@ -18,7 +18,7 @@ import System.Posix.Process
 
 import Types
 import Types.Remote
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import UUID
 import Locations

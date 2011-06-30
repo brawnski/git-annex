@@ -20,7 +20,7 @@ import Data.String.Utils
 import Types.Backend
 import LocationLog
 import qualified Remote
-import qualified GitRepo as Git
+import qualified Git
 import Content
 import qualified Annex
 import Types

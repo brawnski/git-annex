@@ -18,7 +18,7 @@ import Data.List
 import Data.Maybe
 import Data.String.Utils
 
-import qualified GitRepo as Git
+import qualified Git
 import Utility
 
 {- Performs a union merge between two branches, staging it in the index.

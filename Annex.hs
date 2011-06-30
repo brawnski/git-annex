@@ -18,7 +18,7 @@ module Annex (
 
 import Control.Monad.State
 
-import qualified GitRepo as Git
+import qualified Git
 import GitQueue
 import Types.Backend
 import Types.Remote

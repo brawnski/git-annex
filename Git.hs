@@ -3,12 +3,12 @@
  - This is written to be completely independant of git-annex and should be
  - suitable for other uses.
  -
- - Copyright 2010 Joey Hess <joey@kitenet.net>
+ - Copyright 2010,2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module GitRepo (
+module Git (
 	Repo,
 	repoFromCwd,
 	repoFromAbsPath,

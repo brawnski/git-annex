@@ -9,7 +9,7 @@ module Ssh where
 
 import Control.Monad.State (liftIO)
 
-import qualified GitRepo as Git
+import qualified Git
 import Utility
 import Types
 import Config

@@ -15,7 +15,7 @@ import Data.List.Utils
 
 import Command
 import qualified Annex
-import qualified GitRepo as Git
+import qualified Git
 import Messages
 import Types
 import Utility

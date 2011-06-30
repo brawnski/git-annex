@@ -16,7 +16,7 @@ import Data.Maybe
 import Types.Key
 import Types
 import qualified Annex
-import qualified GitRepo as Git
+import qualified Git
 import qualified Branch
 import Messages
 import Utility

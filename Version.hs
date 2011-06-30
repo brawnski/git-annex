@@ -11,7 +11,7 @@ import Control.Monad (unless)
 
 import Types
 import qualified Annex
-import qualified GitRepo as Git
+import qualified Git
 import Config
 
 type Version = String

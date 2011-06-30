@@ -25,8 +25,8 @@ import Locations
 import LocationLog
 import qualified Annex
 import qualified AnnexQueue
-import qualified GitRepo as Git
-import qualified GitRepo.LsFiles as LsFiles
+import qualified Git
+import qualified Git.LsFiles as LsFiles
 import Backend
 import Messages
 import Version

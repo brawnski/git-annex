@@ -21,7 +21,7 @@ import Data.String.Utils
 import Control.Monad (unless, forM_)
 import Utility
 
-import qualified GitRepo as Git
+import qualified Git
 
 {- An action to perform in a git repository. The file to act on
  - is not included, and must be able to be appended after the params. -}

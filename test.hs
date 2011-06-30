@@ -27,7 +27,7 @@ import System.IO.HVFS (SystemFS(..))
 import qualified Annex
 import qualified BackendList
 import qualified Backend
-import qualified GitRepo as Git
+import qualified Git
 import qualified Locations
 import qualified Utility
 import qualified Types.Backend

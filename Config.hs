@@ -10,7 +10,7 @@ module Config where
 import Data.Maybe
 import Control.Monad.State (liftIO)
 
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import Types
 import Utility

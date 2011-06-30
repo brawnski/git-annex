@@ -20,7 +20,7 @@ import qualified Annex
 import qualified Command.Drop
 import qualified Command.Move
 import qualified Remote
-import qualified GitRepo as Git
+import qualified Git
 import Backend
 import Types.Key
 import Utility

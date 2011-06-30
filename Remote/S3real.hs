@@ -27,7 +27,7 @@ import System.Posix.Env (setEnv)
 import Types
 import Types.Remote
 import Types.Key
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import UUID
 import Messages

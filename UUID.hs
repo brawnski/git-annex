@@ -29,7 +29,7 @@ import System.IO
 import qualified Data.Map as M
 import Data.Maybe
 
-import qualified GitRepo as Git
+import qualified Git
 import qualified Branch
 import Types
 import Types.UUID

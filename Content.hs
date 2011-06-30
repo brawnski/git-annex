@@ -36,7 +36,7 @@ import Types
 import Locations
 import LocationLog
 import UUID
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import qualified AnnexQueue
 import qualified Branch

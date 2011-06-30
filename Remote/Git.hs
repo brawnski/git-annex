@@ -15,7 +15,7 @@ import System.Posix.Files
 
 import Types
 import Types.Remote
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import Locations
 import UUID

@@ -34,7 +34,7 @@ import Control.Monad (when)
 import Data.Maybe
 import Control.Monad.State (liftIO)
 
-import qualified GitRepo as Git
+import qualified Git
 import qualified Branch
 import UUID
 import Types

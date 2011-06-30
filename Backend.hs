@@ -39,7 +39,7 @@ import System.Posix.Files
 import System.Directory
 
 import Locations
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import Types
 import Types.Key

@@ -18,7 +18,7 @@ import Control.Monad (when)
 
 import qualified Annex
 import qualified AnnexQueue
-import qualified GitRepo as Git
+import qualified Git
 import Content
 import Types
 import Command

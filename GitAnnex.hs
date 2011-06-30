@@ -9,7 +9,7 @@ module GitAnnex where
 
 import System.Console.GetOpt
 
-import qualified GitRepo as Git
+import qualified Git
 import CmdLine
 import Command
 import Options

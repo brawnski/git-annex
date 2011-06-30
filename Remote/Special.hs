@@ -14,7 +14,7 @@ import Control.Monad.State (liftIO)
 
 import Types
 import Types.Remote
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import UUID
 import Utility

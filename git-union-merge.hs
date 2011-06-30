@@ -11,7 +11,7 @@ import System.Directory
 import Control.Monad (when)
 
 import qualified GitUnionMerge
-import qualified GitRepo as Git
+import qualified Git
 
 header :: String
 header = "Usage: git-union-merge ref ref newref"

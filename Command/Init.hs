@@ -13,7 +13,7 @@ import System.Directory
 
 import Command
 import qualified Annex
-import qualified GitRepo as Git
+import qualified Git
 import qualified Branch
 import UUID
 import Version

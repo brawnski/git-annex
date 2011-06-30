@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module GitRepo.LsFiles (
+module Git.LsFiles (
 	inRepo,
 	notInRepo,
 	staged,
@@ -15,7 +15,7 @@ module GitRepo.LsFiles (
 	typeChangedStaged,
 ) where
 
-import GitRepo
+import Git
 import Utility
 
 {- Scans for files that are checked into git at the specified locations. -}

@@ -30,7 +30,7 @@ import System.IO.Binary
 import qualified Data.ByteString.Char8 as B
 
 import Types.BranchState
-import qualified GitRepo as Git
+import qualified Git
 import qualified GitUnionMerge
 import qualified Annex
 import Utility

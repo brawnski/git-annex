@@ -14,7 +14,7 @@ import Command
 import Messages
 import Types
 import Utility
-import qualified GitRepo as Git
+import qualified Git
 import qualified Annex
 import qualified Command.Unannex
 import qualified Command.Init

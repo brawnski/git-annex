@@ -18,7 +18,7 @@ import qualified Types.Backend as B
 import qualified Types.Remote as R
 import qualified Remote
 import qualified Command.Unused
-import qualified GitRepo as Git
+import qualified Git
 import Command
 import Types
 import DataUnits

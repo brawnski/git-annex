@@ -8,7 +8,7 @@
 import System.Environment
 import Data.List
 
-import qualified GitRepo as Git
+import qualified Git
 import CmdLine
 import Command
 import Utility

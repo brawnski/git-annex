@@ -22,8 +22,8 @@ import Locations
 import Utility
 import LocationLog
 import qualified Annex
-import qualified GitRepo as Git
-import qualified GitRepo.LsFiles as LsFiles
+import qualified Git
+import qualified Git.LsFiles as LsFiles
 import qualified Backend
 import qualified Remote
 
