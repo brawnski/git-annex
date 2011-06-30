@@ -11,6 +11,8 @@ mans=git-annex.1 git-annex-shell.1 git-union-merge.1
 
 all: $(bins) $(mans) docs
 
+sources: SysConfig.hs StatFS.hs Touch.hs Remote/S3.hs
+
 SysConfig.hs: configure.hs TestConfig.hs
 	$(GHCMAKE) configure
 	./configure
@@ -19,8 +21,10 @@ SysConfig.hs: configure.hs TestConfig.hs
 	hsc2hs $<
 	perl -i -pe 's/^{-# INCLUDE.*//' $@
 
-Remote/S3.o:
+Remote/S3.hs:
 	@ln -sf S3real.hs Remote/S3.hs
+
+Remote/S3.o: Remote/S3.hs
 	@if ! $(GHCMAKE) Remote/S3.hs; then \
 		ln -sf S3stub.hs Remote/S3.hs; \
 		echo "** building without S3 support"; \

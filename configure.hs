@@ -56,12 +56,24 @@ unicodeFilePath = do
 {- Pulls package version out of the changelog. -}
 getVersion :: Test
 getVersion = do
-	changelog <- readFile "debian/changelog"
+	changelog <- readFile "CHANGELOG"
 	let verline = head $ lines changelog
 	let version = middle (words verline !! 1)
+
+	-- Replace Version field in cabal file, so I don't have to maintain
+	-- the version there too.
+	cabal <- readFile cabalfile
+	writeFile tmpcabalfile $ unlines $ map (setversion version) $ lines cabal
+	renameFile tmpcabalfile cabalfile
+
 	return $ Config "packageversion" (StringConfig version)
 	where
 		middle s = drop 1 $ take (length s - 1) s
+		cabalfile = "git-annex.cabal"
+		tmpcabalfile = cabalfile++".tmp"
+		setversion version s
+			| "Version:" `isPrefixOf` s = "Version: " ++ version
+			| otherwise = s
 
 setup :: IO ()
 setup = do

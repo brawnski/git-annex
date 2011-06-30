@@ -16,3 +16,4 @@ html
 Touch.hs
 StatFS.hs
 Remote/S3.hs
+dist
