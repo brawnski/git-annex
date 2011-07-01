@@ -16,9 +16,13 @@ import Command
 import qualified Backend
 import qualified Remote.Web
 import qualified Command.Add
+import qualified Annex
 import Messages
 import Content
 import PresenceLog
+import Types.Key
+import Locations
+import Utility
 
 command :: [Command]
 command = [repoCommand "addurl" paramPath seek "add urls to annex"]
@@ -38,16 +42,20 @@ start s = do
 			
 perform :: String -> FilePath -> CommandPerform
 perform url file = do
-	[(_, backend)] <- Backend.chooseBackends [file]
+	g <- Annex.gitRepo
 	showNote $ "downloading " ++ url
-	ok <- Remote.Web.download file [url]
+	let dummykey = stubKey { keyName = url, keyBackendName = "URL" }
+	let tmp = gitAnnexTmpLocation g dummykey
+	liftIO $ createDirectoryIfMissing True (parentDir tmp)
+	ok <- Remote.Web.download [url] tmp
 	if ok
 		then do
-			stored <- Backend.storeFileKey file backend
+			[(_, backend)] <- Backend.chooseBackends [file]
+			stored <- Backend.storeFileKey tmp backend
 			case stored of
 				Nothing -> stop
 				Just (key, _) -> do
-					moveAnnex key file
+					moveAnnex key tmp
 					Remote.Web.setUrl key url InfoPresent
 					next $ Command.Add.cleanup file key
 		else stop

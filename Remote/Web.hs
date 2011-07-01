@@ -82,7 +82,9 @@ setUrl key url status = do
 	logChange g key webUUID (if null us then InfoMissing else InfoPresent)
 
 downloadKey :: Key -> FilePath -> Annex Bool
-downloadKey key file = download file =<< getUrls key
+downloadKey key file = do
+	us <- getUrls key
+	download us file
 
 uploadKey :: Key -> Annex Bool
 uploadKey _ = do
@@ -116,9 +118,9 @@ urlexists url = do
 	res <- perform curl
 	return $ res == CurlOK
 
-download :: FilePath -> [URLString] -> Annex Bool
-download _ [] = return False
-download file (url:us) = do
+download :: [URLString] -> FilePath -> Annex Bool
+download [] _ = return False
+download (url:us) file = do
 	showProgress -- make way for curl progress bar
-	ok <- liftIO $ boolSystem "curl" [Params "-# -o", File file, File url]
-	if ok then return ok else download file us
+	ok <- liftIO $ boolSystem "curl" [Params "-C - -# -o", File file, File url]
+	if ok then return ok else download us file
