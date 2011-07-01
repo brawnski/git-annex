@@ -72,7 +72,7 @@ Example:
 
 ## `aaa/bbb/*.log`
 
-The remainder of the log files record [[location_tracking]] information
+These log files record [[location_tracking]] information
 for file contents. Again these are placed in two levels of subdirectories
 for hashing. The name of the key is the filename, and the content
 consists of a timestamp, either 1 (present) or 0 (not present), and
@@ -85,3 +85,9 @@ Example:
 
 These files are designed to be auto-merged using git's union merge driver.
 The timestamps allow the most recent information to be identified.
+
+## `remote/web/aaa/bbb/*.log`
+
+These log files record urls used by the
+[[web_special_remote|special_remotes/web]]. Their format is similar
+to the location tracking files, but with urls rather than UUIDs.
