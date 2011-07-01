@@ -17,7 +17,9 @@ module LocationLog (
 	readLog,
 	writeLog,
 	keyLocations,
-	loggedKeys
+	loggedKeys,
+	logFile,
+	logFileKey	
 ) where
 
 import System.FilePath
@@ -28,6 +30,7 @@ import qualified Git
 import qualified Branch
 import UUID
 import Types
+import Types.Key
 import Locations
 import PresenceLog
 
@@ -49,3 +52,15 @@ keyLocations key = currentLog $ logFile key
 loggedKeys :: Annex [Key]
 loggedKeys =
 	return . catMaybes . map (logFileKey . takeFileName) =<< Branch.files
+
+{- The filename of the log file for a given key. -}
+logFile :: Key -> String
+logFile key = hashDirLower key ++ keyFile key ++ ".log"
+
+{- Converts a log filename into a key. -}
+logFileKey :: FilePath -> Maybe Key
+logFileKey file
+	| end == ".log" = readKey beginning
+	| otherwise = Nothing
+	where
+		(beginning, end) = splitAt (length file - 4) file

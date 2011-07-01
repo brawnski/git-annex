@@ -20,7 +20,7 @@ import qualified Git
 import qualified Branch
 import Messages
 import Utility
-import Locations
+import LocationLog
 import Content
 
 olddir :: Git.Repo -> FilePath

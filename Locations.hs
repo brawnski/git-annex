@@ -19,8 +19,6 @@ module Locations (
 	gitAnnexUnusedLog,
 	gitAnnexJournalDir,
 	isLinkToAnnex,
-	logFile,
-	logFileKey,
 	hashDirMixed,
 	hashDirLower,
 
@@ -114,18 +112,6 @@ gitAnnexJournalDir r = addTrailingPathSeparator $ gitAnnexDir r </> "journal"
 {- Checks a symlink target to see if it appears to point to annexed content. -}
 isLinkToAnnex :: FilePath -> Bool
 isLinkToAnnex s = ("/.git/" ++ objectDir) `isInfixOf` s
-
-{- The filename of the log file for a given key. -}
-logFile :: Key -> String
-logFile key = hashDirLower key ++ keyFile key ++ ".log"
-
-{- Converts a log filename into a key. -}
-logFileKey :: FilePath -> Maybe Key
-logFileKey file
-	| end == ".log" = readKey beginning
-	| otherwise = Nothing
-	where
-		(beginning, end) = splitAt (length file - 4) file
 
 {- Converts a key into a filename fragment.
  -
