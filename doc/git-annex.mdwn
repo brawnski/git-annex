@@ -275,6 +275,10 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
   Returns a repository to the default semi trusted state.
 
+* addurl [url ...]
+
+  Downloads each url to a file, which is added to the annex.
+
 * fromkey file
 
   This plumbing-level command can be used to manually set up a file
