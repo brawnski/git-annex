@@ -277,13 +277,8 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * fromkey file
 
-  This can be used to manually set up a file to link to a specified key
-  in the key-value backend. How you determine an existing key in the backend
-  varies. For the URL backend, the key is based on an URL to the content.
-
-  Example:
-
-	git annex fromkey --key=URL--http://www.archive.org/somefile somefile
+  This plumbing-level command can be used to manually set up a file
+  to link to a specified key in the key-value backend.
 
 * dropkey [key ...]
 
@@ -299,8 +294,8 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
 * setkey file
 
-  This plumbing-level command sets the annexed data for a key to the content of
-  the specified file, and then removes the file.
+  This plumbing-level command sets the annexed data for a key to the
+  content of the specified file, and then removes the file.
 
   Example:
 
@@ -402,7 +397,6 @@ Here are all the supported configuration settings.
 
   Space-separated list of names of the key-value backends to use. 
   The first listed is used to store new files by default. 
-  (default: "WORM SHA1 URL")
 
 * `remote.<name>.annex-cost`
 
