@@ -1,4 +1,4 @@
-{- git-annex SHA abstract backend
+{- git-annex SHA backend
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -

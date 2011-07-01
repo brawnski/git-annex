@@ -9,7 +9,7 @@ to retrieve the file's content (its value).
 Multiple pluggable backends are supported, and a single repository
 can use different backends for different files.
 
-These backends can transfer file contents in configured git remotes.
+These backends can transfer file contents between configured git remotes.
 It's also possible to use [[special_remotes]], such as Amazon S3 with
 these backends.
 
