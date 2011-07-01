@@ -235,10 +235,11 @@ moveBad key = do
 	g <- Annex.gitRepo
 	let src = gitAnnexLocation g key
 	let dest = gitAnnexBadDir g </> takeFileName src
-	liftIO $ createDirectoryIfMissing True (parentDir dest)
-	liftIO $ allowWrite (parentDir src)
-	liftIO $ renameFile src dest
-	liftIO $ removeDirectory (parentDir src)
+	liftIO $ do
+		createDirectoryIfMissing True (parentDir dest)
+		allowWrite (parentDir src)
+		renameFile src dest
+		removeDirectory (parentDir src)
 	logStatus key ValueMissing
 	return dest
 
@@ -252,12 +253,12 @@ getKeysPresent' dir = do
 	exists <- liftIO $ doesDirectoryExist dir
 	if (not exists)
 		then return []
-		else do
+		else liftIO $ do
 			-- 2 levels of hashing
-			levela <- liftIO $ dirContents dir
-			levelb <- liftIO $ mapM dirContents levela
-			contents <- liftIO $ mapM dirContents (concat levelb)
-			files <- liftIO $ filterM present (concat contents)
+			levela <- dirContents dir
+			levelb <- mapM dirContents levela
+			contents <- mapM dirContents (concat levelb)
+			files <- filterM present (concat contents)
 			return $ catMaybes $ map (fileKey . takeFileName) files
 	where
 		present d = do
