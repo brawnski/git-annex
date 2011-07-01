@@ -2,8 +2,6 @@
 
 import System.Directory
 import Data.List
-import Data.String.Utils
-import System.Cmd.Utils
 
 import TestConfig
 
@@ -73,11 +71,9 @@ getVersionString = do
 cabalSetup :: IO ()
 cabalSetup = do
 	version <- getVersionString
-	(_, filelist) <- pipeLinesFrom "find" (words ". -name .git -prune -o -name dist -prune -o -not -name *.hi -not -name *.o -not -name configure -not -name *.tmp -type f -print")
 	cabal <- readFile cabalfile
 	writeFile tmpcabalfile $ unlines $ 
 		map (setfield "Version" version) $
-		map (setfield "Extra-Source-Files" $ join ", " $ sort filelist) $
 		lines cabal
 	renameFile tmpcabalfile cabalfile
 	where
