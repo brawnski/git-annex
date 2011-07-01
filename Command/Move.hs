@@ -58,7 +58,7 @@ remoteHasKey remote key present	= do
 	g <- Annex.gitRepo
 	logChange g key remoteuuid status
 	where
-		status = if present then ValuePresent else ValueMissing
+		status = if present then InfoPresent else InfoMissing
 
 {- Moves (or copies) the content of an annexed file to a remote.
  -

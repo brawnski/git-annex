@@ -46,5 +46,5 @@ perform file = do
 cleanup :: CommandCleanup
 cleanup = do
 	key <- cmdlineKey
-	logStatus key ValuePresent
+	logStatus key InfoPresent
 	return True

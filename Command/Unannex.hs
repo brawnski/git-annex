@@ -65,7 +65,7 @@ cleanup file key = do
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 
 	fromAnnex key file
-	logStatus key ValueMissing
+	logStatus key InfoMissing
 	
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to

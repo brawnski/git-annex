@@ -65,12 +65,7 @@ calcGitLink file key = do
 		whoops = error $ "unable to normalize " ++ file
 
 {- Updates the LocationLog when a key's presence changes in the current
- - repository.
- -
- - Note that the LocationLog is not updated in bare repositories.
- - Operations that change a bare repository should be done from
- - a non-bare repository, and the LocationLog in that repository be
- - updated instead. -}
+ - repository. -}
 logStatus :: Key -> LogStatus -> Annex ()
 logStatus key status = do
 	g <- Annex.gitRepo
@@ -112,7 +107,7 @@ getViaTmpUnchecked key action = do
 	if success
 		then do
 			moveAnnex key tmp
-			logStatus key ValuePresent
+			logStatus key InfoPresent
 			return True
 		else do
 			-- the tmp file is left behind, in case caller wants
@@ -240,7 +235,7 @@ moveBad key = do
 		allowWrite (parentDir src)
 		renameFile src dest
 		removeDirectory (parentDir src)
-	logStatus key ValueMissing
+	logStatus key InfoMissing
 	return dest
 
 {- List of keys whose content exists in .git/annex/objects/ -}

@@ -45,5 +45,5 @@ perform key backend numcopies = do
 cleanup :: Key -> CommandCleanup
 cleanup key = do
 	whenM (inAnnex key) $ removeAnnex key
-	logStatus key ValueMissing
+	logStatus key InfoMissing
 	return True

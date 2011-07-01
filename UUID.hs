@@ -17,7 +17,6 @@ module UUID (
 	getUncachedUUID,
 	prepUUID,
 	genUUID,
-	prettyPrintUUIDs,
 	describeUUID,
 	uuidMap,
 	uuidLog
@@ -85,21 +84,6 @@ prepUUID = do
 	when ("" == u) $ do
 		uuid <- liftIO $ genUUID
 		setConfig configkey uuid
-
-{- Pretty-prints a list of UUIDs -}
-prettyPrintUUIDs :: [UUID] -> Annex String
-prettyPrintUUIDs uuids = do
-	here <- getUUID =<< Annex.gitRepo
-	m <- uuidMap
-	return $ unwords $ map (\u -> "\t" ++ prettify m u here ++ "\n") uuids
-	where
-		prettify m u here = base ++ ishere
-			where
-				base = if not $ null $ findlog m u
-					then u ++ "  -- " ++ findlog m u
-					else u
-				ishere = if here == u then " <-- here" else ""
-		findlog m u = M.findWithDefault "" u m
 
 {- Records a description for a uuid in the uuidLog. -}
 describeUUID :: UUID -> String -> Annex ()

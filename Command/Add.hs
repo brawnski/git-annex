@@ -51,7 +51,7 @@ perform (file, backend) = do
 
 cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do
-	logStatus key ValuePresent
+	logStatus key InfoPresent
 
 	link <- calcGitLink file key
 	liftIO $ createSymbolicLink link file

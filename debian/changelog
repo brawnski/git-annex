@@ -1,5 +1,7 @@
 git-annex (3.20110625) UNRELEASED; urgency=low
 
+  * Now the web can be used as a special remote. This feature
+    replaces the old URL backend.
   * Sped back up fsck, copy --from, and other commands that often
     have to read a lot of information from the git-annex branch. Such
     commands are now faster than they were before introduction of the

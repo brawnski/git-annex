@@ -10,7 +10,7 @@ module Command.Whereis where
 import LocationLog
 import Command
 import Messages
-import UUID
+import Remote
 import Types
 
 command :: [Command]

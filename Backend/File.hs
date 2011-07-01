@@ -135,8 +135,8 @@ showLocations key exclude = do
 	untrusteduuids <- trustGet UnTrusted
 	let uuidswanted = filteruuids uuids (u:exclude++untrusteduuids) 
 	let uuidsskipped = filteruuids uuids (u:exclude++uuidswanted)
-	ppuuidswanted <- prettyPrintUUIDs uuidswanted
-	ppuuidsskipped <- prettyPrintUUIDs uuidsskipped
+	ppuuidswanted <- Remote.prettyPrintUUIDs uuidswanted
+	ppuuidsskipped <- Remote.prettyPrintUUIDs uuidsskipped
 	showLongNote $ message ppuuidswanted ppuuidsskipped
 	where
 		filteruuids list x = filter (`notElem` x) list
@@ -195,7 +195,7 @@ checkKeyNumCopies key file numcopies = do
 	let present = length safelocations
 	if present < needed
 		then do
-			ppuuids <- prettyPrintUUIDs untrustedlocations
+			ppuuids <- Remote.prettyPrintUUIDs untrustedlocations
 			warning $ missingNote (filename file key) present needed ppuuids
 			return False
 		else return True

@@ -24,6 +24,7 @@ module Remote (
 	nameToUUID,
 	remotesWithUUID,
 	remotesWithoutUUID,
+	prettyPrintUUIDs,
 
 	remoteLog,
 	readRemoteLog,
@@ -34,7 +35,7 @@ module Remote (
 	prop_idempotent_configEscape
 ) where
 
-import Control.Monad (filterM)
+import Control.Monad (filterM, liftM2)
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -54,6 +55,7 @@ import qualified Remote.S3
 import qualified Remote.Bup
 import qualified Remote.Directory
 import qualified Remote.Rsync
+import qualified Remote.Web
 import qualified Remote.Hook
 
 remoteTypes :: [RemoteType Annex]
@@ -63,6 +65,7 @@ remoteTypes =
 	, Remote.Bup.remote
 	, Remote.Directory.remote
 	, Remote.Rsync.remote
+	, Remote.Web.remote
 	, Remote.Hook.remote
 	]
 
@@ -119,6 +122,24 @@ nameToUUID n = do
 		byDescription = return . M.lookup n . invertMap =<< uuidMap
 		invertMap = M.fromList . map swap . M.toList
 		swap (a, b) = (b, a)
+
+{- Pretty-prints a list of UUIDs of remotes. -}
+prettyPrintUUIDs :: [UUID] -> Annex String
+prettyPrintUUIDs uuids = do
+	here <- getUUID =<< Annex.gitRepo
+	-- Show descriptions from the uuid log, falling back to remote names,
+	-- as some remotes may not be in the uuid log.
+	m <- liftM2 M.union uuidMap $
+		return . M.fromList . map (\r -> (uuid r, name r)) =<< genList
+	return $ unwords $ map (\u -> "\t" ++ prettify m u here ++ "\n") uuids
+	where
+		prettify m u here = base ++ ishere
+			where
+				base = if not $ null $ findlog m u
+					then u ++ "  -- " ++ findlog m u
+					else u
+				ishere = if here == u then " <-- here" else ""
+		findlog m u = M.findWithDefault "" u m
 
 {- Filters a list of remotes to ones that have the listed uuids. -}
 remotesWithUUID :: [Remote Annex] -> [UUID] -> [Remote Annex]
