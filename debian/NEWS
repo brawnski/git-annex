@@ -1,3 +1,9 @@
+git-annex (3.20110702) unstable; urgency=low
+
+  The URL backend has been removed. Instead the new web remote can be used.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 01 Jul 2011 15:40:51 -0400
+
 git-annex (3.20110624) exerimental; urgency=low
 
   There has been another change to the git-annex data store.

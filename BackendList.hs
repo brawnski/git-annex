@@ -10,12 +10,10 @@ module BackendList (allBackends) where
 -- When adding a new backend, import it here and add it to the list.
 import qualified Backend.WORM
 import qualified Backend.SHA
-import qualified Backend.URL
 import Types
 
 allBackends :: [Backend Annex]
 allBackends = concat 
 	[ Backend.WORM.backends
 	, Backend.SHA.backends
-	, Backend.URL.backends
 	]
