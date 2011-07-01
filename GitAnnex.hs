@@ -46,6 +46,7 @@ import qualified Command.Uninit
 import qualified Command.Trust
 import qualified Command.Untrust
 import qualified Command.Semitrust
+import qualified Command.AddUrl
 import qualified Command.Map
 import qualified Command.Upgrade
 import qualified Command.Version
@@ -68,6 +69,7 @@ cmds = concat
 	, Command.Trust.command
 	, Command.Untrust.command
 	, Command.Semitrust.command
+	, Command.AddUrl.command
 	, Command.FromKey.command
 	, Command.DropKey.command
 	, Command.SetKey.command

@@ -37,10 +37,7 @@ logChange repo key u s = do
 	when (null u) $
 		error $ "unknown UUID for " ++ Git.repoDescribe repo ++ 
 			" (have you run git annex init there?)"
-	line <- logNow s u
-	let f = logFile key
-	ls <- readLog f
-	writeLog f (compactLog $ line:ls)
+	addLog (logFile key) =<< logNow s u
 
 {- Returns a list of repository UUIDs that, according to the log, have
  - the value of a key. -}

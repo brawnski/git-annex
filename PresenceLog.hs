@@ -13,6 +13,7 @@
 
 module PresenceLog (
 	LogStatus(..),
+	addLog,
 	readLog,
 	writeLog,
 	logNow,
@@ -69,6 +70,11 @@ instance Read LogLine where
 			good v = ret $ LogLine (utcTimeToPOSIXSeconds v) s i
 			bad = ret $ LogLine 0 Undefined ""
 			ret v = [(v, "")]
+
+addLog :: FilePath -> LogLine -> Annex ()
+addLog file line = do
+	ls <- readLog file
+	writeLog file (compactLog $ line:ls)
 
 {- Reads a log file.
  - Note that the LogLines returned may be in any order. -}

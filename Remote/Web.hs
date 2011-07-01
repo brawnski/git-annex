@@ -6,7 +6,9 @@
  -}
 
 module Remote.Web (
-	remote
+	remote,
+	setUrl,
+	download
 ) where
 
 import Control.Monad.State (liftIO)
@@ -20,11 +22,13 @@ import Network.Curl.Code
 import Types
 import Types.Remote
 import qualified Git
+import qualified Annex
 import Messages
 import Utility
 import UUID
 import Config
 import PresenceLog
+import LocationLog
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -50,10 +54,10 @@ gen r _ _ =
 		uuid = webUUID,
 		cost = expensiveRemoteCost,
 		name = Git.repoDescribe r,
-		storeKey = upload,
-		retrieveKeyFile = download,
-		removeKey = remove,
-		hasKey = check,
+		storeKey = uploadKey,
+		retrieveKeyFile = downloadKey,
+		removeKey = dropKey,
+		hasKey = checkKey,
 		hasKeyCheap = False,
 		config = Nothing
 	}
@@ -62,40 +66,44 @@ gen r _ _ =
 urlLog :: Key -> FilePath
 urlLog key = "remote/web" </> show key ++ ".log"
 
-urls :: Key -> Annex [URLString]
-urls key = currentLog (urlLog key)
+getUrls :: Key -> Annex [URLString]
+getUrls key = currentLog (urlLog key)
 
-download :: Key -> FilePath -> Annex Bool
-download key file = download' file =<< urls key
-download' :: FilePath -> [URLString] -> Annex Bool
-download' _ [] = return False
-download' file (url:us) = do
-	showProgress -- make way for curl progress bar
-	ok <- liftIO $ boolSystem "curl" [Params "-# -o", File file, File url]
-	if ok then return ok else download' file us
+{- Records a change in an url for a key. -}
+setUrl :: Key -> URLString -> LogStatus -> Annex ()
+setUrl key url status = do
+	g <- Annex.gitRepo
+	addLog (urlLog key) =<< logNow status url
 
-upload :: Key -> Annex Bool
-upload _ = do
+	-- update location log to indicate that the web has the key, or not
+	us <- getUrls key
+	logChange g key webUUID (if null us then InfoMissing else InfoPresent)
+
+downloadKey :: Key -> FilePath -> Annex Bool
+downloadKey key file = download file =<< getUrls key
+
+uploadKey :: Key -> Annex Bool
+uploadKey _ = do
 	warning "upload to web not supported"
 	return False
 
-remove :: Key -> Annex Bool
-remove _ = do
+dropKey :: Key -> Annex Bool
+dropKey _ = do
 	warning "removal from web not supported"
 	return False
 
-check :: Key -> Annex (Either IOException Bool)
-check key = do
-	us <- urls key
+checkKey :: Key -> Annex (Either IOException Bool)
+checkKey key = do
+	us <- getUrls key
 	if null us
 		then return $ Right False
-		else return . Right =<< check' us
-check' :: [URLString] -> Annex Bool
-check' [] = return False
-check' (u:us) = do
+		else return . Right =<< checkKey' us
+checkKey' :: [URLString] -> Annex Bool
+checkKey' [] = return False
+checkKey' (u:us) = do
 	showNote ("checking " ++ u)
 	e <- liftIO $ urlexists u
-	if e then return e else check' us
+	if e then return e else checkKey' us
 
 urlexists :: URLString -> IO Bool
 urlexists url = do
@@ -105,3 +113,10 @@ urlexists url = do
 	_ <- setopt curl (CurlFailOnError True)
 	res <- perform curl
 	return $ res == CurlOK
+
+download :: FilePath -> [URLString] -> Annex Bool
+download _ [] = return False
+download file (url:us) = do
+	showProgress -- make way for curl progress bar
+	ok <- liftIO $ boolSystem "curl" [Params "-# -o", File file, File url]
+	if ok then return ok else download file us
