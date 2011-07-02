@@ -39,5 +39,4 @@ Then just [[download]] git-annex and run: `make; make install`
 
 As a haskell package, git-annex can be built using cabal. For example:
 
-	cabal configure
-	cabal install --bindir=$HOME/bin
+	cabal install git-annex --bindir=$HOME/bin
