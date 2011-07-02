@@ -1,4 +1,4 @@
-git-annex (3.20110702) UNRELEASED; urgency=low
+git-annex (3.20110702) unstable; urgency=low
 
   * Now the web can be used as a special remote. 
     This feature replaces the old URL backend.
@@ -17,7 +17,7 @@ git-annex (3.20110702) UNRELEASED; urgency=low
     does not run the test suite, and is not particularly recommended,
     but could be useful to some.
 
- -- Joey Hess <joeyh@debian.org>  Sun, 26 Jun 2011 21:01:06 -0400
+ -- Joey Hess <joeyh@debian.org>  Sat, 02 Jul 2011 15:00:18 -0400
 
 git-annex (3.20110624) experimental; urgency=low
 
