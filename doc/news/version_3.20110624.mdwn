@@ -1,15 +1,16 @@
 News for git-annex 3.20110624:
 
-   There has been another change to the git-annex data store.
-   Use `git annex upgrade` to migrate your repositories to the new
-   layout. See &lt;http://git-annex.branchable.com/upgrades/&gt; or
-   /usr/share/doc/git-annex/html/upgrades.html
-   The significant change this time is that the .git-annex/ directory
-   is gone; instead there is a git-annex branch that is automatically
-   maintained by git-annex, and encapsulates all its state nicely out
-   of your way.
-   You should make sure you include the git-annex branch when
-   git pushing and pulling.
+There has been another change to the git-annex data store.
+Use `git annex upgrade` to migrate your repositories to the new
+layout. See [[upgrades]].
+
+The significant change this time is that the .git-annex/ directory
+is gone; instead there is a git-annex branch that is automatically
+maintained by git-annex, and encapsulates all its state nicely out
+of your way.
+
+You should make sure you include the git-annex branch when
+git pushing and pulling.
 
 git-annex 3.20110624 released with [[!toggle text="these changes"]]
 [[!toggleable text="""

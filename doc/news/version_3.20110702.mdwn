@@ -1,6 +1,6 @@
 News for git-annex 3.20110702:
 
-   The URL backend has been removed. Instead the new web remote can be used.
+The URL backend has been removed. Instead the new web remote can be used.
 
 git-annex 3.20110702 released with [[!toggle text="these changes"]]
 [[!toggleable text="""
