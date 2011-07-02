@@ -241,8 +241,7 @@ catFile file = do
 				[Param "cat-file", Param "--batch"]
 			let gitcmd = join " " ("git" : toCommand cmd)
 			(_, from, to) <- liftIO $ hPipeBoth "sh"
-				-- want stderr on stdin to see error messages
-				["-c", "exec " ++ gitcmd ++ " 2>&1"]
+				["-c", "exec " ++ gitcmd ++ " 2>/dev/null"]
 			setState state { catFileHandles = Just (from, to) }
 			ask (from, to)
 		ask (from, to) = liftIO $ do
@@ -255,7 +254,9 @@ catFile file = do
 					| length sha == Git.shaSize &&
 					  blob == "blob" -> handle from size
 					| otherwise -> empty
-				_ -> empty
+				_
+					| header == want ++ " missing" -> empty
+					| otherwise -> error $ "unknown response from git cat-file " ++ header
 		handle from size = case reads size of
 			[(bytes, "")] -> readcontent from bytes
 			_ -> empty
