@@ -237,11 +237,9 @@ catFile file = do
 	where
 		startup state = do
 			g <- Annex.gitRepo
-			let cmd = Git.gitCommandLine g
-				[Param "cat-file", Param "--batch"]
-			let gitcmd = join " " ("git" : toCommand cmd)
-			(_, from, to) <- liftIO $ hPipeBoth "sh"
-				["-c", "exec " ++ gitcmd ++ " 2>/dev/null"]
+			(_, from, to) <- liftIO $ hPipeBoth "git" $
+				toCommand $ Git.gitCommandLine g
+					[Param "cat-file", Param "--batch"]
 			setState state { catFileHandles = Just (from, to) }
 			ask (from, to)
 		ask (from, to) = liftIO $ do
