@@ -7,6 +7,7 @@ Author: Joey Hess
 Stability: Stable
 Copyright: 2010-2011 Joey Hess
 License-File: GPL
+Extra-Source-Files: use-make-sdist-instead
 Homepage: http://git-annex.branchable.com/
 Build-type: Custom
 Category: Utility

@@ -17,7 +17,6 @@ tests =
 	, TestCase "curl" $ testCmd "curl" "curl --version >/dev/null"
 	, TestCase "bup" $ testCmd "bup" "bup --version >/dev/null"
 	, TestCase "gpg" $ testCmd "gpg" "gpg --version >/dev/null"
-	, TestCase "unicode FilePath support" $ unicodeFilePath
 	] ++ shaTestCases [1, 256, 512, 224, 384]
 
 shaTestCases :: [Int] -> [TestCase]
@@ -39,19 +38,6 @@ testCp k option = TestCase cmd $ testCmd k run
 	where
 		cmd = "cp " ++ option
 		run = cmd ++ " " ++ testFile ++ " " ++ testFile ++ ".new"
-
-{- Checks if FilePaths contain decoded unicode, or not. The testdata
- - directory contains a "unicode-test-ü" file; try to find the file,
- - and see if the "ü" is encoded correctly.
- -
- - Note that the file is shipped with git-annex, rather than created,
- - to avoid other potential unicode issues.
- -}
-unicodeFilePath :: Test
-unicodeFilePath = do
-	fs <- getDirectoryContents "testdata"
-	let file = head $ filter (isInfixOf "unicode-test") fs
-	return $ Config "unicodefilepath" (BoolConfig $ isInfixOf "ü" file)
 
 {- Pulls package version out of the changelog. -}
 getVersion :: Test

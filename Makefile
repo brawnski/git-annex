@@ -87,4 +87,12 @@ clean:
 	rm -rf doc/.ikiwiki html dist
 	find . \( -name \*.o -or -name \*.hi \) -exec rm {} \;
 
+# Workaround for cabal sdist not running Setup hooks, so I cannot
+# generate a file list there.
+sdist: clean
+	@if [ ! -e git-annex.cabal.orig ]; then cp git-annex.cabal git-annex.cabal.orig; fi
+	@sed -e "s!\(Extra-Source-Files: \).*!\1$(shell find . -name .git -prune -or -not -name \\*.orig -type f -print)!i" < git-annex.cabal.orig > git-annex.cabal
+	@cabal sdist
+	@mv git-annex.cabal.orig git-annex.cabal
+
 .PHONY: $(bins) test install
