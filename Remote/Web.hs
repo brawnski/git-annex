@@ -115,6 +115,7 @@ urlexists url = do
 	_ <- setopt curl (CurlURL url)
 	_ <- setopt curl (CurlNoBody True)
 	_ <- setopt curl (CurlFailOnError True)
+	_ <- setopt curl (CurlFollowLocation True)
 	res <- perform curl
 	return $ res == CurlOK
 
@@ -122,5 +123,5 @@ download :: [URLString] -> FilePath -> Annex Bool
 download [] _ = return False
 download (url:us) file = do
 	showProgress -- make way for curl progress bar
-	ok <- liftIO $ boolSystem "curl" [Params "-C - -# -o", File file, File url]
+	ok <- liftIO $ boolSystem "curl" [Params "-L -C - -# -o", File file, File url]
 	if ok then return ok else download us file
