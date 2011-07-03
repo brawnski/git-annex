@@ -79,7 +79,7 @@ indexpages: 0
 discussion: 0
 # name of Discussion pages
 discussionpage: Discussion
-# generate HTML5? (experimental)
+# generate HTML5?
 html5: 0
 # only send cookies over SSL connections?
 sslcookie: 0
@@ -271,8 +271,9 @@ po_link_to: default
 
 ######################################################################
 # web plugins
-#   (404, attachment, comments, editdiff, edittemplate, google, goto,
-#    mirrorlist, remove, rename, repolist, search, theme, websetup, wmd)
+#   (404, attachment, comments, editdiff, edittemplate, getsource, google,
+#    goto, mirrorlist, remove, rename, repolist, search, theme, userlist,
+#    websetup, wmd)
 ######################################################################
 
 # attachment plugin
@@ -294,6 +295,10 @@ comments_pagename: comment_
 #comments_allowauthor: 0
 # commit comments to the VCS
 comments_commit: 1
+
+# getsource plugin
+# Mime type for returned source.
+#getsource_mimetype: text/plain; charset=utf-8
 
 # mirrorlist plugin
 # list of mirrors
@@ -330,15 +335,17 @@ websetup_unsafe:
   - prefix_directives
   - indexpages
   - repositories
+  - sslcookie
 # show unsafe settings, read-only, in web interface?
 websetup_show_unsafe: 0
 
 ######################################################################
 # widget plugins
 #   (calendar, color, conditional, cutpaste, date, format, fortune,
-#    graphviz, haiku, img, linkmap, listdirectives, map, more, orphans,
-#    pagecount, pagestats, poll, polygen, postsparkline, progress,
-#    shortcut, sparkline, table, template, teximg, toc, toggle, version)
+#    graphviz, haiku, headinganchors, img, linkmap, listdirectives, map,
+#    more, orphans, pagecount, pagestats, poll, polygen, postsparkline,
+#    progress, shortcut, sparkline, table, template, teximg, toc, toggle,
+#    version)
 ######################################################################
 
 # calendar plugin
