@@ -1,0 +1,8 @@
+Just starting using v3, even more awesome, thanks!
+
+With git-annex, I take the habit to do copies of files without restriction, as they end up into (cheap) symlink copies.
+However, if 2 copies are unannexed, only one is restored, the other becomes a broken symlink, so I kind of loose some information 
+(my use case: I have a repo on which I recently started using annex, but most of the files, which i would want to be annexed, are only in git,
+so my plan is to unninit this repo, delete the .git dir, and then annex everything, as I don't mind the history).
+
+Rafaël
