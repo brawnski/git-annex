@@ -9,6 +9,7 @@ module Command.Uninit where
 
 import Control.Monad.State (liftIO)
 import System.Directory
+import System.Exit
 
 import Command
 import Messages
@@ -18,6 +19,8 @@ import qualified Git
 import qualified Annex
 import qualified Command.Unannex
 import qualified Command.Init
+import qualified Branch
+import Content
 
 command :: [Command]
 command = [repoCommand "uninit" paramPath seek 
@@ -27,15 +30,19 @@ seek :: [CommandSeek]
 seek = [withFilesInGit Command.Unannex.start, withNothing start]
 
 start :: CommandStartNothing
-start = do
-	showStart "uninit" ""
-	next perform
+start = next perform
 
 perform :: CommandPerform
-perform = do
+perform = next cleanup
+
+cleanup :: CommandCleanup
+cleanup = do
 	g <- Annex.gitRepo
 	gitPreCommitHookUnWrite g
-	next $ return True
+	saveState
+	liftIO $ Git.run g "branch" [Param "-D", Param Branch.name]
+	-- bypass normal shutdown, which writes to the deleted branch
+	liftIO exitSuccess
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do
