@@ -108,7 +108,7 @@ boolSystemEnv command params env = do
 			executeFile command True (toCommand params) env
 
 {- executeFile with debug logging -}
-executeFile :: FilePath -> Bool -> [String] -> Maybe [(String, String)] -> IO a
+executeFile :: FilePath -> Bool -> [String] -> Maybe [(String, String)] -> IO ()
 executeFile c path p e = do
 	debugM "Utility.executeFile" $
 		"Running: " ++ c ++ " " ++ show p ++ " " ++ maybe "" show e
