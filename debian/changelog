@@ -1,6 +1,6 @@
 git-annex (3.20110703) UNRELEASED; urgency=low
 
-  * uninit: Delete the git-annex branch.
+  * uninit: Delete the git-annex branch and .git/annex/
 
  -- Joey Hess <joeyh@debian.org>  Mon, 04 Jul 2011 15:50:21 -0400
 

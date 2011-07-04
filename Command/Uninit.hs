@@ -21,6 +21,7 @@ import qualified Command.Unannex
 import qualified Command.Init
 import qualified Branch
 import Content
+import Locations
 
 command :: [Command]
 command = [repoCommand "uninit" paramPath seek 
@@ -40,9 +41,11 @@ cleanup = do
 	g <- Annex.gitRepo
 	gitPreCommitHookUnWrite g
 	saveState
-	liftIO $ Git.run g "branch" [Param "-D", Param Branch.name]
-	-- bypass normal shutdown, which writes to the deleted branch
-	liftIO exitSuccess
+	liftIO $ do
+		Git.run g "branch" [Param "-D", Param Branch.name]
+		removeDirectoryRecursive (gitAnnexDir g)
+		-- avoid normal shutdown
+		exitSuccess
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do
