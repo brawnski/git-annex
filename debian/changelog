@@ -3,6 +3,8 @@ git-annex (3.20110703) UNRELEASED; urgency=low
   * uninit: Delete the git-annex branch and .git/annex/
   * unannex: In --fast mode, file content is left in the annex, and a
     hard link made to it.
+  * uninit: Use unannex in --fast mode, to support unannexing multiple
+    files that link to the same content.
 
  -- Joey Hess <joeyh@debian.org>  Mon, 04 Jul 2011 15:50:21 -0400
 

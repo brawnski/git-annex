@@ -28,7 +28,15 @@ command = [repoCommand "uninit" paramPath seek
         "de-initialize git-annex and clean out repository"]
 
 seek :: [CommandSeek]
-seek = [withFilesInGit Command.Unannex.start, withNothing start]
+seek = [withFilesInGit startUnannex, withNothing start]
+
+startUnannex :: CommandStartString
+startUnannex file = do
+	-- Force fast mode before running unannex. This way, if multiple
+	-- files link to a key, it will be left in the annex and hardlinked
+	-- to by each.
+	Annex.changeState $ \s -> s { Annex.fast = True }
+	Command.Unannex.start file
 
 start :: CommandStartNothing
 start = next perform
@@ -40,12 +48,12 @@ cleanup :: CommandCleanup
 cleanup = do
 	g <- Annex.gitRepo
 	gitPreCommitHookUnWrite g
+	mapM_ removeAnnex =<< getKeysPresent
+	liftIO $ removeDirectoryRecursive (gitAnnexDir g)
+	-- avoid normal shutdown
 	saveState
-	liftIO $ do
-		Git.run g "branch" [Param "-D", Param Branch.name]
-		removeDirectoryRecursive (gitAnnexDir g)
-		-- avoid normal shutdown
-		exitSuccess
+	liftIO $ Git.run g "branch" [Param "-D", Param Branch.name]
+	liftIO $ exitSuccess
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do
