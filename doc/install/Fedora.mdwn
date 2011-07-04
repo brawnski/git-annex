@@ -9,6 +9,7 @@ sudo cabal install pcre-light
 sudo cabal install quickcheck
 sudo cabal install SHA
 sudo cabal install dataenc
+sudo cabal install HTTP
 sudo cabal install hS3
 
 git clone git://git-annex.branchable.com/

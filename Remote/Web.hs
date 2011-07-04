@@ -14,10 +14,9 @@ module Remote.Web (
 import Control.Monad.State (liftIO)
 import Control.Exception
 import System.FilePath
-import Network.Curl.Easy
-import Network.Curl.Opts
-import Network.Curl.Types
-import Network.Curl.Code
+import Network.Browser
+import Network.HTTP
+import Network.URI
 
 import Types
 import Types.Remote
@@ -30,6 +29,8 @@ import Config
 import PresenceLog
 import LocationLog
 import Locations
+
+type URLString = String
 
 remote :: RemoteType Annex
 remote = RemoteType {
@@ -111,13 +112,19 @@ checkKey' (u:us) = do
 
 urlexists :: URLString -> IO Bool
 urlexists url = do
-	curl <- initialize
-	_ <- setopt curl (CurlURL url)
-	_ <- setopt curl (CurlNoBody True)
-	_ <- setopt curl (CurlFailOnError True)
-	_ <- setopt curl (CurlFollowLocation True)
-	res <- perform curl
-	return $ res == CurlOK
+	case parseURI url of
+		Nothing -> return False
+		Just u -> do
+			(_, r) <- Network.Browser.browse $ do
+				setErrHandler ignore
+				setOutHandler ignore
+				setAllowRedirects True
+				request (mkRequest HEAD u :: Request_String)
+			case rspCode r of
+				(2,_,_) -> return True
+				_ -> return False
+	where
+		ignore = const $ return ()
 
 download :: [URLString] -> FilePath -> Annex Bool
 download [] _ = return False
