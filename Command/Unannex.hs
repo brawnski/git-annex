@@ -10,6 +10,7 @@ module Command.Unannex where
 import Control.Monad.State (liftIO)
 import Control.Monad (unless)
 import System.Directory
+import System.Posix.Files
 
 import Command
 import qualified Annex
@@ -22,6 +23,7 @@ import Content
 import qualified Git
 import qualified Git.LsFiles as LsFiles
 import Messages
+import Locations
 
 command :: [Command]
 command = [repoCommand "unannex" paramPath seek "undo accidential add command"]
@@ -64,8 +66,15 @@ cleanup file key = do
 	-- git rm deletes empty directories; put them back
 	liftIO $ createDirectoryIfMissing True (parentDir file)
 
-	fromAnnex key file
-	logStatus key InfoMissing
+	fast <- Annex.getState Annex.fast
+	if fast
+		then liftIO $ do
+			-- fast mode: hard link to content in annex
+			createLink (gitAnnexLocation g key) file
+			allowWrite file
+		else do
+			fromAnnex key file
+			logStatus key InfoMissing
 	
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to

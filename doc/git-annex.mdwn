@@ -239,6 +239,9 @@ Many git-annex commands will stage changes for later `git commit` by you.
   file and don't want its contents any more. In that case you should use
   `git annex drop` instead, and you can also `git rm` the file.
 
+  In --fast mode, this command leaves content in the annex, simply making
+  a hard link to it.
+
 * uninit
 
   Use this to stop using git annex. It will unannex every file in the
