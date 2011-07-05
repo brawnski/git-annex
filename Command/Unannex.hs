@@ -13,10 +13,10 @@ import System.Directory
 import System.Posix.Files
 
 import Command
+import qualified Command.Drop
 import qualified Annex
 import qualified AnnexQueue
 import Utility
-import qualified Backend
 import LocationLog
 import Types
 import Content
@@ -33,7 +33,7 @@ seek = [withFilesInGit start]
 
 {- The unannex subcommand undoes an add. -}
 start :: CommandStartString
-start file = isAnnexed file $ \(key, backend) -> do
+start file = isAnnexed file $ \(key, _) -> do
 	ishere <- inAnnex key
 	if ishere
 		then do
@@ -46,13 +46,12 @@ start file = isAnnexed file $ \(key, backend) -> do
 				Annex.changeState $ \s -> s { Annex.force = True }
 
 			showStart "unannex" file
-			next $ perform file key backend
+			next $ perform file key
 		else stop
 
-perform :: FilePath -> Key -> Backend Annex -> CommandPerform
-perform file key backend = do
-	-- force backend to always remove
-	ok <- Backend.removeKey backend key (Just 0)
+perform :: FilePath -> Key -> CommandPerform
+perform file key = do
+	ok <- Command.Drop.dropKey key (Just 0) -- always remove
 	if ok
 		then next $ cleanup file key
 		else stop

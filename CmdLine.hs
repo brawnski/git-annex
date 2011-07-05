@@ -22,7 +22,6 @@ import qualified Git
 import Content
 import Types
 import Command
-import BackendList
 import Version
 import Options
 import Messages
@@ -32,7 +31,7 @@ import UUID
 dispatch :: [String] -> [Command] -> [Option] -> String -> Git.Repo -> IO ()
 dispatch args cmds options header gitrepo = do
 	setupConsole
-	state <- Annex.new gitrepo allBackends
+	state <- Annex.new gitrepo
 	(actions, state') <- Annex.run state $ parseCmd args header cmds options
 	tryRun state' $ [startup] ++ actions ++ [shutdown]
 

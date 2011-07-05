@@ -14,10 +14,10 @@ module Remote (
 	removeKey,
 	hasKey,
 	hasKeyCheap,
+
 	keyPossibilities,
 	keyPossibilitiesTrusted,
 	forceTrust,
-
 	remoteTypes,
 	genList,
 	byName,
@@ -25,6 +25,8 @@ module Remote (
 	remotesWithUUID,
 	remotesWithoutUUID,
 	prettyPrintUUIDs,
+	showTriedRemotes,
+	showLocations,
 
 	remoteLog,
 	readRemoteLog,
@@ -40,6 +42,7 @@ import Data.List
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Char
+import Data.String.Utils
 
 import qualified Branch
 import Types
@@ -49,6 +52,7 @@ import qualified Annex
 import Config
 import Trust
 import LocationLog
+import Messages
 
 import qualified Remote.Git
 import qualified Remote.S3
@@ -181,9 +185,34 @@ keyPossibilities' withtrusted key = do
 
 	return (sort validremotes, validtrusteduuids)
 
+{- Displays known locations of a key. -}
+showLocations :: Key -> [UUID] -> Annex ()
+showLocations key exclude = do
+	g <- Annex.gitRepo
+	u <- getUUID g
+	uuids <- keyLocations key
+	untrusteduuids <- trustGet UnTrusted
+	let uuidswanted = filteruuids uuids (u:exclude++untrusteduuids) 
+	let uuidsskipped = filteruuids uuids (u:exclude++uuidswanted)
+	ppuuidswanted <- Remote.prettyPrintUUIDs uuidswanted
+	ppuuidsskipped <- Remote.prettyPrintUUIDs uuidsskipped
+	showLongNote $ message ppuuidswanted ppuuidsskipped
+	where
+		filteruuids l x = filter (`notElem` x) l
+		message [] [] = "No other repository is known to contain the file."
+		message rs [] = "Try making some of these repositories available:\n" ++ rs
+		message [] us = "Also these untrusted repositories may contain the file:\n" ++ us
+		message rs us = message rs [] ++ message [] us
+
+showTriedRemotes :: [Remote Annex] -> Annex ()
+showTriedRemotes [] = return ()	
+showTriedRemotes remotes =
+	showLongNote $ "Unable to access these remotes: " ++
+		(join ", " $ map name remotes)
+
 forceTrust :: TrustLevel -> String -> Annex ()
 forceTrust level remotename = do
-	r <- Remote.nameToUUID remotename
+	r <- nameToUUID remotename
 	Annex.changeState $ \s ->
 		s { Annex.forcetrust = (r, level):Annex.forcetrust s }
 

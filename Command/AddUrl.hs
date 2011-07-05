@@ -51,8 +51,8 @@ perform url file = do
 	if ok
 		then do
 			[(_, backend)] <- Backend.chooseBackends [file]
-			stored <- Backend.storeFileKey tmp backend
-			case stored of
+			k <- Backend.genKey tmp backend
+			case k of
 				Nothing -> stop
 				Just (key, _) -> do
 					moveAnnex key tmp

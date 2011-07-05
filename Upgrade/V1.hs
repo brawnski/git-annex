@@ -191,17 +191,16 @@ logFile1 repo key = Upgrade.V2.gitStateDir repo ++ keyFile1 key ++ ".log"
 
 lookupFile1 :: FilePath -> Annex (Maybe (Key, Backend Annex))
 lookupFile1 file = do
-	bs <- Annex.getState Annex.supportedBackends
 	tl <- liftIO $ try getsymlink
 	case tl of
 		Left _ -> return Nothing
-		Right l -> makekey bs l
+		Right l -> makekey l
 	where
 		getsymlink = do
 			l <- readSymbolicLink file
 			return $ takeFileName l
-		makekey bs l = do
-			case maybeLookupBackendName bs bname of
+		makekey l = do
+			case maybeLookupBackendName bname of
 				Nothing -> do
 					unless (null kname || null bname ||
 					        not (isLinkToAnnex l)) $

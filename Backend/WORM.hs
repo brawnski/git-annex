@@ -11,7 +11,6 @@ import Control.Monad.State
 import System.FilePath
 import System.Posix.Files
 
-import qualified Backend.File
 import Types.Backend
 import Types
 import Types.Key
@@ -20,9 +19,10 @@ backends :: [Backend Annex]
 backends = [backend]
 
 backend :: Backend Annex
-backend = Backend.File.backend {
+backend = Types.Backend.Backend {
 	name = "WORM",
-	getKey = keyValue
+	getKey = keyValue,
+	fsckKey = const (return True)
 }
 
 {- The key includes the file size, modification time, and the

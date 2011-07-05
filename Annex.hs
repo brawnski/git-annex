@@ -34,7 +34,6 @@ type Annex = StateT AnnexState IO
 data AnnexState = AnnexState
 	{ repo :: Git.Repo
 	, backends :: [Backend Annex]
-	, supportedBackends :: [Backend Annex]
 	, remotes :: [Remote Annex]
 	, repoqueue :: Queue
 	, quiet :: Bool
@@ -52,12 +51,11 @@ data AnnexState = AnnexState
 	, cipher :: Maybe Cipher
 	}
 
-newState :: [Backend Annex] -> Git.Repo -> AnnexState
-newState allbackends gitrepo = AnnexState
+newState :: Git.Repo -> AnnexState
+newState gitrepo = AnnexState
 	{ repo = gitrepo
 	, backends = []
 	, remotes = []
-	, supportedBackends = allbackends
 	, repoqueue = empty
 	, quiet = False
 	, force = False
@@ -75,9 +73,8 @@ newState allbackends gitrepo = AnnexState
 	}
 
 {- Create and returns an Annex state object for the specified git repo. -}
-new :: Git.Repo -> [Backend Annex] -> IO AnnexState
-new gitrepo allbackends =
-	newState allbackends `liftM` (liftIO . Git.configRead) gitrepo
+new :: Git.Repo -> IO AnnexState
+new gitrepo = newState `liftM` (liftIO . Git.configRead) gitrepo
 
 {- performs an action in the Annex monad -}
 run :: AnnexState -> Annex a -> IO (a, AnnexState)

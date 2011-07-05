@@ -112,7 +112,7 @@ inAnnex r key = if Git.repoIsUrl r
 		checklocal = do
 			-- run a local check inexpensively,
 			-- by making an Annex monad using the remote
-			a <- Annex.new r []
+			a <- Annex.new r
 			Annex.eval a (Content.inAnnex key)
 		checkremote = do
 			showNote ("checking " ++ Git.repoDescribe r ++ "...")
@@ -142,7 +142,7 @@ copyToRemote r key
 		let keysrc = gitAnnexLocation g key
 		-- run copy from perspective of remote
 		liftIO $ do
-			a <- Annex.new r []
+			a <- Annex.new r
 			Annex.eval a $ do
 				ok <- Content.getViaTmp key $
 					rsyncOrCopyFile r keysrc

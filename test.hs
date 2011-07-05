@@ -25,7 +25,6 @@ import System.Path (recurseDir)
 import System.IO.HVFS (SystemFS(..))
 
 import qualified Annex
-import qualified BackendList
 import qualified Backend
 import qualified Git
 import qualified Locations
@@ -483,7 +482,7 @@ annexeval :: Types.Annex a -> IO a
 annexeval a = do
 	g <- Git.repoFromCwd
 	g' <- Git.configRead g
-	s <- Annex.new g' BackendList.allBackends
+	s <- Annex.new g'
 	Annex.eval s a
 
 innewrepo :: Assertion -> Assertion
@@ -684,4 +683,4 @@ backendWORM :: Types.Backend Types.Annex
 backendWORM = backend_ "WORM"
 
 backend_ :: String -> Types.Backend Types.Annex
-backend_ name = Backend.lookupBackendName BackendList.allBackends name
+backend_ name = Backend.lookupBackendName name

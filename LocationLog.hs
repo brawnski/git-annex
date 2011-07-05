@@ -19,7 +19,7 @@ module LocationLog (
 	keyLocations,
 	loggedKeys,
 	logFile,
-	logFileKey	
+	logFileKey
 ) where
 
 import System.FilePath

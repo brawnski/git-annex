@@ -21,7 +21,6 @@ import qualified Command.Drop
 import qualified Command.Move
 import qualified Remote
 import qualified Git
-import Backend
 import Types.Key
 import Utility
 
@@ -64,9 +63,7 @@ perform key = maybe droplocal dropremote =<< Annex.getState Annex.fromremote
 			r <- Remote.byName name
 			showNote $ "from " ++ Remote.name r ++ "..."
 			next $ Command.Move.fromCleanup r True key
-		droplocal = do
-			backend <- keyBackend key
-			Command.Drop.perform key backend (Just 0) -- force drop
+		droplocal = Command.Drop.perform key (Just 0) -- force drop
 
 performOther :: (Git.Repo -> Key -> FilePath) -> Key -> CommandPerform
 performOther filespec key = do

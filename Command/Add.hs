@@ -42,8 +42,8 @@ start pair@(file, _) = notAnnexed file $ do
 
 perform :: BackendFile -> CommandPerform
 perform (file, backend) = do
-	stored <- Backend.storeFileKey file backend
-	case stored of
+	k <- Backend.genKey file backend
+	case k of
 		Nothing -> stop
 		Just (key, _) -> do
 			moveAnnex key file

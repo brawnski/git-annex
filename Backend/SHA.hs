@@ -16,7 +16,6 @@ import Data.Maybe
 import System.Posix.Files
 import System.FilePath
 
-import qualified Backend.File
 import Messages
 import qualified Annex
 import Locations
@@ -42,10 +41,10 @@ genBackend size
 	| shaCommand size == Nothing = Nothing
 	| otherwise = Just b
 	where
-		b = Backend.File.backend 
+		b = Types.Backend.Backend
 			{ name = shaName size
 			, getKey = keyValue size
-			, fsckKey = Backend.File.checkKey $ checkKeyChecksum size
+			, fsckKey = checkKeyChecksum size
 			}
 
 genBackendE :: SHASize -> Maybe (Backend Annex)

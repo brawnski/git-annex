@@ -12,7 +12,6 @@ import System.Directory hiding (copyFile)
 
 import Command
 import qualified Annex
-import qualified Backend
 import Types
 import Messages
 import Locations
@@ -38,7 +37,7 @@ start file = isAnnexed file $ \(key, _) -> do
 
 perform :: FilePath -> Key -> CommandPerform
 perform dest key = do
-	unlessM (Backend.hasKey key) $ error "content not present"
+	unlessM (inAnnex key) $ error "content not present"
 	
 	checkDiskSpace key
 

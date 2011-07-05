@@ -25,6 +25,7 @@ import DataUnits
 import Content
 import Types.Key
 import Locations
+import Backend
 
 -- a named computation that produces a statistic
 type Stat = StatState (Maybe (String, StatState String))
@@ -95,9 +96,8 @@ showStat s = calc =<< s
 		calc Nothing = return ()
 
 supported_backends :: Stat
-supported_backends = stat "supported backends" $
-	lift (Annex.getState Annex.supportedBackends) >>=
-		return . unwords . (map B.name)
+supported_backends = stat "supported backends" $ 
+	return $ unwords $ map B.name Backend.list
 
 supported_remote_types :: Stat
 supported_remote_types = stat "supported remote types" $
