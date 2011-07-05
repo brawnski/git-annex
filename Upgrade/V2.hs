@@ -54,11 +54,13 @@ upgrade = do
 	when e $ do
 		mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
 		mapM_ (\f -> inject f f) =<< logFiles (olddir g)
-		liftIO $ do
-			Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
-			unless bare $ gitAttributesUnWrite g
 
 	saveState
+
+	when e $ liftIO $ do
+		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
+		unless bare $ gitAttributesUnWrite g
+
 	unless bare $ push
 
 	return True
