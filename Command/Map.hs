@@ -175,6 +175,7 @@ scan r = do
 			showEndOk
 			return r'
 		Nothing -> do
+			showProgress
 			showEndFail
 			return r
 

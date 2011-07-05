@@ -43,14 +43,16 @@ showEndOk :: Annex ()
 showEndOk = verbose $ liftIO $ putStrLn "ok"
 
 showEndFail :: Annex ()
-showEndFail = verbose $ liftIO $ putStrLn "\nfailed"
+showEndFail = verbose $ liftIO $ putStrLn "failed"
 
 showEndResult :: Bool -> Annex ()
 showEndResult True = showEndOk
 showEndResult False = showEndFail
 
 showErr :: (Show a) => a -> Annex ()
-showErr e = warning $ "git-annex: " ++ show e
+showErr e = do
+	liftIO $ hFlush stdout
+	liftIO $ hPutStrLn stderr $ "git-annex: " ++ show e
 
 warning :: String -> Annex ()
 warning w = do

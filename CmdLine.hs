@@ -87,7 +87,9 @@ tryRun' state errnum (a:as) = do
 		a
 	case result of
 		Left err -> do
-			Annex.eval state $ showErr err
+			Annex.eval state $ do
+				showEndFail
+				showErr err
 			tryRun' state (errnum + 1) as
 		Right (True,state') -> tryRun' state' errnum as
 		Right (False,state') -> tryRun' state' (errnum + 1) as

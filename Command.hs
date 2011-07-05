@@ -96,10 +96,15 @@ prepCommand Command { cmdseek = seek } params = do
 doCommand :: CommandStart -> CommandCleanup
 doCommand = start
 	where
-		start   = stage $ maybe (return True) perform
-		perform = stage $ maybe (showEndFail >> return False) cleanup
+		start   = stage $ maybe success perform
+		perform = stage $ maybe failure cleanup
 		cleanup = stage $ \r -> showEndResult r >> return r
 		stage a b = b >>= a
+		success = return True
+		failure = do
+			showProgress
+			showEndFail
+			return False
 
 notAnnexed :: FilePath -> Annex (Maybe a) -> Annex (Maybe a)
 notAnnexed file a = maybe a (const $ return Nothing) =<< Backend.lookupFile file
