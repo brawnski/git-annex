@@ -27,6 +27,8 @@ import Data.Maybe
 import Data.List
 import System.IO
 import System.IO.Binary
+import System.Posix.Process
+import System.Exit
 import qualified Data.ByteString.Char8 as B
 
 import Types.BranchState
@@ -329,12 +331,19 @@ stageJournalFiles = do
 			let paths = map (dir </>) fs
 			-- inject all the journal files directly into git
 			-- in one quick command
-			(h, s) <- Git.pipeWriteRead g [Param "hash-object",
-				Param "-w", Param "--stdin-paths"] $ unlines paths
+			(pid, fromh, toh) <- hPipeBoth "git" $ toCommand $
+				Git.gitCommandLine g [Param "hash-object", Param "-w", Param "--stdin-paths"]
+			_ <- forkProcess $ do
+				hPutStr toh $ unlines paths
+				hClose toh
+				exitSuccess
+			hClose toh
+			s <- hGetContents fromh
 			-- update the index, also in just one command
 			Git.UnionMerge.update_index g $
 				index_lines (lines s) $ map fileJournal fs
-			forceSuccess h
+			hClose fromh
+			forceSuccess pid
 			mapM_ removeFile paths
 		index_lines shas fs = map genline $ zip shas fs
 		genline (sha, file) = Git.UnionMerge.update_index_line sha file
