@@ -1,3 +1,9 @@
+git-annex (3.20110706) UNRELEASED; urgency=low
+
+  * Fix sign bug in disk free space checking.
+
+ -- Joey Hess <joeyh@debian.org>  Tue, 05 Jul 2011 20:52:11 -0400
+
 git-annex (3.20110705) unstable; urgency=low
 
   * uninit: Delete the git-annex branch and .git/annex/
