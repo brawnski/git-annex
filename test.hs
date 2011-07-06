@@ -36,6 +36,7 @@ import qualified LocationLog
 import qualified UUID
 import qualified Trust
 import qualified Remote
+import qualified RemoteLog
 import qualified Content
 import qualified Command.DropUnused
 import qualified Types.Key
@@ -73,7 +74,7 @@ quickcheck = TestLabel "quickcheck" $ TestList
 	, qctest "prop_idempotent_key_read_show" Types.Key.prop_idempotent_key_read_show
 	, qctest "prop_idempotent_shellEscape" Utility.prop_idempotent_shellEscape
 	, qctest "prop_idempotent_shellEscape_multiword" Utility.prop_idempotent_shellEscape_multiword
-	, qctest "prop_idempotent_configEscape" Remote.prop_idempotent_configEscape
+	, qctest "prop_idempotent_configEscape" RemoteLog.prop_idempotent_configEscape
 	, qctest "prop_parentDir_basics" Utility.prop_parentDir_basics
 	, qctest "prop_relPathDirToFile_basics" Utility.prop_relPathDirToFile_basics
 	, qctest "prop_cost_sane" Config.prop_cost_sane

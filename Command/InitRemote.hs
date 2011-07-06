@@ -15,6 +15,7 @@ import Data.String.Utils
 
 import Command
 import qualified Remote
+import qualified RemoteLog
 import qualified Types.Remote as R
 import Types
 import UUID
@@ -42,7 +43,7 @@ start ws = do
 
 	where
 		name = head ws
-		config = Remote.keyValToConfig $ tail ws
+		config = RemoteLog.keyValToConfig $ tail ws
 		needname = do
 			let err s = error $ "Specify a name for the remote. " ++ s
 			names <- remoteNames
@@ -58,13 +59,13 @@ perform t u c = do
 
 cleanup :: UUID -> R.RemoteConfig -> CommandCleanup
 cleanup u c = do
-	Remote.configSet u c
+	RemoteLog.configSet u c
         return True
 
 {- Look up existing remote's UUID and config by name, or generate a new one -}
 findByName :: String -> Annex (UUID, R.RemoteConfig)
 findByName name = do
-	m <- Remote.readRemoteLog
+	m <- RemoteLog.readRemoteLog
 	maybe generate return $ findByName' name m
 	where
 		generate = do
@@ -83,7 +84,7 @@ findByName' n m = if null matches then Nothing else Just $ head matches
 
 remoteNames :: Annex [String]
 remoteNames = do
-	m <- Remote.readRemoteLog
+	m <- RemoteLog.readRemoteLog
 	return $ catMaybes $ map ((M.lookup nameKey) . snd) $ M.toList m
 
 {- find the specified remote type -}
