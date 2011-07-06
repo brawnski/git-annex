@@ -28,7 +28,7 @@ import Locations
 import Config
 import Utility
 import Messages
-import Ssh
+import Remote.Ssh
 import Remote.Special
 import Remote.Encryptable
 import Crypto

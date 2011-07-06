@@ -21,7 +21,7 @@ import qualified Command.Unused
 import qualified Git
 import Command
 import Types
-import DataUnits
+import Utility.DataUnits
 import Content
 import Types.Key
 import Locations

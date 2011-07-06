@@ -24,7 +24,7 @@ import qualified Content
 import Messages
 import Utility.CopyFile
 import Utility.RsyncFile
-import Ssh
+import Remote.Ssh
 import Config
 
 remote :: RemoteType Annex

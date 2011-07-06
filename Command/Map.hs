@@ -21,8 +21,8 @@ import Types
 import Utility
 import UUID
 import Trust
-import Ssh
-import qualified Dot
+import Remote.Ssh
+import qualified Utility.Dot as Dot
 
 -- a link from the first repository to the second (its remote)
 data Link = Link Git.Repo Git.Repo

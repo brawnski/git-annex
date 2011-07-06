@@ -1,11 +1,11 @@
-{- git-annex repository access with ssh
+{- git-annex remote access with ssh
  -
  - Copyright 2011 Joey Hess <joey@kitenet.net>
  -
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Ssh where
+module Remote.Ssh where
 
 import Control.Monad.State (liftIO)
 

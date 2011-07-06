@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module DataUnits (
+module Utility.DataUnits (
 	dataUnits,
 	storageUnits,
 	memoryUnits,

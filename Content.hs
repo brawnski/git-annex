@@ -43,7 +43,7 @@ import qualified Branch
 import Utility
 import StatFS
 import Types.Key
-import DataUnits
+import Utility.DataUnits
 import Config
 
 {- Checks if a given key is currently present in the gitAnnexLocation. -}

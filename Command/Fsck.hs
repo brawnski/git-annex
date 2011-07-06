@@ -26,7 +26,7 @@ import Content
 import LocationLog
 import Locations
 import Trust
-import DataUnits
+import Utility.DataUnits
 import Config
 
 command :: [Command]

@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Dot where -- import qualified
+module Utility.Dot where -- import qualified
 
 {- generates a graph description from a list of lines -}
 graph :: [String] -> String
