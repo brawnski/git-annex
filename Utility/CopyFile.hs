@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module CopyFile (copyFile) where
+module Utility.CopyFile (copyFile) where
 
 import System.Directory (doesFileExist, removeFile)
 

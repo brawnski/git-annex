@@ -37,7 +37,7 @@ import Remote.Special
 import Remote.Encryptable
 import Crypto
 import Content
-import Base64
+import Utility.Base64
 
 remote :: RemoteType Annex
 remote = RemoteType {

@@ -16,7 +16,7 @@ import Types
 import Messages
 import Locations
 import Content
-import CopyFile
+import Utility.CopyFile
 import Utility
 
 command :: [Command]

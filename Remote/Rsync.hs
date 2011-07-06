@@ -29,7 +29,7 @@ import Remote.Special
 import Remote.Encryptable
 import Crypto
 import Messages
-import RsyncFile
+import Utility.RsyncFile
 
 type RsyncUrl = String
 

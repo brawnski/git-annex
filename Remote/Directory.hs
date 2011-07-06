@@ -22,7 +22,7 @@ import qualified Git
 import qualified Annex
 import UUID
 import Locations
-import CopyFile
+import Utility.CopyFile
 import Config
 import Content
 import Utility

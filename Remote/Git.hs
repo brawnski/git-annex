@@ -22,8 +22,8 @@ import UUID
 import Utility
 import qualified Content
 import Messages
-import CopyFile
-import RsyncFile
+import Utility.CopyFile
+import Utility.RsyncFile
 import Ssh
 import Config
 

@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module RsyncFile where
+module Utility.RsyncFile where
 
 import Data.String.Utils
 

@@ -5,7 +5,7 @@
  - Licensed under the GNU GPL version 3 or higher.
  -}
 
-module Base64 (toB64, fromB64) where
+module Utility.Base64 (toB64, fromB64) where
 
 import Codec.Binary.Base64
 import Data.Bits.Utils
