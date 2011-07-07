@@ -1,6 +1,9 @@
 git-annex (3.20110706) UNRELEASED; urgency=low
 
   * Fix sign bug in disk free space checking.
+  * Bugfix: Forgot to de-escape keys when upgrading. Could result in
+    bad location log data for keys that contain [&:%] in their names.
+    (A workaround for this problem is to run git annex fsck.)
 
  -- Joey Hess <joeyh@debian.org>  Tue, 05 Jul 2011 20:52:11 -0400
 
