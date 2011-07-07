@@ -4,6 +4,8 @@ git-annex (3.20110706) UNRELEASED; urgency=low
   * Bugfix: Forgot to de-escape keys when upgrading. Could result in
     bad location log data for keys that contain [&:%] in their names.
     (A workaround for this problem is to run git annex fsck.)
+  * add: Avoid a failure mode that resulted in the file seemingly being
+    deleted (content put in the annex but no symlink present).
 
  -- Joey Hess <joeyh@debian.org>  Tue, 05 Jul 2011 20:52:11 -0400
 

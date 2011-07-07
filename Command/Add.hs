@@ -51,10 +51,10 @@ perform (file, backend) = do
 
 cleanup :: FilePath -> Key -> CommandCleanup
 cleanup file key = do
-	logStatus key InfoPresent
-
 	link <- calcGitLink file key
 	liftIO $ createSymbolicLink link file
+
+	logStatus key InfoPresent
 
 	-- touch the symlink to have the same mtime as the file it points to
 	s <- liftIO $ getFileStatus file
