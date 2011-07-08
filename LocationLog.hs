@@ -30,7 +30,6 @@ import qualified Git
 import qualified Branch
 import UUID
 import Types
-import Types.Key
 import Locations
 import PresenceLog
 
