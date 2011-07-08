@@ -88,5 +88,6 @@ Involved a reorganisation of the layout of .git/annex/. Symlinks changed.
 Handled more or less transparently, although git-annex was just 2 weeks
 old at the time, and had few users other than Joey.
 
-This upgrade is believed to still be supported, but has not been tested
-lately.
+Before doing this upgrade, set annex.version:
+
+	git config annex.version 0
