@@ -530,6 +530,7 @@ checkAttr repo attr files = do
 	-- directory. Convert to absolute, and then convert the filenames
 	-- in its output back to relative.
 	cwd <- getCurrentDirectory
+	let top = workTree repo
 	let absfiles = map (absPathFrom cwd) files
 	(_, fromh, toh) <- hPipeBoth "git" (toCommand params)
         _ <- forkProcess $ do
@@ -539,19 +540,21 @@ checkAttr repo attr files = do
                 exitSuccess
         hClose toh
 	s <- hGetContents fromh
-	return $ map (topair $ cwd++"/") $ lines s
+	return $ map (topair cwd top) $ lines s
 	where
 		params = gitCommandLine repo [Param "check-attr", Param attr, Params "-z --stdin"]
-		topair cwd l = (relfile, value)
+		topair cwd top l = (relfile, value)
 			where 
-				relfile 
-					| startswith cwd file = drop (length cwd) file
-					| otherwise = file
+				relfile
+					| startswith cwd' file = drop (length cwd') file
+					| otherwise = relPathDirToFile top' file
 				file = decodeGitFile $ join sep $ take end bits
 				value = bits !! end
 				end = length bits - 1
 				bits = split sep l
 				sep = ": " ++ attr ++ ": "
+				cwd' = cwd ++ "/"
+				top' = top ++ "/"
 
 {- Some git commands output encoded filenames. Decode that (annoyingly
  - complex) encoding. -}

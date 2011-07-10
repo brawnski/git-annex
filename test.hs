@@ -108,7 +108,7 @@ test_init = "git-annex init" ~: TestCase $ innewrepo $ do
 		reponame = "test repo"
 
 test_add :: Test
-test_add = "git-annex add" ~: TestList [basic, sha1dup]
+test_add = "git-annex add" ~: TestList [basic, sha1dup, subdirs]
 	where
 		-- this test case runs in the main repo, to set up a basic
 		-- annexed file that later tests will use
@@ -129,6 +129,14 @@ test_add = "git-annex add" ~: TestList [basic, sha1dup]
 			git_annex "add" ["-q", sha1annexedfiledup, "--backend=SHA1"] @? "add of second file with same SHA1 failed"
 			annexed_present sha1annexedfiledup
 			annexed_present sha1annexedfile
+		subdirs = TestCase $ intmpclonerepo $ do
+			createDirectory "dir"
+			writeFile "dir/foo" $ content annexedfile
+			git_annex "add" ["-q", "dir"] @? "add of subdir failed"
+			createDirectory "dir2"
+			writeFile "dir2/foo" $ content annexedfile
+			changeWorkingDirectory "dir"
+			git_annex "add" ["-q", "../dir2"] @? "add of ../subdir failed"
 
 test_setkey :: Test
 test_setkey = "git-annex setkey/fromkey" ~: TestCase $ inmainrepo $ do
