@@ -8,12 +8,14 @@
 module GitAnnex where
 
 import System.Console.GetOpt
+import Control.Monad.State (liftIO)
 
 import qualified Git
 import CmdLine
 import Command
 import Options
 import Utility
+import Types
 import Types.TrustLevel
 import qualified Annex
 import qualified Remote
@@ -102,9 +104,11 @@ options = commonOptions ++
 	, Option [] ["trust"] (ReqArg (Remote.forceTrust Trusted) paramRemote)
 		"override trust setting"
 	, Option [] ["semitrust"] (ReqArg (Remote.forceTrust SemiTrusted) paramRemote)
-		"override trust setting back to default value"
+		"override trust setting back to default"
 	, Option [] ["untrust"] (ReqArg (Remote.forceTrust UnTrusted) paramRemote)
 		"override trust setting to untrusted"
+	, Option ['c'] ["config"] (ReqArg setgitconfig "NAME=VALUE")
+		"override git configuration setting"
 	]
 	where
 		setto v = Annex.changeState $ \s -> s { Annex.toremote = Just v }
@@ -112,6 +116,11 @@ options = commonOptions ++
 		addexclude v = Annex.changeState $ \s -> s { Annex.exclude = v:Annex.exclude s }
 		setnumcopies v = Annex.changeState $ \s -> s {Annex.forcenumcopies = readMaybe v }
 		setkey v = Annex.changeState $ \s -> s { Annex.defaultkey = Just v }
+		setgitconfig :: String -> Annex ()
+		setgitconfig v = do
+			g <- Annex.gitRepo
+			g' <- liftIO $ Git.configStore g v
+			Annex.changeState $ \s -> s { Annex.repo = g' }
 
 header :: String
 header = "Usage: git-annex command [option ..]"

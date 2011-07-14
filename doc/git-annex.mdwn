@@ -387,6 +387,10 @@ Many git-annex commands will stage changes for later `git commit` by you.
 
   Specifies a key to operate on.
 
+* -c name=value
+
+  Used to override git configuration settings. May be specified multiple times.
+
 # CONFIGURATION
 
 Like other git commands, git-annex is configured via `.git/config`.
