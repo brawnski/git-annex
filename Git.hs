@@ -466,13 +466,24 @@ hConfigRead repo h = do
 	val <- hGetContentsStrict h
 	configStore repo val
 
-{- Parses a git config and returns a version of the repo using it. -}
+{- Stores a git config into a repo, returning the new version of the repo.
+ - The git config may be multiple lines, or a single line. Config settings
+ - can be updated inrementally. -}
 configStore :: Repo -> String -> IO Repo
 configStore repo s = do
-	rs <- configRemotes r
-	return $ r { remotes = rs }
+	let repo' = repo { config = Map.union (configParse s) (config repo) }
+	rs <- configRemotes repo'
+	return $ repo' { remotes = rs }
+
+{- Parses git config --list output into a config map. -}
+configParse :: String -> Map.Map String String
+configParse s = Map.fromList $ map pair $ lines s
 	where
-		r = repo { config = configParse s }
+		pair l = (key l, val l)
+		key l = head $ keyval l
+		val l = join sep $ drop 1 $ keyval l
+		keyval l = split sep l :: [String]
+		sep = "="
 
 {- Calculates a list of a repo's configured remotes, by parsing its config. -}
 configRemotes :: Repo -> IO [Repo]
@@ -502,16 +513,6 @@ configRemotes repo = mapM construct remotepairs
 {- Checks if a string from git config is a true value. -}
 configTrue :: String -> Bool
 configTrue s = map toLower s == "true"
-
-{- Parses git config --list output into a config map. -}
-configParse :: String -> Map.Map String String
-configParse s = Map.fromList $ map pair $ lines s
-	where
-		pair l = (key l, val l)
-		key l = head $ keyval l
-		val l = join sep $ drop 1 $ keyval l
-		keyval l = split sep l :: [String]
-		sep = "="
 
 {- Returns a single git config setting, or a default value if not set. -}
 configGet :: Repo -> String -> String -> String
