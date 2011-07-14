@@ -78,6 +78,6 @@ cleanup file key = do
 	-- Commit staged changes at end to avoid confusing the
 	-- pre-commit hook if this file is later added back to
 	-- git as a normal, non-annexed file.
-	AnnexQueue.add "commit" [Params "-a -m", Param "content removed from git annex"] "-a"
+	AnnexQueue.add "commit" [Params "-a -m", Param "content removed from git annex"] []
 	
 	return True

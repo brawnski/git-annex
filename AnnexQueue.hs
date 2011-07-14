@@ -21,10 +21,10 @@ import Utility
 
 {- Adds a git command to the queue, possibly running previously queued
  - actions if enough have accumulated. -}
-add :: String -> [CommandParam] -> FilePath -> Annex ()
-add command params file = do
+add :: String -> [CommandParam] -> [FilePath] -> Annex ()
+add command params files = do
 	q <- getState repoqueue
-	store $ Git.Queue.add q command params file
+	store $ Git.Queue.add q command params files
 
 {- Runs the queue if it is full. Should be called periodically. -}
 flushWhenFull :: Annex ()

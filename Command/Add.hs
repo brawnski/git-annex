@@ -87,6 +87,6 @@ cleanup file key = do
 
 	force <- Annex.getState Annex.force
 	if force
-		then AnnexQueue.add "add" [Param "-f", Param "--"] file
-		else AnnexQueue.add "add" [Param "--"] file
+		then AnnexQueue.add "add" [Param "-f", Param "--"] [file]
+		else AnnexQueue.add "add" [Param "--"] [file]
 	return True

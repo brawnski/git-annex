@@ -53,15 +53,15 @@ empty :: Queue
 empty = Queue 0 M.empty
 
 {- Adds an action to a queue. -}
-add :: Queue -> String -> [CommandParam] -> FilePath -> Queue
-add (Queue n m) subcommand params file = Queue (n + 1) m'
+add :: Queue -> String -> [CommandParam] -> [FilePath] -> Queue
+add (Queue n m) subcommand params files = Queue (n + 1) m'
 	where
 		action = Action subcommand params
 		-- There are probably few items in the map, but there
 		-- can be a lot of files per item. So, optimise adding
 		-- files.
-		m' = M.insertWith' const action files m
-		files = file:(M.findWithDefault [] action m)
+		m' = M.insertWith' const action fs m
+		fs = files ++ (M.findWithDefault [] action m)
 
 {- Number of items in a queue. -}
 size :: Queue -> Int
@@ -79,11 +79,14 @@ flush repo (Queue _ m) = do
 
 {- Runs an Action on a list of files in a git repository.
  -
- - Complicated by commandline length limits. -}
+ - Complicated by commandline length limits.
+ -
+ - Intentionally runs the command even if the list of files is empty;
+ - this allows queueing commands that do not need a list of files. -}
 runAction :: Repo -> Action -> [FilePath] -> IO ()
-runAction repo action files = unless (null files) runxargs
+runAction repo action files =
+	pOpen WriteToPipe "xargs" ("-0":"git":params) feedxargs
 	where
-		runxargs = pOpen WriteToPipe "xargs" ("-0":"git":params) feedxargs
 		params = toCommand $ gitCommandLine repo
 			(Param (getSubcommand action):getParams action)
 		feedxargs h = hPutStr h $ join "\0" files

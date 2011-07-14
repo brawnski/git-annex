@@ -3,6 +3,7 @@ git-annex (3.20110708) UNRELEASED; urgency=low
   * add: Be even more robust to avoid ever leaving the file seemingly deleted.
   * Bugfix: Make add ../ work.
   * Support the standard git -c name=value
+  * unannex: Clean up use of git commit -a.
 
  -- Joey Hess <joeyh@debian.org>  Thu, 07 Jul 2011 21:28:49 -0400
 
