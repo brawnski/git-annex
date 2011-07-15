@@ -87,7 +87,7 @@ withIndex' bootstrapping a = do
 
 	e <- liftIO $ doesFileExist f
 	unless e $ do
-		unless bootstrapping $ create
+		unless bootstrapping create
 		liftIO $ createDirectoryIfMissing True $ takeDirectory f
 		liftIO $ unless bootstrapping $ genIndex g
 
@@ -187,7 +187,7 @@ updateRef ref
 			Param (name++".."++ref),
 			Params "--oneline -n1"
 			]
-		if (null diffs)
+		if null diffs
 			then return Nothing
 			else do
 				showSideAction $ "merging " ++ shortref ref ++ " into " ++ name ++ "..."
@@ -305,7 +305,7 @@ getJournalFile file = do
 
 {- List of journal files. -}
 getJournalFiles :: Annex [FilePath]
-getJournalFiles = getJournalFilesRaw >>= return . map fileJournal
+getJournalFiles = fmap (map fileJournal) getJournalFilesRaw
 
 getJournalFilesRaw :: Annex [FilePath]
 getJournalFilesRaw = do

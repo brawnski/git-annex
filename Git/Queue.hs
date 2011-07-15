@@ -18,7 +18,7 @@ import qualified Data.Map as M
 import System.IO
 import System.Cmd.Utils
 import Data.String.Utils
-import Control.Monad (unless, forM_)
+import Control.Monad (forM_)
 import Utility
 
 import Git
@@ -61,7 +61,7 @@ add (Queue n m) subcommand params files = Queue (n + 1) m'
 		-- can be a lot of files per item. So, optimise adding
 		-- files.
 		m' = M.insertWith' const action fs m
-		fs = files ++ (M.findWithDefault [] action m)
+		fs = files ++ M.findWithDefault [] action m
 
 {- Number of items in a queue. -}
 size :: Queue -> Int

@@ -37,7 +37,7 @@ showProgress :: Annex ()
 showProgress = verbose $ liftIO $ putStr "\n"
 
 showLongNote :: String -> Annex ()
-showLongNote s = verbose $ liftIO $ putStr $ "\n" ++ indent s
+showLongNote s = verbose $ liftIO $ putStr $ '\n' : indent s
 
 showEndOk :: Annex ()
 showEndOk = verbose $ liftIO $ putStrLn "ok"

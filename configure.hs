@@ -7,7 +7,7 @@ import TestConfig
 
 tests :: [TestCase]
 tests =
-	[ TestCase "version" $ getVersion
+	[ TestCase "version" getVersion
 	, testCp "cp_a" "-a"
 	, testCp "cp_p" "-p"
 	, testCp "cp_reflink_auto" "--reflink=auto"
@@ -77,8 +77,7 @@ setup = do
 	writeFile testFile "test file contents"
 
 cleanup :: IO ()
-cleanup = do
-	removeDirectoryRecursive tmpDir
+cleanup = removeDirectoryRecursive tmpDir
 
 main :: IO ()
 main = do

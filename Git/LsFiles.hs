@@ -21,7 +21,7 @@ import Utility
 {- Scans for files that are checked into git at the specified locations. -}
 inRepo :: Repo -> [FilePath] -> IO [FilePath]
 inRepo repo l = pipeNullSplit repo $
-	[Params "ls-files --cached -z --"] ++ map File l
+	Params "ls-files --cached -z --" : map File l
 
 {- Scans for files at the specified locations that are not checked into
  - git. -}
@@ -44,12 +44,12 @@ staged' :: Repo -> [FilePath] -> [CommandParam] -> IO [FilePath]
 staged' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = [Params "diff --cached --name-only -z"]
-		end = [Param "--"] ++ map File l
+		end = Param "--" : map File l
 
 {- Returns a list of files that have unstaged changes. -}
 changedUnstaged :: Repo -> [FilePath] -> IO [FilePath]
 changedUnstaged repo l = pipeNullSplit repo $
-	[Params "diff --name-only -z --"] ++ map File l
+	Params "diff --name-only -z --" : map File l
 
 {- Returns a list of the files in the specified locations that are staged
  - for commit, and whose type has changed. -}
@@ -65,4 +65,4 @@ typeChanged' :: Repo -> [FilePath] -> [CommandParam] -> IO [FilePath]
 typeChanged' repo l middle = pipeNullSplit repo $ start ++ middle ++ end
 	where
 		start = [Params "diff --name-only --diff-filter=T -z"]
-		end = [Param "--"] ++ map File l
+		end = Param "--" : map File l

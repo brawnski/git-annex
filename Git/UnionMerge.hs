@@ -91,5 +91,5 @@ mergeFile g (info, file) = case filter (/= nullsha) [asha, bsha] of
 		return $ Just $ update_index_line sha file
 	where
 		[_colonamode, _bmode, asha, bsha, _status] = words info
-		nullsha = take shaSize $ repeat '0'
+		nullsha = replicate shaSize '0'
 		unionmerge = unlines . nub . lines

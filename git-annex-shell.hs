@@ -58,10 +58,10 @@ builtins = map cmdname cmds
 builtin :: String -> String -> [String] -> IO ()
 builtin cmd dir params =
 	Git.repoAbsPath dir >>= Git.repoFromAbsPath >>=
-		dispatch (cmd:(filterparams params)) cmds commonOptions header
+		dispatch (cmd : filterparams params) cmds commonOptions header
 
 external :: [String] -> IO ()
-external params = do
+external params =
 	unlessM (boolSystem "git-shell" $ map Param $ "-c":filterparams params) $
 		error "git-shell failed"
 

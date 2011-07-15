@@ -94,7 +94,7 @@ updateSymlinks = do
 	showNote "updating symlinks..."
 	g <- Annex.gitRepo
 	files <- liftIO $ LsFiles.inRepo g [Git.workTree g]
-	forM_ files $ fixlink
+	forM_ files fixlink
 	where
 		fixlink f = do
 			r <- lookupFile1 f
@@ -119,7 +119,7 @@ moveLocationLogs = do
 				if exists
 					then do
 						contents <- liftIO $ getDirectoryContents dir
-						return $ catMaybes $ map oldlog2key contents
+						return $ mapMaybe oldlog2key contents
 					else return []
 			move (l, k) = do
 				g <- Annex.gitRepo
@@ -196,17 +196,14 @@ lookupFile1 file = do
 		Left _ -> return Nothing
 		Right l -> makekey l
 	where
-		getsymlink = do
-			l <- readSymbolicLink file
-			return $ takeFileName l
-		makekey l = do
-			case maybeLookupBackendName bname of
-				Nothing -> do
-					unless (null kname || null bname ||
-					        not (isLinkToAnnex l)) $
-						warning skip
-					return Nothing
-				Just backend -> return $ Just (k, backend)
+		getsymlink = return . takeFileName =<< readSymbolicLink file
+		makekey l = case maybeLookupBackendName bname of
+			Nothing -> do
+				unless (null kname || null bname ||
+				        not (isLinkToAnnex l)) $
+					warning skip
+				return Nothing
+			Just backend -> return $ Just (k, backend)
 			where
 				k = fileKey1 l
 				bname = keyBackendName k
@@ -221,7 +218,7 @@ getKeyFilesPresent1  = do
 getKeyFilesPresent1' :: FilePath -> Annex [FilePath]
 getKeyFilesPresent1' dir = do
 	exists <- liftIO $ doesDirectoryExist dir
-	if (not exists)
+	if not exists
 		then return []
 		else do
 			dirs <- liftIO $ getDirectoryContents dir

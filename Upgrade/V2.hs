@@ -10,7 +10,7 @@ module Upgrade.V2 where
 import System.Directory
 import System.FilePath
 import Control.Monad.State (unless, when, liftIO)
-import List
+import Data.List
 import Data.Maybe
 
 import Types.Key
@@ -61,7 +61,7 @@ upgrade = do
 		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
 		unless bare $ gitAttributesUnWrite g
 
-	unless bare $ push
+	unless bare push
 
 	return True
 
@@ -70,11 +70,11 @@ locationLogs repo = liftIO $ do
 	levela <- dirContents dir
 	levelb <- mapM tryDirContents levela
 	files <- mapM tryDirContents (concat levelb)
-	return $ catMaybes $ map islogfile (concat files)
+	return $ mapMaybe islogfile (concat files)
 	where
 		tryDirContents d = catch (dirContents d) (return . const [])
 		dir = gitStateDir repo
-		islogfile f = maybe Nothing (\k -> Just $ (k, f)) $
+		islogfile f = maybe Nothing (\k -> Just (k, f)) $
 				logFileKey $ takeFileName f
 
 inject :: FilePath -> FilePath -> Annex ()
@@ -131,10 +131,10 @@ gitAttributesUnWrite repo = do
 	whenM (doesFileExist attributes) $ do
 		c <- readFileStrict attributes
 		liftIO $ viaTmp writeFile attributes $ unlines $
-			filter (\l -> not $ l `elem` attrLines) $ lines c
+			filter (`notElem` attrLines) $ lines c
 		Git.run repo "add" [File attributes]
 
 stateDir :: FilePath
-stateDir = addTrailingPathSeparator $ ".git-annex"
+stateDir = addTrailingPathSeparator ".git-annex"
 gitStateDir :: Git.Repo -> FilePath
 gitStateDir repo = addTrailingPathSeparator $ Git.workTree repo </> stateDir

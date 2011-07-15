@@ -43,8 +43,7 @@ checkVersion :: Annex ()
 checkVersion = getVersion >>= handle
 	where
 		handle Nothing = error "First run: git-annex init"
-		handle (Just v) = do
-			unless (v `elem` supportedVersions) $ do
+		handle (Just v) = unless (v `elem` supportedVersions) $
 			error $ "Repository version " ++ v ++ 
 				" is not supported. " ++
 				msg v

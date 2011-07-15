@@ -114,7 +114,7 @@ checkKeyChecksum size key = do
 	fast <- Annex.getState Annex.fast
 	let file = gitAnnexLocation g key
 	present <- liftIO $ doesFileExist file
-	if (not present || fast)
+	if not present || fast
 		then return True
 		else do
 			s <- shaN size file

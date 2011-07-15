@@ -36,7 +36,7 @@ configSet u c = do
 	Branch.change remoteLog $ unlines $ sort $
 		map toline $ M.toList $ M.insert u c m
 	where
-		toline (u', c') = u' ++ " " ++ (unwords $ configToKeyVal c')
+		toline (u', c') = u' ++ " " ++ unwords (configToKeyVal c')
 
 {- Map of remotes by uuid containing key/value config maps. -}
 readRemoteLog :: Annex (M.Map UUID RemoteConfig)
@@ -44,14 +44,14 @@ readRemoteLog = return . remoteLogParse =<< Branch.get remoteLog
 
 remoteLogParse :: String -> M.Map UUID RemoteConfig
 remoteLogParse s =
-	M.fromList $ catMaybes $ map parseline $ filter (not . null) $ lines s
+	M.fromList $ mapMaybe parseline $ filter (not . null) $ lines s
 	where
 		parseline l
 			| length w > 2 = Just (u, c)
 			| otherwise = Nothing
 			where
 				w = words l
-				u = w !! 0
+				u = head w
 				c = keyValToConfig $ tail w
 
 {- Given Strings like "key=value", generates a RemoteConfig. -}
@@ -90,8 +90,8 @@ configUnEscape = unescape
 				r = drop (length num) s
 				rest = drop 1 r
 				ok = not (null num) && 
-					not (null r) && r !! 0 == ';'
+					not (null r) && head r == ';'
 
 {- for quickcheck -}
 prop_idempotent_configEscape :: String -> Bool
-prop_idempotent_configEscape s = s == (configUnEscape $ configEscape s)
+prop_idempotent_configEscape s = s == (configUnEscape . configEscape) s

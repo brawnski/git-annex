@@ -115,7 +115,7 @@ isAnnexed file a = maybe (return Nothing) a =<< Backend.lookupFile file
 notBareRepo :: Annex a -> Annex a
 notBareRepo a = do
 	g <- Annex.gitRepo
-	when (Git.repoIsLocalBare g) $ do
+	when (Git.repoIsLocalBare g) $
 		error "You cannot run this subcommand in a bare repository."
 	a
 
@@ -175,9 +175,9 @@ withFilesUnlocked' typechanged a params = do
 	unlockedfiles' <- filterFiles unlockedfiles
 	backendPairs a unlockedfiles'
 withKeys :: CommandSeekKeys
-withKeys a params = return $ map a $ map parse params
+withKeys a params = return $ map (a . parse) params
 	where
-		parse p = maybe (error "bad key") id $ readKey p
+		parse p = fromMaybe (error "bad key") $ readKey p
 withTempFile :: CommandSeekStrings
 withTempFile a params = return $ map a params
 withNothing :: CommandSeekNothing

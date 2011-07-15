@@ -52,7 +52,7 @@ import qualified Git
 {- The directory git annex uses for local state, relative to the .git
  - directory -}
 annexDir :: FilePath
-annexDir = addTrailingPathSeparator $ "annex"
+annexDir = addTrailingPathSeparator "annex"
 
 {- The directory git annex uses for locally available object content,
  - relative to the .git directory -}

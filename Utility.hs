@@ -141,9 +141,9 @@ shellUnEscape s = word : shellUnEscape rest
 
 {- For quickcheck. -}
 prop_idempotent_shellEscape :: String -> Bool
-prop_idempotent_shellEscape s = [s] == (shellUnEscape $ shellEscape s)
+prop_idempotent_shellEscape s = [s] == (shellUnEscape . shellEscape) s
 prop_idempotent_shellEscape_multiword :: [String] -> Bool
-prop_idempotent_shellEscape_multiword s = s == (shellUnEscape $ unwords $ map shellEscape s)
+prop_idempotent_shellEscape_multiword s = s == (shellUnEscape . unwords . map shellEscape) s
 
 {- A version of hgetContents that is not lazy. Ensures file is 
  - all read before it gets closed. -}

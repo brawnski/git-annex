@@ -48,7 +48,7 @@ lookupFile0 = Upgrade.V1.lookupFile1
 getKeysPresent0 :: FilePath -> Annex [Key]
 getKeysPresent0 dir = do
 	exists <- liftIO $ doesDirectoryExist dir
-	if (not exists)
+	if not exists
 		then return []
 		else do
 			contents <- liftIO $ getDirectoryContents dir

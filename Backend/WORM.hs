@@ -35,7 +35,7 @@ backend = Types.Backend.Backend {
 keyValue :: FilePath -> Annex (Maybe Key)
 keyValue file = do
 	stat <- liftIO $ getFileStatus file
-	return $ Just $ Key {
+	return $ Just Key {
 		keyName = takeFileName file,
 		keyBackendName = name backend,
 		keySize = Just $ fromIntegral $ fileSize stat,

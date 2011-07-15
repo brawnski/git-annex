@@ -19,7 +19,7 @@ import System.IO.Error
 import System.Posix.Env
 import qualified Control.Exception.Extensible as E
 import Control.Exception (throw)
-import Maybe
+import Data.Maybe
 import qualified Data.Map as M
 import System.Path (recurseDir)
 import System.IO.HVFS (SystemFS(..))
@@ -48,7 +48,7 @@ instance Arbitrary Types.Key.Key where
 	arbitrary = do
 		n <- arbitrary
 		b <- elements ['A'..'Z']
-		return $ Types.Key.Key {
+		return Types.Key.Key {
 			Types.Key.keyName = n,
 			Types.Key.keyBackendName = [b],
 			Types.Key.keySize = Nothing,
@@ -278,7 +278,7 @@ test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
 	-- write different content, to verify that lock
 	-- throws it away
 	changecontent annexedfile
-	writeFile annexedfile $ (content annexedfile) ++ "foo"
+	writeFile annexedfile $ content annexedfile ++ "foo"
 	git_annex "lock" ["-q", annexedfile] @? "lock failed"
 	annexed_present annexedfile
 	git_annex "unlock" ["-q", annexedfile] @? "unlock failed"		
@@ -287,7 +287,7 @@ test_lock = "git-annex unlock/lock" ~: intmpclonerepo $ do
 	git_annex "add" ["-q", annexedfile] @? "add of modified file failed"
 	runchecks [checklink, checkunwritable] annexedfile
 	c <- readFile annexedfile
-	assertEqual ("content of modified file") c (changedcontent annexedfile)
+	assertEqual "content of modified file" c (changedcontent annexedfile)
 	r' <- git_annex "drop" ["-q", annexedfile]
 	not r' @? "drop wrongly succeeded with no known copy of modified file"
 
@@ -312,9 +312,9 @@ test_edit = "git-annex edit/commit" ~: TestList [t False, t True]
 					@? "git commit of edited file failed"
 		runchecks [checklink, checkunwritable] annexedfile
 		c <- readFile annexedfile
-		assertEqual ("content of modified file") c (changedcontent annexedfile)
+		assertEqual "content of modified file" c (changedcontent annexedfile)
 		r <- git_annex "drop" ["-q", annexedfile]
-		(not r) @? "drop wrongly succeeded with no known copy of modified file"
+		not r @? "drop wrongly succeeded with no known copy of modified file"
 
 test_fix :: Test
 test_fix = "git-annex fix" ~: intmpclonerepo $ do
@@ -331,7 +331,7 @@ test_fix = "git-annex fix" ~: intmpclonerepo $ do
 	git_annex "fix" ["-q", newfile] @? "fix of moved file failed"
 	runchecks [checklink, checkunwritable] newfile
 	c <- readFile newfile
-	assertEqual ("content of moved file") c (content annexedfile)
+	assertEqual "content of moved file" c (content annexedfile)
 	where
 		subdir = "s"
 		newfile = subdir ++ "/" ++ annexedfile

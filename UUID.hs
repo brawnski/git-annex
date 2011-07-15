@@ -49,7 +49,7 @@ genUUID :: IO UUID
 genUUID = liftIO $ pOpen ReadFromPipe command params $ \h -> hGetLine h
 	where
 		command = SysConfig.uuid
-		params = if (command == "uuid")
+		params = if command == "uuid"
 			-- request a random uuid be generated
 			then ["-m"]
 			-- uuidgen generates random uuid by default
@@ -82,7 +82,7 @@ prepUUID :: Annex ()
 prepUUID = do
 	u <- getUUID =<< Annex.gitRepo
 	when ("" == u) $ do
-		uuid <- liftIO $ genUUID
+		uuid <- liftIO genUUID
 		setConfig configkey uuid
 
 {- Records a description for a uuid in the uuidLog. -}

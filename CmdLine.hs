@@ -39,14 +39,13 @@ dispatch args cmds options header gitrepo = do
  - list of actions to be run in the Annex monad. -}
 parseCmd :: [String] -> String -> [Command] -> [Option] -> Annex [Annex Bool]
 parseCmd argv header cmds options = do
-	(flags, params) <- liftIO $ getopt
+	(flags, params) <- liftIO getopt
 	when (null params) $ error $ "missing command" ++ usagemsg
 	case lookupCmd (head params) of
 		[] -> error $ "unknown command" ++ usagemsg
 		[command] -> do
 			_ <- sequence flags
-			when (cmdusesrepo command) $
-				checkVersion
+			when (cmdusesrepo command) checkVersion
 			prepCommand command (drop 1 params)
 		_ -> error "internal error: multiple matching commands"
 	where
@@ -78,9 +77,9 @@ usage header cmds options =
  - (but explicitly thrown errors terminate the whole command).
  -}
 tryRun :: Annex.AnnexState -> [Annex Bool] -> IO ()
-tryRun state actions = tryRun' state 0 actions
-tryRun' :: Annex.AnnexState -> Integer -> [Annex Bool] -> IO ()
-tryRun' state errnum (a:as) = do
+tryRun = tryRun' 0
+tryRun' :: Integer -> Annex.AnnexState -> [Annex Bool] -> IO ()
+tryRun' errnum state (a:as) = do
 	result <- try $ Annex.run state $ do
 		AnnexQueue.flushWhenFull
 		a
@@ -89,11 +88,10 @@ tryRun' state errnum (a:as) = do
 			Annex.eval state $ do
 				showEndFail
 				showErr err
-			tryRun' state (errnum + 1) as
-		Right (True,state') -> tryRun' state' errnum as
-		Right (False,state') -> tryRun' state' (errnum + 1) as
-tryRun' _ errnum [] = do
-	when (errnum > 0) $ error $ show errnum ++ " failed"
+			tryRun' (errnum + 1) state as
+		Right (True,state') -> tryRun' errnum state' as
+		Right (False,state') -> tryRun' (errnum + 1) state' as
+tryRun' errnum _ [] = when (errnum > 0) $ error $ show errnum ++ " failed"
 
 {- Actions to perform each time ran. -}
 startup :: Annex Bool
@@ -105,5 +103,5 @@ startup = do
 shutdown :: Annex Bool
 shutdown = do
 	saveState
-	liftIO $ Git.reap
+	liftIO Git.reap
 	return True

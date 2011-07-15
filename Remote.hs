@@ -33,6 +33,7 @@ import Control.Monad (filterM, liftM2)
 import Data.List
 import qualified Data.Map as M
 import Data.String.Utils
+import Data.Maybe
 
 import Types
 import Types.Remote
@@ -97,7 +98,7 @@ byName' "" = return $ Left "no remote specified"
 byName' n = do
 	allremotes <- genList
 	let match = filter matching allremotes
-	if (null match)
+	if null match
 		then return $ Left $ "there is no git remote named \"" ++ n ++ "\""
 		else return $ Right $ head match
 	where
@@ -110,7 +111,7 @@ nameToUUID "." = getUUID =<< Annex.gitRepo -- special case for current repo
 nameToUUID n = do
 	res <- byName' n
 	case res of
-		Left e -> return . (maybe (error e) id) =<< byDescription
+		Left e -> return . fromMaybe (error e) =<< byDescription
 		Right r -> return $ uuid r
 	where
 		byDescription = return . M.lookup n . invertMap =<< uuidMap
@@ -122,7 +123,7 @@ prettyPrintUUIDs :: [UUID] -> Annex String
 prettyPrintUUIDs uuids = do
 	here <- getUUID =<< Annex.gitRepo
 	-- Show descriptions from the uuid log, falling back to remote names,
-	-- as some remotes may not be in the uuid log.
+	-- as some remotes may not be in the uuid log
 	m <- liftM2 M.union uuidMap $
 		return . M.fromList . map (\r -> (uuid r, name r)) =<< genList
 	return $ unwords $ map (\u -> "\t" ++ prettify m u here ++ "\n") uuids

@@ -69,11 +69,10 @@ import System.Posix.User
 import System.Posix.Process
 import System.Path
 import System.Cmd.Utils
-import IO (bracket_)
+import IO (bracket_, try)
 import Data.String.Utils
 import System.IO
-import IO (try)
-import qualified Data.Map as Map hiding (map, split)
+import qualified Data.Map as M hiding (map, split)
 import Network.URI
 import Data.Maybe
 import Data.Char
@@ -93,7 +92,7 @@ data RepoLocation = Dir FilePath | Url URI | Unknown
 
 data Repo = Repo {
 	location :: RepoLocation,
-	config :: Map.Map String String,
+	config :: M.Map String String,
 	remotes :: [Repo],
 	-- remoteName holds the name used for this repo in remotes
 	remoteName :: Maybe String 
@@ -103,7 +102,7 @@ newFrom :: RepoLocation -> Repo
 newFrom l = 
 	Repo {
 		location = l,
-		config = Map.empty,
+		config = M.empty,
 		remotes = [],
 		remoteName = Nothing
 	}
@@ -140,7 +139,7 @@ repoFromUrl url
 	| startswith "file://" url = repoFromAbsPath $ uriPath u
 	| otherwise = return $ newFrom $ Url u
 		where
-			u = maybe bad id $ parseURI url
+			u = fromMaybe bad $ parseURI url
 			bad = error $ "bad url " ++ url
 
 {- Creates a repo that has an unknown location. -}
@@ -208,7 +207,7 @@ repoIsSsh Repo { location = Url url }
 repoIsSsh _ = False
 
 configAvail ::Repo -> Bool
-configAvail Repo { config = c } = c /= Map.empty
+configAvail Repo { config = c } = c /= M.empty
 
 repoIsLocalBare :: Repo -> Bool
 repoIsLocalBare r@(Repo { location = Dir _ }) = configAvail r && configBare r
@@ -228,7 +227,7 @@ assertUrl repo action =
 				" not supported"
 
 configBare :: Repo -> Bool
-configBare repo = maybe unknown configTrue $ Map.lookup "core.bare" $ config repo
+configBare repo = maybe unknown configTrue $ M.lookup "core.bare" $ config repo
 	where
 		unknown = error $ "it is not known if git repo " ++
 			repoDescribe repo ++
@@ -272,14 +271,14 @@ workTreeFile repo@(Repo { location = Dir d }) file = do
 	let file' = absfile cwd
 	unless (inrepo file') $
 		error $ file ++ " is not located inside git repository " ++ absrepo
-	if (inrepo $ addTrailingPathSeparator cwd)
+	if inrepo $ addTrailingPathSeparator cwd
 		then return $ relPathDirToFile cwd file'
 		else return $ drop (length absrepo) file'
 	where
 		-- normalize both repo and file, so that repo
 		-- will be substring of file
 		absrepo = maybe bad addTrailingPathSeparator $ absNormPath "/" d
-		absfile c = maybe file id $ secureAbsNormPath c file
+		absfile c = fromMaybe file $ secureAbsNormPath c file
 		inrepo f = absrepo `isPrefixOf` f
 		bad = error $ "bad repo" ++ repoDescribe repo
 workTreeFile repo _ = assertLocal repo $ error "internal"
@@ -303,7 +302,7 @@ uriRegName' a = fixup $ uriRegName a
 			| rest !! len == ']' = take len rest
 			| otherwise = x
 			where
-				len  = (length rest) - 1
+				len  = length rest - 1
 		fixup x = x
 
 {- Hostname of an URL repo. -}
@@ -348,7 +347,7 @@ gitCommandLine repo _ = assertLocal repo $ error "internal"
 {- Runs git in the specified repo. -}
 runBool :: Repo -> String -> [CommandParam] -> IO Bool
 runBool repo subcommand params = assertLocal repo $
-	boolSystem "git" (gitCommandLine repo ((Param subcommand):params))
+	boolSystem "git" $ gitCommandLine repo $ Param subcommand : params
 
 {- Runs git in the specified repo, throwing an error if it fails. -}
 run :: Repo -> String -> [CommandParam] -> IO ()
@@ -471,13 +470,13 @@ hConfigRead repo h = do
  - can be updated inrementally. -}
 configStore :: Repo -> String -> IO Repo
 configStore repo s = do
-	let repo' = repo { config = Map.union (configParse s) (config repo) }
+	let repo' = repo { config = configParse s `M.union` config repo }
 	rs <- configRemotes repo'
 	return $ repo' { remotes = rs }
 
 {- Parses git config --list output into a config map. -}
-configParse :: String -> Map.Map String String
-configParse s = Map.fromList $ map pair $ lines s
+configParse :: String -> M.Map String String
+configParse s = M.fromList $ map pair $ lines s
 	where
 		pair l = (key l, val l)
 		key l = head $ keyval l
@@ -489,8 +488,8 @@ configParse s = Map.fromList $ map pair $ lines s
 configRemotes :: Repo -> IO [Repo]
 configRemotes repo = mapM construct remotepairs
 	where
-		remotepairs = Map.toList $ filterremotes $ config repo
-		filterremotes = Map.filterWithKey (\k _ -> isremote k)
+		remotepairs = M.toList $ filterremotes $ config repo
+		filterremotes = M.filterWithKey (\k _ -> isremote k)
 		isremote k = startswith "remote." k && endswith ".url" k
 		construct (k,v) = do
 			r <- gen v
@@ -499,15 +498,15 @@ configRemotes repo = mapM construct remotepairs
 			| isURI v = repoFromUrl v
 			| otherwise = repoFromRemotePath v repo
 		-- git remotes can be written scp style -- [user@]host:dir
-		scpstyle v = ":" `isInfixOf` v && (not $ "//" `isInfixOf` v)
+		scpstyle v = ":" `isInfixOf` v && not ("//" `isInfixOf` v)
 		scptourl v = "ssh://" ++ host ++ slash dir
 			where
 				bits = split ":" v
-				host = bits !! 0
+				host = head bits
 				dir = join ":" $ drop 1 bits
 				slash d	| d == "" = "/~/" ++ dir
-					| d !! 0 == '/' = dir
-					| d !! 0 == '~' = '/':dir
+					| head d == '/' = dir
+					| head d == '~' = '/':dir
 					| otherwise = "/~/" ++ dir
 
 {- Checks if a string from git config is a true value. -}
@@ -517,11 +516,11 @@ configTrue s = map toLower s == "true"
 {- Returns a single git config setting, or a default value if not set. -}
 configGet :: Repo -> String -> String -> String
 configGet repo key defaultValue = 
-	Map.findWithDefault defaultValue key (config repo)
+	M.findWithDefault defaultValue key (config repo)
 
 {- Access to raw config Map -}
-configMap :: Repo -> Map.Map String String
-configMap repo = config repo
+configMap :: Repo -> M.Map String String
+configMap = config
 
 {- Efficiently looks up a gitattributes value for each file in a list. -}
 checkAttr :: Repo -> String -> [FilePath] -> IO [(FilePath, String)]
@@ -680,8 +679,8 @@ seekUp :: (FilePath -> IO Bool) -> FilePath -> IO (Maybe FilePath)
 seekUp want dir = do
 	ok <- want dir
 	if ok
-		then return (Just dir)
-		else case (parentDir dir) of
+		then return $ Just dir
+		else case parentDir dir of
 			"" -> return Nothing
 			d -> seekUp want d
 

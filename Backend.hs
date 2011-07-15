@@ -19,6 +19,7 @@ import Control.Monad.State (liftIO, when)
 import System.IO.Error (try)
 import System.FilePath
 import System.Posix.Files
+import Data.Maybe
 
 import Locations
 import qualified Git
@@ -33,10 +34,7 @@ import qualified Backend.WORM
 import qualified Backend.SHA
 
 list :: [Backend Annex]
-list = concat 
-	[ Backend.WORM.backends
-	, Backend.SHA.backends
-	]
+list = Backend.WORM.backends ++ Backend.SHA.backends
 
 {- List of backends in the order to try them when storing a new key. -}
 orderedList :: Annex [Backend Annex]
@@ -54,7 +52,7 @@ orderedList = do
 		handle Nothing s = return s
 		handle (Just "") s = return s
 		handle (Just name) s = do
-			let l' = (lookupBackendName name):s
+			let l' = lookupBackendName name : s
 			Annex.changeState $ \state -> state { Annex.backends = l' }
 			return l'
 		getstandard = do
@@ -119,7 +117,7 @@ chooseBackends fs = do
 
 {- Looks up a backend by name. May fail if unknown. -}
 lookupBackendName :: String -> Backend Annex
-lookupBackendName s = maybe unknown id $ maybeLookupBackendName s
+lookupBackendName s = fromMaybe unknown $ maybeLookupBackendName s
 	where
 		unknown = error $ "unknown backend " ++ s
 maybeLookupBackendName :: String -> Maybe (Backend Annex)

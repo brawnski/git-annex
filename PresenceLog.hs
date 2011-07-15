@@ -94,7 +94,7 @@ writeLog file ls = Branch.change file (unlines $ map show ls)
 {- Generates a new LogLine with the current date. -}
 logNow :: LogStatus -> String -> Annex LogLine
 logNow s i = do
-	now <- liftIO $ getPOSIXTime
+	now <- liftIO getPOSIXTime
 	return $ LogLine now s i
 
 {- Reads a log and returns only the info that is still in effect. -}
@@ -112,7 +112,7 @@ type LogMap = Map.Map String LogLine
 {- Compacts a set of logs, returning a subset that contains the current
  - status. -}
 compactLog :: [LogLine] -> [LogLine]
-compactLog ls = compactLog' Map.empty ls
+compactLog = compactLog' Map.empty
 compactLog' :: LogMap -> [LogLine] -> [LogLine]
 compactLog' m [] = Map.elems m
 compactLog' m (l:ls) = compactLog' (mapLog m l) ls

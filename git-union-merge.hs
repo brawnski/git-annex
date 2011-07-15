@@ -23,8 +23,7 @@ tmpIndex :: Git.Repo -> FilePath
 tmpIndex g = Git.workTree g </> Git.gitDir g </> "index.git-union-merge"
 
 setup :: Git.Repo -> IO ()
-setup g = do
-	cleanup g -- idempotency
+setup g = cleanup g -- idempotency
 
 cleanup :: Git.Repo -> IO ()
 cleanup g = do
@@ -34,7 +33,7 @@ cleanup g = do
 parseArgs :: IO [String]
 parseArgs = do
 	args <- getArgs
-	if (length args /= 3)
+	if length args /= 3
 		then usage
 		else return args
 
