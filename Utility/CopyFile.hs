@@ -20,10 +20,8 @@ copyFile src dest = do
 		removeFile dest
 	boolSystem "cp" [params, File src, File dest]
 	where
-		params = if SysConfig.cp_reflink_auto
-			then Params "--reflink=auto"
-			else if SysConfig.cp_a
-				then Params "-a"
-				else if SysConfig.cp_p
-					then Params "-p"
-					else Params ""
+		params
+			| SysConfig.cp_reflink_auto = Params "--reflink=auto"
+			| SysConfig.cp_a = Params "-a"
+			| SysConfig.cp_p = Params "-p"
+			| otherwise = Params ""

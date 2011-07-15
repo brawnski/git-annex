@@ -94,7 +94,7 @@ fsckKey :: Backend Annex -> Key -> Maybe FilePath -> Maybe Int -> Annex Bool
 fsckKey backend key file numcopies = do
 	size_ok <- checkKeySize key
 	copies_ok <- checkKeyNumCopies key file numcopies
-	backend_ok <-(Types.Backend.fsckKey backend) key
+	backend_ok <- (Types.Backend.fsckKey backend) key
 	return $ size_ok && copies_ok && backend_ok
 
 {- The size of the data for a key is checked against the size encoded in

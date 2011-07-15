@@ -124,7 +124,7 @@ fromStart src move file = isAnnexed file $ \(key, _) -> do
 	g <- Annex.gitRepo
 	u <- getUUID g
 	remotes <- Remote.keyPossibilities key
-	if (u == Remote.uuid src) || (null $ filter (== src) remotes)
+	if u == Remote.uuid src || not (any (== src) remotes)
 		then stop
 		else do
 			showAction move file

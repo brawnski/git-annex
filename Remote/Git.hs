@@ -57,7 +57,7 @@ gen r u _ = do
 	let defcst = if cheap then cheapRemoteCost else expensiveRemoteCost
 	cst <- remoteCost r' defcst
 
-	return $ Remote {
+	return Remote {
 		uuid = u',
 		cost = cst,
 		name = Git.repoDescribe r',
@@ -81,7 +81,7 @@ tryGitConfigRead r
 		-- Reading config can fail due to IO error or
 		-- for other reasons; catch all possible exceptions.
 		safely a = do
-			result <- liftIO (try (a)::IO (Either SomeException Git.Repo))
+			result <- liftIO (try a :: IO (Either SomeException Git.Repo))
 			case result of
 				Left _ -> return r
 				Right r' -> return r'
@@ -154,7 +154,7 @@ copyToRemote r key
 		rsyncHelper =<< rsyncParamsRemote r False key keysrc
 	| otherwise = error "copying to non-ssh repo not supported"
 
-rsyncHelper :: [CommandParam] -> Annex (Bool)
+rsyncHelper :: [CommandParam] -> Annex Bool
 rsyncHelper p = do
 	showProgress -- make way for progress bar
 	res <- liftIO $ rsync p

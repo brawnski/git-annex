@@ -49,7 +49,7 @@ start (unused, unusedbad, unusedtmp) s = notBareRepo $ search
 	]
 	where
 		search [] = stop
-		search ((m, a):rest) = do
+		search ((m, a):rest) =
 			case M.lookup s m of
 				Nothing -> search rest
 				Just key -> do
@@ -78,10 +78,9 @@ readUnusedLog prefix = do
 	let f = gitAnnexUnusedLog prefix g
 	e <- liftIO $ doesFileExist f
 	if e
-		then do
-			l <- liftIO $ readFile f
-			return $ M.fromList $ map parse $ lines l
-		else return $ M.empty
+		then return . M.fromList . map parse . lines
+			=<< liftIO (readFile f)
+		else return M.empty
 	where
 		parse line = (head ws, fromJust $ readKey $ unwords $ tail ws)
 			where

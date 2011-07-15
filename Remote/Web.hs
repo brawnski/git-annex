@@ -52,7 +52,7 @@ webUUID = "00000000-0000-0000-0000-000000000001"
 
 gen :: Git.Repo -> UUID -> Maybe RemoteConfig -> Annex (Remote Annex)
 gen r _ _ = 
-	return $ Remote {
+	return Remote {
 		uuid = webUUID,
 		cost = expensiveRemoteCost,
 		name = Git.repoDescribe r,
@@ -111,7 +111,7 @@ checkKey' (u:us) = do
 	if e then return e else checkKey' us
 
 urlexists :: URLString -> IO Bool
-urlexists url = do
+urlexists url =
 	case parseURI url of
 		Nothing -> return False
 		Just u -> do

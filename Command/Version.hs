@@ -31,4 +31,4 @@ start = do
 	liftIO $ putStrLn $ "upgrade supported from repository versions: " ++ vs upgradableVersions
 	stop
 	where
-		vs l = join " " l
+		vs = join " "

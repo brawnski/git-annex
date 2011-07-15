@@ -7,7 +7,7 @@
 
 module Command.Unused where
 
-import Control.Monad (filterM, unless, forM_, when)
+import Control.Monad (filterM, unless, forM_)
 import Control.Monad.State (liftIO)
 import qualified Data.Set as S
 import Data.Maybe
@@ -55,9 +55,9 @@ checkUnused = do
 	where
 		list file msg l c = do
 			let unusedlist = number c l
-			when (not $ null l) $ do
+			unless (null l) $ do
 				showLongNote $ msg unusedlist
-				showLongNote $ "\n"
+				showLongNote "\n"
 			writeUnusedFile file unusedlist
 			return $ c + length l
 
@@ -68,7 +68,7 @@ checkRemoteUnused name = do
 
 checkRemoteUnused' :: Remote.Remote Annex -> Annex ()
 checkRemoteUnused' r = do
-	showNote $ "checking for unused data..."
+	showNote "checking for unused data..."
 	referenced <- getKeysReferenced
 	remotehas <- filterM isthere =<< loggedKeys
 	let remoteunused = remotehas `exclude` referenced
@@ -76,7 +76,7 @@ checkRemoteUnused' r = do
 	writeUnusedFile "" list
 	unless (null remoteunused) $ do
 		showLongNote $ remoteUnusedMsg r list
-		showLongNote $ "\n"
+		showLongNote "\n"
 	where
 		isthere k = do
 			us <- keyLocations k
@@ -90,14 +90,14 @@ writeUnusedFile prefix l = do
 		unlines $ map (\(n, k) -> show n ++ " " ++ show k) l
 
 table :: [(Int, Key)] -> [String]
-table l = ["  NUMBER  KEY"] ++ map cols l
+table l = "  NUMBER  KEY" : map cols l
 	where
 		cols (n,k) = "  " ++ pad 6 (show n) ++ "  " ++ show k
 		pad n s = s ++ replicate (n - length s) ' '
 
 number :: Int -> [a] -> [(Int, a)]
 number _ [] = []
-number n (x:xs) = (n+1, x):(number (n+1) xs)
+number n (x:xs) = (n+1, x) : number (n+1) xs
 
 staleTmpMsg :: [(Int, Key)] -> String
 staleTmpMsg t = unlines $ 
@@ -210,4 +210,4 @@ staleKeys dirspec = do
 			contents <- liftIO $ getDirectoryContents dir
 			files <- liftIO $ filterM doesFileExist $
 				map (dir </>) contents
-			return $ catMaybes $ map (fileKey . takeFileName) files
+			return $ mapMaybe (fileKey . takeFileName) files

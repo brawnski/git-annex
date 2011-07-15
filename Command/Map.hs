@@ -12,6 +12,7 @@ import Control.Exception.Extensible
 import System.Cmd.Utils
 import qualified Data.Map as M
 import Data.List.Utils
+import Data.Maybe
 
 import Command
 import qualified Annex
@@ -58,7 +59,7 @@ start = do
  - the repositories first, followed by uuids that were not matched
  - to a repository.
  -}
-drawMap :: [Git.Repo] -> (M.Map UUID String) -> [UUID] -> String
+drawMap :: [Git.Repo] -> M.Map UUID String -> [UUID] -> String
 drawMap rs umap ts = Dot.graph $ repos ++ trusted ++ others
 	where
 		repos = map (node umap rs) rs
@@ -78,23 +79,23 @@ basehostname r = head $ split "." $ hostname r
 
 {- A name to display for a repo. Uses the name from uuid.log if available,
  - or the remote name if not. -}
-repoName :: (M.Map UUID String) -> Git.Repo -> String
+repoName :: M.Map UUID String -> Git.Repo -> String
 repoName umap r
 	| null repouuid = fallback
 	| otherwise = M.findWithDefault fallback repouuid umap
 	where
 		repouuid = getUncachedUUID r
-		fallback = maybe "unknown" id $ Git.repoRemoteName r
+		fallback = fromMaybe "unknown" $ Git.repoRemoteName r
 
 {- A unique id for the node for a repo. Uses the annex.uuid if available. -}
 nodeId :: Git.Repo -> String
 nodeId r =
-	case (getUncachedUUID r) of
+	case getUncachedUUID r of
 		"" -> Git.repoLocation r
 		u -> u
 
 {- A node representing a repo. -}
-node :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> String
+node :: M.Map UUID String -> [Git.Repo] -> Git.Repo -> String
 node umap fullinfo r = unlines $ n:edges
 	where
 		n = Dot.subGraph (hostname r) (basehostname r) "lightblue" $
@@ -105,14 +106,14 @@ node umap fullinfo r = unlines $ n:edges
 			| otherwise = reachable
 
 {- An edge between two repos. The second repo is a remote of the first. -}
-edge :: (M.Map UUID String) -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
+edge :: M.Map UUID String -> [Git.Repo] -> Git.Repo -> Git.Repo -> String	
 edge umap fullinfo from to =
 	Dot.graphEdge (nodeId from) (nodeId fullto) edgename
 	where
 		-- get the full info for the remote, to get its UUID
 		fullto = findfullinfo to
 		findfullinfo n =
-			case (filter (same n) fullinfo) of
+			case filter (same n) fullinfo of
 				[] -> n
 				(n':_) -> n'
 		{- Only name an edge if the name is different than the name
@@ -120,7 +121,7 @@ edge umap fullinfo from to =
 		 - different from its hostname. (This reduces visual clutter.) -}
 		edgename = maybe Nothing calcname $ Git.repoRemoteName to
 		calcname n
-			| n == repoName umap fullto || n == hostname fullto = Nothing
+			| n `elem` [repoName umap fullto, hostname fullto] = Nothing
 			| otherwise = Just n
 
 unreachable :: String -> String
@@ -188,7 +189,7 @@ tryScan r
 	| otherwise = safely $ Git.configRead r
 	where
 		safely a = do
-			result <- liftIO (try (a)::IO (Either SomeException Git.Repo))
+			result <- liftIO (try a :: IO (Either SomeException Git.Repo))
 			case result of
 				Left _ -> return Nothing
 				Right r' -> return $ Just r'

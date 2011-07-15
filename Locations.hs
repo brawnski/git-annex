@@ -167,8 +167,8 @@ display_32bits_as_dir w = trim $ swap_pairs cs
 		-- a real word, use letters that appear less frequently.
 		chars = ['0'..'9'] ++ "zqjxkmvwgpfZQJXKMVWGPF"
 		cs = map (\x -> getc $ (shiftR w (6*x)) .&. 31) [0..7]
-		getc n = chars !! (fromIntegral n)
+		getc n = chars !! fromIntegral n
 		swap_pairs (x1:x2:xs) = x2:x1:swap_pairs xs
 		swap_pairs _ = []
 		-- Last 2 will always be 00, so omit.
-		trim s = take 6 s
+		trim = take 6

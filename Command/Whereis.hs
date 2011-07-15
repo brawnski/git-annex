@@ -30,11 +30,11 @@ perform key = do
 	uuids <- keyLocations key
 	let num = length uuids
 	showNote $ show num ++ " " ++ copiesplural num
-	if null $ uuids
+	if null uuids
 		then stop
 		else do
 			pp <- prettyPrintUUIDs uuids
-			showLongNote $ pp
+			showLongNote pp
 			showProgress	
 			next $ return True
 	where

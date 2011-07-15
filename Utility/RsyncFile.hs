@@ -19,7 +19,7 @@ rsyncShell command = [Param "-e", Param $ unwords $ map escape (toCommand comman
 		{- rsync requires some weird, non-shell like quoting in
                  - here. A doubled single quote inside the single quoted
                  - string is a single quote. -}
-		escape s = "'" ++  (join "''" $ split "'" s) ++ "'"
+		escape s = "'" ++  join "''" (split "'" s) ++ "'"
 
 {- Runs rsync in server mode to send a file, and exits. -}
 rsyncServerSend :: FilePath -> IO ()

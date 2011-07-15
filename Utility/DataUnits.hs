@@ -106,7 +106,7 @@ oldSchoolUnits = map mingle $ zip storageUnits memoryUnits
 {- approximate display of a particular number of bytes -}
 roughSize :: [Unit] -> Bool -> ByteSize -> String
 roughSize units abbrev i
-	| i < 0 = "-" ++ findUnit units' (negate i)
+	| i < 0 = '-' : findUnit units' (negate i)
 	| otherwise = findUnit units' i
 	where
 		units' = reverse $ sort units -- largest first
@@ -139,10 +139,10 @@ readSize :: [Unit] -> String -> Maybe ByteSize
 readSize units input
 	| null parsednum = Nothing
 	| null parsedunit = Nothing
-	| otherwise = Just $ round $ number * (fromIntegral multiplier)
+	| otherwise = Just $ round $ number * fromIntegral multiplier
 	where
 		(number, rest) = head parsednum
-		multiplier = head $ parsedunit
+		multiplier = head parsedunit
 		unitname = takeWhile isAlpha $ dropWhile isSpace rest
 
 		parsednum = reads input :: [(Double, String)]

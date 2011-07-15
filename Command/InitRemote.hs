@@ -24,7 +24,7 @@ import Messages
 command :: [Command]
 command = [repoCommand "initremote"
 	(paramPair paramName $
-		paramOptional $ paramRepeating $ paramKeyValue) seek
+		paramOptional $ paramRepeating paramKeyValue) seek
 	"sets up a special (non-git) remote"]
 
 seek :: [CommandSeek]
@@ -32,7 +32,7 @@ seek = [withWords start]
 
 start :: CommandStartWords
 start ws = do
-	when (null ws) $ needname
+	when (null ws) needname
 
 	(u, c) <- findByName name
 	let fullconfig = M.union config c	
@@ -69,7 +69,7 @@ findByName name = do
 	maybe generate return $ findByName' name m
 	where
 		generate = do
-			uuid <- liftIO $ genUUID
+			uuid <- liftIO genUUID
 			return (uuid, M.insert nameKey name M.empty)
 
 findByName' :: String ->  M.Map UUID R.RemoteConfig -> Maybe (UUID, R.RemoteConfig)
@@ -85,7 +85,7 @@ findByName' n m = if null matches then Nothing else Just $ head matches
 remoteNames :: Annex [String]
 remoteNames = do
 	m <- RemoteLog.readRemoteLog
-	return $ catMaybes $ map ((M.lookup nameKey) . snd) $ M.toList m
+	return $ mapMaybe (M.lookup nameKey . snd) $ M.toList m
 
 {- find the specified remote type -}
 findType :: R.RemoteConfig -> Annex (R.RemoteType Annex)

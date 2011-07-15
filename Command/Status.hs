@@ -32,8 +32,8 @@ type Stat = StatState (Maybe (String, StatState String))
 
 -- cached info that multiple Stats may need
 data StatInfo = StatInfo
-	{ keysPresentCache :: (Maybe (SizeList Key))
-	, keysReferencedCache :: (Maybe (SizeList Key))
+	{ keysPresentCache :: Maybe (SizeList Key)
+	, keysReferencedCache :: Maybe (SizeList Key)
 	}
 
 -- a state monad for running Stats in
@@ -84,7 +84,7 @@ stat :: String -> StatState String -> Stat
 stat desc a = return $ Just (desc, a)
 
 nostat :: Stat
-nostat = return $ Nothing
+nostat = return Nothing
 
 showStat :: Stat -> StatState ()
 showStat s = calc =<< s
@@ -144,7 +144,7 @@ cachedKeysPresent = do
 	case keysPresentCache s of
 		Just v -> return v
 		Nothing -> do
-			keys <- lift $ getKeysPresent
+			keys <- lift getKeysPresent
 			let v = sizeList keys
 			put s { keysPresentCache = Just v }
 			return v
@@ -155,7 +155,7 @@ cachedKeysReferenced = do
 	case keysReferencedCache s of
 		Just v -> return v
 		Nothing -> do
-			keys <- lift $ Command.Unused.getKeysReferenced
+			keys <- lift Command.Unused.getKeysReferenced
 			-- A given key may be referenced repeatedly.
 			-- nub does not seem too slow (yet)..
 			let v = sizeList $ nub keys
@@ -164,9 +164,9 @@ cachedKeysReferenced = do
 
 keySizeSum :: SizeList Key -> StatState String
 keySizeSum (keys, len) = do
-	let knownsize = catMaybes $ map keySize keys
-	let total = roughSize storageUnits False $ foldl (+) 0 knownsize
-	let missing = len - genericLength knownsize
+	let knownsizes = mapMaybe keySize keys
+	let total = roughSize storageUnits False $ sum knownsizes
+	let missing = len - genericLength knownsizes
 	return $ total ++
 		if missing > 0
 			then aside $ "but " ++ show missing ++ " keys have unknown size"

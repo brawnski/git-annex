@@ -39,7 +39,7 @@ git_annex_shell r command params
 	where
 		dir = Git.workTree r
 		shellcmd = "git-annex-shell"
-		shellopts = (Param command):(File dir):params
+		shellopts = Param command : File dir : params
 		sshcmd = shellcmd ++ " " ++ 
 			unwords (map shellEscape $ toCommand shellopts)
 

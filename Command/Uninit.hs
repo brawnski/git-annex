@@ -52,8 +52,9 @@ cleanup = do
 	liftIO $ removeDirectoryRecursive (gitAnnexDir g)
 	-- avoid normal shutdown
 	saveState
-	liftIO $ Git.run g "branch" [Param "-D", Param Branch.name]
-	liftIO $ exitSuccess
+	liftIO $ do
+		Git.run g "branch" [Param "-D", Param Branch.name]
+		exitSuccess
 
 gitPreCommitHookUnWrite :: Git.Repo -> Annex ()
 gitPreCommitHookUnWrite repo = do

@@ -20,13 +20,13 @@ graphNode nodeid desc = label desc $ quote nodeid
 
 {- an edge between two nodes -}
 graphEdge :: String -> String -> Maybe String -> String
-graphEdge fromid toid desc = indent $ maybe edge (\d -> label d edge) desc
+graphEdge fromid toid desc = indent $ maybe edge (`label` edge) desc
 	where
 		edge = quote fromid ++ " -> " ++ quote toid
 
 {- adds a label to a node or edge -}
 label :: String -> String -> String
-label l s = attr "label" l s
+label = attr "label"
 
 {- adds an attribute to a node or edge
  - (can be called multiple times for multiple attributes) -}
@@ -35,7 +35,7 @@ attr a v s = s ++ " [ " ++ a ++ "=" ++ quote v ++ " ]"
 
 {- fills a node with a color -}
 fillColor :: String -> String -> String
-fillColor color s = attr "fillcolor" color $ attr "style" "filled" $ s
+fillColor color s = attr "fillcolor" color $ attr "style" "filled" s
 
 {- apply to graphNode to put the node in a labeled box -}
 subGraph :: String -> String -> String -> String -> String
@@ -52,10 +52,10 @@ subGraph subid l color s =
 		setlabel = "label=" ++ quote l
 		setfilled = "style=" ++ quote "filled"
 		setcolor = "fillcolor=" ++ quote color
-		ii x = (indent $ indent x) ++ "\n"
+		ii x = indent (indent x) ++ "\n"
 
 indent ::String -> String
-indent s = "\t" ++ s
+indent s = '\t' : s
 
 quote :: String -> String
 quote s = "\"" ++ s' ++ "\""

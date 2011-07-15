@@ -39,7 +39,7 @@ seek = [withFilesNotInGit start, withFilesUnlocked start]
 start :: CommandStartBackendFile
 start pair@(file, _) = notAnnexed file $ do
 	s <- liftIO $ getSymbolicLinkStatus file
-	if (isSymbolicLink s) || (not $ isRegularFile s)
+	if isSymbolicLink s || not (isRegularFile s)
 		then stop
 		else do
 			showStart "add" file
@@ -58,8 +58,8 @@ perform (file, backend) = do
  - This can be called before or after the symlink is in place. -}
 undo :: FilePath -> Key -> IOException -> Annex a
 undo file key e = do
-	unlessM (inAnnex key) $ rethrow -- no cleanup to do
-	liftIO $ whenM (doesFileExist file) $ do removeFile file
+	unlessM (inAnnex key) rethrow -- no cleanup to do
+	liftIO $ whenM (doesFileExist file) $ removeFile file
 	handle tryharder $ fromAnnex key file
 	logStatus key InfoMissing
 	rethrow
