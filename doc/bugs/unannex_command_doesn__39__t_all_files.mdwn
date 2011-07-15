@@ -19,3 +19,8 @@
     total 72
     -rw-r--r-- 1 simons users 65536 Jul 15 17:29 file1
     lrwxrwxrwx 1 simons users   132 Jul 15 17:29 file2 -> .git/annex/objects/jp/Fk/SHA1-s65536--795b58cc4e5190b02e7026fd9e94a10c98c6475f/SHA1-s65536--795b58cc4e5190b02e7026fd9e94a10c98c6475f
+
+> This was recently discussed in
+> [[annex_unannex__47__uninit_should_handle_copies]] and `unannex --fast`
+> added to leave contents behind in the annex, which allows handling
+> copies. But needs manual cleanup later with dropunused. --[[Joey]] 
