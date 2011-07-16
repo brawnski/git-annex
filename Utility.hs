@@ -288,6 +288,6 @@ unlessM c a = c >>= flip unless a
 (>>!) :: Monad m => m Bool -> m () -> m ()
 (>>!) = unlessM
 
--- low fixity allows eg, foo bar <|> error $ "failed " ++ meep
+-- low fixity allows eg, foo bar >>! error $ "failed " ++ meep
 infixr 0 >>?
 infixr 0 >>!
