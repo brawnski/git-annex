@@ -72,7 +72,7 @@ shaNameE size = shaName size ++ "E"
 
 shaN :: SHASize -> FilePath -> Annex String
 shaN size file = do
-	showNote "checksum..."
+	showAction "checksum"
 	liftIO $ pOpen ReadFromPipe command (toCommand [File file]) $ \h -> do
 		line <- hGetLine h
 		let bits = split " " line

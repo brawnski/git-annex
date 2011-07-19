@@ -185,7 +185,7 @@ remove r k = s3Action r False $ \(conn, bucket) -> do
 
 checkPresent :: Remote Annex -> Key -> Annex (Either IOException Bool)
 checkPresent r k = s3Action r noconn $ \(conn, bucket) -> do
-	showNote ("checking " ++ name r ++ "...")
+	showAction $ "checking " ++ name r
 	res <- liftIO $ getObjectInfo conn $ bucketKey r bucket k
 	case res of
 		Right _ -> return $ Right True
@@ -241,13 +241,13 @@ iaMunge = (>>= munge)
 genBucket :: RemoteConfig -> Annex ()
 genBucket c = do
 	conn <- s3ConnectionRequired c
-	showNote "checking bucket"
+	showAction "checking bucket"
 	loc <- liftIO $ getBucketLocation conn bucket 
 	case loc of
 		Right _ -> return ()
 		Left err@(NetworkError _) -> s3Error err
 		Left (AWSError _ _) -> do
-			showNote $ "creating bucket in " ++ datacenter
+			showAction $ "creating bucket in " ++ datacenter
 			res <- liftIO $ createBucketIn conn bucket datacenter
 			case res of
 				Right _ -> return ()

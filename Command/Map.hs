@@ -44,7 +44,7 @@ start = do
 
 	liftIO $ writeFile file (drawMap rs umap trusted)
 	showLongNote $ "running: dot -Tx11 " ++ file
-	showProgress
+	showOutput
 	r <- liftIO $ boolSystem "dot" [Param "-Tx11", File file]
 	next $ next $ return r
 	where
@@ -176,7 +176,7 @@ scan r = do
 			showEndOk
 			return r'
 		Nothing -> do
-			showProgress
+			showOutput
 			showEndFail
 			return r
 
@@ -224,5 +224,5 @@ tryScan r
 				ok -> return ok
 
 		sshnote = do
-			showNote "sshing..."
-			showProgress
+			showAction "sshing"
+			showOutput

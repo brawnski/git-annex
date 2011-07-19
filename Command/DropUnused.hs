@@ -61,7 +61,7 @@ perform key = maybe droplocal dropremote =<< Annex.getState Annex.fromremote
 	where
 		dropremote name = do
 			r <- Remote.byName name
-			showNote $ "from " ++ Remote.name r ++ "..."
+			showAction $ "from " ++ Remote.name r
 			next $ Command.Move.fromCleanup r True key
 		droplocal = Command.Drop.perform key (Just 0) -- force drop
 

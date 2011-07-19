@@ -141,7 +141,7 @@ remove o k = withRsyncScratchDir $ \tmp -> do
 
 checkPresent :: Git.Repo -> RsyncOpts -> Key -> Annex (Either IOException Bool)
 checkPresent r o k = do
-	showNote ("checking " ++ Git.repoDescribe r ++ "...")
+	showAction $ "checking " ++ Git.repoDescribe r
 	-- note: Does not currently differnetiate between rsync failing
 	-- to connect, and the file not being present.
 	res <- liftIO $ boolSystem "sh" [Param "-c", Param cmd]
@@ -174,7 +174,7 @@ withRsyncScratchDir a = do
 
 rsyncRemote :: RsyncOpts -> [CommandParam] -> Annex Bool
 rsyncRemote o params = do
-	showProgress -- make way for progress bar
+	showOutput -- make way for progress bar
 	res <- liftIO $ rsync $ rsyncOptions o ++ defaultParams ++ params
 	if res
 		then return res

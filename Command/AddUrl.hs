@@ -43,7 +43,7 @@ start s = do
 perform :: String -> FilePath -> CommandPerform
 perform url file = do
 	g <- Annex.gitRepo
-	showNote $ "downloading " ++ url
+	showAction $ "downloading " ++ url ++ " "
 	let dummykey = stubKey { keyName = url, keyBackendName = "URL" }
 	let tmp = gitAnnexTmpLocation g dummykey
 	liftIO $ createDirectoryIfMissing True (parentDir tmp)

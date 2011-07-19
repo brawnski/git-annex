@@ -115,7 +115,7 @@ inAnnex r key = if Git.repoIsUrl r
 			a <- Annex.new r
 			Annex.eval a (Content.inAnnex key)
 		checkremote = do
-			showNote ("checking " ++ Git.repoDescribe r ++ "...")
+			showAction $ "checking " ++ Git.repoDescribe r
 			inannex <- onRemote r (boolSystem, False) "inannex" 
 				[Param (show key)]
 			return $ Right inannex
@@ -156,7 +156,7 @@ copyToRemote r key
 
 rsyncHelper :: [CommandParam] -> Annex Bool
 rsyncHelper p = do
-	showProgress -- make way for progress bar
+	showOutput -- make way for progress bar
 	res <- liftIO $ rsync p
 	if res
 		then return res

@@ -35,7 +35,7 @@ perform key = do
 		else do
 			pp <- prettyPrintUUIDs uuids
 			showLongNote pp
-			showProgress	
+			showOutput
 			next $ return True
 	where
 		copiesplural 1 = "copy"

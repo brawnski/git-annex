@@ -190,7 +190,7 @@ updateRef ref
 		if null diffs
 			then return Nothing
 			else do
-				showSideAction $ "merging " ++ shortref ref ++ " into " ++ name ++ "..."
+				showSideAction $ "merging " ++ shortref ref ++ " into " ++ name
 				-- By passing only one ref, it is actually
 				-- merged into the index, preserving any
 				-- changes that may already be staged.

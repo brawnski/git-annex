@@ -106,7 +106,7 @@ checkKey key = do
 checkKey' :: [URLString] -> Annex Bool
 checkKey' [] = return False
 checkKey' (u:us) = do
-	showNote ("checking " ++ u)
+	showAction $ "checking " ++ u
 	e <- liftIO $ urlexists u
 	if e then return e else checkKey' us
 
@@ -129,6 +129,6 @@ urlexists url =
 download :: [URLString] -> FilePath -> Annex Bool
 download [] _ = return False
 download (url:us) file = do
-	showProgress -- make way for curl progress bar
+	showOutput -- make way for curl progress bar
 	ok <- liftIO $ boolSystem "curl" [Params "-L -C - -# -o", File file, File url]
 	if ok then return ok else download us file

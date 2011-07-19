@@ -45,7 +45,7 @@ perform dest key = do
 	let src = gitAnnexLocation g key
 	let tmpdest = gitAnnexTmpLocation g key
 	liftIO $ createDirectoryIfMissing True (parentDir tmpdest)
-	showNote "copying..."
+	showAction "copying"
 	ok <- liftIO $ copyFile src tmpdest
         if ok
                 then do

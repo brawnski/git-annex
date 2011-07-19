@@ -45,21 +45,25 @@ olddir g
  -}
 upgrade :: Annex Bool
 upgrade = do
-	showNote "v2 to v3"
+	showAction "v2 to v3"
 	g <- Annex.gitRepo
 	let bare = Git.repoIsLocalBare g
 
 	Branch.create
+	showProgress
+
 	e <- liftIO $ doesDirectoryExist (olddir g)
 	when e $ do
 		mapM_ (\(k, f) -> inject f $ logFile k) =<< locationLogs g
 		mapM_ (\f -> inject f f) =<< logFiles (olddir g)
 
 	saveState
+	showProgress
 
 	when e $ liftIO $ do
 		Git.run g "rm" [Param "-r", Param "-f", Param "-q", File (olddir g)]
 		unless bare $ gitAttributesUnWrite g
+	showProgress
 
 	unless bare push
 
@@ -83,6 +87,7 @@ inject source dest = do
 	new <- liftIO (readFile $ olddir g </> source)
 	prev <- Branch.get dest
 	Branch.change dest $ unlines $ nub $ lines prev ++ lines new
+	showProgress
 
 logFiles :: FilePath -> Annex [FilePath]
 logFiles dir = return . filter (".log" `isSuffixOf`)
@@ -105,8 +110,8 @@ push = do
 			-- "git push" will from then on
 			-- automatically push it
 			Branch.update -- just in case
-			showNote "pushing new git-annex branch to origin"
-			showProgress
+			showAction "pushing new git-annex branch to origin"
+			showOutput
 			g <- Annex.gitRepo
 			liftIO $ Git.run g "push" [Param "origin", Param Branch.name]
 		_ -> do
@@ -116,7 +121,7 @@ push = do
 			showLongNote $
 				"git-annex branch created\n" ++
 				"Be sure to push this branch when pushing to remotes.\n"
-			showProgress
+			showOutput
 
 {- Old .gitattributes contents, not needed anymore. -}
 attrLines :: [String]

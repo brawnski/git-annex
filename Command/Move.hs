@@ -44,9 +44,9 @@ start move file = do
 			fromStart src move file
 		(_ ,  _) -> error "only one of --from or --to can be specified"
 
-showAction :: Bool -> FilePath -> Annex ()
-showAction True file = showStart "move" file
-showAction False file = showStart "copy" file
+showMoveAction :: Bool -> FilePath -> Annex ()
+showMoveAction True file = showStart "move" file
+showMoveAction False file = showStart "copy" file
 
 {- Used to log a change in a remote's having a key. The change is logged
  - in the local repo, not on the remote. The process of transferring the
@@ -77,7 +77,7 @@ toStart dest move file = isAnnexed file $ \(key, _) -> do
 	if not ishere || u == Remote.uuid dest
 		then stop -- not here, so nothing to do
 		else do
-			showAction move file
+			showMoveAction move file
 			next $ toPerform dest move key
 toPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 toPerform dest move key = do
@@ -97,7 +97,7 @@ toPerform dest move key = do
 			showNote $ show err
 			stop
 		Right False -> do
-			showNote $ "to " ++ Remote.name dest ++ "..."
+			showAction $ "to " ++ Remote.name dest
 			ok <- Remote.storeKey dest key
 			if ok
 				then next $ toCleanup dest move key
@@ -127,7 +127,7 @@ fromStart src move file = isAnnexed file $ \(key, _) -> do
 	if u == Remote.uuid src || not (any (== src) remotes)
 		then stop
 		else do
-			showAction move file
+			showMoveAction move file
 			next $ fromPerform src move key
 fromPerform :: Remote.Remote Annex -> Bool -> Key -> CommandPerform
 fromPerform src move key = do
@@ -135,7 +135,7 @@ fromPerform src move key = do
 	if ishere
 		then next $ fromCleanup src move key
 		else do
-			showNote $ "from " ++ Remote.name src ++ "..."
+			showAction $ "from " ++ Remote.name src
 			ok <- getViaTmp key $ Remote.retrieveKeyFile src key
 			if ok
 				then next $ fromCleanup src move key

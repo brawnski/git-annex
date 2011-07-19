@@ -98,7 +98,7 @@ runHook :: String -> String -> Key -> Maybe FilePath -> Annex Bool -> Annex Bool
 runHook hooktype hook k f a = maybe (return False) run =<< lookupHook hooktype hook
 	where
 		run command = do
-			showProgress -- make way for hook output
+			showOutput -- make way for hook output
 			res <- liftIO $ boolSystemEnv
 				"sh" [Param "-c", Param command] $ hookEnv k f
 			if res
@@ -133,7 +133,7 @@ remove h k = runHook h "remove" k Nothing $ return True
 
 checkPresent :: Git.Repo -> String -> Key -> Annex (Either IOException Bool)
 checkPresent r h k = do
-	showNote ("checking " ++ Git.repoDescribe r ++ "...")
+	showAction $ "checking " ++ Git.repoDescribe r
 	v <- lookupHook h "checkpresent"
 	liftIO (try (check v) ::IO (Either IOException Bool))
 	where

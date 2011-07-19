@@ -20,21 +20,29 @@ verbose a = do
 	q <- Annex.getState Annex.quiet
 	unless q a
 
-showSideAction :: String -> Annex ()
-showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ ")"
-
 showStart :: String -> String -> Annex ()
-showStart command file = verbose $ do
-	liftIO $ putStr $ command ++ " " ++ file ++ " "
-	liftIO $ hFlush stdout
+showStart command file = verbose $ liftIO $ do
+	putStr $ command ++ " " ++ file ++ " "
+	hFlush stdout
 
 showNote :: String -> Annex ()
-showNote s = verbose $ do
-	liftIO $ putStr $ "(" ++ s ++ ") "
-	liftIO $ hFlush stdout
+showNote s = verbose $ liftIO $ do
+	putStr $ "(" ++ s ++ ") "
+	hFlush stdout
+
+showAction :: String -> Annex ()
+showAction s = showNote $ s ++ "..."
 
 showProgress :: Annex ()
-showProgress = verbose $ liftIO $ putStr "\n"
+showProgress = verbose $ liftIO $ do
+	putStr "."
+	hFlush stdout
+
+showSideAction :: String -> Annex ()
+showSideAction s = verbose $ liftIO $ putStrLn $ "(" ++ s ++ "...)"
+
+showOutput :: Annex ()
+showOutput = verbose $ liftIO $ putStr "\n"
 
 showLongNote :: String -> Annex ()
 showLongNote s = verbose $ liftIO $ putStr $ '\n' : indent s
@@ -50,15 +58,16 @@ showEndResult True = showEndOk
 showEndResult False = showEndFail
 
 showErr :: (Show a) => a -> Annex ()
-showErr e = do
-	liftIO $ hFlush stdout
-	liftIO $ hPutStrLn stderr $ "git-annex: " ++ show e
+showErr e = liftIO $ do
+	hFlush stdout
+	hPutStrLn stderr $ "git-annex: " ++ show e
 
 warning :: String -> Annex ()
 warning w = do
 	verbose $ liftIO $ putStr "\n"
-	liftIO $ hFlush stdout
-	liftIO $ hPutStrLn stderr $ indent w
+	liftIO $ do
+		hFlush stdout
+		hPutStrLn stderr $ indent w
 
 indent :: String -> String
 indent s = join "\n" $ map (\l -> "  " ++ l) $ lines s

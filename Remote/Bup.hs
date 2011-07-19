@@ -76,7 +76,7 @@ bupSetup u c = do
 
 	-- bup init will create the repository.
 	-- (If the repository already exists, bup init again appears safe.)
-	showNote "bup init"
+	showAction "bup init"
 	bup "init" buprepo [] >>! error "bup init failed"
 
 	storeBupUUID u buprepo
@@ -93,7 +93,7 @@ bupParams command buprepo params =
 
 bup :: String -> BupRepo -> [CommandParam] -> Annex Bool
 bup command buprepo params = do
-	showProgress -- make way for bup output
+	showOutput -- make way for bup output
 	liftIO $ boolSystem "bup" $ bupParams command buprepo params
 
 pipeBup :: [CommandParam] -> Maybe Handle -> Maybe Handle -> IO Bool
@@ -109,7 +109,7 @@ bupSplitParams :: Git.Repo -> BupRepo -> Key -> CommandParam -> Annex [CommandPa
 bupSplitParams r buprepo k src = do
 	o <- getConfig r "bup-split-options" ""
 	let os = map Param $ words o
-	showProgress -- make way for bup output
+	showOutput -- make way for bup output
 	return $ bupParams "split" buprepo 
 		(os ++ [Param "-n", Param (show k), src])
 
@@ -157,7 +157,7 @@ remove _ = do
 checkPresent :: Git.Repo -> Git.Repo -> Key -> Annex (Either IOException Bool)
 checkPresent r bupr k
 	| Git.repoIsUrl bupr = do
-		showNote ("checking " ++ Git.repoDescribe r ++ "...")
+		showAction $ "checking " ++ Git.repoDescribe r
 		ok <- onBupRemote bupr boolSystem "git" params
 		return $ Right ok
 	| otherwise = liftIO $ try $ boolSystem "git" $ Git.gitCommandLine bupr params
@@ -172,7 +172,7 @@ storeBupUUID u buprepo = do
 	r <- liftIO $ bup2GitRemote buprepo
 	if Git.repoIsUrl r
 		then do
-			showNote "storing uuid"
+			showAction "storing uuid"
 			onBupRemote r boolSystem "git"
 				[Params $ "config annex.uuid " ++ u]
 					>>! error "ssh failed"
