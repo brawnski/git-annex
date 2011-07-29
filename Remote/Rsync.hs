@@ -93,9 +93,12 @@ rsyncSetup u c = do
 	return c'
 
 rsyncKey :: RsyncOpts -> Key -> String
-rsyncKey o k = rsyncUrl o </> hashDirMixed k </> f </> f
+rsyncKey o k = rsyncUrl o </> hashDirMixed k </> shellEscape (f </> f)
         where
                 f = keyFile k
+
+rsyncKeyDir :: RsyncOpts -> Key -> String
+rsyncKeyDir o k = rsyncUrl o </> hashDirMixed k </> shellEscape (keyFile k)
 
 store :: RsyncOpts -> Key -> Annex Bool
 store o k = do
@@ -136,7 +139,7 @@ remove o k = withRsyncScratchDir $ \tmp -> do
 		[ Params "--delete --recursive"
 		, partialParams
 		, Param $ addTrailingPathSeparator dummy
-		, Param $ parentDir $ rsyncKey o k
+		, Param $ rsyncKeyDir o k
 		]
 
 checkPresent :: Git.Repo -> RsyncOpts -> Key -> Annex (Either IOException Bool)
@@ -147,8 +150,7 @@ checkPresent r o k = do
 	res <- liftIO $ boolSystem "sh" [Param "-c", Param cmd]
 	return $ Right res
 	where
-		cmd = "rsync --quiet " ++ testfile ++ " 2>/dev/null"
-		testfile = shellEscape $ rsyncKey o k
+		cmd = "rsync --quiet " ++ shellEscape (rsyncKey o k) ++ " 2>/dev/null"
 
 {- Rsync params to enable resumes of sending files safely,
  - ensure that files are only moved into place once complete

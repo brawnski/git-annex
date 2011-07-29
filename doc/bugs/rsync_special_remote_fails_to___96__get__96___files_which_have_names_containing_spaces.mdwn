@@ -46,3 +46,5 @@
             b8b1ea7a-b93f-11e0-b712-d7bffb6e61e6  -- localrsync
     failed
     git-annex: 1 failed
+
+> [[fixed|done]] --[[Joey]] 

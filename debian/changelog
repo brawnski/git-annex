@@ -1,3 +1,9 @@
+git-annex (3.20110720) UNRELEASED; urgency=low
+
+  * Fix shell escaping in rsync special remote.
+
+ -- Joey Hess <joeyh@debian.org>  Fri, 29 Jul 2011 15:27:30 +0200
+
 git-annex (3.20110719) unstable; urgency=low
 
   * add: Be even more robust to avoid ever leaving the file seemingly deleted.
