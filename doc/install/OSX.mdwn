@@ -1,5 +1,7 @@
+Install Haskel Platform from [[http://hackage.haskell.org/platform/mac.html]]. The version provided by Macports is too old to work with current versions of git-annex. Then execute
+
 <pre>
-sudo port install haskell-platform git-core ossp-uuid md5sha1sum coreutils pcre
+sudo port install git-core ossp-uuid md5sha1sum coreutils pcre
 sudo cabal update
 sudo cabal install missingh
 sudo cabal install utf8-string
@@ -21,7 +23,7 @@ make
 sudo make install
 </pre>
 
-Originally posted by Jon at <https://gist.github.com/671785> --[[Joey]]
+Originally posted by Jon at <https://gist.github.com/671785> --[[Joey]], modified by [[kristianrumberg]]
 
 See also:
 
