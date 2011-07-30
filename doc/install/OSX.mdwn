@@ -2,6 +2,8 @@ Install Haskel Platform from [[http://hackage.haskell.org/platform/mac.html]]. T
 
 <pre>
 sudo port install git-core ossp-uuid md5sha1sum coreutils pcre
+
+sudo ln -s /opt/local/include/pcre.h  /usr/include/pcre.h # This is hack that allows pcre-light to find pcre
 sudo cabal update
 sudo cabal install missingh
 sudo cabal install utf8-string
