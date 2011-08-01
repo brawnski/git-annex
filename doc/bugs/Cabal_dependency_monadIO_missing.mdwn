@@ -1,0 +1,8 @@
+Just issuing the command `cabal install` results in the following error message.
+
+    Command/Add.hs:54:3:
+        No instance for (Control.Monad.IO.Control.MonadControlIO
+                           (Control.Monad.State.Lazy.StateT Annex.AnnexState IO))
+          arising from a use of `handle' at Command/Add.hs:54:3-24
+
+Adding the dependency for `monadIO` to `git-annex.cabal` should fix this?
