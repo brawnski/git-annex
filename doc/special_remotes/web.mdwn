@@ -1,5 +1,5 @@
 git-annex can use the WWW as a special remote, downloading urls to files.
-See [[walkthrough/using_web_web]] for usage examples.
+See [[walkthrough/using_the_web]] for usage examples.
 
 ## notes
 
