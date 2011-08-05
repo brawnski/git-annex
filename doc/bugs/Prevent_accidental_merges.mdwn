@@ -7,3 +7,8 @@ Adding a tiny binary file called .gitnomerge to both branches would solve that w
 Yes, there is an argument to be made that this is too much hand-holding, but I still think it's worth it.
 
 -- Richard
+
+> It should be as easy to undo such an accidential merge
+> as it is to undo any other git commit, right? I quite like that git-annex 
+> no longer adds any clutter to the master branch, and would be reluctant
+> to change that. --[[Joey]]
