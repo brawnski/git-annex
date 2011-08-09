@@ -13,7 +13,7 @@ git-annex does not take into account the --git-dir and --work-tree command line 
 
 regular git add works:
 
-    > git --git-dir =/tmp/test/.git --work-tree=/tmp/test add foo
+    > git --git-dir=/tmp/test/.git --work-tree=/tmp/test add foo
     > git --git-dir=/tmp/test/.git --work-tree=/tmp/test status 
     # On branch master
     #
