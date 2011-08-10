@@ -5,5 +5,5 @@ after upgrading to git-annex 3, i'm stuck with diverging git-annex branches -- i
 could you explain how to do that in a littel more detail? git pull seems to only merge master, although i have these ``.git/config`` settings:
 
     [branch "git-annex"]
-    	remote = poseidon
+    	remote = origin
     	merge = git-annex
